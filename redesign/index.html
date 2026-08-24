@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataForge · 데이터·AI 실습 플랫폼</title>
+<meta name="description" content="데이터를 직접 만지며 배우는 AI 실무 훈련장. 생성·전처리·분석·머신러닝·딥러닝·자동화·바이브 코딩까지 브라우저에서 바로 실습.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/df.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="logo" href="/"><span class="spark"></span>Data<em>Forge</em></a>
+    <nav class="nav-links">
+      <a href="#tools">실습 도구</a>
+      <a href="#how">이용 방법</a>
+      <a href="/guide/">가이드</a>
+      <a href="/about">소개</a>
+    </nav>
+    <div style="display:flex;gap:10px">
+      <a class="btn btn-ghost" href="/lms/">교육 코드</a>
+      <a class="btn btn-primary" href="#tools">바로 실습 →</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="eyebrow"><span class="dot"></span>BuildUp Lab · AI 실무 교육 실습장</span>
+    <h1 class="display">원자재 데이터를<br><span class="grad">기술로 벼려내는 곳</span></h1>
+    <p class="lead">설치도, 회원가입도 없습니다. 데이터 생성부터 전처리·분석·머신러닝·딥러닝, 업무 자동화와 바이브 코딩까지 — 브라우저에서 직접 만지며 원리를 익히는 실습 도구 60여 종.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#tools">실습 도구 둘러보기 →</a>
+      <a class="btn btn-ghost" href="/sim/ml">머신러닝 시뮬레이터 열기</a>
+    </div>
+    <div class="hero-meta">
+      <div class="stat"><b class="display">60+</b><span class="mono">실습 도구</span></div>
+      <div class="stat"><b class="display">12</b><span class="mono">학습 트랙</span></div>
+      <div class="stat"><b class="display">0원</b><span class="mono">가입 없이 무료</span></div>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+  <section class="section" id="tools">
+    <div class="sec-head">
+      <div>
+        <div class="coord"><b>01</b> · FORGE — 실습 트랙</div>
+        <h2 class="display">무엇을 벼려낼까요</h2>
+      </div>
+      <p>데이터 업무의 전체 흐름을 트랙별로. 카드를 눌러 바로 실습을 시작하세요.</p>
+    </div>
+
+    <div class="forge-grid" id="grid"></div>
+  </section>
+
+  <!-- HOW -->
+  <section class="section" id="how">
+    <div class="sec-head">
+      <div>
+        <div class="coord"><b>02</b> · TEMPER — 이렇게 씁니다</div>
+        <h2 class="display">클릭만으로 원리를 관찰</h2>
+      </div>
+    </div>
+    <div class="forge-grid">
+      <div class="tool"><span class="tid">STEP 01</span><span class="ticon">🧪</span><h3 class="display">데이터를 만든다</h3><p>제조·경영·광고·텍스트 도메인의 실습 데이터를 원하는 조건으로 생성. 내 데이터가 없어도 시작할 수 있습니다.</p></div>
+      <div class="tool"><span class="tid">STEP 02</span><span class="ticon">⚙️</span><h3 class="display">직접 돌려본다</h3><p>결측치 처리·정규화부터 K-Means·XGBoost·신경망까지, 값을 바꿔가며 결과가 어떻게 변하는지 눈으로 확인합니다.</p></div>
+      <div class="tool"><span class="tid">STEP 03</span><span class="ticon">🚀</span><h3 class="display">내 것으로 만든다</h3><p>프롬프트·차트·PWA 앱·텔레그램 봇까지 결과물을 직접 제작. 배운 걸 실무로 바로 연결합니다.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <div><b class="display" style="color:var(--ink)">DataForge</b> · 데이터를 벼려내는 실습장</div>
+    <div class="mono">© 2026 BuildUp Lab · dataforge.ai.kr</div>
+  </div>
+</footer>
+
+<script>
+// 실습 트랙 — 실제 도구 경로로 연결
+const TRACKS = [
+  {id:'PROMPT', icon:'💬', cat:'#4338ca', name:'프롬프트', href:'/builder/prompt_lib',
+   desc:'검증된 프롬프트를 트랙별로 모아두고, 필요한 걸 골라 바로 복사해 씁니다.', tags:['prompt','library']},
+  {id:'GEN', icon:'🏭', cat:'#0284c7', name:'데이터 생성', href:'/mfg',
+   desc:'제조 센서·경영·광고·텍스트 실습 데이터를 조건에 맞게 생성합니다.', tags:['mfg','csv','stream']},
+  {id:'PREP', icon:'🧹', cat:'#0891b2', name:'데이터 전처리', href:'/prep/missing',
+   desc:'결측치·이상치 처리, 보간, 정규화, 원-핫 인코딩을 단계별로 실습합니다.', tags:['clean','impute','scale']},
+  {id:'SIM', icon:'📊', cat:'#7c3aed', name:'분석 시뮬레이션', href:'/sim/chart',
+   desc:'차트·기초통계·텍스트 마이닝·시계열을 브라우저에서 바로 실행합니다.', tags:['chart','stat','ts']},
+  {id:'ML', icon:'🤖', cat:'#c026d3', name:'머신러닝', href:'/sim/ml',
+   desc:'K-Means부터 XGBoost까지 실제 학습·평가. 파일 올리고 지표를 확인합니다.', tags:['kmeans','xgboost']},
+  {id:'DL', icon:'🧠', cat:'#db2777', name:'딥러닝', href:'/sim/deep',
+   desc:'신경망 구조와 과적합, 하이퍼파라미터를 값을 바꿔가며 관찰합니다.', tags:['neuron','overfit']},
+  {id:'BUILD', icon:'🛠', cat:'#ea580c', name:'빌더', href:'/builder/chart',
+   desc:'HTML·차트·행정경계 지도·프롬프트를 직접 만들어 결과물로 뽑습니다.', tags:['html','chart','map']},
+  {id:'BIZ', icon:'📈', cat:'#16a34a', name:'경영·사업', href:'/manage/bmc',
+   desc:'BMC·SWOT·손익분기·재무모델 등 17종 경영 분석 캔버스와 계산기.', tags:['bmc','bep','swot']},
+  {id:'WORK', icon:'⚡', cat:'#ca8a04', name:'업무 생산성', href:'/work/markdown',
+   desc:'마크다운 변환, PDF 분할·생성·압축, OCR, 유튜브 저장 등 실무 도구 모음.', tags:['pdf','ocr','md']},
+  {id:'EXT', icon:'🧩', cat:'#0d9488', name:'브라우저 확장', href:'/extension/capture',
+   desc:'영역 캡처·텍스트 추출·이미지 저장을 돕는 크롬 확장 프로그램.', tags:['capture','grab']},
+  {id:'VIBE', icon:'🚀', cat:'#2563eb', name:'바이브 코딩', href:'/vibe/pwa',
+   desc:'PWA·Firestore 앱·웹 푸시·텔레그램 봇을 코드 없이 만드는 빌더.', tags:['pwa','bot','push']},
+  {id:'LAB', icon:'🔬', cat:'#475569', name:'팩토리 랩', href:'/factory_lab',
+   desc:'실시간 센서 대시보드·설비 카탈로그·제조 뉴스로 스마트팩토리를 체험합니다.', tags:['sensor','iot']},
+];
+document.getElementById('grid').innerHTML = TRACKS.map(t => `
+  <a class="tool" href="${t.href}" style="--cat:${t.cat}">
+    <span class="tid">${t.id}</span>
+    <span class="ticon">${t.icon}</span>
+    <h3 class="display">${t.name}</h3>
+    <p>${t.desc}</p>
+    <div class="tags">${t.tags.map(x=>`<span class="tag">${x}</span>`).join('')}</div>
+    <span class="arrow">→</span>
+  </a>`).join('');
+// 방문 로그(있으면)
+try{fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=hub&page=/'});}catch(e){}
+</script>
+</body>
+</html>
