@@ -261,5 +261,32 @@ class LmsTests(TestCase):
         good = self.client.post("/lms/", {"code": "lms123"})  # 소문자→대문자
         self.assertEqual(good.status_code, 302)
         self.assertNotIn("err", good["Location"])
-        # 인증 후 배너
-        self.assertIn("인증됨", self.client.get("/lms/").content.decode())
+        # 인증 후 강의 뷰어 렌더(세션명 노출)
+        self.assertIn("교육", self.client.get("/lms/").content.decode())
+
+
+class FactoryLmsRecoveryTests(TestCase):
+    def setUp(self):
+        from django.core.management import call_command
+        call_command("seed_factory", verbosity=0)
+
+    def test_catalog_and_news_detail(self):
+        from .models import CatalogItem, NewsItem
+        c = CatalogItem.objects.first()
+        self.assertContains(self.client.get(f"/factory_lab/catalog/detail.php?id={c.id}"), c.name)
+        n = NewsItem.objects.first()
+        r = self.client.get(f"/factory_lab/news/detail.php?id={n.id}")
+        self.assertContains(r, n.title)
+
+    def test_maintenance_ajax(self):
+        d = self.client.get("/factory_lab/maintenance/?ajax=1&offset=0").json()
+        self.assertLessEqual(len(d["items"]), 20)
+
+    def test_lms_viewer_renders_curriculum(self):
+        from .models import TrainingSession
+        s = TrainingSession.objects.create(name="과정A", code="VIEW01",
+                                           modules=[{"title": "1강 소개", "content": "x"}])
+        self.client.post("/lms/", {"code": "view01"})
+        html = self.client.get("/lms/").content.decode()
+        self.assertIn("1강 소개", html)
+        self.assertIn("과정A", html)

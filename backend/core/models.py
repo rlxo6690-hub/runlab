@@ -147,3 +147,30 @@ class StreamRow(models.Model):
     topic = models.CharField(max_length=80, db_index=True)
     data = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CatalogItem(models.Model):
+    """factory_lab 장비 카탈로그. 소실 DB를 긁힌 목록에서 복구 시딩."""
+    name = models.CharField(max_length=200)
+    category = models.CharField(max_length=60, db_index=True)
+    maker = models.CharField(max_length=200, blank=True)
+    price = models.CharField(max_length=60, blank=True)
+    stock = models.CharField(max_length=60, blank=True)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["id"]
+
+
+class NewsItem(models.Model):
+    """factory_lab 뉴스. 크롤러(crawl_lab)가 채우고, 초기값은 긁힌 목록에서 복구."""
+    title = models.CharField(max_length=300)
+    category = models.CharField(max_length=40, db_index=True)
+    author = models.CharField(max_length=100, blank=True)
+    date = models.CharField(max_length=40, blank=True)
+    views = models.IntegerField(default=0)
+    body = models.TextField(blank=True)
+    source_url = models.URLField(max_length=600, blank=True)
+
+    class Meta:
+        ordering = ["-id"]

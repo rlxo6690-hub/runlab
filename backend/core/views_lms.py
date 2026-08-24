@@ -26,14 +26,69 @@ def lms(request):
         return HttpResponseRedirect("/lms/?err=1")
 
     # GET
-    html = os.path.join(settings.SITE_DIR, "lms", "index.html")
-    body = open(html, encoding="utf-8").read()
+    if request.GET.get("logout"):
+        request.session.pop("lms_code", None)
+        return HttpResponseRedirect("/lms/")
     authed = request.session.get("lms_code")
-    if authed and TrainingSession.objects.filter(code=authed).exists():
-        # 인증됨 — 하지만 뷰어 템플릿은 스크랩에 없음. 6단계 재설계 전까지 안내 배너.
-        note = ("<div style='position:fixed;top:0;left:0;right:0;z-index:9999;"
-                "background:#1e3a5f;color:#fff;padding:14px;text-align:center;"
-                "font-family:sans-serif;font-size:14px'>교육 코드 <b>%s</b> 인증됨 · "
-                "강의 뷰어는 UI 재설계 단계에서 커리큘럼 데이터로 복원됩니다.</div>" % authed)
-        body = re.sub(r"<body([^>]*)>", r"<body\1>" + note, body, count=1)
-    return HttpResponse(body, content_type="text/html; charset=utf-8")
+    sess = TrainingSession.objects.filter(code=authed).first() if authed else None
+    if sess:
+        return HttpResponse(_render_viewer(sess), content_type="text/html; charset=utf-8")
+    # 미인증 → 로그인 게이트(스크랩본 그대로)
+    html = os.path.join(settings.SITE_DIR, "lms", "index.html")
+    return HttpResponse(open(html, encoding="utf-8").read(), content_type="text/html; charset=utf-8")
+
+
+def _render_viewer(sess):
+    """세션 커리큘럼(modules)으로 강의 뷰어를 렌더. 원본 뷰어가 스크랩에 없어 재구성한 것.
+    모듈 필드: title·content·pdfUrl·pdfName·attachments·examples·tools (관리자 편집기 규격)."""
+    import html as _h
+    import json as _j
+    mods = sess.modules or []
+    # 사이드바
+    nav = "".join(
+        f"<button class='m' onclick='pick({i})'>{_h.escape(m.get('title') or f'모듈 {i+1}')}</button>"
+        for i, m in enumerate(mods)) or "<div class='empty'>등록된 커리큘럼이 없습니다</div>"
+    data = _j.dumps([{
+        "title": m.get("title", ""), "content": m.get("content", ""),
+        "pdfUrl": m.get("pdfUrl", ""), "pdfName": m.get("pdfName", ""),
+        "attachments": m.get("attachments", []), "examples": m.get("examples", []),
+        "tools": m.get("tools", []),
+    } for m in mods], ensure_ascii=False)
+    return f"""<!doctype html><html lang=ko><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>{_h.escape(sess.name)} · DataForge LMS</title>
+<style>
+:root{{--bg:#0f172a;--side:#1e293b;--card:#fff;--accent:#2563eb;--text:#1e293b;--dim:#64748b}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:'Noto Sans KR',system-ui,sans-serif;display:flex;min-height:100vh;color:var(--text)}}
+.side{{width:280px;background:var(--side);color:#e2e8f0;padding:20px 12px;overflow-y:auto}}
+.side h1{{font-size:14px;color:#93c5fd;margin-bottom:4px}}
+.side .code{{font-size:11px;color:#64748b;margin-bottom:20px;font-family:monospace}}
+.m{{display:block;width:100%;text-align:left;background:none;border:none;color:#cbd5e1;
+   padding:11px 12px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:2px}}
+.m:hover,.m.on{{background:rgba(37,99,235,.25);color:#fff}}
+.empty{{color:#64748b;font-size:12px;padding:12px}}
+main{{flex:1;background:#f8fafc;padding:40px;overflow-y:auto}}
+.content{{max-width:760px;margin:0 auto;background:var(--card);border-radius:14px;padding:36px;
+   box-shadow:0 4px 20px rgba(0,0,0,.06);line-height:1.8}}
+.content h2{{margin-bottom:18px}}
+.pill{{display:inline-block;background:#eff6ff;color:var(--accent);border-radius:6px;
+   padding:6px 12px;font-size:13px;margin:4px 6px 4px 0;text-decoration:none}}
+</style></head><body>
+<nav class=side><h1>{_h.escape(sess.name)}</h1><div class=code>CODE {_h.escape(sess.code)}</div>{nav}
+<a href='/lms/?logout=1' class=m style='margin-top:20px;color:#64748b'>로그아웃</a></nav>
+<main><div class=content id=view><h2>모듈을 선택하세요</h2><p style='color:var(--dim)'>왼쪽에서 학습할 모듈을 고르면 여기에 표시됩니다.</p></div></main>
+<script>
+const MODS={data};
+function esc(s){{return String(s||'').replace(/[&<>]/g,c=>({{'&':'&amp;','<':'&lt;','>':'&gt;'}}[c]))}}
+function pick(i){{
+  document.querySelectorAll('.m').forEach((b,j)=>b.classList.toggle('on',j===i));
+  const m=MODS[i];let h='<h2>'+esc(m.title)+'</h2>';
+  if(m.content)h+='<div>'+esc(m.content).replace(/\\n/g,'<br>')+'</div>';
+  if(m.pdfUrl)h+='<p><a class=pill href="'+esc(m.pdfUrl)+'" target=_blank>📄 '+esc(m.pdfName||'PDF 자료')+'</a></p>';
+  (m.attachments||[]).forEach(a=>h+='<a class=pill href="'+esc(a.url)+'" target=_blank>📎 '+esc(a.name||'첨부')+'</a>');
+  (m.tools||[]).forEach(t=>{{const id=typeof t==='string'?t:(t.id||t.url||'');h+='<a class=pill href="'+esc(id)+'" target=_blank>🛠 실습도구</a>';}});
+  (m.examples||[]).forEach(x=>h+='<p class=pill>💡 '+esc(typeof x==='string'?x:(x.title||''))+'</p>');
+  document.getElementById('view').innerHTML=h;
+}}
+</script></body></html>"""

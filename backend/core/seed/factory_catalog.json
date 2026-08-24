@@ -1,0 +1,242 @@
+[
+ {
+  "id": 6,
+  "name": "산업용 PLC S7-1200",
+  "category": "제어기기",
+  "maker": "지멘스코리아 · PLC-S7-1200-DC",
+  "price": "980,000원",
+  "stock": ""
+ },
+ {
+  "id": 7,
+  "name": "서보 드라이버 750W",
+  "category": "제어기기",
+  "maker": "(주)LS일렉트릭 · SD-750W-A",
+  "price": "456,000원",
+  "stock": ""
+ },
+ {
+  "id": 8,
+  "name": "인버터 드라이브 3.7kW",
+  "category": "제어기기",
+  "maker": "(주)LS일렉트릭 · INV-3.7K-B",
+  "price": "320,000원",
+  "stock": ""
+ },
+ {
+  "id": 14,
+  "name": "RFID 리더기 UHF",
+  "category": "식별/트래킹",
+  "maker": "(주)한국RFID · RFID-UHF-R",
+  "price": "520,000원",
+  "stock": ""
+ },
+ {
+  "id": 13,
+  "name": "바코드 리더기 산업용",
+  "category": "식별/트래킹",
+  "maker": "코그넥스코리아 · BC-IND-2D-A",
+  "price": "430,000원",
+  "stock": ""
+ },
+ {
+  "id": 28,
+  "name": "산업용 마그네틱 드릴",
+  "category": "공구류",
+  "maker": "(주)보쉬코리아 · MD-35-B",
+  "price": "780,000원",
+  "stock": ""
+ },
+ {
+  "id": 27,
+  "name": "토크 렌치 디지털",
+  "category": "공구류",
+  "maker": "(주)토니테크 · TW-DIG-500",
+  "price": "320,000원",
+  "stock": ""
+ },
+ {
+  "id": 24,
+  "name": "산업용 공기청정기",
+  "category": "환경설비",
+  "maker": "(주)공조테크 · IAC-500-F",
+  "price": "1,200,000원",
+  "stock": ""
+ },
+ {
+  "id": 25,
+  "name": "오일 미스트 집진기",
+  "category": "환경설비",
+  "maker": "(주)공조테크 · OC-300-M",
+  "price": "980,000원",
+  "stock": ""
+ },
+ {
+  "id": 18,
+  "name": "산업용 태블릿 PC",
+  "category": "IT기기",
+  "maker": "파나소닉코리아 · TAB-IND-10A",
+  "price": "1,850,000원",
+  "stock": ""
+ },
+ {
+  "id": 23,
+  "name": "머신 비전 카메라 5MP",
+  "category": "검사장비",
+  "maker": "바슬러코리아 · MV-CAM-5M",
+  "price": "680,000원",
+  "stock": ""
+ },
+ {
+  "id": 29,
+  "name": "열화상 카메라 산업용",
+  "category": "검사장비",
+  "maker": "(주)플리르코리아 · TC-320-A",
+  "price": "2,800,000원",
+  "stock": ""
+ },
+ {
+  "id": 15,
+  "name": "공압 솔레노이드 밸브 5/2",
+  "category": "공압기기",
+  "maker": "(주)SMC코리아 · SOL-52-NC",
+  "price": "56,000원",
+  "stock": ""
+ },
+ {
+  "id": 16,
+  "name": "에어 실린더 Φ40x100S",
+  "category": "공압기기",
+  "maker": "(주)SMC코리아 · CYL-40-100S",
+  "price": "34,000원",
+  "stock": ""
+ },
+ {
+  "id": 21,
+  "name": "진공 그리퍼 Φ80",
+  "category": "공압기기",
+  "maker": "(주)SMC코리아 · VAC-GRP-80",
+  "price": "78,000원",
+  "stock": ""
+ },
+ {
+  "id": 20,
+  "name": "AC 서보 모터 400W",
+  "category": "구동기기",
+  "maker": "(주)LS일렉트릭 · SM-400W-B",
+  "price": "280,000원",
+  "stock": ""
+ },
+ {
+  "id": 9,
+  "name": "산업용 스위치허브 8포트",
+  "category": "네트워크",
+  "maker": "피닉스코리아 · SW-8P-GIG",
+  "price": "185,000원",
+  "stock": ""
+ },
+ {
+  "id": 17,
+  "name": "체인 호이스트 1T",
+  "category": "물류장비",
+  "maker": "(주)기계호이스트 · CH-1TON-A",
+  "price": "890,000원",
+  "stock": ""
+ },
+ {
+  "id": 10,
+  "name": "광섬유 센서 앰프",
+  "category": "센서류",
+  "maker": "오므론코리아 · FOS-AMP-100",
+  "price": "67,000원",
+  "stock": ""
+ },
+ {
+  "id": 19,
+  "name": "레이저 안전 스캐너",
+  "category": "안전장치",
+  "maker": "(주)SICK코리아 · LS-SCAN-270",
+  "price": "3,200,000원",
+  "stock": ""
+ },
+ {
+  "id": 12,
+  "name": "비상정지 스위치",
+  "category": "안전장치",
+  "maker": "(주)자이글코리아 · ES-40MM-Y",
+  "price": "28,000원",
+  "stock": ""
+ },
+ {
+  "id": 11,
+  "name": "안전 광커튼 Type4",
+  "category": "안전장치",
+  "maker": "필즈코리아 · SLC-T4-900",
+  "price": "1,250,000원",
+  "stock": ""
+ },
+ {
+  "id": 26,
+  "name": "휴대용 가스 검지기",
+  "category": "안전장치",
+  "maker": "(주)신영이앤씨 · GD-PORT-CO",
+  "price": "145,000원",
+  "stock": ""
+ },
+ {
+  "id": 30,
+  "name": "광학식 엔코더 2500PPR",
+  "category": "센서류",
+  "maker": "(주)한국엔코더 · ENC-OPT-2500",
+  "price": "89,000원",
+  "stock": ""
+ },
+ {
+  "id": 22,
+  "name": "다축 힘/토크 센서",
+  "category": "센서류",
+  "maker": "(주)ATI코리아 · FT-6AXIS-A",
+  "price": "4,500,000원",
+  "stock": ""
+ },
+ {
+  "id": 5,
+  "name": "레이저 변위 센서",
+  "category": "센서류",
+  "maker": "키엔스코리아 · LD-50-C",
+  "price": "345,000원",
+  "stock": ""
+ },
+ {
+  "id": 1,
+  "name": "산업용 온도 센서 PT100",
+  "category": "센서류",
+  "maker": "(주)한국센서 · TMP-PT100-A",
+  "price": "45,000원",
+  "stock": ""
+ },
+ {
+  "id": 4,
+  "name": "습도/온도 복합 센서",
+  "category": "센서류",
+  "maker": "(주)한국센서 · HT-COMBO-200",
+  "price": "38,000원",
+  "stock": ""
+ },
+ {
+  "id": 2,
+  "name": "압력 트랜스미터 4-20mA",
+  "category": "센서류",
+  "maker": "삼성센서텍 · PRS-420-B",
+  "price": "89,000원",
+  "stock": ""
+ },
+ {
+  "id": 3,
+  "name": "진동 센서 가속도계",
+  "category": "센서류",
+  "maker": "PCB코리아 · VIB-ACC-100",
+  "price": "127,000원",
+  "stock": ""
+ }
+]

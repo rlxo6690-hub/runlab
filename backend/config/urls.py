@@ -16,6 +16,7 @@ from core import views_text as txt
 from core import views_ml as ml
 from core import views_work as work
 from core import views_lms as lms
+from core import views_factory as fac
 from core import frontend
 
 urlpatterns = [
@@ -42,6 +43,10 @@ urlpatterns = [
     path("mfg/api/stream_state.php", strm.stream_state),
     path("mfg/api/db_write.php", strm.db_write),
     path("factory_lab/sensor/api.php", strm.sensor_api),
+    path("factory_lab/catalog/detail.php", fac.catalog_detail),
+    path("factory_lab/news/detail.php", fac.news_detail),
+    path("factory_lab/maintenance/", fac.maintenance_api),  # ?ajax=1 일 때만 JSON, 아니면 아래 캐치올
+    path("factory_lab/crawl_lab.php", fac.crawl_lab),
 
     # ── ML/계산 프록시 (Python 통합) ──
     path("sim/api/timeseries_calc.php", ts.timeseries_calc),
