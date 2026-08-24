@@ -3,3 +3,6 @@ backend/db.sqlite3
 backend/**/__pycache__/
 *.pyc
 backend/media/
+backend/staticfiles/
+backend/data/
+.env

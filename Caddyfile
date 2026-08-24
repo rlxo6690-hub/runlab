@@ -1,0 +1,10 @@
+# Caddy — 도메인으로 접속하면 HTTPS(자물쇠) 인증서를 Let's Encrypt에서 자동 발급.
+# {$SITE_DOMAIN} 은 .env 의 SITE_DOMAIN 값(예: runlab.ai.kr). 앱 컨테이너로 넘겨준다.
+{$SITE_DOMAIN} {
+	encode gzip
+	# 업로드·변환 대용량 대비
+	request_body {
+		max_size 200MB
+	}
+	reverse_proxy app:8000
+}

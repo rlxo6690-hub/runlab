@@ -1,7 +1,7 @@
 {
-  "tool_name": "mcp__Claude_Browser__find",
-  "tool_input_preview": "{\"query\":\"admin password input field\"}",
-  "error": "no read_page tree cached; call read_page first",
-  "timestamp": "2026-08-24T11:57:17.929Z",
-  "retry_count": 2
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd ~/Desktop/태태/dataforge-복구/backend\\nB=\\\"http://127.0.0.1:8890\\\"\\necho \\\"허브(RunLab):    $(curl -sS -o /dev/null -w '%{http_code}' $B/) / $(curl -sS $B/ | grep -o 'run<em>lab</em>.nb' | he...",
+  "error": "Exit code 1\n허브(RunLab):    200 / run<em>lab</em>.nb\n도구 폴백서빙:   200\n재디자인 도구:   1 (df-skin 링크)\n백엔드 API:      {\"ok\": true}\n(eval):7: character not in range\nML 계산(간단):   {\"ok\": false, \"msg\": \"",
+  "timestamp": "2026-08-24T13:49:20.991Z",
+  "retry_count": 1
 }

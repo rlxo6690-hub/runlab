@@ -10,7 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+def env(k, default=None):
+    return os.environ.get(k, default)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-nr)9l1p6)6f6mvqy7oq+0_$*o^&o)@+gzj-ys3mf3d@r0-h^#h'
+SECRET_KEY = env("SECRET_KEY", "django-insecure-dev-only-key-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = ['127.0.0.1','localhost','testserver']
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", "127.0.0.1 localhost testserver").split()
+CSRF_TRUSTED_ORIGINS = [("https://" if not h.startswith("http") else "") + h
+                        for h in env("ALLOWED_HOSTS", "").split() if h not in ("127.0.0.1","localhost","testserver")]
 
 
 # Application definition
@@ -76,7 +82,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': env('DB_PATH', str(BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -120,9 +126,36 @@ STATIC_URL = 'static/'
 # --- DataForge 복구 설정 ---
 SITE_DIR = str(BASE_DIR.parent / "site")   # 회수한 정적 프론트(원본, 폴백)
 REDESIGN_DIR = str(BASE_DIR.parent / "redesign")  # 재디자인 프론트(우선)
-DEMO_PASSWORD = "dataforge"                 # ads/biz 데모 게이트 비번(임시)
+DEMO_PASSWORD = env("DEMO_PASSWORD", "dataforge")   # ads/biz 데모 게이트
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024   # 파일 업로드(마크다운 이미지 등)
 
-ADMIN_PASSWORD = "dataforge2026!"           # 관리자 로그인(대표가 바꿀 것)
+ADMIN_PASSWORD = env("ADMIN_PASSWORD", "dataforge2026!")   # 관리자 로그인
 MEDIA_URL = "/media/"
 MEDIA_ROOT = str(BASE_DIR / "media")
+
+
+# ── 운영 설정 (DEBUG=0) ──
+STATIC_ROOT = str(BASE_DIR / "staticfiles")
+# sqlite WAL: 동시 접근에 강하게
+DATABASES["default"]["OPTIONS"] = {"init_command": "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=20000;"}
+
+if not DEBUG:
+    # 필수 값 없으면 부팅 실패시켜 사고 방지
+    from django.core.exceptions import ImproperlyConfigured
+    if SECRET_KEY.startswith("django-insecure"):
+        raise ImproperlyConfigured("운영(DEBUG=0)에서는 SECRET_KEY 환경변수를 반드시 설정하세요.")
+    if not [h for h in ALLOWED_HOSTS if h not in ("127.0.0.1","localhost","testserver")]:
+        raise ImproperlyConfigured("운영에서는 ALLOWED_HOSTS 환경변수(도메인)를 설정하세요.")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = False   # Caddy가 이미 https 종단
+    SECURE_HSTS_SECONDS = 31536000
+    X_FRAME_OPTIONS = "SAMEORIGIN"
+
+# whitenoise: 관리자 CSS/JS(staticfiles) 서빙
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
