@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 진단 테스트 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="AI 진단 테스트 — DataForge">
+<meta property="og:description" content="AI가 데이터 품질·분포·이상치를 자동 진단하는 교육용 테스트 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- html2canvas + jsPDF 로더 -->
+<script>
+(function(){
+  function loadScript(url, onOk, onFail){
+    var s = document.createElement('script');
+    s.src = url;
+    s.onload  = onOk;
+    s.onerror = onFail;
+    document.head.appendChild(s);
+  }
+  var h2cUrls = [
+    'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+    'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
+  ];
+  var pdfUrls = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+    'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+  ];
+  function tryLoad(urls, idx, flag){
+    if(idx >= urls.length){ window[flag]=true; return; }
+    loadScript(urls[idx], null, function(){ tryLoad(urls, idx+1, flag); });
+  }
+  tryLoad(h2cUrls, 0, '_h2cFailed');
+  tryLoad(pdfUrls, 0, '_jspdfFailed');
+})();
+</script>
+<style>
+:root {
+  --bg: #f8fafc;
+  --bg2: #ffffff;
+  --bg3: #f1f5f9;
+  --card: #ffffff;
+  --card2: #f1f5f9;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.15);
+  --text: #1e293b;
+  --muted: #64748b;
+  --dim: #94a3b8;
+  --accent: #2563eb;
+  --accent2: #6366f1;
+  --teal: #0d9488;
+  --amber: #d97706;
+  --green: #059669;
+  --red: #dc2626;
+  --pink: #db2777;
+  --r: 12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;line-height:1.6;font-size:15px;
+}
+
+/* ── SHARED ── */
+.page{max-width:1400px;margin:0 auto;padding:0 20px;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:block;}
+input,select{
+  background:rgba(0,0,0,0.04);
+  border:1px solid var(--border2);
+  border-radius:8px;color:var(--text);
+  font-size:14px;padding:10px 14px;
+  outline:none;transition:border-color .2s, box-shadow .2s;
+  width:100%;font-family:inherit;
+}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.15);}
+input::placeholder{color:var(--dim);}
+select option{background:#f8fafc;color:#1e293b;}
+button{cursor:pointer;font-family:inherit;border:none;outline:none;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;
+  transition:all .2s;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,130,246,0.3);}
+.btn-primary:active{transform:translateY(0);}
+.btn-outline{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--muted);
+}
+.btn-outline:hover{border-color:var(--border2);color:var(--text);background:rgba(0,0,0,0.04);}
+.badge{
+  display:inline-block;font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:20px;letter-spacing:.04em;
+}
+
+/* ── HEADER ── */
+.site-header{
+  max-width:1400px;margin:0 auto;
+  padding:20px 20px;border-bottom:1px solid var(--border);
+}
+.site-header .inner{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title span{color:var(--accent);}
+.header-back{font-family:'Noto Sans KR', sans-serif;font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:4px 12px;border-radius:2px;transition:.2s;letter-spacing:.5px;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);}
+
+/* ── SCREEN 1: INTRO ── */
+#screen-intro{padding-bottom:80px;}
+.hero{
+  text-align:center;padding:72px 20px 56px;
+}
+.hero-tag{
+  display:inline-block;font-size:11px;font-weight:700;
+  background:rgba(59,130,246,0.12);color:var(--accent);
+  border:1px solid rgba(59,130,246,0.3);
+  padding:5px 14px;border-radius:20px;letter-spacing:.06em;
+  margin-bottom:24px;
+}
+.hero h1{
+  font-size:clamp(28px,5vw,46px);font-weight:800;
+  line-height:1.2;margin-bottom:18px;
+  background:linear-gradient(135deg,#1e293b 0%,#1d4ed8 50%,#6366f1 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero p{color:var(--muted);font-size:16px;max-width:520px;margin:0 auto 36px;}
+
+.info-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  margin-bottom:48px;
+}
+.info-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px 16px;text-align:center;
+}
+.info-card .num{font-size:26px;font-weight:800;margin-bottom:4px;}
+.info-card .lbl{font-size:12px;color:var(--muted);}
+
+.form-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:32px 36px;max-width:480px;margin:0 auto;
+}
+.form-title{font-size:16px;font-weight:700;margin-bottom:22px;color:var(--text);}
+.form-row{margin-bottom:16px;}
+.form-row label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px;letter-spacing:.04em;text-transform:uppercase;}
+.form-hint{font-size:11px;color:var(--dim);margin-top:5px;}
+.form-actions{margin-top:24px;display:flex;flex-direction:column;gap:10px;align-items:center;}
+
+.category-pills{
+  display:flex;flex-wrap:wrap;gap:8px;
+  justify-content:center;margin-bottom:40px;
+}
+.cat-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:20px;padding:7px 14px;font-size:12px;color:var(--muted);
+}
+.cat-dot{width:7px;height:7px;border-radius:50%;}
+
+/* ── SCREEN 2: QUIZ ── */
+#screen-quiz{padding-bottom:60px;}
+.quiz-header{
+  max-width:1400px;margin:0 auto;
+  background:var(--bg);border-bottom:1px solid var(--border);
+  padding:14px 20px;position:sticky;top:0;z-index:100;
+}
+.quiz-header .inner{
+  display:flex;align-items:center;gap:14px;
+}
+.q-progress-wrap{flex:1;}
+.q-progress-label{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:var(--muted);margin-bottom:5px;
+}
+.q-progress-bar{
+  height:5px;background:rgba(0,0,0,0.08);
+  border-radius:3px;overflow:hidden;
+}
+.q-progress-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--teal));
+  transition:width .4s ease;
+}
+.q-timer{
+  font-size:13px;font-weight:700;color:var(--muted);
+  background:var(--card);border:1px solid var(--border);
+  padding:5px 12px;border-radius:8px;white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.q-timer.warn{color:var(--amber);}
+.q-timer.danger{color:var(--red);}
+
+.quiz-body{padding:40px 0;}
+.q-category-badge{margin-bottom:14px;}
+.q-num{font-size:12px;color:var(--dim);margin-bottom:10px;font-weight:600;letter-spacing:.04em;}
+.q-text{font-size:17px;font-weight:600;line-height:1.55;margin-bottom:24px;color:var(--text);}
+
+.q-options{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.q-option{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;padding:14px 16px;cursor:pointer;
+  transition:all .18s;
+}
+.q-option:hover{border-color:var(--accent);background:rgba(59,130,246,0.07);}
+.q-option.selected{border-color:var(--accent);background:rgba(59,130,246,0.12);}
+.q-option.correct{border-color:var(--green)!important;background:rgba(16,185,129,0.1)!important;}
+.q-option.wrong{border-color:var(--red)!important;background:rgba(239,68,68,0.08)!important;}
+.q-option.show-correct{border-color:var(--green)!important;background:rgba(16,185,129,0.06)!important;}
+.q-option-key{
+  width:28px;height:28px;border-radius:7px;
+  background:rgba(0,0,0,0.07);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;
+  transition:all .18s;
+}
+.q-option.selected .q-option-key{background:var(--accent);color:#fff;}
+.q-option.correct .q-option-key{background:var(--green);color:#fff;}
+.q-option.wrong .q-option-key{background:var(--red);color:#fff;}
+.q-option.show-correct .q-option-key{background:var(--green);color:#fff;}
+.q-option-text{font-size:14px;line-height:1.5;padding-top:4px;}
+
+.q-feedback{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;margin-bottom:20px;
+  font-size:13px;line-height:1.6;display:none;
+}
+.q-feedback.show{display:block;}
+.q-feedback.correct-fb{border-color:rgba(5,150,105,0.3);color:#065f46;}
+.q-feedback.wrong-fb{border-color:rgba(220,38,38,0.3);color:#991b1b;}
+.q-feedback strong{font-weight:700;}
+
+.q-nav{display:flex;justify-content:space-between;align-items:center;}
+.q-dot-wrap{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;flex:1;margin:0 16px;}
+.q-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(0,0,0,0.1);transition:all .2s;cursor:pointer;
+}
+.q-dot.answered{background:var(--accent);}
+.q-dot.correct-dot{background:var(--green);}
+.q-dot.wrong-dot{background:var(--red);}
+.q-dot.current{box-shadow:0 0 0 2px var(--accent);}
+
+/* ── SCREEN 3: RESULT ── */
+#screen-result{padding:60px 0 80px;}
+.result-hero{text-align:center;margin-bottom:48px;}
+.result-grade{
+  width:120px;height:120px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  margin:0 auto 20px;border:3px solid;
+}
+.result-grade .grade-letter{font-size:44px;font-weight:900;line-height:1;}
+.result-grade .grade-sub{font-size:11px;letter-spacing:.06em;margin-top:2px;}
+.result-score-big{font-size:48px;font-weight:900;margin-bottom:6px;}
+.result-title{font-size:20px;font-weight:700;margin-bottom:8px;}
+.result-desc{font-size:14px;color:var(--muted);max-width:480px;margin:0 auto;}
+
+.result-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  margin-bottom:32px;
+}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px 12px;text-align:center;
+}
+.stat-val{font-size:22px;font-weight:800;margin-bottom:4px;}
+.stat-lbl{font-size:11px;color:var(--muted);}
+
+.cat-result-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  margin-bottom:32px;
+}
+.cat-result-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 18px;
+}
+.cat-result-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.cat-result-name{font-size:13px;font-weight:600;}
+.cat-result-score{font-size:13px;font-weight:700;}
+.cat-bar-track{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;}
+.cat-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+
+.review-section{margin-bottom:32px;}
+.review-title{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text);}
+.review-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:16px 18px;margin-bottom:10px;
+}
+.review-q{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text);}
+.review-row{display:flex;gap:8px;font-size:12px;margin-bottom:4px;align-items:flex-start;}
+.review-label{color:var(--muted);flex-shrink:0;width:48px;}
+.review-ans-wrong{color:#991b1b;}
+.review-ans-right{color:#065f46;}
+.review-exp{font-size:12px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);line-height:1.55;}
+
+.result-actions{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+  margin-top:36px;
+}
+
+.level-badge-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px 24px;margin-bottom:32px;
+}
+.level-title{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.level-row{
+  display:flex;gap:12px;
+}
+.level-item{
+  flex:1;border-radius:8px;padding:12px 14px;
+}
+.level-item.current-level{border:1.5px solid;} 
+.level-name{font-size:13px;font-weight:700;margin-bottom:3px;}
+.level-range{font-size:11px;opacity:.7;}
+.level-desc{font-size:11px;opacity:.8;margin-top:5px;line-height:1.4;}
+
+/* ── ANIMATIONS ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes scoreCount{from{opacity:0;transform:scale(.8);}to{opacity:1;transform:scale(1);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.anim-up{animation:fadeUp .4s ease both;}
+.anim-in{animation:fadeIn .3s ease both;}
+.result-grade{animation:scoreCount .5s ease both;}
+.result-score-big{animation:scoreCount .6s .1s ease both;}
+
+@media(max-width:600px){
+  /* ── 공통 ── */
+  .page{padding:0 14px;}
+
+  /* ── 헤더 ── */
+  .site-header{padding:14px 0;}
+  .site-header .inner{padding:0 14px;}
+  .logo{font-size:13px;}
+
+  /* ── 인트로 ── */
+  .hero{padding:40px 0 28px;}
+  .hero p{font-size:14px;margin-bottom:24px;}
+  .info-grid{grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:28px;}
+  .info-card{padding:12px 8px;}
+  .info-card .num{font-size:20px;}
+  .info-card .lbl{font-size:10px;}
+  .category-pills{gap:6px;margin-bottom:28px;}
+  .cat-pill{font-size:11px;padding:5px 10px;}
+  .form-card{padding:20px 16px;border-radius:12px;}
+  .form-actions .btn{width:100%;justify-content:center;}
+
+  /* ── 퀴즈 ── */
+  .quiz-header{padding:14px 12px;}
+  .quiz-header .inner{gap:10px;}
+  .q-progress-label{font-size:10px;}
+  .q-timer{font-size:12px;padding:4px 8px;}
+  .quiz-body{padding:20px 0 40px;}
+  .q-text{font-size:15px;margin-bottom:18px;}
+  .q-option{padding:11px 12px;gap:9px;}
+  .q-option-key{width:24px;height:24px;font-size:11px;border-radius:6px;}
+  .q-option-text{font-size:13px;}
+  .q-feedback{font-size:12px;padding:12px 14px;}
+  /* 이전/다음 버튼 위로, 도트 아래 전체 너비 */
+  .q-nav{flex-wrap:wrap;gap:10px;}
+  .q-dot-wrap{order:3;flex-basis:100%;margin:0;justify-content:center;}
+  #btn-prev,#btn-next{padding:9px 16px;font-size:12px;}
+
+  /* ── 결과 ── */
+  .result-grade{width:96px;height:96px;}
+  .result-grade .grade-letter{font-size:36px;}
+  .result-score-big{font-size:36px;}
+  .result-title{font-size:17px;}
+  .result-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+  .stat-val{font-size:18px;}
+  .cat-result-grid{grid-template-columns:1fr;}
+  .level-badge-wrap{padding:16px;}
+  .level-row{flex-direction:column;gap:8px;}
+  .review-item{padding:12px 14px;}
+  .result-actions{flex-direction:column;align-items:stretch;gap:10px;}
+  .result-actions .btn{width:100%;justify-content:center;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+
+<!-- ══════ SCREEN 1: INTRO ══════ -->
+<div class="screen active" id="screen-intro">
+<header class="site-header">
+  <div class="inner">
+    <div class="logo">
+      <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+      <span class="logo-sep"></span>
+      <div class="logo-title"><span>AI</span> 진단 테스트</div>
+    </div>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+  <div class="hero anim-up">
+    <div class="hero-tag">DIAGNOSTIC TEST</div>
+    <h1>AI 원리 & 프롬프트<br>진단 테스트</h1>
+    <p style="margin-bottom:10px;">인공지능 기초 이해도와 프롬프트 작성 능력을 20문항으로 진단합니다.</p>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:36px;">결과는 PDF로 저장됩니다.</p>
+  </div>
+
+  <div class="info-grid anim-up" style="animation-delay:.1s">
+    <div class="info-card">
+      <div class="num" style="color:var(--accent)">20</div>
+      <div class="lbl">총 문항 수</div>
+    </div>
+    <div class="info-card">
+      <div class="num" style="color:var(--teal)">20<span style="font-size:16px">분</span></div>
+      <div class="lbl">권장 소요 시간</div>
+    </div>
+    <div class="info-card">
+      <div class="num" style="color:var(--amber)">4</div>
+      <div class="lbl">진단 영역</div>
+    </div>
+  </div>
+
+  <div class="category-pills anim-up" style="animation-delay:.15s">
+    <div class="cat-pill"><div class="cat-dot" style="background:#3b82f6"></div>AI 기초 개념 (5문항)</div>
+    <div class="cat-pill"><div class="cat-dot" style="background:#14b8a6"></div>컨텍스트 & 토큰 (5문항)</div>
+    <div class="cat-pill"><div class="cat-dot" style="background:#f59e0b"></div>프롬프트 작성법 (5문항)</div>
+    <div class="cat-pill"><div class="cat-dot" style="background:#a855f7"></div>하이퍼파라미터 (5문항)</div>
+  </div>
+
+  <div class="form-card anim-up" style="animation-delay:.2s">
+    <div class="form-title">테스트 시작 전 정보 입력</div>
+    <div class="form-row">
+      <label>이름</label>
+      <input type="text" id="inp-name" placeholder="홍길동" maxlength="20">
+    </div>
+    <div class="form-row">
+      <label>직급</label>
+      <select id="inp-rank">
+        <option value="">선택하세요</option>
+        <option>사원 / 주임</option>
+        <option>대리</option>
+        <option>과장 / 팀장</option>
+        <option>차장 / 부장</option>
+        <option>임원 / 대표</option>
+        <option>학생 / 기타</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>이메일</label>
+      <input type="email" id="inp-email" placeholder="example@company.com">
+      <div class="form-hint">PDF 결과지에 표시됩니다. 발송되지 않습니다.</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" style="width:100%" onclick="startQuiz()">
+        테스트 시작하기 →
+      </button>
+      <div style="font-size:12px;color:var(--dim);text-align:center">문항당 약 60초 · 즉시 채점 · PDF 저장 가능</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════ SCREEN 2: QUIZ ══════ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-header">
+    <div class="inner">
+      <div class="q-progress-wrap">
+        <div class="q-progress-label">
+          <span id="q-label">문항 1 / 20</span>
+          <span id="q-score-live">맞은 수: 0</span>
+        </div>
+        <div class="q-progress-bar"><div class="q-progress-fill" id="q-prog" style="width:5%"></div></div>
+      </div>
+      <div class="q-timer" id="q-timer">20:00</div>
+    </div>
+  </div>
+
+  <div class="page quiz-body">
+    <div id="q-category-badge" class="q-category-badge"></div>
+    <div class="q-num" id="q-num"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-options" id="q-options"></div>
+    <div class="q-feedback" id="q-feedback"></div>
+    <div class="q-nav">
+      <button class="btn btn-outline" id="btn-prev" onclick="prevQ()" style="padding:10px 18px;font-size:13px">← 이전</button>
+      <div class="q-dot-wrap" id="q-dots"></div>
+      <button class="btn btn-primary" id="btn-next" onclick="nextQ()" style="padding:10px 18px;font-size:13px">다음 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN 3: RESULT ══════ -->
+<div class="screen" id="screen-result">
+<div class="page">
+<!-- PDF 캡처 영역 시작 -->
+<div id="pdf-content">
+
+  <div class="result-hero anim-up">
+    <div class="result-grade" id="r-grade">
+      <div class="grade-letter" id="r-grade-letter">A</div>
+      <div class="grade-sub" id="r-grade-sub">GRADE</div>
+    </div>
+    <div class="result-score-big" id="r-score">0점</div>
+    <div class="result-title" id="r-title"></div>
+    <div class="result-desc" id="r-desc"></div>
+  </div>
+
+  <div class="result-stats anim-up" style="animation-delay:.1s" id="r-stats"></div>
+
+  <div class="level-badge-wrap anim-up" style="animation-delay:.15s">
+    <div class="level-title">역량 레벨</div>
+    <div class="level-row" id="r-levels"></div>
+  </div>
+
+  <div class="cat-result-grid anim-up" style="animation-delay:.2s" id="r-cat-grid"></div>
+
+  <div class="review-section anim-up" style="animation-delay:.25s">
+    <div class="review-title">틀린 문항 해설</div>
+    <div id="r-review"></div>
+  </div>
+
+</div><!-- /pdf-content -->
+
+  <div class="result-actions anim-up" style="animation-delay:.3s">
+    <button class="btn btn-primary" id="pdf-btn" onclick="savePDF()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      PDF 결과지 저장
+    </button>
+    <button class="btn btn-outline" onclick="restartQuiz()">다시 시도</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   QUIZ DATA — 20 Questions
+══════════════════════════════════════════════ */
+const QUESTIONS = [
+  // ─── 카테고리 1: AI 기초 개념 (5문항) ───
+  {
+    cat:'AI 기초 개념', catColor:'#3b82f6',
+    q:'머신러닝(ML), 딥러닝(DL), 인공지능(AI)의 관계를 올바르게 설명한 것은?',
+    opts:['AI ⊃ ML ⊃ DL (포함 관계, AI가 가장 넓은 개념)','ML ⊃ AI ⊃ DL','DL ⊃ ML ⊃ AI','세 개념은 서로 독립적이다'],
+    ans:0,
+    exp:'AI는 가장 광범위한 개념으로 머신러닝을 포함하고, 머신러닝은 딥러닝을 포함합니다. DL ⊂ ML ⊂ AI 순의 포함 관계입니다.'
+  },
+  {
+    cat:'AI 기초 개념', catColor:'#3b82f6',
+    q:'생성형 AI(Generative AI)가 기존 분류형 AI와 가장 다른 점은?',
+    opts:['데이터를 분류하는 대신 새로운 콘텐츠를 생성한다','학습 속도가 더 빠르다','더 많은 서버가 필요하다','오류율이 0%에 가깝다'],
+    ans:0,
+    exp:'생성형 AI는 텍스트, 이미지, 코드 등 새로운 콘텐츠를 생성합니다. 기존 AI가 주로 분류·예측에 집중했다면, 생성형 AI는 창작이 핵심입니다.'
+  },
+  {
+    cat:'AI 기초 개념', catColor:'#3b82f6',
+    q:'LLM(Large Language Model)의 기본 작동 원리는?',
+    opts:['이전 토큰을 바탕으로 다음에 올 확률이 높은 토큰을 예측한다','인터넷을 실시간으로 검색해 답변한다','사람이 입력한 규칙에 따라 답변을 선택한다','데이터베이스에서 가장 유사한 답변을 찾아 반환한다'],
+    ans:0,
+    exp:'LLM은 학습된 패턴을 바탕으로 주어진 컨텍스트에서 다음 토큰(단어의 조각)이 올 확률을 계산해 순차적으로 텍스트를 생성합니다.'
+  },
+  {
+    cat:'AI 기초 개념', catColor:'#3b82f6',
+    q:'AI 환각(Hallucination)이란?',
+    opts:['AI가 이미지를 생성할 때 시각적 왜곡이 생기는 현상','AI의 처리 속도가 일시적으로 느려지는 현상','AI가 사실이 아닌 내용을 그럴듯하게 생성하는 현상','AI가 사용자를 인식하지 못하는 현상'],
+    ans:2,
+    exp:'AI 환각이란 모델이 사실이 아닌 내용을 마치 사실인 것처럼 자신 있게 생성하는 현상입니다. 프롬프트 설계와 RAG 등으로 줄일 수 있습니다.'
+  },
+  {
+    cat:'AI 기초 개념', catColor:'#3b82f6',
+    q:'파운데이션 모델(Foundation Model)의 특징으로 올바른 것은?',
+    opts:['하나의 특정 작업만 수행하도록 설계된 모델','오프라인 환경에서만 동작하는 모델','제조업 전용으로 개발된 산업 AI 모델','대규모 데이터로 사전 학습 후 다양한 작업에 파인튜닝할 수 있는 범용 모델'],
+    ans:3,
+    exp:'파운데이션 모델은 방대한 데이터로 사전 학습(Pre-training)된 범용 모델로, GPT·Claude·Gemini 등이 해당합니다. 다양한 다운스트림 태스크에 파인튜닝이 가능합니다.'
+  },
+
+  // ─── 카테고리 2: 컨텍스트 윈도우 & 토큰 (5문항) ───
+  {
+    cat:'컨텍스트 & 토큰', catColor:'#14b8a6',
+    q:'컨텍스트 윈도우(Context Window)를 가장 적절하게 비유한 것은?',
+    opts:['AI가 한 번의 대화에서 참조할 수 있는 단기 작업 메모리','AI의 장기 기억 저장소','인터넷 검색 기록','AI의 학습 데이터 전체'],
+    ans:0,
+    exp:'컨텍스트 윈도우는 AI가 현재 대화에서 참조할 수 있는 최대 텍스트 범위입니다. 인간의 단기 기억과 유사하며, 초과되면 오래된 내용부터 잘려나갑니다.'
+  },
+  {
+    cat:'컨텍스트 & 토큰', catColor:'#14b8a6',
+    q:'컨텍스트 윈도우가 긴 모델이 필요한 상황으로 가장 적합한 것은?',
+    opts:['날씨를 묻는 간단한 챗봇','단어의 정의를 한 문장으로 요청할 때','100페이지 분량의 계약서 전체를 한 번에 분석할 때','짧은 이메일 한 통을 번역할 때'],
+    ans:2,
+    exp:'컨텍스트 윈도우가 길수록 한 번에 처리할 수 있는 텍스트 양이 늘어납니다. 긴 문서 분석, 장편 코드 리뷰, 긴 대화 유지 등에 유리하며, 단순 작업에는 짧은 컨텍스트로도 충분합니다.'
+  },
+  {
+    cat:'컨텍스트 & 토큰', catColor:'#14b8a6',
+    q:'컨텍스트 윈도우 한계를 초과했을 때 일어나는 현상은?',
+    opts:['오래된 대화 내용이 삭제(Truncation)되어 AI가 초반 내용을 기억하지 못한다','오류 메시지가 표시되고 대화가 중단된다','AI가 자동으로 요약하여 이전 내용을 압축 저장한다','비용이 추가 청구된다'],
+    ans:0,
+    exp:'컨텍스트 한계 초과 시 오래된 토큰부터 잘려나갑니다(Truncation). AI는 삭제된 내용을 알 수 없으므로 긴 작업에서는 중간 요약을 삽입하거나 새 대화를 시작하는 것이 좋습니다.'
+  },
+  {
+    cat:'컨텍스트 & 토큰', catColor:'#14b8a6',
+    q:'컨텍스트 윈도우 내 구성 요소가 아닌 것은?',
+    opts:['시스템 프롬프트(System Prompt)','대화 히스토리','현재 사용자 입력','모델의 가중치(Weights)'],
+    ans:3,
+    exp:'모델의 가중치(Weights)는 학습을 통해 모델 내부에 저장된 파라미터로, 컨텍스트 윈도우와는 별개입니다. 컨텍스트 윈도우는 시스템 프롬프트, 대화 히스토리, 현재 입력으로 구성됩니다.'
+  },
+  {
+    cat:'컨텍스트 & 토큰', catColor:'#14b8a6',
+    q:'API 사용 시 토큰 비용과 관련하여 가장 올바른 설명은?',
+    opts:['출력 토큰만 비용이 청구된다','대화 횟수 기준으로만 비용이 측정된다','입력 토큰과 출력 토큰 모두 비용이 청구되며, 일반적으로 출력이 더 비싸다','컨텍스트 윈도우가 클수록 항상 비용이 저렴하다'],
+    ans:2,
+    exp:'대부분의 LLM API는 입력(프롬프트) 토큰과 출력(생성) 토큰 모두 과금하며, 출력 토큰이 입력보다 2~5배 비싼 것이 일반적입니다. 따라서 시스템 프롬프트를 간결하게 유지하는 것이 비용 절감에 중요합니다.'
+  },
+
+  // ─── 카테고리 3: 프롬프트 작성법 (5문항) ───
+  {
+    cat:'프롬프트 작성법', catColor:'#f59e0b',
+    q:'"당신은 10년 경력의 마케팅 컨설턴트입니다"처럼 AI에게 역할을 부여하는 기법은?',
+    opts:['Chain-of-Thought Prompting','Few-shot Prompting','Zero-shot Prompting','Role Prompting (페르소나 부여)'],
+    ans:3,
+    exp:'Role Prompting은 AI에게 특정 전문가의 페르소나를 부여하는 기법입니다. AI가 해당 역할의 맥락, 어조, 전문성을 반영한 답변을 생성하게 됩니다.'
+  },
+  {
+    cat:'프롬프트 작성법', catColor:'#f59e0b',
+    q:'복잡한 수학 문제나 논리 추론에서 정확도를 높이는 가장 효과적인 기법은?',
+    opts:['프롬프트를 짧게 유지한다','역할을 부여하지 않는다','"단계별로 생각해줘"를 추가하는 Chain-of-Thought(CoT)','모든 단어를 대문자로 작성한다'],
+    ans:2,
+    exp:'Chain-of-Thought(CoT) 프롬프팅은 AI가 추론 과정을 단계별로 서술하게 해 복잡한 문제의 정확도를 크게 향상시킵니다. "단계별로 생각해줘", "Step by Step으로 풀어줘" 같은 지시가 효과적입니다.'
+  },
+  {
+    cat:'프롬프트 작성법', catColor:'#f59e0b',
+    q:'Few-shot Prompting의 핵심 원리는?',
+    opts:['가능한 한 짧은 프롬프트로 원하는 결과를 얻는 것','1~3개의 입출력 예시를 제공해 원하는 패턴을 AI가 학습하게 하는 것','여러 AI 모델에 동시에 질문을 보내는 것','API 키를 복수로 사용하는 것'],
+    ans:1,
+    exp:'Few-shot Prompting은 원하는 입출력 예시를 1~3개 제공해 AI가 패턴을 즉시 파악하게 합니다. 특히 특수한 형식의 출력이 필요할 때 가장 효과적입니다.'
+  },
+  {
+    cat:'프롬프트 작성법', catColor:'#f59e0b',
+    q:'다음 중 가장 잘 작성된 프롬프트는?',
+    opts:['보고서 써줘','당신은 경영 컨설턴트입니다. 중소기업 대표용 AI 도입 보고서를 요약→현황→제언 순서로 A4 2장 이내로 작성해주세요.','AI 관련 내용을 적어줘','정보를 알려줘'],
+    ans:1,
+    exp:'좋은 프롬프트는 역할(경영 컨설턴트), 대상(중소기업 대표), 형식(요약→현황→제언), 분량(A4 2장)을 모두 포함합니다. 구체적일수록 원하는 결과를 얻기 쉽습니다.'
+  },
+  {
+    cat:'프롬프트 작성법', catColor:'#f59e0b',
+    q:'RAG(Retrieval-Augmented Generation)의 주요 목적은?',
+    opts:['AI의 처리 속도를 빠르게 한다','외부 문서나 데이터를 프롬프트에 주입해 환각을 줄이고 최신 정보를 활용한다','AI 모델의 파라미터를 수정한다','여러 AI를 동시에 실행한다'],
+    ans:1,
+    exp:'RAG는 검색 결과나 외부 문서를 프롬프트에 포함시켜 AI가 학습하지 않은 최신 정보를 참조하게 합니다. 이를 통해 환각(Hallucination)을 줄이고 사실 기반 답변의 품질을 높입니다.'
+  },
+
+  // ─── 카테고리 4: 하이퍼파라미터 (5문항) ───
+  {
+    cat:'하이퍼파라미터', catColor:'#a855f7',
+    q:'Temperature = 0.1로 설정했을 때 예상되는 출력 특성은?',
+    opts:['매우 창의적이고 예측 불가능한 답변','일관되고 예측 가능한 답변, 같은 질문에 거의 동일한 응답','오류가 발생하고 답변이 생성되지 않음','영어로만 답변이 생성됨'],
+    ans:1,
+    exp:'Temperature가 낮을수록(0에 가까울수록) 모델은 확률이 가장 높은 토큰을 일관되게 선택합니다. 코드 생성, 번역, 사실 확인처럼 정확성이 중요한 작업에 적합합니다.'
+  },
+  {
+    cat:'하이퍼파라미터', catColor:'#a855f7',
+    q:'창의적인 광고 카피 작성에 가장 적합한 Temperature 범위는?',
+    opts:['0.0 ~ 0.2','0.3 ~ 0.5','0.7 ~ 0.9','1.2 ~ 1.5'],
+    ans:3,
+    exp:'창의적 글쓰기, 마케팅 카피, 스토리텔링에는 Temperature를 1.0 이상으로 설정하면 다양하고 독창적인 표현이 나옵니다. 단, 너무 높으면(2.0 이상) 일관성이 깨질 수 있습니다.'
+  },
+  {
+    cat:'하이퍼파라미터', catColor:'#a855f7',
+    q:'Top-p(Nucleus Sampling) 파라미터의 역할은?',
+    opts:['생성할 최대 토큰 수를 제한한다','누적 확률 합이 Top-p에 도달할 때까지의 후보 토큰만 고려한다','반복 단어 사용을 억제한다','입력 토큰의 우선순위를 설정한다'],
+    ans:1,
+    exp:'Top-p는 누적 확률이 p에 도달하는 최소한의 토큰 집합에서만 다음 단어를 선택합니다. 예를 들어 Top-p=0.9면 상위 90% 확률을 차지하는 토큰들만 후보가 됩니다.'
+  },
+  {
+    cat:'하이퍼파라미터', catColor:'#a855f7',
+    q:'같은 질문을 반복할 때 AI가 비슷한 단어를 계속 사용하는 현상을 줄이는 파라미터는?',
+    opts:['Max tokens','Temperature','Frequency Penalty (빈도 페널티)','Top-p'],
+    ans:2,
+    exp:'Frequency Penalty는 이미 생성된 텍스트에서 자주 등장한 토큰에 패널티를 부여해 동일 단어 반복을 줄입니다. Top-p는 다양성을 조절하지만 반복 억제에 특화되어 있지는 않습니다.'
+  },
+  {
+    cat:'하이퍼파라미터', catColor:'#a855f7',
+    q:'코드 생성 작업에 권장되는 파라미터 조합은?',
+    opts:['Temperature 1.5, Top-p 0.99 — 창의적인 코드 생성','Temperature 1.0, Max tokens 50 — 짧고 다양한 코드','Temperature 2.0, Frequency Penalty 2.0 — 완전히 새로운 알고리즘','Temperature 0.1~0.2, Top-p 0.5 — 정확하고 일관된 코드'],
+    ans:3,
+    exp:'코드 생성은 정확성이 최우선이므로 Temperature를 낮게(0.1~0.3), Top-p도 좁게 설정합니다. 창의성보다 문법적 정확성과 일관성이 중요하기 때문입니다.'
+  }
+];
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let state = {
+  name:'', rank:'', email:'',
+  current:0,
+  answers: new Array(20).fill(null),
+  startTime: null,
+  timerInterval: null,
+  elapsed: 0,
+  revealed: false
+};
+
+const TOTAL = QUESTIONS.length;
+
+/* ══════════════════════════════════════════════
+   SCREEN MANAGEMENT
+══════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ══════════════════════════════════════════════
+   START
+══════════════════════════════════════════════ */
+function startQuiz() {
+  const name  = document.getElementById('inp-name').value.trim();
+  const rank  = document.getElementById('inp-rank').value;
+  const email = document.getElementById('inp-email').value.trim();
+
+  if (!name) { alert('이름을 입력해주세요.'); return; }
+  if (!rank) { alert('직급을 선택해주세요.'); return; }
+  if (!email || !email.includes('@')) { alert('올바른 이메일을 입력해주세요.'); return; }
+
+  state.name = name; state.rank = rank; state.email = email;
+  state.answers = new Array(TOTAL).fill(null);
+  state.current = 0;
+  state.startTime = Date.now();
+  state.elapsed = 0;
+  state.revealed = false;
+
+  showScreen('screen-quiz');
+  renderQ();
+  startTimer();
+}
+
+/* ══════════════════════════════════════════════
+   TIMER
+══════════════════════════════════════════════ */
+const MAX_SEC = 20 * 60;
+function startTimer() {
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    state.elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+    const rem = MAX_SEC - state.elapsed;
+    const el = document.getElementById('q-timer');
+    if (rem <= 0) { clearInterval(state.timerInterval); showResult(); return; }
+    const m = String(Math.floor(rem / 60)).padStart(2,'0');
+    const s = String(rem % 60).padStart(2,'0');
+    el.textContent = `${m}:${s}`;
+    el.className = 'q-timer' + (rem < 60 ? ' danger' : rem < 180 ? ' warn' : '');
+  }, 500);
+}
+
+/* ══════════════════════════════════════════════
+   RENDER QUESTION
+══════════════════════════════════════════════ */
+function renderQ() {
+  const i = state.current;
+  const q = QUESTIONS[i];
+  const ans = state.answers[i];
+  const graded = ans !== null;
+
+  // Header progress
+  document.getElementById('q-label').textContent = `문항 ${i+1} / ${TOTAL}`;
+  const correctCount = state.answers.filter((a,j) => a !== null && a === QUESTIONS[j].ans).length;
+  document.getElementById('q-score-live').textContent = `맞은 수: ${correctCount}`;
+  document.getElementById('q-prog').style.width = `${((i+1)/TOTAL)*100}%`;
+
+  // Category badge
+  document.getElementById('q-category-badge').innerHTML =
+    `<span class="badge" style="background:${q.catColor}22;color:${q.catColor};border:1px solid ${q.catColor}44">${q.cat}</span>`;
+
+  document.getElementById('q-num').textContent = `Q${i+1}`;
+  document.getElementById('q-text').textContent = q.q;
+
+  // Options
+  const keys = ['A','B','C','D'];
+  document.getElementById('q-options').innerHTML = q.opts.map((opt, oi) => {
+    let cls = 'q-option';
+    if (graded) {
+      if (oi === q.ans) cls += ' show-correct';
+      else if (oi === ans) cls += ' wrong';
+    } else if (oi === ans) cls += ' selected';
+    const cursor = graded ? 'default' : 'pointer';
+    return `<div class="${cls}" style="cursor:${cursor}" onclick="selectOpt(${oi})">
+      <div class="q-option-key">${keys[oi]}</div>
+      <div class="q-option-text">${opt}</div>
+    </div>`;
+  }).join('');
+
+  // Feedback
+  const fb = document.getElementById('q-feedback');
+  if (graded) {
+    const correct = ans === q.ans;
+    fb.className = 'q-feedback show ' + (correct ? 'correct-fb' : 'wrong-fb');
+    fb.innerHTML = (correct
+      ? '<strong>✓ 정답!</strong> '
+      : `<strong>✗ 오답.</strong> 정답: <strong>${keys[q.ans]}. ${q.opts[q.ans]}</strong><br>`)
+      + q.exp;
+  } else {
+    fb.className = 'q-feedback';
+    fb.innerHTML = '';
+  }
+
+  // Dots
+  document.getElementById('q-dots').innerHTML = QUESTIONS.map((_,di) => {
+    let cls = 'q-dot';
+    const a = state.answers[di];
+    if (di === i) cls += ' current';
+    else if (a !== null) cls += a === QUESTIONS[di].ans ? ' correct-dot' : ' wrong-dot';
+    else cls += ' answered'; // just visited
+    return `<div class="${cls}" onclick="jumpQ(${di})"></div>`;
+  }).join('');
+
+  // Prev/Next buttons
+  document.getElementById('btn-prev').style.visibility = i === 0 ? 'hidden' : 'visible';
+  const isLast = i === TOTAL - 1;
+  const btn = document.getElementById('btn-next');
+  btn.textContent = isLast ? '결과 보기 →' : '다음 →';
+  btn.style.background = isLast
+    ? 'linear-gradient(135deg,#10b981,#059669)'
+    : 'linear-gradient(135deg,var(--accent),var(--accent2))';
+}
+
+function selectOpt(oi) {
+  const i = state.current;
+  if (state.answers[i] !== null) return; // already answered
+  state.answers[i] = oi;
+  renderQ();
+}
+
+function nextQ() {
+  if (state.current === TOTAL - 1) {
+    clearInterval(state.timerInterval);
+    showResult();
+  } else {
+    state.current++;
+    renderQ();
+  }
+}
+function prevQ() {
+  if (state.current > 0) { state.current--; renderQ(); }
+}
+function jumpQ(i) { state.current = i; renderQ(); }
+
+/* ══════════════════════════════════════════════
+   RESULT
+══════════════════════════════════════════════ */
+function showResult() {
+  state.elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+  clearInterval(state.timerInterval);
+
+  const total = TOTAL;
+  const correct = state.answers.filter((a,i) => a === QUESTIONS[i].ans).length;
+  const wrong = state.answers.filter((a,i) => a !== null && a !== QUESTIONS[i].ans).length;
+  const skipped = state.answers.filter(a => a === null).length;
+  const score = Math.round((correct / total) * 100);
+  const mm = String(Math.floor(state.elapsed/60)).padStart(2,'0');
+  const ss = String(state.elapsed%60).padStart(2,'0');
+
+  // Grade
+  const grade = score >= 90 ? {l:'A+',c:'#10b981',t:'AI 마스터',d:'AI 원리와 프롬프트 엔지니어링에 대한 탁월한 이해를 보여주셨습니다. 실무 적용 능력이 매우 우수합니다.'}
+              : score >= 80 ? {l:'A',c:'#3b82f6',t:'상급 사용자',d:'AI의 핵심 개념을 잘 이해하고 있습니다. 심화 학습으로 마스터 수준에 도달할 수 있습니다.'}
+              : score >= 70 ? {l:'B',c:'#6366f1',t:'중급 사용자',d:'기본 개념은 잘 이해하고 있으며 일부 심화 개념의 보완이 필요합니다.'}
+              : score >= 60 ? {l:'C',c:'#f59e0b',t:'초급 사용자',d:'AI 기초 개념을 이해하고 있으나 프롬프트 엔지니어링과 파라미터 설정의 추가 학습이 필요합니다.'}
+              : {l:'D',c:'#ef4444',t:'입문 단계',d:'AI의 기초 개념부터 체계적으로 학습하시기를 권장합니다.<br>다시 시도해보세요!'};
+
+  // Grade display
+  const gr = document.getElementById('r-grade');
+  gr.style.borderColor = grade.c;
+  gr.style.background = grade.c + '18';
+  document.getElementById('r-grade-letter').textContent = grade.l;
+  document.getElementById('r-grade-letter').style.color = grade.c;
+  document.getElementById('r-grade-sub').style.color = grade.c;
+  document.getElementById('r-score').textContent = `${score}점`;
+  document.getElementById('r-score').style.color = grade.c;
+  document.getElementById('r-title').textContent = grade.t;
+  document.getElementById('r-desc').innerHTML = grade.d;
+
+  // Stats
+  document.getElementById('r-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-val" style="color:#10b981">${correct}</div><div class="stat-lbl">정답</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#ef4444">${wrong}</div><div class="stat-lbl">오답</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#8b9ab5">${skipped}</div><div class="stat-lbl">미응답</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${mm}:${ss}</div><div class="stat-lbl">소요 시간</div></div>
+  `;
+
+  // Level
+  const levels = [
+    {name:'입문',range:'0~59점',desc:'AI 개념 기초 학습 필요',bg:'#1a2338',col:'#6b80a8'},
+    {name:'초급',range:'60~69점',desc:'기본 이해, 실습 권장',bg:'#1e2a1e',col:'#f59e0b'},
+    {name:'중급',range:'70~84점',desc:'심화 개념 보완 필요',bg:'#1a2038',col:'#6366f1'},
+    {name:'상급',range:'85점~',desc:'실무 즉시 적용 가능',bg:'#1a2e28',col:'#10b981'},
+  ];
+  const curLv = score < 60 ? 0 : score < 70 ? 1 : score < 85 ? 2 : 3;
+  document.getElementById('r-levels').innerHTML = levels.map((lv,li) =>
+    `<div class="level-item${li===curLv?' current-level':''}" style="background:${lv.bg};${li===curLv?`border-color:${lv.col};`:'border:1px solid rgba(255,255,255,0.06)'}">
+      <div class="level-name" style="color:${lv.col}">${lv.name}</div>
+      <div class="level-range" style="color:${lv.col}">${lv.range}</div>
+      <div class="level-desc" style="color:${li===curLv?lv.col+'cc':'#6b80a8'}">${lv.desc}</div>
+    </div>`
+  ).join('');
+
+  // Category scores
+  const cats = [...new Set(QUESTIONS.map(q=>q.cat))];
+  const catColors = {'AI 기초 개념':'#3b82f6','컨텍스트 & 토큰':'#14b8a6','프롬프트 작성법':'#f59e0b','하이퍼파라미터':'#a855f7'};
+  document.getElementById('r-cat-grid').innerHTML = cats.map(cat => {
+    const qs = QUESTIONS.map((q,i)=>({q,i})).filter(({q})=>q.cat===cat);
+    const c = qs.filter(({q,i})=>state.answers[i]===q.ans).length;
+    const t = qs.length;
+    const pct = Math.round(c/t*100);
+    const col = catColors[cat]||'#4f8ef7';
+    return `<div class="cat-result-card">
+      <div class="cat-result-head">
+        <div class="cat-result-name">${cat}</div>
+        <div class="cat-result-score" style="color:${col}">${c}/${t} (${pct}%)</div>
+      </div>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Review — wrong answers only
+  const wrongItems = QUESTIONS.map((q,i)=>({q,i,a:state.answers[i]})).filter(({q,i,a})=>a!==null&&a!==q.ans);
+  const keys = ['A','B','C','D'];
+  document.getElementById('r-review').innerHTML = wrongItems.length === 0
+    ? '<div style="color:#10b981;font-size:13px;padding:16px;background:rgba(16,185,129,0.08);border-radius:10px;border:1px solid rgba(16,185,129,0.2)">틀린 문항이 없습니다! 완벽한 점수입니다.</div>'
+    : wrongItems.map(({q,i,a}) => `
+      <div class="review-item">
+        <div class="review-q">Q${i+1}. ${q.q}</div>
+        <div class="review-row"><span class="review-label">내 답:</span><span class="review-ans-wrong">${keys[a]}. ${q.opts[a]}</span></div>
+        <div class="review-row"><span class="review-label">정답:</span><span class="review-ans-right">${keys[q.ans]}. ${q.opts[q.ans]}</span></div>
+        <div class="review-exp">${q.exp}</div>
+      </div>
+    `).join('');
+
+  showScreen('screen-result');
+}
+
+/* ══════════════════════════════════════════════
+   PDF GENERATION v6 — 고대비 인쇄용 / 1장
+══════════════════════════════════════════════ */
+async function savePDF() {
+  if (typeof html2canvas === 'undefined') {
+    alert('html2canvas 라이브러리를 불러오지 못했습니다.\n새로고침 후 다시 시도해주세요.'); return;
+  }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('jsPDF 라이브러리를 불러오지 못했습니다.\n새로고침 후 다시 시도해주세요.'); return;
+  }
+
+  const btn = document.getElementById('pdf-btn');
+  const origHTML = btn.innerHTML;
+  btn.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(59,130,246,0.3);border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>PDF 생성 중...';
+  btn.disabled = true;
+
+  /* ── 고대비 팔레트 (인쇄용) ── */
+  const C = {
+    bg      : '#ffffff',
+    panel   : '#f4f6f8',   /* 섹션 배경 — 연회색 */
+    panel2  : '#e8ecf0',   /* 바 트랙 배경 */
+    border  : '#1a1a2e',   /* 테두리 — 거의 검정 */
+    header  : '#1a1a2e',   /* 헤더 배경 */
+    text    : '#000000',   /* 본문 — 완전 검정 */
+    sub     : '#1e293b',   /* 보조 텍스트 */
+    label   : '#334155',   /* 라벨 */
+    accent  : '#1d4ed8',   /* 파랑 */
+    teal    : '#0f766e',   /* 청록 */
+    amber   : '#b45309',   /* 황금 */
+    green   : '#15803d',   /* 녹색 */
+    red     : '#b91c1c',   /* 빨강 */
+    purple  : '#6d28d9',   /* 보라 */
+  };
+
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+
+  /* ── 결과 데이터 ── */
+  const TOTAL   = QUESTIONS.length;
+  const correct = state.answers.filter(function(a,i){ return a === QUESTIONS[i].ans; }).length;
+  const wrong   = state.answers.filter(function(a,i){ return a !== null && a !== QUESTIONS[i].ans; }).length;
+  const skip    = state.answers.filter(function(a){ return a === null; }).length;
+  const score   = Math.round(correct / TOTAL * 100);
+  const elapsed = state.elapsed;
+  const tmm = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const tss = String(elapsed%60).padStart(2,'0');
+
+  const G = score>=90 ? {l:'A+', c:C.green,  bg:'#dcfce7', t:'AI 마스터',    d:'AI 원리와 프롬프트 엔지니어링에 대한 탁월한 이해를 보여주셨습니다.'}
+          : score>=80 ? {l:'A',  c:C.accent, bg:'#dbeafe', t:'상급 사용자',  d:'AI의 핵심 개념을 잘 이해하고 있습니다. 심화 학습으로 마스터 수준에 도달할 수 있습니다.'}
+          : score>=70 ? {l:'B',  c:C.purple, bg:'#ede9fe', t:'중급 사용자',  d:'기본 개념은 잘 이해하고 있으며 일부 심화 개념의 보완이 필요합니다.'}
+          : score>=60 ? {l:'C',  c:C.amber,  bg:'#fef3c7', t:'초급 사용자',  d:'AI 기초를 이해하고 있으나 프롬프트 엔지니어링과 파라미터 설정의 추가 학습이 필요합니다.'}
+          :             {l:'D',  c:C.red,    bg:'#fee2e2', t:'입문 단계',    d:'AI의 기초 개념부터 체계적으로 학습하시기를 권장합니다.'};
+
+  /* ── 카테고리 ── */
+  const CATS  = ['AI 기초 개념','컨텍스트 & 토큰','프롬프트 작성법','하이퍼파라미터'];
+  const CAT_C = {'AI 기초 개념':C.accent,'컨텍스트 & 토큰':C.teal,'프롬프트 작성법':C.amber,'하이퍼파라미터':C.purple};
+  function cScore(cat){
+    var qs=QUESTIONS.map(function(q,i){return{q:q,i:i};}).filter(function(x){return x.q.cat===cat;});
+    var c=qs.filter(function(x){return state.answers[x.i]===x.q.ans;}).length;
+    return {c:c,t:qs.length,pct:Math.round(c/qs.length*100)};
+  }
+
+  /* 공통 패널 스타일 */
+  var PANEL = 'background:'+C.panel+';border:1.5px solid '+C.border+';border-radius:8px;';
+
+  /* ══════════════════════════════════════════
+     HTML 조립
+  ══════════════════════════════════════════ */
+  var html = '';
+
+  /* ① 헤더 — 진한 배경, 흰 텍스트 */
+  html +=
+    '<div style="background:'+C.header+';border-radius:8px;padding:16px 22px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">' +
+      '<div>' +
+        '<div style="font-size:10px;font-weight:700;color:#93c5fd;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">AI Diagnostic Test Report</div>' +
+        '<div style="display:flex;gap:30px">' +
+          '<div><div style="font-size:9px;color:#94a3b8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">이름</div><div style="font-size:16px;font-weight:800;color:#ffffff">'+state.name+'</div></div>' +
+          '<div><div style="font-size:9px;color:#94a3b8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">직급</div><div style="font-size:14px;font-weight:600;color:#e2e8f0">'+state.rank+'</div></div>' +
+          '<div><div style="font-size:9px;color:#94a3b8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">이메일</div><div style="font-size:14px;color:#cbd5e1">'+state.email+'</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:12px;font-weight:600;color:#e2e8f0">'+dateStr+'</div>' +
+        '<div style="font-size:11px;color:#64748b;margin-top:3px">총 '+TOTAL+'문항</div>' +
+      '</div>' +
+    '</div>';
+
+  /* ② 등급 + 점수 히어로 */
+  html +=
+    '<div style="'+PANEL+'padding:24px 22px;margin-bottom:14px">' +
+      '<div style="display:flex;align-items:center;gap:24px">' +
+        /* 등급 원형 */
+        '<div style="width:96px;height:96px;border-radius:50%;border:3px solid '+G.c+';background:'+G.bg+';display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">' +
+          '<div style="font-size:38px;font-weight:900;line-height:1;color:'+G.c+'">'+G.l+'</div>' +
+          '<div style="font-size:9px;font-weight:700;color:'+G.c+';letter-spacing:.08em;margin-top:3px">GRADE</div>' +
+        '</div>' +
+        /* 점수 + 레벨 */
+        '<div>' +
+          '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">' +
+            '<span style="font-size:58px;font-weight:900;color:'+G.c+';line-height:1">'+score+'</span>' +
+            '<span style="font-size:22px;font-weight:700;color:'+G.c+'">점</span>' +
+            '<span style="font-size:12px;font-weight:600;color:'+C.label+';margin-left:4px">/ 100점</span>' +
+          '</div>' +
+          '<div style="font-size:18px;font-weight:800;color:'+C.text+';margin-bottom:5px">'+G.t+'</div>' +
+          '<div style="font-size:12px;color:'+C.sub+';line-height:1.55;max-width:360px">'+G.d+'</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  /* ③ 통계 4칸 */
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">';
+  [
+    {lbl:'정답',     val:correct,       col:C.green,  icon:'✓'},
+    {lbl:'오답',     val:wrong,         col:C.red,    icon:'✗'},
+    {lbl:'미응답',   val:skip,          col:C.label,  icon:'—'},
+    {lbl:'소요 시간',val:tmm+':'+tss,   col:C.accent, icon:''},
+  ].forEach(function(s){
+    html +=
+      '<div style="'+PANEL+'padding:14px 10px;text-align:center">' +
+        '<div style="font-size:26px;font-weight:900;color:'+s.col+';line-height:1;margin-bottom:5px">'+s.val+'</div>' +
+        '<div style="font-size:11px;font-weight:600;color:'+C.label+'">'+s.lbl+'</div>' +
+      '</div>';
+  });
+  html += '</div>';
+
+  /* ④ 역량 레벨 */
+  var LVL_META = [
+    {n:'입문', r:'0~59점',  c:'#475569'},
+    {n:'초급', r:'60~69점', c:C.amber},
+    {n:'중급', r:'70~84점', c:C.purple},
+    {n:'상급', r:'85점~',   c:C.green},
+  ];
+  var curLv = score<60?0:score<70?1:score<85?2:3;
+  html += '<div style="'+PANEL+'padding:16px 18px;margin-bottom:14px">';
+  html += '<div style="font-size:10px;font-weight:700;color:'+C.label+';letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">역량 레벨</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
+  LVL_META.forEach(function(lv,li){
+    var active = li===curLv;
+    html +=
+      '<div style="border-radius:6px;padding:10px 12px;' +
+        'background:'+(active ? lv.c : '#ffffff') +';' +
+        'border:2px solid '+(active ? lv.c : '#d1d5db')+';">' +
+        '<div style="font-size:14px;font-weight:800;color:'+(active?'#ffffff':C.label)+'">'+lv.n+'</div>' +
+        '<div style="font-size:10px;font-weight:600;color:'+(active?'rgba(255,255,255,0.85)':C.label)+';margin-top:2px">'+lv.r+'</div>' +
+      '</div>';
+  });
+  html += '</div></div>';
+
+  /* ⑤ 영역별 점수 */
+  html += '<div style="'+PANEL+'padding:16px 18px">';
+  html += '<div style="font-size:10px;font-weight:700;color:'+C.label+';letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">영역별 점수</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+  CATS.forEach(function(cat){
+    var s   = cScore(cat);
+    var col = CAT_C[cat];
+    html +=
+      '<div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<span style="font-size:13px;font-weight:700;color:'+C.text+'">'+cat+'</span>' +
+          '<span style="font-size:12px;font-weight:800;color:'+col+'">'+s.c+'/'+s.t+' ('+s.pct+'%)</span>' +
+        '</div>' +
+        '<div style="height:9px;background:'+C.panel2+';border-radius:5px;overflow:hidden;border:1px solid #cbd5e1">' +
+          '<div style="height:100%;width:'+s.pct+'%;background:'+col+';border-radius:5px"></div>' +
+        '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+
+  /* 푸터 — 캔버스 안에 포함 (한글 깨짐 방지) */
+  html +=
+    '<div style="margin-top:20px;padding-top:12px;border-top:1.5px solid '+C.border+';' +
+      'display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="font-size:11px;font-weight:600;color:'+C.label+'">AI 진단 테스트 결과지 &middot; '+state.name+' ('+state.rank+')</div>' +
+      '<div style="font-size:11px;color:'+C.label+'">'+dateStr+'</div>' +
+    '</div>';
+
+  html += '</div>';   /* panel close */
+
+  /* ══════════════════════════════════════════
+     렌더 컨테이너
+  ══════════════════════════════════════════ */
+  const PDF_W = 840;
+  const wrap  = document.createElement('div');
+  wrap.style.cssText =
+    'position:fixed;top:0;left:0;z-index:9999;' +
+    'width:'+PDF_W+'px;' +
+    'background:#ffffff;color:'+C.text+';' +
+    'padding:28px 36px 36px;' +
+    'font-family:"Noto Sans KR","Malgun Gothic","Segoe UI",system-ui,sans-serif;' +
+    'font-size:14px;line-height:1.6;box-sizing:border-box;' +
+    'overflow:visible;pointer-events:none;';
+  wrap.innerHTML = html;
+  document.body.appendChild(wrap);
+
+  wrap.querySelectorAll('*').forEach(function(el){
+    el.style.animation='none'; el.style.transition='none';
+    el.style.animationDelay='0s'; el.style.animationDuration='0s';
+  });
+
+  await new Promise(function(r){ setTimeout(r, 350); });
+
+  try {
+    const totalH = wrap.scrollHeight;
+
+    const canvas = await html2canvas(wrap, {
+      backgroundColor : '#ffffff',
+      scale           : 2,
+      useCORS         : true,
+      allowTaint      : true,
+      logging         : false,
+      width           : PDF_W,
+      height          : totalH,
+      scrollX:0, scrollY:0,
+      windowWidth:PDF_W, windowHeight:totalH,
+      x:0, y:0,
+    });
+
+    /* ── A4 1장 배치 ── */
+    const { jsPDF } = window.jspdf;
+    const A4_W = 210, A4_H = 297;
+    const MARGIN = 8;
+    const usableW = A4_W - MARGIN * 2;
+    const usableH = A4_H - MARGIN * 2;
+    const imgH_mm = canvas.height / canvas.width * usableW;
+    const finalH  = Math.min(imgH_mm, usableH);
+
+    const doc     = new jsPDF({orientation:'portrait', unit:'mm', format:'a4', compress:true});
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    doc.addImage(imgData, 'JPEG', MARGIN, MARGIN, usableW, finalH);
+
+    /* ── 다운로드 ── */
+    const pdfBlob  = doc.output('blob');
+    const url      = URL.createObjectURL(pdfBlob);
+    const safeName = state.name.replace(/\s+/g,'');
+    const datePart = now.toISOString().slice(0,10);
+    const a        = document.createElement('a');
+    a.href=url; a.download='AI_test_'+safeName+'_'+datePart+'.pdf';
+    a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); document.body.removeChild(a); }, 2000);
+
+  } catch(err) {
+    console.error('PDF 오류:', err);
+    alert('PDF 생성 중 오류가 발생했습니다.\n'+err.message);
+  } finally {
+    document.body.removeChild(wrap);
+    btn.innerHTML = origHTML;
+    btn.disabled  = false;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   RESTART
+══════════════════════════════════════════════ */
+function restartQuiz() {
+  clearInterval(state.timerInterval);
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-rank').value = '';
+  document.getElementById('inp-email').value = '';
+  showScreen('screen-intro');
+}
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

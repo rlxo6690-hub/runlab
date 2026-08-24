@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가이드·아티클 | DataForge</title>
+  <meta name="description" content="DataForge 도구별 사용 가이드와 데이터 분석·머신러닝 개념 아티클 모음. 결측치 처리부터 모델 평가의 함정까지, 실무 데이터 다루기를 글로 배웁니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="가이드·아티클 | DataForge">
+  <meta property="og:description" content="DataForge 도구별 사용 가이드와 데이터 분석·머신러닝 개념 아티클 모음.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.7; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 26px; }
+    h2 { font-size: 15px; font-weight: 700; color: var(--muted); margin: 26px 0 12px; }
+    .list { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .item {
+      display: block; background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 16px 18px; text-decoration: none; color: var(--text); transition: border-color .15s;
+    }
+    .item:hover, .item:active { border-color: var(--accent); }
+    .item b { display: block; font-size: 15px; margin-bottom: 4px; }
+    .item span { display: block; font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .item .badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--accent); background: rgba(37,99,235,.08); border-radius: 4px;
+      padding: 1px 7px; margin-bottom: 7px;
+    }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .list { grid-template-columns: 1fr 1fr; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <h1>📚 가이드·아티클</h1>
+    <p class="lead">DataForge 도구 사용법과 데이터 분석·머신러닝 개념을 글로 정리했습니다.</p>
+
+    <h2>도구 사용 가이드</h2>
+    <div class="list">
+      <a class="item" href="/guide/data_gen">
+        <span class="badge">/mfg · /biz · /ads · /text</span>
+        <b>🏭 실습용 데이터 생성기 사용법</b>
+        <span>제조·경영·광고·텍스트 데이터를 원하는 조건으로 즉시 만드는 법</span>
+      </a>
+      <a class="item" href="/guide/prep_missing">
+        <span class="badge">/prep/missing</span>
+        <b>🔍 결측치·이상치 시뮬레이터 사용법</b>
+        <span>빠진 값과 튀는 값이 어떤 모양으로 나타나는지 직접 만들어보며 익히기</span>
+      </a>
+      <a class="item" href="/guide/prep_interpolate">
+        <span class="badge">/prep/interpolate</span>
+        <b>🔧 CSV 보간·병합 사용법</b>
+        <span>진짜 데이터의 결측을 8가지 방법으로 채우고, 여러 파일을 합치기</span>
+      </a>
+      <a class="item" href="/guide/prep_edit">
+        <span class="badge">/prep/edit</span>
+        <b>✂️ CSV 편집 도구 사용법</b>
+        <span>빈 행 삭제·값 필터·날짜 분리·데이터 차분을 브라우저에서 바로</span>
+      </a>
+      <a class="item" href="/guide/sim_ml">
+        <span class="badge">/sim/ml</span>
+        <b>🤖 머신러닝 시뮬레이션 사용법</b>
+        <span>K-Means부터 XGBoost까지, 코드 없이 값을 바꿔가며 원리 관찰</span>
+      </a>
+      <a class="item" href="/guide/sim_deep">
+        <span class="badge">/sim/deep</span>
+        <b>🧠 딥러닝 시뮬레이션 사용법</b>
+        <span>뉴런·신경망 구조·경사하강·하이퍼파라미터·과적합을 눈으로 확인</span>
+      </a>
+      <a class="item" href="/guide/prep_normalize">
+        <span class="badge">/prep/normalize</span>
+        <b>⚖️ 정규화·표준화 사용법</b>
+        <span>스케일이 다른 변수를 같은 눈금으로 — Min-Max와 Z-score 고르는 법</span>
+      </a>
+      <a class="item" href="/guide/prep_onehot">
+        <span class="badge">/prep/onehot</span>
+        <b>🔢 원-핫 인코딩 사용법</b>
+        <span>문자(범주) 데이터를 모델이 읽을 수 있는 숫자로 바꾸기</span>
+      </a>
+      <a class="item" href="/guide/prep_split">
+        <span class="badge">/prep/split</span>
+        <b>🪓 데이터 분할 도구 사용법</b>
+        <span>학습·테스트 세트를 올바르게 나누기 — 누수 없는 분할의 시작</span>
+      </a>
+      <a class="item" href="/guide/sim_timeseries">
+        <span class="badge">/sim/timeseries</span>
+        <b>📈 시계열 분석 시뮬레이터 사용법</b>
+        <span>추세·계절성·예측을 값을 바꿔가며 눈으로 확인</span>
+      </a>
+    </div>
+
+    <h2>개념 아티클</h2>
+    <div class="list">
+      <a class="item" href="/guide/accuracy_trap">
+        <span class="badge">모델 평가</span>
+        <b>📉 정확도 98%의 함정</b>
+        <span>불량 121개 중 110개를 놓친 모델 이야기 — 혼동행렬과 불균형 데이터</span>
+      </a>
+      <a class="item" href="/guide/data_leakage">
+        <span class="badge">데이터 분할</span>
+        <b>🕳️ AUC 0.987은 축하가 아니라 경고다</b>
+        <span>시험 문제를 미리 본 학생 — 데이터 누수가 점수를 부풀리는 구조</span>
+      </a>
+      <a class="item" href="/guide/correlation_trap">
+        <span class="badge">상관관계</span>
+        <b>🔗 상관계수가 같아도 데이터는 다르다</b>
+        <span>앤스콤 4중주와 심슨의 역설 — 요약 통계가 감추는 것들</span>
+      </a>
+      <a class="item" href="/guide/imbalance_smote">
+        <span class="badge">불균형 데이터</span>
+        <b>🧪 없는 불량 17,272개를 지어냈다</b>
+        <span>SMOTE와 리샘플링의 대가 — 재현율을 올리면 무엇을 잃는가</span>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

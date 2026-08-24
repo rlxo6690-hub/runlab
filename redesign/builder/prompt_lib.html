@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프롬프트 모음 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="AI 프롬프트 모음 — DataForge">
+<meta property="og:description" content="카테고리별로 정리된 AI 프롬프트 모음집. 복사 한 번으로 ChatGPT·Claude·Gemini에 바로 활용하세요.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626; --orange:#ea580c;
+  --teal:#0d9488; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  font-size:14px;line-height:1.6;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* ── HEADER ── */
+.site-header{
+  padding:14px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── PAGE TABS (outer) ── */
+.pg-tabs{
+  display:flex;border-bottom:1px solid var(--border);
+  background:rgba(248,250,252,.95);backdrop-filter:blur(8px);
+  position:sticky;top:57px;z-index:90;
+  padding:0 24px;
+}
+.pg-tab{
+  padding:13px 22px;font-size:13px;font-weight:600;
+  color:var(--muted);cursor:pointer;border:none;background:none;
+  border-bottom:2px solid transparent;transition:all .15s;
+  font-family:inherit;white-space:nowrap;
+}
+.pg-tab:hover{color:var(--text);}
+.pg-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.pg-panel{display:none;}
+.pg-panel.active{display:block;}
+
+/* ══════════════════════════════
+   PANEL 1 — 프롬프트 모음
+══════════════════════════════ */
+.toolbar{
+  padding:16px 24px 0;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  position:relative;z-index:1;
+}
+.search-inp{
+  flex:1;min-width:180px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:8px;color:var(--text);font-size:13px;
+  padding:8px 14px;outline:none;transition:border-color .2s;font-family:inherit;
+}
+.search-inp:focus{border-color:var(--accent);}
+.search-inp::placeholder{color:var(--dim);}
+.count-badge{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
+
+.cat-wrap{
+  padding:12px 24px 0;display:flex;gap:6px;flex-wrap:wrap;
+  position:relative;z-index:1;
+}
+.cat-tab{
+  font-size:12px;font-weight:600;padding:5px 13px;
+  border:1px solid var(--border2);border-radius:20px;
+  background:transparent;color:var(--muted);cursor:pointer;
+  transition:all .15s;font-family:inherit;white-space:nowrap;
+}
+.cat-tab:hover{color:var(--text);border-color:rgba(37,99,235,.4);}
+.cat-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.grid-wrap{padding:16px 24px 80px;position:relative;z-index:1;}
+.prompt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+
+.p-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;
+  display:flex;flex-direction:column;gap:8px;
+  transition:border-color .15s,box-shadow .15s;
+}
+.p-card:hover{border-color:rgba(37,99,235,.3);box-shadow:0 2px 12px rgba(37,99,235,.07);}
+.p-card.featured{border-color:rgba(217,119,6,.25);background:linear-gradient(160deg,#fff 80%,rgba(217,119,6,.03) 100%);}
+.p-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.p-card-title{font-size:13px;font-weight:700;color:var(--text);line-height:1.4;flex:1;}
+.p-badges{display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0;}
+.badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;}
+.b-feat{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.2);}
+.b-easy{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.b-med{background:rgba(37,99,235,.1);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.b-hard{background:rgba(220,38,38,.1);color:var(--red);border:1px solid rgba(220,38,38,.2);}
+.b-cat{background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2);}
+.p-card-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.p-content{
+  font-size:11px;color:var(--text);background:var(--card2);
+  border:1px solid var(--border);border-radius:6px;
+  padding:9px 11px;line-height:1.6;
+  white-space:pre-wrap;word-break:break-word;
+  max-height:90px;overflow:hidden;position:relative;flex:1;
+}
+.p-content.open{max-height:none;}
+.p-content:not(.open)::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:26px;
+  background:linear-gradient(transparent,var(--card2));pointer-events:none;
+}
+.p-footer{display:flex;gap:6px;align-items:center;margin-top:2px;}
+.btn-copy{
+  font-size:11px;font-weight:700;padding:5px 14px;
+  background:var(--accent);color:#fff;border:none;border-radius:6px;
+  cursor:pointer;transition:background .15s;font-family:inherit;flex-shrink:0;
+}
+.btn-copy:hover{background:#1d4ed8;}
+.btn-copy.ok{background:var(--green);}
+.btn-tog{
+  font-size:11px;color:var(--dim);background:none;border:none;
+  cursor:pointer;padding:5px 4px;font-family:inherit;transition:color .15s;
+  text-decoration:none;display:inline-block;
+}
+.btn-tog:hover{color:var(--accent);}
+.btn-link{
+  margin-left:auto;font-size:10.5px;font-family:'Space Mono',monospace;font-weight:700;
+  color:var(--accent2);background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);
+  border-radius:6px;padding:4px 9px;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-link:hover{background:rgba(99,102,241,.15);}
+
+.state-box{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);}
+.state-box .ico{font-size:32px;margin-bottom:12px;}
+.state-box .ttl{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.state-box .sub{font-size:12px;line-height:1.7;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
+
+/* ══════════════════════════════
+   PANEL 2 — 프롬프트 빌더
+══════════════════════════════ */
+.builder-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+  margin:20px 24px 80px;padding:24px;
+}
+.builder-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.builder-field label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;margin-bottom:5px;text-transform:uppercase;}
+.builder-field input,.builder-field select,.builder-field textarea{
+  width:100%;background:rgba(0,0,0,.03);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:12px;padding:8px 10px;outline:none;
+  transition:border-color .2s;resize:vertical;
+}
+.builder-field input:focus,.builder-field select:focus,.builder-field textarea:focus{border-color:var(--accent);}
+.builder-field select option{background:#f8fafc;color:#1e293b;}
+.preset-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+.preset-chip{
+  font-size:12px;font-weight:600;padding:6px 13px;
+  border:1px solid var(--border2);border-radius:20px;
+  background:var(--card);color:var(--muted);cursor:pointer;
+  transition:all .15s;font-family:inherit;white-space:nowrap;
+}
+.preset-chip:hover{color:var(--accent);border-color:rgba(37,99,235,.45);background:rgba(37,99,235,.05);}
+.saved-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.saved-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  padding:9px 14px;
+}
+.saved-name{font-size:12px;font-weight:700;color:var(--text);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.saved-date{font-size:10px;color:var(--dim);white-space:nowrap;}
+.saved-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);
+  background:var(--card);color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.saved-btn:hover{color:var(--accent);border-color:rgba(37,99,235,.4);}
+.saved-btn.del:hover{color:var(--red);border-color:rgba(220,38,38,.4);}
+.saved-empty{font-size:12px;color:var(--dim);padding:6px 2px;}
+.builder-output-pre{
+  background:rgba(0,0,0,.03);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;font-family:'Space Mono',monospace;font-size:11px;
+  color:#1e40af;line-height:1.8;white-space:pre-wrap;word-break:break-all;
+  min-height:110px;margin-bottom:10px;
+}
+.copy-btn{
+  font-size:11px;font-weight:600;padding:6px 14px;
+  background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);
+  color:var(--accent);border-radius:6px;cursor:pointer;transition:all .2s;font-family:inherit;
+}
+.copy-btn:hover{background:rgba(79,142,247,.25);}
+.ai-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.ai-link-btn{font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer;text-decoration:none;border:1px solid;transition:all .2s;font-family:inherit;}
+.ai-link-btn:hover{opacity:.8;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){.prompt-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:720px){.prompt-grid{grid-template-columns:repeat(2,1fr);}.builder-grid{grid-template-columns:1fr;}}
+@media(max-width:480px){
+  .prompt-grid{grid-template-columns:1fr;}
+  .toolbar,.cat-wrap{padding-left:14px;padding-right:14px;}
+  .grid-wrap{padding:12px 14px 60px;}
+  .site-header{padding:12px 14px;}
+  .pg-tabs{padding:0 14px;}
+  .builder-wrap{margin:16px 14px 60px;padding:16px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title">프롬프트 모음</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<!-- ── 페이지 탭 ── -->
+<div class="pg-tabs">
+  <button class="pg-tab active" onclick="switchPgTab('lib',this)">💬 프롬프트 모음</button>
+  <button class="pg-tab"       onclick="switchPgTab('lab',this)">🔨 프롬프트 빌더</button>
+</div>
+
+<!-- ══════════════════════════════
+     PANEL 1 — 프롬프트 모음
+══════════════════════════════ -->
+<div class="pg-panel active" id="pg-lib">
+
+  <div class="toolbar">
+    <input class="search-inp" id="search-inp" type="text"
+           placeholder="🔍  프롬프트 검색..." oninput="applyFilter()">
+    <span class="count-badge" id="count-badge"></span>
+  </div>
+
+  <div class="cat-wrap" id="cat-wrap">
+    <button class="cat-tab active" data-cat="all" onclick="selectCat('all',this)">전체</button>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="prompt-grid" id="prompt-grid">
+      <div class="state-box"><span class="spinner"></span> 불러오는 중...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════
+     PANEL 2 — 프롬프트 빌더
+══════════════════════════════ -->
+<div class="pg-panel" id="pg-lab">
+  <div class="builder-wrap">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+      자주 하는 업무를 선택하면 항목이 자동으로 채워집니다. 괄호 안 내용만 내 상황에 맞게 바꾼 뒤 복사해서 ChatGPT·Claude·Gemini에 붙여넣으세요.
+    </div>
+    <div class="preset-bar" id="preset-bar"></div>
+
+    <div class="builder-grid" style="margin-bottom:10px">
+      <div class="builder-field" style="grid-column:1/-1">
+        <label>시스템 프롬프트 <span style="color:var(--accent2);font-size:10px;text-transform:none;font-weight:400">(선택) AI의 성격·제약을 미리 설정</span></label>
+        <textarea id="b-sys" rows="2" placeholder="예: 당신은 제조업 전문 컨설턴트입니다. 답변은 항상 한국어로, 3문장 이내로 작성하세요." oninput="buildPrompt()"></textarea>
+      </div>
+    </div>
+    <div class="builder-grid">
+      <div class="builder-field">
+        <label>역할 (Role)</label>
+        <input type="text" id="b-role" placeholder="예: 마케팅 전문가" oninput="buildPrompt()">
+      </div>
+      <div class="builder-field">
+        <label>대상 독자</label>
+        <input type="text" id="b-audience" placeholder="예: 50대 중소기업 대표" oninput="buildPrompt()">
+      </div>
+      <div class="builder-field" style="grid-column:1/-1">
+        <label>작업 지시</label>
+        <input type="text" id="b-task" placeholder="예: AI 도입 제안 이메일을 작성해줘" oninput="buildPrompt()">
+      </div>
+      <div class="builder-field">
+        <label>출력 형식</label>
+        <select id="b-format" onchange="buildPrompt()">
+          <option value="">선택 안 함</option>
+          <option value="bullet 목록 형식으로">Bullet 목록</option>
+          <option value="번호 매긴 단계별 형식으로">번호 매긴 단계</option>
+          <option value="표 형식으로">표 형식</option>
+          <option value="한 단락 산문 형식으로">산문 단락</option>
+          <option value="JSON 형식으로">JSON</option>
+        </select>
+      </div>
+      <div class="builder-field">
+        <label>분량 제한</label>
+        <select id="b-length" onchange="buildPrompt()">
+          <option value="">선택 안 함</option>
+          <option value="100자 이내로">100자 이내</option>
+          <option value="300자 이내로">300자 이내</option>
+          <option value="A4 1장 이내로">A4 1장</option>
+          <option value="A4 2장 이내로">A4 2장</option>
+          <option value="5문장으로">5문장</option>
+        </select>
+      </div>
+      <div class="builder-field">
+        <label>어조</label>
+        <select id="b-tone" onchange="buildPrompt()">
+          <option value="">선택 안 함</option>
+          <option value="정중하고 격식 있는 어조로">정중·격식</option>
+          <option value="친근하고 쉬운 어조로">친근·쉬운</option>
+          <option value="전문적이고 분석적인 어조로">전문·분석적</option>
+          <option value="간결하고 직관적인 어조로">간결·직관적</option>
+        </select>
+      </div>
+      <div class="builder-field">
+        <label>제외 조건</label>
+        <input type="text" id="b-exclude" placeholder="예: 기술 용어, 영어 약어" oninput="buildPrompt()">
+      </div>
+      <div class="builder-field" style="grid-column:1/-1">
+        <label>추가 맥락 / 배경</label>
+        <textarea id="b-context" rows="2" placeholder="예: 우리 회사는 제조업 중소기업으로, AI 도입 경험이 없습니다." oninput="buildPrompt()"></textarea>
+      </div>
+      <div class="builder-field" style="grid-column:1/-1">
+        <label>입력 자료 <span style="color:var(--accent2);font-size:10px;text-transform:none;font-weight:400">(선택) 요약·번역·분석할 원문이나 데이터를 그대로 붙여넣기</span></label>
+        <textarea id="b-input" rows="3" placeholder="예: 회의 메모, 보고서 원문, 표·CSV 데이터 등을 그대로 붙여넣으세요." oninput="buildPrompt()"></textarea>
+      </div>
+      <div class="builder-field" style="grid-column:1/-1">
+        <label>원하는 출력 예시 <span style="color:var(--accent2);font-size:10px;text-transform:none;font-weight:400">(선택) 결과물 형태를 한 번 보여주면 정확도가 크게 올라갑니다</span></label>
+        <textarea id="b-example" rows="2" placeholder="예: ■ 결정사항: …  ■ 실행항목: 담당자 — 기한 — 내용" oninput="buildPrompt()"></textarea>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;margin-bottom:6px;text-transform:uppercase;">생성된 프롬프트</div>
+    <div class="builder-output-pre" id="builder-out">항목을 입력하면 여기에 프롬프트가 자동 생성됩니다.</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button class="copy-btn" onclick="copyBuilderPrompt()">📋 클립보드 복사</button>
+      <button class="copy-btn" onclick="savePromptLocal()">💾 저장</button>
+      <button class="copy-btn" style="background:rgba(0,0,0,.04);border-color:var(--border2);color:var(--muted);" onclick="resetBuilder()">↺ 초기화</button>
+      <span id="copy-msg" style="font-size:11px;color:var(--teal);display:none;">복사되었습니다!</span>
+      <span id="builder-len" style="font-size:11px;color:var(--dim);"></span>
+      <span id="builder-score" style="font-size:12px;color:var(--muted);margin-left:auto;"></span>
+    </div>
+    <div class="ai-links">
+      <span style="font-size:11px;color:var(--muted);align-self:center;">복사 후 바로가기:</span>
+      <a href="https://chatgpt.com" target="_blank" class="ai-link-btn" style="background:rgba(16,163,127,.12);border-color:rgba(16,163,127,.3);color:#34d399;" onclick="copyBuilderPrompt()">ChatGPT</a>
+      <a href="https://claude.ai"   target="_blank" class="ai-link-btn" style="background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.3);color:#fb923c;" onclick="copyBuilderPrompt()">Claude</a>
+      <a href="https://gemini.google.com" target="_blank" class="ai-link-btn" style="background:rgba(79,142,247,.12);border-color:rgba(79,142,247,.3);color:#93c5fd;" onclick="copyBuilderPrompt()">Gemini</a>
+    </div>
+
+    <!-- ─ 내 프롬프트 저장함 ─ -->
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;margin-bottom:2px;text-transform:uppercase;">내 프롬프트 저장함</div>
+      <div style="font-size:11px;color:var(--dim);">자주 쓰는 프롬프트를 저장해두고 꺼내 쓰세요. 이 브라우저에만 저장됩니다.</div>
+      <div class="saved-list" id="saved-list"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.page-wrap -->
+<script>
+/* ── PAGE TAB SWITCH ── */
+function switchPgTab(id, btn) {
+  document.querySelectorAll('.pg-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pg-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pg-' + id).classList.add('active');
+}
+
+/* ══════════════════════════════
+   PANEL 1 — 프롬프트 모음
+══════════════════════════════ */
+let _cats  = [];
+let _items = [];
+let _cat   = 'all';
+let _q     = '';
+
+async function load() {
+  try {
+    const r = await fetch('/mfg/api/prompt_lib.php?action=all');
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.msg);
+    _cats  = d.categories || [];
+    _items = d.items      || [];
+    buildCatTabs();
+    // 허브 카테고리 카드에서 ?cat=<id> 로 진입하면 해당 카테고리를 미리 선택
+    const urlCat = new URLSearchParams(location.search).get('cat');
+    const catBtn = urlCat && document.querySelector(`.cat-tab[data-cat="${CSS.escape(urlCat)}"]`);
+    if (catBtn) selectCat(urlCat, catBtn);
+    else render();
+  } catch(e) {
+    document.getElementById('prompt-grid').innerHTML =
+      `<div class="state-box"><div class="ico">⚠</div>
+       <div class="ttl">로드 실패</div><div class="sub">${e.message}</div></div>`;
+  }
+}
+
+function buildCatTabs() {
+  const wrap = document.getElementById('cat-wrap');
+  const catCount = {};
+  _items.forEach(it => { catCount[it.category_id] = (catCount[it.category_id]||0)+1; });
+  wrap.innerHTML =
+    `<button class="cat-tab active" data-cat="all" onclick="selectCat('all',this)">
+       전체 <span style="opacity:.55;font-size:10px">${_items.length}</span>
+     </button>` +
+    _cats.map(c =>
+      `<button class="cat-tab" data-cat="${c.id}" onclick="selectCat('${c.id}',this)">
+         ${esc(c.icon)} ${esc(c.name)}
+         <span style="opacity:.55;font-size:10px">${catCount[c.id]||0}</span>
+       </button>`
+    ).join('');
+}
+
+function selectCat(id, btn) {
+  _cat = id;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function applyFilter() {
+  _q = document.getElementById('search-inp').value.toLowerCase().trim();
+  render();
+}
+
+function render() {
+  const catMap = {};
+  _cats.forEach(c => { catMap[c.id] = c; });
+  let list = _items;
+  if (_cat !== 'all') list = list.filter(it => String(it.category_id) === String(_cat));
+  if (_q)  list = list.filter(it =>
+    it.title.toLowerCase().includes(_q) ||
+    it.content.toLowerCase().includes(_q) ||
+    (it.description||'').toLowerCase().includes(_q)
+  );
+  const grid  = document.getElementById('prompt-grid');
+  const badge = document.getElementById('count-badge');
+  badge.textContent = list.length ? `${list.length}개` : '';
+  if (!list.length) {
+    grid.innerHTML = `<div class="state-box">
+      <div class="ico">${_items.length ? '🔍' : '💬'}</div>
+      <div class="ttl">${_items.length ? '검색 결과 없음' : '등록된 프롬프트 없음'}</div>
+      <div class="sub">${_items.length ? '다른 검색어나 카테고리를 선택해보세요.' : '관리자 페이지에서 프롬프트를 등록하세요.'}</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = list.map(it => cardHtml(it, catMap[it.category_id])).join('');
+}
+
+function cardHtml(it, cat) {
+  const diffCls = {easy:'b-easy',medium:'b-med',hard:'b-hard'}[it.difficulty||'medium'];
+  const diffLbl = {easy:'기초',medium:'중급',hard:'고급'}[it.difficulty||'medium'];
+  const catTxt  = cat ? `${esc(cat.icon)} ${esc(cat.name)}` : '';
+  return `
+<div class="p-card${+it.is_featured?' featured':''}">
+  <div class="p-card-head">
+    <div class="p-card-title">${esc(it.title)}</div>
+    <div class="p-badges">
+      ${+it.is_featured ? '<span class="badge b-feat">★ 추천</span>' : ''}
+      <span class="badge ${diffCls}">${diffLbl}</span>
+    </div>
+  </div>
+  ${it.description ? `<div class="p-card-desc">${esc(it.description)}</div>` : ''}
+  ${cat ? `<div><span class="badge b-cat">${catTxt}</span></div>` : ''}
+  <div class="p-content" id="pc-${it.id}">${esc(it.content)}</div>
+  <div class="p-footer">
+    <button class="btn-copy" id="bc-${it.id}" onclick="copy(${it.id})">📋 복사</button>
+    ${it.short_code
+      ? `<a class="btn-tog" href="/pm/${esc(it.short_code)}" target="_blank" rel="noopener" title="전용 페이지에서 크게 보기">자세히 보기 ↗</a>`
+      : `<button class="btn-tog" onclick="tog(${it.id})">펼치기 ▾</button>`}
+    ${it.short_code ? `<button class="btn-link" title="이 프롬프트 전용 주소 복사" onclick="copyLink('${esc(it.short_code)}',this)">🔗 /pm/${esc(it.short_code)}</button>` : ''}
+  </div>
+</div>`;
+}
+
+function copy(id) {
+  const it = _items.find(x => String(x.id) === String(id));
+  if (!it) return;
+  navigator.clipboard.writeText(it.content).then(() => {
+    const b = document.getElementById('bc-'+id);
+    b.textContent = '✅ 복사됨'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 복사'; b.classList.remove('ok'); }, 1800);
+  });
+}
+
+function copyLink(code, btn) {
+  var url = location.origin + '/pm/' + code;
+  navigator.clipboard.writeText(url).then(function(){
+    var t = btn.textContent;
+    btn.textContent = '✅ 링크 복사됨';
+    setTimeout(function(){ btn.textContent = t; }, 1500);
+  });
+}
+
+function tog(id) {
+  const el  = document.getElementById('pc-'+id);
+  const btn = el.nextElementSibling.querySelector('.btn-tog');
+  el.classList.toggle('open')
+    ? btn.textContent = '접기 ▴'
+    : btn.textContent = '펼치기 ▾';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+load();
+
+/* ══════════════════════════════
+   PANEL 2 — 프롬프트 빌더
+══════════════════════════════ */
+const PB_FIELDS = ['b-sys','b-role','b-audience','b-task','b-format','b-length','b-tone','b-exclude','b-context','b-input','b-example'];
+
+/* 실무 템플릿 — 선택하면 항목이 자동으로 채워진다. 괄호 안만 바꿔 쓰면 됨 */
+const PB_PRESETS = [
+  {icon:'📧', name:'업무 이메일', f:{'b-role':'비즈니스 커뮤니케이션 전문가','b-task':'아래 내용을 바탕으로 업무 이메일을 작성해줘. 메일 제목도 함께 제안해줘.','b-audience':'협력사 담당자','b-tone':'정중하고 격식 있는 어조로','b-length':'5문장으로','b-format':'한 단락 산문 형식으로','b-context':'(누구에게, 무슨 목적으로 보내는지, 핵심 요청이 무엇인지 적어주세요)'}},
+  {icon:'📊', name:'보고서 요약', f:{'b-role':'경영기획팀 애널리스트','b-task':'아래 입력 자료를 핵심만 요약해줘. 결론부터 제시하고, 수치는 원문 그대로 인용해줘.','b-audience':'바쁜 임원 (읽는 시간 1분)','b-format':'bullet 목록 형식으로','b-length':'300자 이내로','b-tone':'간결하고 직관적인 어조로','b-input':'(여기에 보고서·기사 원문을 붙여넣으세요)'}},
+  {icon:'📝', name:'회의록 정리', f:{'b-role':'회의록 작성 전문가','b-task':'아래 회의 메모를 회의록으로 정리해줘. ①결정사항 ②실행항목(담당자·기한) ③주요 논의 순서로 작성해줘.','b-format':'번호 매긴 단계별 형식으로','b-tone':'간결하고 직관적인 어조로','b-input':'(여기에 회의 메모를 붙여넣으세요)','b-example':'■ 결정사항: …\n■ 실행항목: 홍길동 — 8/22 — 견적서 발송\n■ 주요 논의: …'}},
+  {icon:'📈', name:'데이터 분석', f:{'b-role':'데이터 분석가','b-task':'아래 데이터를 분석해서 눈에 띄는 패턴 3가지를 찾고, 각각 근거 수치와 실무 시사점을 제시해줘.','b-format':'번호 매긴 단계별 형식으로','b-tone':'전문적이고 분석적인 어조로','b-input':'(여기에 표·CSV 데이터를 붙여넣으세요)'}},
+  {icon:'🌐', name:'번역·교정', f:{'b-role':'전문 번역가이자 에디터','b-task':'아래 글을 자연스러운 한국어로 번역해줘. 직역투는 다듬고 원문의 뉘앙스는 유지해줘. 어색한 표현을 고쳤다면 이유도 알려줘.','b-input':'(여기에 원문을 붙여넣으세요)'}},
+  {icon:'💡', name:'기획서 초안', f:{'b-role':'사업 기획 전문가','b-task':'아래 아이디어로 기획서 초안을 작성해줘. 배경 → 목표 → 실행 방안 → 기대 효과 → 필요 자원 순서로 구성해줘.','b-audience':'예산을 승인할 경영진','b-length':'A4 1장 이내로','b-tone':'전문적이고 분석적인 어조로','b-context':'(아이디어와 해결하려는 문제를 적어주세요)'}},
+  {icon:'🔍', name:'자료 조사', f:{'b-role':'리서치 전문가','b-task':'다음 주제를 조사해줘: (주제). 항목별로 사실과 의견을 구분하고, 확실하지 않은 내용은 "확인 필요"라고 표시해줘.','b-format':'표 형식으로','b-tone':'전문적이고 분석적인 어조로'}},
+  {icon:'🎓', name:'교육 자료', f:{'b-role':'기업 교육 전문 강사','b-task':'다음 주제를 처음 배우는 사람을 위한 교육 자료를 만들어줘: (주제). 일상적인 비유 1개와 바로 해볼 수 있는 실습 1개를 포함해줘.','b-audience':'해당 분야 완전 초보자','b-tone':'친근하고 쉬운 어조로','b-exclude':'전문 용어, 영어 약어'}},
+  {icon:'🧮', name:'엑셀·코드', f:{'b-role':'엑셀·파이썬 자동화 전문가','b-task':'다음 작업을 처리하는 엑셀 수식(또는 파이썬 코드)을 작성해줘: (작업 내용). 각 부분이 무슨 일을 하는지 초보자 눈높이로 설명해줘.','b-tone':'친근하고 쉬운 어조로','b-context':'(데이터가 어떤 열에 어떤 형태로 들어 있는지 적어주세요)'}}
+];
+
+document.getElementById('preset-bar').innerHTML = PB_PRESETS.map((p,i) =>
+  `<button class="preset-chip" onclick="applyPreset(${i})">${p.icon} ${p.name}</button>`).join('');
+
+function applyPreset(i) {
+  const p = PB_PRESETS[i];
+  PB_FIELDS.forEach(id => { document.getElementById(id).value = p.f[id] !== undefined ? p.f[id] : ''; });
+  buildPrompt();
+}
+
+function pbGet() { const o = {}; PB_FIELDS.forEach(id => o[id] = document.getElementById(id).value); return o; }
+function pbSet(o) { PB_FIELDS.forEach(id => { document.getElementById(id).value = o[id] || ''; }); }
+
+/* 필드 → 완성 프롬프트 텍스트 (저장함 복사에서도 재사용) */
+function composePrompt(f) {
+  const v = id => (f[id] || '').trim();
+  let sections = [];
+  if (v('b-sys')) sections.push('[시스템 프롬프트]\n' + v('b-sys') + '\n\n' + '─'.repeat(30));
+  let parts = [];
+  if (v('b-role'))     parts.push('당신은 ' + v('b-role') + '입니다.');
+  if (v('b-context'))  parts.push('[배경 정보]\n' + v('b-context'));
+  if (v('b-audience')) parts.push('대상: ' + v('b-audience'));
+  if (v('b-task'))     parts.push('[작업]\n' + v('b-task'));
+  let cond = [];
+  if (f['b-format'])  cond.push(f['b-format']);
+  if (f['b-length'])  cond.push(f['b-length']);
+  if (f['b-tone'])    cond.push(f['b-tone']);
+  if (v('b-exclude')) cond.push('다음 내용은 제외: ' + v('b-exclude'));
+  if (cond.length)     parts.push('[조건]\n- ' + cond.join('\n- '));
+  if (v('b-example'))  parts.push('[원하는 출력 예시]\n' + v('b-example'));
+  if (v('b-input'))    parts.push('[입력 자료]\n"""\n' + v('b-input') + '\n"""');
+  if (parts.length) sections.push(parts.join('\n\n'));
+  return sections.join('\n');
+}
+
+function buildPrompt() {
+  const f = pbGet();
+  const text = composePrompt(f);
+  document.getElementById('builder-out').innerText =
+    text || '위에서 업무 템플릿을 선택하거나 항목을 입력하면 프롬프트가 자동 생성됩니다.';
+  document.getElementById('builder-len').textContent = text ? text.length + '자' : '';
+
+  const scoreEl = document.getElementById('builder-score');
+  if (!text) scoreEl.textContent = '';
+  else if (!(f['b-task'] || '').trim())
+    scoreEl.innerHTML = '<span style="color:#ef4444;font-weight:700">⚠ [작업 지시]는 꼭 입력하세요</span>';
+  else {
+    const filled = PB_FIELDS.filter(id => (f[id] || '').trim()).length;
+    const pct = Math.min(100, Math.round(filled / PB_FIELDS.length * 100));
+    const col = pct < 30 ? '#ef4444' : pct < 60 ? '#d97706' : '#059669';
+    scoreEl.innerHTML = `완성도: <span style="color:${col};font-weight:700">${pct}%</span>`;
+  }
+  try { localStorage.setItem('df_pb_draft', JSON.stringify(f)); } catch (e) {}
+}
+
+function copyBuilderPrompt() {
+  const text = document.getElementById('builder-out').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('copy-msg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 2000);
+  });
+}
+
+function resetBuilder() {
+  PB_FIELDS.forEach(id => document.getElementById(id).value = '');
+  buildPrompt();
+}
+
+/* ── 내 프롬프트 저장함 (localStorage) ── */
+const PB_STORE = 'df_pb_saved';
+function pbSaved() { try { return JSON.parse(localStorage.getItem(PB_STORE)) || []; } catch (e) { return []; } }
+
+function savePromptLocal() {
+  const f = pbGet();
+  if (!composePrompt(f)) { alert('저장할 내용이 없습니다. 항목을 먼저 입력하세요.'); return; }
+  const def = (f['b-task'] || '').trim().slice(0, 30) || '내 프롬프트';
+  const name = window.prompt('저장할 이름을 입력하세요', def);
+  if (name === null) return;
+  const list = pbSaved();
+  list.unshift({ id: Date.now(), name: (name.trim() || def).slice(0, 40), f });
+  if (list.length > 30) list.length = 30;
+  localStorage.setItem(PB_STORE, JSON.stringify(list));
+  renderSaved();
+}
+
+function renderSaved() {
+  const list = pbSaved();
+  const el = document.getElementById('saved-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="saved-empty">저장된 프롬프트가 없습니다. 항목을 채우고 💾 저장을 눌러보세요.</div>';
+    return;
+  }
+  el.innerHTML = list.map(s => `
+    <div class="saved-row">
+      <span class="saved-name">${esc(s.name)}</span>
+      <span class="saved-date">${new Date(s.id).toLocaleDateString('ko-KR')}</span>
+      <button class="saved-btn" onclick="loadSaved(${s.id})">불러오기</button>
+      <button class="saved-btn" onclick="copySaved(${s.id}, this)">📋 복사</button>
+      <button class="saved-btn del" onclick="delSaved(${s.id})">삭제</button>
+    </div>`).join('');
+}
+
+function loadSaved(id) {
+  const s = pbSaved().find(x => x.id === id);
+  if (!s) return;
+  pbSet(s.f); buildPrompt();
+  document.getElementById('builder-out').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function copySaved(id, btn) {
+  const s = pbSaved().find(x => x.id === id);
+  if (!s) return;
+  navigator.clipboard.writeText(composePrompt(s.f)).then(() => {
+    const t = btn.textContent;
+    btn.textContent = '✅ 복사됨';
+    setTimeout(() => btn.textContent = t, 1500);
+  });
+}
+
+function delSaved(id) {
+  if (!confirm('이 프롬프트를 삭제할까요?')) return;
+  localStorage.setItem(PB_STORE, JSON.stringify(pbSaved().filter(x => x.id !== id)));
+  renderSaved();
+}
+
+/* 초안 자동 복원 — 새로고침해도 작성하던 내용 유지 */
+(function () {
+  try {
+    const d = JSON.parse(localStorage.getItem('df_pb_draft'));
+    if (d) pbSet(d);
+  } catch (e) {}
+  renderSaved();
+  buildPrompt();
+})();
+</script>
+<script>(function(){
+  var k='tf_builder_promptlib';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=builder&page='+encodeURIComponent(location.pathname)});
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

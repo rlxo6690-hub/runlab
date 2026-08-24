@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경사하강법: 언덕을 굴러 내려가는 공</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { indigo:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},blue:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},sky:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},cyan:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},violet:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},purple:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},fuchsia:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'} },
+  fontFamily: { sans: ['Noto Sans KR','Pretendard','system-ui','sans-serif'],
+               mono: ['Space Mono','monospace'] }
+} } };
+</script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- MathJax for Beautiful Formula Rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>:root{--bg:#f8fafc;--card:#fff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--color-indigo-50:#eff6ff!important;--color-indigo-100:#dbeafe!important;--color-indigo-200:#bfdbfe!important;--color-indigo-300:#93c5fd!important;--color-indigo-400:#60a5fa!important;--color-indigo-500:#3b82f6!important;--color-indigo-600:#2563eb!important;--color-indigo-700:#1d4ed8!important;--color-indigo-800:#1e40af!important;--color-indigo-900:#1e3a8a!important;--color-indigo-950:#172554!important;--color-blue-50:#eff6ff!important;--color-blue-100:#dbeafe!important;--color-blue-200:#bfdbfe!important;--color-blue-300:#93c5fd!important;--color-blue-400:#60a5fa!important;--color-blue-500:#3b82f6!important;--color-blue-600:#2563eb!important;--color-blue-700:#1d4ed8!important;--color-blue-800:#1e40af!important;--color-blue-900:#1e3a8a!important;--color-blue-950:#172554!important;--color-sky-50:#eff6ff!important;--color-sky-100:#dbeafe!important;--color-sky-200:#bfdbfe!important;--color-sky-300:#93c5fd!important;--color-sky-400:#60a5fa!important;--color-sky-500:#3b82f6!important;--color-sky-600:#2563eb!important;--color-sky-700:#1d4ed8!important;--color-sky-800:#1e40af!important;--color-sky-900:#1e3a8a!important;--color-sky-950:#172554!important;--color-cyan-50:#eff6ff!important;--color-cyan-100:#dbeafe!important;--color-cyan-200:#bfdbfe!important;--color-cyan-300:#93c5fd!important;--color-cyan-400:#60a5fa!important;--color-cyan-500:#3b82f6!important;--color-cyan-600:#2563eb!important;--color-cyan-700:#1d4ed8!important;--color-cyan-800:#1e40af!important;--color-cyan-900:#1e3a8a!important;--color-cyan-950:#172554!important;--color-violet-50:#eef2ff!important;--color-violet-100:#e0e7ff!important;--color-violet-200:#c7d2fe!important;--color-violet-300:#a5b4fc!important;--color-violet-400:#818cf8!important;--color-violet-500:#6366f1!important;--color-violet-600:#4f46e5!important;--color-violet-700:#4338ca!important;--color-violet-800:#3730a3!important;--color-violet-900:#312e81!important;--color-violet-950:#1e1b4b!important;--color-purple-50:#eef2ff!important;--color-purple-100:#e0e7ff!important;--color-purple-200:#c7d2fe!important;--color-purple-300:#a5b4fc!important;--color-purple-400:#818cf8!important;--color-purple-500:#6366f1!important;--color-purple-600:#4f46e5!important;--color-purple-700:#4338ca!important;--color-purple-800:#3730a3!important;--color-purple-900:#312e81!important;--color-purple-950:#1e1b4b!important;--color-fuchsia-50:#eef2ff!important;--color-fuchsia-100:#e0e7ff!important;--color-fuchsia-200:#c7d2fe!important;--color-fuchsia-300:#a5b4fc!important;--color-fuchsia-400:#818cf8!important;--color-fuchsia-500:#6366f1!important;--color-fuchsia-600:#4f46e5!important;--color-fuchsia-700:#4338ca!important;--color-fuchsia-800:#3730a3!important;--color-fuchsia-900:#312e81!important;--color-fuchsia-950:#1e1b4b!important;}body{background-color:#f8fafc!important;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px)!important;background-size:40px 40px!important;background-attachment:fixed!important;}.df-header{position:sticky;top:0;z-index:100;max-width:1400px;margin:0 auto;width:100%;border-bottom:1px solid rgba(0,0,0,.1);background:rgba(248,250,252,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}.df-header-in{max-width:1400px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;}.df-logo{display:flex;align-items:center;gap:12px;}.df-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none;}.df-brand em{color:#ea580c;font-style:normal;}.df-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0;}.df-title{font-size:13px;color:#64748b;}.df-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}.df-back:hover{color:#1e293b;border-color:rgba(0,0,0,.3);}.df-header.dark{background:rgba(2,6,23,.85);border-bottom:1px solid rgba(255,255,255,.1);}.df-header.dark .df-sep{background:rgba(255,255,255,.18);}.df-header.dark .df-title{color:#94a3b8;}.df-header.dark .df-back{color:#94a3b8;border-color:rgba(255,255,255,.18);}.df-header.dark .df-back:hover{color:#f1f5f9;border-color:rgba(255,255,255,.4);}body,button,input,select,textarea,h1,h2,h3,h4,h5,p,span,div,label,li,a,td,th{font-family:'Noto Sans KR','Pretendard',system-ui,-apple-system,sans-serif;}.df-brand,code,pre,.font-mono{font-family:'Space Mono',monospace;}.df-header,.df-header *{line-height:1.3;}.df-subhead{max-width:1400px;margin:0 auto;width:100%;padding:22px 24px 4px;}.df-subhead-in{display:flex;align-items:center;gap:14px;}.df-subhead-ic{font-size:24px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px;flex-shrink:0;}.df-subhead-t{font-size:20px;font-weight:800;color:#1e293b;letter-spacing:-.01em;line-height:1.2;}.df-subhead-s{font-size:13px;color:#64748b;margin-top:3px;line-height:1.4;}.df-tabbar{max-width:1400px;margin:0 auto;width:100%;padding:12px 24px 0;}.df-tabbar-in{display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:4px;overflow-x:auto;width:fit-content;max-width:100%;}@media(max-width:640px){.df-header-in{padding:12px 14px;}.df-title{display:none;}.df-subhead{padding:16px 14px 4px;}.df-subhead-t{font-size:17px;}.df-subhead-ic{width:40px;height:40px;font-size:20px;}.df-tabbar{padding:10px 14px 0;}}</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<header class="df-header"><div class="df-header-in"><div class="df-logo"><a href="https://dataforge.ai.kr" class="df-brand">DATA<em>FORGE</em></a><div class="df-sep"></div><div class="df-title">경사하강법</div></div><a href="https://dataforge.ai.kr" class="df-back">← DataForge 홈</a></div></header><div class="df-subhead"><div class="df-subhead-in"><div class="df-subhead-ic">⛰️</div><div><h1 class="df-subhead-t">경사하강법</h1><p class="df-subhead-s">공이 언덕을 굴러 내려가듯 최솟값을 찾아가는 과정을 봅니다</p></div></div></div>
+
+    <!-- Header -->
+    
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Side: Interactive Playground (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col space-y-6">
+            
+            <!-- Simulation Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-100 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        실시간 물리 시뮬레이션
+                    </span>
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="px-2 py-1 bg-white rounded border">X축: 가중치 ($w$)</span>
+                        <span class="px-2 py-1 bg-white rounded border">Y축: 손실 ($L(w)$)</span>
+                    </div>
+                </div>
+
+                <!-- Simulation Canvas -->
+                <div class="canvas-container bg-slate-950">
+                    <canvas id="simCanvas" class="w-full h-full block"></canvas>
+                    
+                    <!-- Overlay Stats -->
+                    <div class="absolute top-4 left-4 bg-slate-900/85 backdrop-blur-sm text-white p-3 rounded-lg border border-slate-700 text-xs space-y-1 font-mono shadow-lg">
+                        <div>현재 위치 ($w$): <span id="valW" class="text-yellow-400 font-bold">0.00</span></div>
+                        <div>현재 높이 ($L$): <span id="valL" class="text-emerald-400 font-bold">0.00</span></div>
+                        <div>현재 경사 (Slope): <span id="valSlope" class="text-cyan-400 font-bold">0.00</span></div>
+                        <div>경사하강 공식: <span class="text-pink-400 font-bold">w ← w - η × Slope</span></div>
+                    </div>
+
+                    <!-- Overlay Legend -->
+                    <div class="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-sm text-white px-3 py-1.5 rounded text-[11px] flex gap-3 border border-slate-700">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span> 공 (현재 가중치)</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 전역 최솟값</span>
+                    </div>
+                </div>
+
+                <!-- Control Console -->
+                <div class="p-6 bg-slate-50 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <button id="btnPlay" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm">
+                        <i id="playIcon" class="fa-solid fa-play"></i> <span id="playText">내려보내기</span>
+                    </button>
+                    <button id="btnStep" class="flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold py-2.5 px-4 rounded-xl border border-slate-300 shadow-sm transition-all text-sm">
+                        <i class="fa-solid fa-forward-step"></i> 1단계 이동
+                    </button>
+                    <button id="btnReset" class="flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-700 font-semibold py-2.5 px-4 rounded-xl border border-slate-300 shadow-sm transition-all text-sm">
+                        <i class="fa-solid fa-rotate-left"></i> 초기화
+                    </button>
+                    <button id="btnTrace" class="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm">
+                        <i class="fa-solid fa-route"></i> <span id="traceText">잔상 켜기</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parametric Tuning Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-500"></i>
+                    조건 및 하이퍼파라미터 조절
+                </h3>
+
+                <!-- Top Grid: Function Select & Momentum -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Function Selector -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">언덕의 지형 유형 (손실 함수)</label>
+                        <select id="selectFunc" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                            <option value="quadratic">기본 둥근 그릇 ($w^2$ - 단순 이차곡선)</option>
+                            <option value="complex">울퉁불퉁한 언덕 (지역 최솟값 존재)</option>
+                            <option value="plateau">가파르다가 평평해지는 지형 (Gradient Vanishing)</option>
+                        </select>
+                    </div>
+
+                    <!-- Optimizer Type -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">하강 최적화 알고리즘 (Optimizer)</label>
+                        <select id="selectOpt" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                            <option value="sgd">순수 경사하강법 (Standard GD)</option>
+                            <option value="momentum">모멘텀 (Momentum - 관성 적용)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sliders -->
+                <div class="space-y-5">
+                    <!-- Learning Rate -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-bolt text-amber-500"></i>
+                                학습률 (Learning Rate, $\eta$)
+                            </span>
+                            <span id="labelLR" class="text-xs font-mono bg-indigo-50 text-indigo-600 px-2.5 py-0.5 rounded-full font-bold">0.100</span>
+                        </div>
+                        <input id="sliderLR" type="range" min="0.01" max="1.5" step="0.01" value="0.1" class="w-full accent-indigo-600 cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>너무 작음 (기어감)</span>
+                            <span>적정 범위</span>
+                            <span>너무 큼 (발산/오버슈팅)</span>
+                        </div>
+                    </div>
+
+                    <!-- Initial Position -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrows-left-right text-sky-500"></i>
+                                공의 시작 위치 ($w_{start}$)
+                            </span>
+                            <span id="labelStart" class="text-xs font-mono bg-sky-50 text-sky-600 px-2.5 py-0.5 rounded-full font-bold">-4.0</span>
+                        </div>
+                        <input id="sliderStart" type="range" min="-5" max="5" step="0.1" value="-4" class="w-full accent-indigo-600 cursor-pointer">
+                    </div>
+
+                    <!-- Momentum Parameter (Hidden unless momentum selected) -->
+                    <div id="momentumParamContainer" class="hidden animate-fadeIn">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="fa-solid fa-wind text-teal-500"></i>
+                                관성 계수 (Momentum Coefficient, $\alpha$)
+                            </span>
+                            <span id="labelMomentum" class="text-xs font-mono bg-teal-50 text-teal-600 px-2.5 py-0.5 rounded-full font-bold">0.9</span>
+                        </div>
+                        <input id="sliderMomentum" type="range" min="0.0" max="0.99" step="0.01" value="0.9" class="w-full accent-indigo-600 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Learning Center & Theory (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col space-y-6">
+            
+            <!-- Quick Education Board -->
+            <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-md border border-slate-800 space-y-5">
+                <h3 class="text-xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-cyan-300 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    쉽게 이해하는 경사하강법
+                </h3>
+                
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    머신러닝의 인공지능은 <strong>"최대한 정답에 가까운 정교한 공식을 완성하는 일"</strong>입니다. 이때 오답률(에러 크기)을 <strong>'언덕의 높이(Loss)'</strong>라 부르고, 공식의 수치들을 <strong>'공의 위치($w$)'</strong>라고 가정해봅시다.
+                </p>
+
+                <!-- Process Card -->
+                <div class="space-y-3">
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3.5 items-start">
+                        <div class="bg-yellow-400 text-slate-950 text-xs font-extrabold w-5 h-5 flex items-center justify-center rounded-full shrink-0 mt-0.5">1</div>
+                        <div>
+                            <h4 class="text-sm font-bold text-yellow-300">경사도(기울기) 측정</h4>
+                            <p class="text-xs text-slate-300 mt-1">공이 놓인 지점에서 오른쪽이 높은지 왼쪽이 높은지 <strong>미분(Derivative)</strong>을 통해 경사면의 각도를 측정합니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3.5 items-start">
+                        <div class="bg-cyan-400 text-slate-950 text-xs font-extrabold w-5 h-5 flex items-center justify-center rounded-full shrink-0 mt-0.5">2</div>
+                        <div>
+                            <h4 class="text-sm font-bold text-cyan-300">내리막길 방향으로 이동</h4>
+                            <p class="text-xs text-slate-300 mt-1">기울기가 플러스(+)면 왼쪽으로, 마이너스(-)면 오른쪽으로 이동시킵니다. 즉, <strong>기울기의 반대 방향</strong>으로 공을 보냅니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3.5 items-start">
+                        <div class="bg-pink-400 text-slate-950 text-xs font-extrabold w-5 h-5 flex items-center justify-center rounded-full shrink-0 mt-0.5">3</div>
+                        <div>
+                            <h4 class="text-sm font-bold text-pink-300">보폭(학습률) 조절</h4>
+                            <p class="text-xs text-slate-300 mt-1">너무 크면 언덕 건너편으로 튕겨 날아가고(발산), 너무 작으면 기어가는 보폭 속도인 <strong>학습률($\eta$)</strong>을 곱해 위치를 업데이트합니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-white/10 text-xs text-slate-400 italic text-center">
+                    "기울기가 0인 평평한 골짜기 바닥에 멈추는 것이 최종 목표입니다."
+                </div>
+            </div>
+
+            <!-- Experiment Challenges / Interactive Missions -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-flask text-emerald-500"></i>
+                    이런 실험을 해보세요!
+                </h3>
+                
+                <div class="space-y-3 text-xs">
+                    <!-- Mission 1 -->
+                    <button onclick="applyPreset('overshoot')" class="w-full text-left p-3 rounded-xl border border-dashed border-red-200 bg-red-50 hover:bg-red-100/70 transition-all flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-bold text-red-800">💥 실험 1. 오버슈팅 (Overshooting)</h4>
+                            <p class="text-red-600 mt-0.5 font-light">학습률을 <span class="font-mono font-bold">1.2</span> 이상으로 크게 올리고 공을 굴려보세요.</p>
+                        </div>
+                        <i class="fa-solid fa-circle-play text-red-500 text-lg group-hover:scale-110 transition-transform"></i>
+                    </button>
+
+                    <!-- Mission 2 -->
+                    <button onclick="applyPreset('local')" class="w-full text-left p-3 rounded-xl border border-dashed border-amber-200 bg-amber-50 hover:bg-amber-100/70 transition-all flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-bold text-amber-800">⛰️ 실험 2. 지역 최솟값 (Local Minimum)</h4>
+                            <p class="text-amber-600 mt-0.5 font-light">울퉁불퉁 언덕 지형에서 학습률을 낮게 설정해 웅덩이에 갇히게 해봅니다.</p>
+                        </div>
+                        <i class="fa-solid fa-circle-play text-amber-500 text-lg group-hover:scale-110 transition-transform"></i>
+                    </button>
+
+                    <!-- Mission 3 -->
+                    <button onclick="applyPreset('momentum')" class="w-full text-left p-3 rounded-xl border border-dashed border-teal-200 bg-teal-50 hover:bg-teal-100/70 transition-all flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-bold text-teal-800">🚀 실험 3. 관성(Momentum)의 힘</h4>
+                            <p class="text-teal-600 mt-0.5 font-light">관성을 켜서 방금 갇혔던 웅덩이를 탈출하여 더 깊은 바닥으로 가봅니다.</p>
+                        </div>
+                        <i class="fa-solid fa-circle-play text-teal-500 text-lg group-hover:scale-110 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Math Box -->
+            <div class="bg-slate-100 rounded-2xl p-5 border border-slate-200 space-y-3">
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-square-root-variable text-purple-600"></i>
+                    사용한 수학적 지형(함수식)
+                </h4>
+                <div class="text-xs space-y-2 text-slate-600">
+                    <div class="flex justify-between py-1 border-b border-slate-200">
+                        <span class="font-semibold">이차곡선:</span>
+                        <code class="font-mono text-indigo-600">L(w) = 0.5 * w²</code>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-200">
+                        <span class="font-semibold">울퉁불퉁 언덕:</span>
+                        <code class="font-mono text-indigo-600">L(w) = 0.1w⁴ + 0.15w³ - 1.2w² - 0.5w + 8</code>
+                    </div>
+                    <div class="flex justify-between py-1">
+                        <span class="font-semibold">가파름 후 평평:</span>
+                        <code class="font-mono text-indigo-600">L(w) = (0.5w³ - 2.5w)의 아크탄젠트 활용 지형</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-center py-6 border-t border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 경사하강법 인터랙티브 교육 도구. 공이 경사를 따라 굴러가 가장 낮은 곳을 찾아내도록 설계되었습니다.</p>
+        </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // --- 1. DOM Elements ---
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const selectFunc = document.getElementById('selectFunc');
+        const selectOpt = document.getElementById('selectOpt');
+        const sliderLR = document.getElementById('sliderLR');
+        const labelLR = document.getElementById('labelLR');
+        const sliderStart = document.getElementById('sliderStart');
+        const labelStart = document.getElementById('labelStart');
+        const sliderMomentum = document.getElementById('sliderMomentum');
+        const labelMomentum = document.getElementById('labelMomentum');
+        const momentumParamContainer = document.getElementById('momentumParamContainer');
+
+        const btnPlay = document.getElementById('btnPlay');
+        const playIcon = document.getElementById('playIcon');
+        const playText = document.getElementById('playText');
+        const btnStep = document.getElementById('btnStep');
+        const btnReset = document.getElementById('btnReset');
+        const btnTrace = document.getElementById('btnTrace');
+        const traceText = document.getElementById('traceText');
+
+        const valW = document.getElementById('valW');
+        const valL = document.getElementById('valL');
+        const valSlope = document.getElementById('valSlope');
+
+        // --- 2. System Variables ---
+        let currentW = parseFloat(sliderStart.value);
+        let learningRate = parseFloat(sliderLR.value);
+        let momentumCoeff = parseFloat(sliderMomentum.value);
+        let isRunning = false;
+        let isTraceOn = false;
+        let lastUpdateTime = 0;
+        let stepDelay = 400; // ms per descent step in automated mode
+        let velocity = 0; // for momentum
+        let traceHistory = []; // stores visited coords {w, l}
+        
+        // --- 3. Mathematical Functions (Loss Landscapes) ---
+        // We define the Loss L(w) and its derivative (gradient) dL/dw
+        const functions = {
+            quadratic: {
+                loss: (w) => 0.15 * w * w,
+                grad: (w) => 0.3 * w,
+                globalMin: 0
+            },
+            complex: {
+                // Modified multi-modal function suited for visible local min in range [-5, 5]
+                loss: (w) => {
+                    return 0.03 * Math.pow(w, 4) + 0.05 * Math.pow(w, 3) - 0.45 * Math.pow(w, 2) - 0.2 * w + 5;
+                },
+                grad: (w) => {
+                    return 0.12 * Math.pow(w, 3) + 0.15 * Math.pow(w, 2) - 0.9 * w - 0.2;
+                },
+                globalMin: 2.12
+            },
+            plateau: {
+                // Standard plateau style using sigmoid or custom curves that flatten out
+                loss: (w) => {
+                    // S-curve but shifted
+                    return 5 - 4 / (1 + Math.exp(-0.8 * (w - 1)));
+                },
+                grad: (w) => {
+                    const e = Math.exp(-0.8 * (w - 1));
+                    return -3.2 * e / Math.pow(1 + e, 2);
+                },
+                globalMin: 5
+            }
+        };
+
+        let activeFunc = functions[selectFunc.value];
+
+        // --- 4. Coordinate Transformations ---
+        // Mapping mathematical coordinates [ -6 to 6, L_min to L_max ] to Canvas pixels
+        let xMin = -6;
+        let xMax = 6;
+        let yMin = -1;
+        let yMax = 10;
+
+        function toCanvasX(w) {
+            return ((w - xMin) / (xMax - xMin)) * canvas.width;
+        }
+
+        function toCanvasY(loss) {
+            // Y in canvas goes downwards, so we flip it
+            return canvas.height - ((loss - yMin) / (yMax - yMin)) * canvas.height;
+        }
+
+        function resizeCanvas() {
+            const rect = canvas.parentNode.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = 400 * window.devicePixelRatio; // Fixed relative canvas height
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            canvas.style.width = '100%';
+            canvas.style.height = '400px';
+            draw();
+        }
+
+        // --- 5. Drawing & Animation Logic ---
+        function draw() {
+            const width = canvas.width / window.devicePixelRatio;
+            const height = 400;
+
+            // Clear background
+            ctx.fillStyle = '#0f172a'; // Slate 950
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw Grid lines (Subtle)
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.3)'; // Slate 700
+            ctx.lineWidth = 1;
+            for (let x = Math.ceil(xMin); x <= xMax; x++) {
+                const cx = toCanvasX(x);
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(cx, height);
+                ctx.stroke();
+            }
+            for (let y = Math.ceil(yMin); y <= yMax; y++) {
+                const cy = toCanvasY(y);
+                ctx.beginPath();
+                ctx.moveTo(0, cy);
+                ctx.lineTo(width, cy);
+                ctx.stroke();
+            }
+
+            // Draw Axis lines
+            ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)'; // Slate 600
+            ctx.lineWidth = 2;
+            const cy0 = toCanvasY(0);
+            ctx.beginPath();
+            ctx.moveTo(0, cy0);
+            ctx.lineTo(width, cy0);
+            ctx.stroke();
+
+            // Draw Mountain/Curve Landscape
+            ctx.strokeStyle = '#6366f1'; // Indigo 500
+            ctx.lineWidth = 4.5;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            
+            let first = true;
+            for (let w = xMin; w <= xMax; w += 0.05) {
+                const loss = activeFunc.loss(w);
+                const cx = toCanvasX(w);
+                const cy = toCanvasY(loss);
+                if (first) {
+                    ctx.moveTo(cx, cy);
+                    first = false;
+                } else {
+                    ctx.lineTo(cx, cy);
+                }
+            }
+            ctx.stroke();
+
+            // Draw Trace history (if enabled)
+            if (isTraceOn && traceHistory.length > 0) {
+                ctx.lineWidth = 2;
+                for (let i = 0; i < traceHistory.length - 1; i++) {
+                    const alpha = (i + 1) / traceHistory.length * 0.6; // Fade out older traces
+                    ctx.strokeStyle = `rgba(250, 204, 21, ${alpha})`; // Yellow
+                    ctx.beginPath();
+                    ctx.moveTo(toCanvasX(traceHistory[i].w), toCanvasY(traceHistory[i].loss));
+                    ctx.lineTo(toCanvasX(traceHistory[i+1].w), toCanvasY(traceHistory[i+1].loss));
+                    ctx.stroke();
+
+                    // Dot at trace node
+                    ctx.fillStyle = `rgba(250, 204, 21, ${alpha + 0.2})`;
+                    ctx.beginPath();
+                    ctx.arc(toCanvasX(traceHistory[i].w), toCanvasY(traceHistory[i].loss), 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Draw local/global minimum landmark point
+            ctx.fillStyle = '#10b981'; // Emerald 500
+            ctx.beginPath();
+            const minW = activeFunc.globalMin;
+            ctx.arc(toCanvasX(minW), toCanvasY(activeFunc.loss(minW)), 7, 0, Math.PI * 2);
+            ctx.fill();
+            // Pulse circle for the min landmark
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(toCanvasX(minW), toCanvasY(activeFunc.loss(minW)), 12 + Math.sin(Date.now() / 150) * 3, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Calculate gradient at current position
+            const slope = activeFunc.grad(currentW);
+            const currentLoss = activeFunc.loss(currentW);
+
+            // Draw Tangent/Slope Line (showing current slope)
+            const cx_curr = toCanvasX(currentW);
+            const cy_curr = toCanvasY(currentLoss);
+            
+            ctx.strokeStyle = '#06b6d4'; // Cyan 500
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            // A short line representing the tangent: y - y1 = m(x - x1)
+            const tangentLength = 1.0; 
+            const x1 = currentW - tangentLength;
+            const y1 = currentLoss - slope * tangentLength;
+            const x2 = currentW + tangentLength;
+            const y2 = currentLoss + slope * tangentLength;
+            ctx.moveTo(toCanvasX(x1), toCanvasY(y1));
+            ctx.lineTo(toCanvasX(x2), toCanvasY(y2));
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset dashed
+
+            // Draw Gradient Vector Arrow at the bottom or on the point (Visual indicator of direction)
+            ctx.strokeStyle = '#ec4899'; // Pink 500
+            ctx.lineWidth = 3;
+            ctx.fillStyle = '#ec4899';
+            ctx.beginPath();
+            const arrowDir = slope > 0 ? -1 : 1; // Move left if slope is positive, right if negative
+            const arrowLength = Math.min(Math.abs(slope) * 20, 50); // Scale with gradient size
+            if (Math.abs(slope) > 0.02) {
+                // Draw horizontal arrow pointing towards decrease
+                ctx.moveTo(cx_curr, cy_curr - 20);
+                ctx.lineTo(cx_curr + arrowDir * arrowLength, cy_curr - 20);
+                ctx.stroke();
+                // Arrow tip
+                ctx.beginPath();
+                ctx.moveTo(cx_curr + arrowDir * arrowLength, cy_curr - 20);
+                ctx.lineTo(cx_curr + arrowDir * arrowLength - arrowDir * 6, cy_curr - 24);
+                ctx.lineTo(cx_curr + arrowDir * arrowLength - arrowDir * 6, cy_curr - 16);
+                ctx.fill();
+            }
+
+            // Draw the Ball (Current Weight)
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#facc15'; // Yellow 400
+            ctx.beginPath();
+            ctx.arc(cx_curr, cy_curr, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // Highlight border of ball
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(cx_curr, cy_curr, 10, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Update DOM Statistics Panel
+            valW.innerText = currentW.toFixed(4);
+            valL.innerText = currentLoss.toFixed(4);
+            valSlope.innerText = slope.toFixed(4);
+        }
+
+        // --- 6. Step Logic (Single Epoch) ---
+        function step() {
+            const slope = activeFunc.grad(currentW);
+            const currentLoss = activeFunc.loss(currentW);
+
+            // Record trace history node
+            if (isTraceOn) {
+                traceHistory.push({ w: currentW, loss: currentLoss });
+                if (traceHistory.length > 50) traceHistory.shift(); // Max 50 traces limit
+            }
+
+            const optimizerType = selectOpt.value;
+
+            if (optimizerType === 'sgd') {
+                // Standard SGD formula: w = w - lr * gradient
+                currentW = currentW - learningRate * slope;
+                velocity = 0; // Reset velocity
+            } else if (optimizerType === 'momentum') {
+                // Momentum formula: 
+                // v = alpha * v + lr * gradient
+                // w = w - v
+                velocity = momentumCoeff * velocity + learningRate * slope;
+                currentW = currentW - velocity;
+            }
+
+            // Boundary constraints to avoid flyaways off-canvas
+            if (currentW < -6) {
+                currentW = -6;
+                stopSimulation();
+            }
+            if (currentW > 6) {
+                currentW = 6;
+                stopSimulation();
+            }
+
+            // Update UI Slider corresponding value
+            sliderStart.value = currentW;
+            labelStart.innerText = currentW.toFixed(1);
+
+            draw();
+        }
+
+        // --- 7. Event & Simulation Loops ---
+        function simLoop(timestamp) {
+            if (!isRunning) return;
+
+            if (!lastUpdateTime) lastUpdateTime = timestamp;
+            const delta = timestamp - lastUpdateTime;
+
+            if (delta >= stepDelay) {
+                step();
+                lastUpdateTime = timestamp;
+
+                // Stop conditions if gradient is extremely close to zero (local minimum achieved)
+                const slope = activeFunc.grad(currentW);
+                if (Math.abs(slope) < 0.0001 && Math.abs(velocity) < 0.0001) {
+                    stopSimulation();
+                }
+            }
+
+            requestAnimationFrame(simLoop);
+        }
+
+        function startSimulation() {
+            isRunning = true;
+            playIcon.className = "fa-solid fa-pause";
+            playText.innerText = "멈춤";
+            lastUpdateTime = 0;
+            requestAnimationFrame(simLoop);
+        }
+
+        function stopSimulation() {
+            isRunning = false;
+            playIcon.className = "fa-solid fa-play";
+            playText.innerText = "내려보내기";
+        }
+
+        // --- 8. Event Handlers & Control Panel Connections ---
+        btnPlay.addEventListener('click', () => {
+            if (isRunning) {
+                stopSimulation();
+            } else {
+                startSimulation();
+            }
+        });
+
+        btnStep.addEventListener('click', () => {
+            stopSimulation();
+            step();
+        });
+
+        btnReset.addEventListener('click', () => {
+            stopSimulation();
+            currentW = parseFloat(sliderStart.value);
+            velocity = 0;
+            traceHistory = [];
+            draw();
+        });
+
+        btnTrace.addEventListener('click', () => {
+            isTraceOn = !isTraceOn;
+            if (isTraceOn) {
+                btnTrace.className = "flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm";
+                traceText.innerText = "잔상 끄기";
+            } else {
+                btnTrace.className = "flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm";
+                traceText.innerText = "잔상 켜기";
+                traceHistory = [];
+            }
+            draw();
+        });
+
+        // Sliders Listeners
+        sliderLR.addEventListener('input', (e) => {
+            learningRate = parseFloat(e.target.value);
+            labelLR.innerText = learningRate.toFixed(3);
+        });
+
+        sliderStart.addEventListener('input', (e) => {
+            stopSimulation();
+            currentW = parseFloat(e.target.value);
+            labelStart.innerText = currentW.toFixed(1);
+            traceHistory = []; // Reset trace when manually jumping
+            draw();
+        });
+
+        sliderMomentum.addEventListener('input', (e) => {
+            momentumCoeff = parseFloat(e.target.value);
+            labelMomentum.innerText = momentumCoeff.toFixed(2);
+        });
+
+        // Function selector
+        selectFunc.addEventListener('change', (e) => {
+            stopSimulation();
+            activeFunc = functions[e.target.value];
+            traceHistory = [];
+            
+            // Adjust bounds/y limits based on selected terrain for best visualization zoom
+            if (e.target.value === 'plateau') {
+                yMin = 0;
+                yMax = 6;
+                // Set reasonable default starting position for plateau so gradient doesn't fully vanish instantly
+                sliderStart.min = "-2";
+                sliderStart.max = "5";
+                if (currentW < -2 || currentW > 5) {
+                    currentW = -1.5;
+                    sliderStart.value = currentW;
+                }
+            } else {
+                yMin = -1;
+                yMax = 10;
+                sliderStart.min = "-5";
+                sliderStart.max = "5";
+            }
+            
+            draw();
+        });
+
+        // Optimizer selector
+        selectOpt.addEventListener('change', (e) => {
+            if (e.target.value === 'momentum') {
+                momentumParamContainer.classList.remove('hidden');
+            } else {
+                momentumParamContainer.classList.add('hidden');
+            }
+            velocity = 0;
+        });
+
+        // --- 9. Presets (Experimental Missions) ---
+        window.applyPreset = function(presetName) {
+            stopSimulation();
+            traceHistory = [];
+            isTraceOn = true;
+            btnTrace.className = "flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all text-sm";
+            traceText.innerText = "잔상 끄기";
+
+            if (presetName === 'overshoot') {
+                // High learning rate, standard bowl, starting at edge
+                selectFunc.value = "quadratic";
+                activeFunc = functions.quadratic;
+                selectOpt.value = "sgd";
+                momentumParamContainer.classList.add('hidden');
+                
+                sliderLR.value = "1.25";
+                learningRate = 1.25;
+                labelLR.innerText = "1.250";
+                
+                sliderStart.value = "-4.5";
+                currentW = -4.5;
+                labelStart.innerText = "-4.5";
+                
+                yMin = -1;
+                yMax = 10;
+            } 
+            else if (presetName === 'local') {
+                // Low learning rate, complex hills, starting where it will trap in local minimum on the left
+                selectFunc.value = "complex";
+                activeFunc = functions.complex;
+                selectOpt.value = "sgd";
+                momentumParamContainer.classList.add('hidden');
+                
+                sliderLR.value = "0.08";
+                learningRate = 0.08;
+                labelLR.innerText = "0.080";
+                
+                sliderStart.value = "-4.5";
+                currentW = -4.5;
+                labelStart.innerText = "-4.5";
+                
+                yMin = -1;
+                yMax = 10;
+            } 
+            else if (presetName === 'momentum') {
+                // Same starting position but with Momentum enabled to skip local minimum
+                selectFunc.value = "complex";
+                activeFunc = functions.complex;
+                selectOpt.value = "momentum";
+                momentumParamContainer.classList.remove('hidden');
+                
+                sliderLR.value = "0.08";
+                learningRate = 0.08;
+                labelLR.innerText = "0.080";
+                
+                sliderMomentum.value = "0.95";
+                momentumCoeff = 0.95;
+                labelMomentum.innerText = "0.95";
+                
+                sliderStart.value = "-4.5";
+                currentW = -4.5;
+                labelStart.innerText = "-4.5";
+                
+                yMin = -1;
+                yMax = 10;
+            }
+
+            draw();
+            setTimeout(() => {
+                startSimulation();
+            }, 300);
+        };
+
+        // --- 10. Initial Onload Trigger ---
+        window.onload = () => {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Continuous fine animation for pulse effects
+            setInterval(() => {
+                if (!isRunning) draw();
+            }, 80);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge — 시계열 분석 실습</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="DataForge — 시계열 분석 실습">
+<meta property="og:description" content="이동평균·지수평활·ARIMA 등 시계열 모델을 브라우저에서 바로 실습">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:url" content="https://dataforge.ai.kr/timeseries.php">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --orange:#ea580c;--amber:#d97706;--green:#059669;--red:#dc2626;
+  --r:10px;
+  --surface:var(--card);--surface2:var(--card2);
+  --text-dim:var(--muted);--danger:var(--red);--warning:var(--amber);
+  --accent3:#16a34a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,0,0,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none}
+.logo-brand em{color:#ea580c;font-style:normal}
+.logo-sep{width:1px;height:16px;background:var(--border);flex-shrink:0}
+.logo-title{font-size:14px;font-weight:600;color:var(--text)}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid rgba(0,0,0,0.15);padding:5px 14px;border-radius:8px;transition:.2s}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3)}
+.wrap{padding:24px;position:relative;z-index:1}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.card-title{font-family:'Noto Sans KR', sans-serif;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px}
+.inp{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 11px;font-size:13px;border-radius:3px;outline:none;font-family:inherit}
+.inp:focus{border-color:var(--accent)}
+.lbl{display:block;font-size:11px;color:var(--text-dim);margin-bottom:5px;letter-spacing:.5px}
+.fg{margin-bottom:12px}
+.row{display:flex;gap:10px;align-items:flex-end}
+.btn{padding:8px 20px;font-size:12px;font-weight:700;font-family:'Noto Sans KR', sans-serif;letter-spacing:1px;cursor:pointer;border:none;border-radius:3px;transition:.2s}
+.btn-primary{background:var(--accent);color:#ffffff}.btn-primary:hover{background:#0369a1}
+.btn-green{background:var(--accent3);color:#000}.btn-green:hover{opacity:.85}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-dim)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:4px 12px;font-size:11px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+/* model tabs — 가로 */
+.model-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.model-tab{padding:6px 14px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-dim);text-align:center;transition:.15s;letter-spacing:.5px;line-height:1.5}
+.model-tab:hover{border-color:var(--accent);color:var(--accent)}
+.model-tab.active{border-color:var(--accent);background:rgba(2,132,199,.1);color:var(--accent)}
+.model-tab .tag{font-size:9px;padding:1px 5px;border-radius:2px;margin-left:4px;font-weight:700;vertical-align:middle}
+.tab-sub{display:block;font-size:10px;color:var(--text-dim);margin-top:2px}
+.tag-php{background:rgba(2,132,199,.12);color:var(--accent)}
+.tag-py{background:rgba(234,88,12,.12);color:var(--accent2)}
+.tag-tf{background:rgba(22,163,74,.12);color:var(--accent3)}
+/* param + ctrl row */
+.ctrl-row{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.param-area{flex:1;min-width:200px}
+.param-inline{display:flex;gap:10px;flex-wrap:wrap}
+.param-inline .fg{margin-bottom:0;min-width:100px;flex:1}
+.ctrl-fixed{display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+/* param panel */
+.param-panel{display:none}.param-panel.active{display:block}
+/* data tabs */
+.data-tabs{display:flex;gap:8px;margin-bottom:14px}
+.data-tab{padding:6px 16px;font-size:12px;font-family:'Noto Sans KR', sans-serif;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-dim);transition:.15s}
+.data-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(2,132,199,.08)}
+.data-panel{display:none}.data-panel.active{display:block}
+/* sample btns */
+.sample-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sample-btn{padding:10px;font-size:11px;font-family:'Noto Sans KR', sans-serif;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text-dim);cursor:pointer;text-align:center;transition:.15s}
+.sample-btn:hover{border-color:var(--accent3);color:var(--accent3)}
+/* metrics */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.metric-box{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px;text-align:center}
+.metric-val{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent)}
+.metric-lbl{font-size:10px;color:var(--text-dim);margin-top:3px}
+/* status */
+.status-bar{font-family:'Noto Sans KR', sans-serif;font-size:11px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);min-height:30px;margin-top:10px}
+/* progress */
+.prog-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:8px;display:none}
+.prog-bar{height:100%;background:var(--accent);border-radius:2px;transition:width .1s;width:0}
+/* meta table */
+.meta-table{width:100%;font-size:11px;border-collapse:collapse;margin-top:10px}
+.meta-table td{padding:4px 8px;border-bottom:1px solid rgba(30,58,95,.5)}
+.meta-table td:first-child{color:var(--text-dim)}
+.meta-table td:last-child{font-family:'Space Mono',monospace;color:var(--accent3);text-align:right}
+/* ARIMA diagnostics */
+.diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+/* ADF result */
+.adf-result{padding:8px 12px;border-radius:3px;font-size:12px;margin-top:8px;font-family:'Space Mono',monospace}
+.adf-ok{background:rgba(57,255,20,.08);border:1px solid rgba(57,255,20,.3);color:var(--accent3)}
+.adf-ng{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.3);color:var(--danger)}
+/* loading overlay */
+.load-overlay{display:none;position:fixed;inset:0;background:rgba(10,14,23,.85);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.load-overlay.show{display:flex}
+.load-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-family:'Noto Sans KR', sans-serif;font-size:13px;color:var(--accent)}
+/* detail error table */
+.detail-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.detail-tbl th{background:var(--surface2);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.3px;padding:7px 8px;border:1px solid var(--border);text-align:right;white-space:nowrap;position:sticky;top:0;z-index:1}
+.detail-tbl th:first-child{text-align:left}
+.detail-tbl td{padding:5px 8px;border-bottom:1px solid rgba(203,213,225,.2);font-family:'Space Mono',monospace;font-size:11px;text-align:right;white-space:nowrap}
+.detail-tbl td:first-child{text-align:left;color:var(--text-dim)}
+.detail-tbl tr:hover td{background:rgba(2,132,199,.04)}
+.detail-tbl .row-fc td{color:var(--accent3)}
+.detail-tbl .row-fc-hdr td{color:var(--accent3);font-size:10px;background:rgba(57,255,20,.04);border-top:1px solid rgba(57,255,20,.25)}
+.detail-tbl .row-sum td{background:var(--surface2);font-weight:700;border-top:2px solid var(--border)}
+.detail-tbl .row-metric td{background:rgba(2,132,199,.05);color:var(--accent);font-size:10.5px}
+.detail-tbl .cell-pos{color:var(--accent3)}
+.detail-tbl .cell-neg{color:var(--danger)}
+.detail-tbl .cell-na{color:var(--border);opacity:.7}
+.formula-box{font-family:'Space Mono',monospace;font-size:11px;line-height:2.2;padding:10px 14px;background:rgba(2,132,199,.04);border:1px solid rgba(2,132,199,.15);border-radius:3px;margin-bottom:12px}
+.formula-box .fn{color:var(--accent);font-weight:700}
+.formula-box .fv{color:var(--accent3);font-weight:700}
+/* corr tabs */
+.corr-tab{padding:6px 18px;font-size:11px;font-family:'Space Mono',monospace;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-dim);text-align:center;transition:.15s;letter-spacing:.5px;line-height:1.5}
+.corr-tab:hover{border-color:var(--accent);color:var(--accent)}
+.corr-tab.active{border-color:var(--accent);background:rgba(2,132,199,.1);color:var(--accent)}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title">시계열 분석 시뮬레이터</div>
+  </div>
+  <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="wrap">
+
+  <!-- 페이지 소개 -->
+  <div style="margin-bottom:16px;padding:10px 14px;background:rgba(0,212,255,.04);border-left:2px solid var(--accent);border-radius:0 3px 3px 0;font-size:12px;color:var(--text-dim);line-height:1.8">
+    <strong style="color:var(--text)">시계열 분석 실습</strong> &nbsp;—&nbsp;
+    데이터를 입력하고 모델을 선택한 뒤 <strong style="color:var(--text)">분석 실행</strong>을 누르세요. 별도 설치 없이 브라우저에서 바로 실행됩니다. (SMA · EMA · SES · Holt · Holt-Winters · AR · ARIMA)
+  </div>
+
+  <!-- 데이터 입력 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">데이터 입력</span>
+      <span id="data-info" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)">데이터 없음</span>
+    </div>
+    <div class="data-tabs">
+      <button class="data-tab active" onclick="switchDataTab('sample')">샘플 데이터</button>
+      <button class="data-tab" onclick="switchDataTab('csv')">CSV/XLSX 업로드</button>
+      <button class="data-tab" onclick="switchDataTab('paste')">직접 입력</button>
+    </div>
+
+    <!-- 샘플 -->
+    <div id="dp-sample" class="data-panel active">
+      <div class="sample-grid">
+        <button class="sample-btn" onclick="loadSample('airpass')">✈️ 항공 승객<br><span style="color:var(--text-dim)">계절성 · 144개</span></button>
+        <button class="sample-btn" onclick="loadSample('sensor')">🌡️ 공정 센서<br><span style="color:var(--text-dim)">추세+노이즈 · 200개</span></button>
+        <button class="sample-btn" onclick="loadSample('ar2')">📈 AR(2) 공정<br><span style="color:var(--text-dim)">자기회귀 · 150개</span></button>
+        <button class="sample-btn" onclick="loadSample('energy')">⚡ 에너지 소비<br><span style="color:var(--text-dim)">주간 계절성 · 168개</span></button>
+        <button class="sample-btn" onclick="loadSample('quality')">🔍 품질 측정<br><span style="color:var(--text-dim)">정규공정 · 100개</span></button>
+        <button class="sample-btn" onclick="loadSample('defect')">⚠️ 불량률 추세<br><span style="color:var(--text-dim)">드리프트 · 120개</span></button>
+      </div>
+    </div>
+
+    <!-- CSV -->
+    <div id="dp-csv" class="data-panel">
+      <input type="file" id="csv-file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="loadCSV(this)" style="display:none">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="document.getElementById('csv-file').click()">📁 파일 선택</button>
+        <span style="font-size:12px;color:var(--text-dim)">CSV 첫 행 = 헤더, 숫자 컬럼 자동 감지</span>
+      </div>
+      <div id="csv-col-select" style="display:none;margin-top:12px">
+        <label class="lbl">분석할 컬럼 선택</label>
+        <select id="csv-col" class="inp" style="max-width:300px" onchange="applyCSVCol()"></select>
+      </div>
+    </div>
+
+    <!-- 직접 입력 -->
+    <div id="dp-paste" class="data-panel">
+      <label class="lbl">숫자를 줄바꿈 또는 쉼표로 구분하여 입력</label>
+      <textarea id="paste-area" class="inp" rows="4" placeholder="72.5, 68.3, 74.1, 80.2, ..."></textarea>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="loadPaste()">적용</button>
+    </div>
+
+    <!-- 미리보기 차트 -->
+    <div id="preview-wrap" style="display:none;margin-top:14px">
+      <div style="position:relative;height:380px">
+        <canvas id="preview-chart"></canvas>
+      </div>
+      <div id="preview-axis-info" style="display:flex;gap:16px;margin-top:8px;padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);flex-wrap:wrap">
+        <span>X축 &nbsp;<span id="pv-x-info" style="color:var(--accent)">—</span></span>
+        <span>Y축 &nbsp;<span id="pv-y-info" style="color:var(--accent2)">—</span></span>
+        <span>N &nbsp;<span id="pv-n-info" style="color:var(--accent3)">—</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모델 선택 & 파라미터 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">모델 선택 & 파라미터</span></div>
+
+    <!-- 가로 모델 탭 -->
+    <div class="model-tabs">
+      <button class="model-tab active" onclick="selectModel('sma')">SMA<span class="tab-sub">단순 이동평균</span></button>
+      <button class="model-tab" onclick="selectModel('ema')">EMA<span class="tab-sub">지수가중 이동평균</span></button>
+      <button class="model-tab" onclick="selectModel('ses')">SES<span class="tab-sub">단순 지수평활</span></button>
+      <button class="model-tab" onclick="selectModel('holt')">Holt<span class="tab-sub">이중 지수평활</span></button>
+      <button class="model-tab" onclick="selectModel('holt_winters')">Holt-Winters<span class="tab-sub">삼중 지수평활</span></button>
+      <button class="model-tab" onclick="selectModel('ar')">AR(p)<span class="tab-sub">자기회귀</span></button>
+      <button class="model-tab" onclick="selectModel('arima')">ARIMA<span class="tab-sub">차분 자기회귀</span></button>
+    </div>
+
+    <!-- 파라미터 + 실행 컨트롤 -->
+    <div class="ctrl-row">
+      <div class="param-area">
+        <div id="pp-sma" class="param-panel active">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">이동 창 크기 (window)</label><input class="inp" type="number" id="sma-w" value="5" min="2" max="50" style="max-width:120px"></div>
+          </div>
+        </div>
+        <div id="pp-ema" class="param-panel">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">스팬 (span)</label><input class="inp" type="number" id="ema-span" value="5" min="2" max="50" style="max-width:120px"></div>
+          </div>
+        </div>
+        <div id="pp-ses" class="param-panel">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">평활 계수 α</label><input class="inp" type="number" id="ses-a" value="0.3" min="0.01" max="0.99" step="0.01" style="max-width:120px"></div>
+          </div>
+        </div>
+        <div id="pp-holt" class="param-panel">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">수준 계수 α</label><input class="inp" type="number" id="holt-a" value="0.3" min="0.01" max="0.99" step="0.01" style="max-width:110px"></div>
+            <div class="fg"><label class="lbl">추세 계수 β</label><input class="inp" type="number" id="holt-b" value="0.1" min="0.01" max="0.99" step="0.01" style="max-width:110px"></div>
+          </div>
+        </div>
+        <div id="pp-holt_winters" class="param-panel">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">α</label><input class="inp" type="number" id="hw-a" value="0.3" min="0.01" max="0.99" step="0.01" style="max-width:90px"></div>
+            <div class="fg"><label class="lbl">β</label><input class="inp" type="number" id="hw-b" value="0.1" min="0.01" max="0.99" step="0.01" style="max-width:90px"></div>
+            <div class="fg"><label class="lbl">γ</label><input class="inp" type="number" id="hw-g" value="0.2" min="0.01" max="0.99" step="0.01" style="max-width:90px"></div>
+            <div class="fg"><label class="lbl">계절 주기 m</label><input class="inp" type="number" id="hw-m" value="12" min="2" max="24" style="max-width:90px"></div>
+          </div>
+        </div>
+        <div id="pp-ar" class="param-panel">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">AR 차수 p</label><input class="inp" type="number" id="ar-p" value="2" min="1" max="20" style="max-width:120px"></div>
+          </div>
+        </div>
+        <div id="pp-arima" class="param-panel">
+          <div class="param-inline">
+            <div class="fg"><label class="lbl">p (AR)</label><input class="inp" type="number" id="arima-p" value="1" min="0" max="10" style="max-width:90px"></div>
+            <div class="fg"><label class="lbl">d (차분)</label><input class="inp" type="number" id="arima-d" value="1" min="0" max="3" style="max-width:90px"></div>
+            <div class="fg"><label class="lbl">q (MA)</label><input class="inp" type="number" id="arima-q" value="1" min="0" max="10" style="max-width:90px"></div>
+            <div class="fg" style="align-self:flex-end"><span style="font-size:10px;color:var(--text-dim)">※ 최초 실행 시 준비 시간 필요</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ctrl-fixed">
+        <div class="fg" style="margin-bottom:0">
+          <label class="lbl">예측 스텝</label>
+          <input class="inp" type="number" id="forecast-h" value="20" min="1" max="100" style="max-width:90px">
+        </div>
+        <button class="btn btn-primary" id="run-btn" onclick="runModel()" disabled style="white-space:nowrap;height:38px">▶ 분석 실행</button>
+      </div>
+    </div>
+
+    <div id="status-bar" class="status-bar">데이터를 먼저 선택하세요</div>
+    <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+  </div>
+
+  <!-- 차트 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" id="chart-title">시계열 분석 결과</span>
+      <span style="font-size:11px;color:var(--text-dim);font-family:'Space Mono',monospace">
+        <span style="color:var(--accent)">━</span> 원본 &nbsp;
+        <span style="color:var(--accent2)">━</span> 적합값 &nbsp;
+        <span style="color:var(--accent3)">┅</span> 예측
+      </span>
+    </div>
+    <div style="position:relative;height:380px">
+      <canvas id="main-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- 지표 (차트 아래) -->
+  <div class="metric-row" id="metric-row" style="display:none;margin-bottom:16px">
+    <div class="metric-box"><div class="metric-val" id="m-rmse">-</div><div class="metric-lbl">RMSE</div></div>
+    <div class="metric-box"><div class="metric-val" id="m-mae">-</div><div class="metric-lbl">MAE</div></div>
+    <div class="metric-box"><div class="metric-val" id="m-mape">-</div><div class="metric-lbl">MAPE (%)</div></div>
+    <div class="metric-box"><div class="metric-val" id="m-aic">-</div><div class="metric-lbl">AIC</div></div>
+  </div>
+
+  <!-- 모델 파라미터 요약 -->
+  <div id="meta-wrap" style="display:none;margin-bottom:16px">
+    <div class="card" style="padding:12px 16px;margin-bottom:0">
+      <table class="meta-table" id="meta-table"></table>
+    </div>
+  </div>
+
+  <!-- ARIMA 진단 -->
+  <div id="arima-diag" style="display:none">
+    <div class="card">
+      <div class="card-header"><span class="card-title">ARIMA 진단</span></div>
+      <div id="adf-result-box"></div>
+      <div class="diag-grid">
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">ACF (자기상관함수)</div>
+          <div style="position:relative;height:200px"><canvas id="acf-chart"></canvas></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">PACF (편자기상관함수)</div>
+          <div style="position:relative;height:200px"><canvas id="pacf-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 예측값 & 오차 상세 테이블 -->
+  <div id="dtbl-wrap" style="display:none;margin-bottom:16px">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header">
+        <span class="card-title">예측값 · 오차 상세</span>
+        <span id="dtbl-info" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim)"></span>
+      </div>
+      <div id="formula-box" class="formula-box"></div>
+      <div style="overflow:auto;max-height:440px;border:1px solid var(--border);border-radius:3px">
+        <table class="detail-tbl">
+          <thead>
+            <tr>
+              <th>시점</th>
+              <th>실제값 (y)</th>
+              <th>예측값 (ŷ)</th>
+              <th>오차 e = y−ŷ</th>
+              <th>|e| &nbsp;← MAE</th>
+              <th>e² &nbsp;← RMSE</th>
+              <th>|e/y|×100% &nbsp;← MAPE</th>
+            </tr>
+          </thead>
+          <tbody id="dtbl-body"></tbody>
+          <tfoot id="dtbl-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상관 분석 도구 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">상관 분석</span>
+      <span style="font-size:11px;color:var(--text-dim)">자기상관 ACF/PACF · 교차상관 CCF</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="corr-tab active" onclick="switchCorrTab('acf')">ACF / PACF<span style="display:block;font-size:10px;color:var(--text-dim);margin-top:2px">자기상관계수</span></button>
+      <button class="corr-tab" onclick="switchCorrTab('ccf')">CCF<span style="display:block;font-size:10px;color:var(--text-dim);margin-top:2px">교차상관분석</span></button>
+    </div>
+
+    <!-- ACF/PACF 패널 -->
+    <div id="corr-acf">
+      <div class="row" style="margin-bottom:14px;align-items:flex-end">
+        <div class="fg" style="margin-bottom:0;flex:none">
+          <label class="lbl">최대 시차 (max lag)</label>
+          <input class="inp" type="number" id="acf-maxlag" value="40" min="5" max="200" style="max-width:120px">
+        </div>
+        <button class="btn btn-primary" id="acf-run-btn" onclick="runACFPanel()" disabled style="height:38px">▶ 계산</button>
+      </div>
+      <div id="acf-panel-result" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">ACF — 자기상관함수 r(k)</div>
+            <div style="position:relative;height:220px"><canvas id="acf-sa-chart"></canvas></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">PACF — 편자기상관함수 φ(k)</div>
+            <div style="position:relative;height:220px"><canvas id="pacf-sa-chart"></canvas></div>
+          </div>
+        </div>
+        <div id="acf-ci-info" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:8px"></div>
+        <div style="overflow:auto;max-height:320px;border:1px solid var(--border);border-radius:3px">
+          <table class="detail-tbl">
+            <thead>
+              <tr>
+                <th>시차 k</th>
+                <th>ACF r(k)</th>
+                <th>PACF φ(k)</th>
+                <th>유의 95%</th>
+                <th>해석</th>
+              </tr>
+            </thead>
+            <tbody id="acf-sa-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CCF 패널 -->
+    <div id="corr-ccf" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label class="lbl">X 시계열 (현재 로드된 데이터)</label>
+          <div id="ccf-x-info" style="font-family:'Space Mono',monospace;font-size:11px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim)">데이터를 먼저 로드하세요</div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <label class="lbl" style="margin-bottom:0">Y 시계열</label>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline btn-sm" onclick="document.getElementById('ccf-y-file').click()">📁 CSV/XLSX 업로드</button>
+              <input type="file" id="ccf-y-file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="loadCCFYCSV(this)" style="display:none">
+            </div>
+          </div>
+          <textarea class="inp" id="ccf-y-input" rows="3"
+            placeholder="숫자를 쉼표 또는 줄바꿈으로 직접 입력&#10;예: 10.2, 11.5, 9.8, 12.1, ..."
+            oninput="updateCCFYInfo()"></textarea>
+          <div id="ccf-y-count" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:4px">입력 없음</div>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:14px;align-items:flex-end">
+        <div class="fg" style="margin-bottom:0;flex:none">
+          <label class="lbl">최대 시차</label>
+          <input class="inp" type="number" id="ccf-maxlag" value="20" min="1" max="100" style="max-width:120px">
+        </div>
+        <button class="btn btn-primary" id="ccf-run-btn" onclick="runCCFPanel()" disabled style="height:38px">▶ 계산</button>
+      </div>
+      <div id="ccf-panel-result" style="display:none">
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">CCF r<sub>xy</sub>(k) — 음수 k: Y 선행, 0: 동시, 양수 k: X 선행</div>
+          <div style="position:relative;height:240px"><canvas id="ccf-sa-chart"></canvas></div>
+        </div>
+        <div id="ccf-peak-box" class="formula-box" style="margin-bottom:12px"></div>
+        <div style="overflow:auto;max-height:300px;border:1px solid var(--border);border-radius:3px">
+          <table class="detail-tbl">
+            <thead>
+              <tr>
+                <th>시차 k</th>
+                <th>r<sub>xy</sub>(k)</th>
+                <th>유의 95%</th>
+                <th>해석</th>
+              </tr>
+            </thead>
+            <tbody id="ccf-sa-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="load-overlay" class="load-overlay">
+  <div class="load-spinner"></div>
+  <div class="load-text" id="load-text">로딩 중...</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   샘플 데이터
+══════════════════════════════════════════ */
+const SAMPLES = {
+  airpass: {
+    label: '항공 승객 수 (1949-1960)',
+    data: [112,118,132,129,121,135,148,148,136,119,104,118,115,126,141,135,125,149,170,170,158,133,114,140,145,150,178,163,172,178,199,199,184,162,146,166,171,180,193,181,183,218,230,242,209,191,172,194,196,196,236,235,229,243,264,272,237,211,180,201,204,188,235,227,234,264,302,293,259,229,203,229,242,233,267,269,270,315,364,347,312,274,237,278,284,277,317,313,318,374,413,405,355,306,271,306,315,301,356,348,355,422,465,467,404,347,305,336,340,318,362,348,363,435,491,505,404,359,310,337,360,342,406,396,420,472,548,559,463,407,362,405,417,391,419,461,472,535,622,606,508,461,390,432],
+    unit: '승객 수'
+  },
+  sensor: {
+    label: '공정 센서 온도 (°C)',
+    data: (()=>{const d=[];let v=75;for(let i=0;i<200;i++){v+=0.08+( Math.random()-0.45)*1.2+Math.sin(i/10)*0.3;d.push(+v.toFixed(2));}return d;})(),
+    unit: '°C'
+  },
+  ar2: {
+    label: 'AR(2) 시뮬레이션',
+    data: (()=>{const d=[0,1];for(let i=2;i<150;i++){d.push(+(0.65*d[i-1]-0.25*d[i-2]+(Math.random()-0.5)*0.8).toFixed(4));}return d;})(),
+    unit: '값'
+  },
+  energy: {
+    label: '시간대별 에너지 소비 (kWh)',
+    data: (()=>{const d=[];for(let i=0;i<168;i++){const base=100+30*Math.sin(2*Math.PI*i/24)+15*Math.sin(2*Math.PI*i/168);d.push(+(base+(Math.random()-0.5)*8).toFixed(2));}return d;})(),
+    unit: 'kWh'
+  },
+  quality: {
+    label: '품질 측정값 (mm)',
+    data: (()=>{const d=[];for(let i=0;i<100;i++){d.push(+(50+(Math.random()-0.5)*0.6).toFixed(4));}return d;})(),
+    unit: 'mm'
+  },
+  defect: {
+    label: '불량률 추세 (%)',
+    data: (()=>{const d=[];let v=1.5;for(let i=0;i<120;i++){v+=0.03+(Math.random()-0.45)*0.15;v=Math.max(0,v);d.push(+v.toFixed(3));}return d;})(),
+    unit: '%'
+  }
+};
+
+/* ══════════════════════════════════════════
+   상태
+══════════════════════════════════════════ */
+const state = {
+  data: [], labels: [], currentModel: 'sma',
+  csvRows: [], csvHeaders: []
+};
+
+/* ══════════════════════════════════════════
+   데이터 탭
+══════════════════════════════════════════ */
+function switchDataTab(t){
+  document.querySelectorAll('.data-tab').forEach((b,i)=>b.classList.toggle('active',['sample','csv','paste'][i]===t));
+  document.querySelectorAll('.data-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('dp-'+t).classList.add('active');
+}
+function loadSample(key){
+  const s=SAMPLES[key];
+  state.data=[...s.data];
+  state.labels=s.data.map((_,i)=>'t'+(i+1));
+  state.currentLabel=s.label;
+  state.currentUnit=s.unit||'값';
+  applyData();
+}
+// CSV/TSV/XLSX 공용 리더 — {headers, rows} 콜백
+function readTableFile(file, cb){
+  const isXLSX=/\.xlsx?$/i.test(file.name);
+  const reader=new FileReader();
+  if(isXLSX){
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+        if(!data.length){cb(null);return;}
+        const headers=data[0].map(h=>String(h??'').trim());
+        const rows=data.slice(1).map(row=>headers.map((_,j)=>String(row[j]??'').trim()));
+        cb({headers,rows});
+      }catch(err){cb(null);}
+    };
+    reader.readAsArrayBuffer(file);
+  }else{
+    reader.onload=e=>{
+      const lines=e.target.result.trim().split(/\r?\n/).filter(l=>l.trim());
+      if(!lines.length){cb(null);return;}
+      const sep=lines[0].includes('\t')?'\t':',';
+      const headers=lines[0].split(sep).map(h=>h.trim());
+      const rows=lines.slice(1).map(l=>l.split(sep).map(v=>v.trim()));
+      cb({headers,rows});
+    };
+    reader.readAsText(file);
+  }
+}
+
+function loadCSV(input){
+  const file=input.files[0]; if(!file) return;
+  readTableFile(file,parsed=>{
+    if(!parsed){alert('파일을 읽지 못했습니다. 형식을 확인하세요.');return;}
+    const {headers,rows}=parsed;
+    state.csvRows=rows; state.csvHeaders=headers;
+    const numCols=headers.filter((_,i)=>rows.some(r=>!isNaN(parseFloat(r[i]))));
+    const sel=document.getElementById('csv-col');
+    sel.innerHTML=numCols.map(c=>`<option value="${headers.indexOf(c)}">${c}</option>`).join('');
+    document.getElementById('csv-col-select').style.display='';
+    applyCSVCol();
+  });
+  input.value='';  // 같은 파일 재선택 허용
+}
+function applyCSVCol(){
+  const idx=+document.getElementById('csv-col').value;
+  state.data=state.csvRows.map(r=>parseFloat(r[idx])).filter(v=>!isNaN(v));
+  state.labels=state.data.map((_,i)=>'t'+(i+1));
+  state.currentLabel=state.csvHeaders[idx]||'값';
+  state.currentUnit=state.csvHeaders[idx]||'값';
+  applyData();
+}
+function loadPaste(){
+  const raw=document.getElementById('paste-area').value.replace(/[\n\r]+/g,',');
+  const vals=raw.split(',').map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
+  if(!vals.length){setStatus('유효한 숫자가 없습니다','warn');return;}
+  state.data=vals; state.labels=vals.map((_,i)=>'t'+(i+1));
+  state.currentLabel='사용자 입력';
+  applyData();
+}
+function applyData(){
+  const n=state.data.length;
+  const mn=Math.min(...state.data).toFixed(2);
+  const mx=Math.max(...state.data).toFixed(2);
+  const avg=(state.data.reduce((a,b)=>a+b,0)/n).toFixed(2);
+  document.getElementById('data-info').textContent=`n=${n} · min=${mn} · max=${mx} · avg=${avg}`;
+  document.getElementById('preview-wrap').style.display='';
+  renderPreview();
+  initMainChart();
+  document.getElementById('run-btn').disabled=false;
+  document.getElementById('acf-run-btn').disabled=false;
+  document.getElementById('ccf-run-btn').disabled=false;
+  document.getElementById('ccf-x-info').textContent=
+    `${state.currentLabel||'데이터'} (n=${state.data.length}, min=${Math.min(...state.data).toFixed(2)}, max=${Math.max(...state.data).toFixed(2)})`;
+  clearResults();
+  setStatus('데이터 로드 완료. 모델 설정 후 실행하세요.');
+}
+
+/* ══════════════════════════════════════════
+   모델 선택
+══════════════════════════════════════════ */
+function selectModel(m){
+  state.currentModel=m;
+  document.querySelectorAll('.model-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.model-tab')[['sma','ema','ses','holt','holt_winters','ar','arima'].indexOf(m)].classList.add('active');
+  document.querySelectorAll('.param-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pp-'+m).classList.add('active');
+  document.getElementById('arima-diag').style.display='none';
+  clearResults();
+}
+
+/* ══════════════════════════════════════════
+   메인 실행 디스패처
+══════════════════════════════════════════ */
+async function runModel(){
+  if(!state.data.length){setStatus('데이터를 먼저 입력하세요','warn');return;}
+  const m=state.currentModel;
+  if(m==='arima') await runARIMA();
+  else await runPHP(m);
+}
+
+/* ══════════════════════════════════════════
+   PHP 모델 공통 호출
+══════════════════════════════════════════ */
+async function runPHP(action){
+  setBusy(true);
+  const h=+document.getElementById('forecast-h').value||10;
+  const params={forecast:h};
+  if(action==='sma')          params.window=+document.getElementById('sma-w').value;
+  else if(action==='ema')     params.span  =+document.getElementById('ema-span').value;
+  else if(action==='ses')     params.alpha =+document.getElementById('ses-a').value;
+  else if(action==='holt')   {params.alpha=+document.getElementById('holt-a').value;params.beta=+document.getElementById('holt-b').value;}
+  else if(action==='holt_winters'){params.alpha=+document.getElementById('hw-a').value;params.beta=+document.getElementById('hw-b').value;params.gamma=+document.getElementById('hw-g').value;params.period=+document.getElementById('hw-m').value;}
+  else if(action==='ar')      params.p     =+document.getElementById('ar-p').value;
+
+  try{
+    const res=await fetch('api/timeseries_calc.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,data:state.data,params})});
+    const d=await res.json();
+    if(!d.ok){setStatus(d.msg||'오류 발생','err');return;}
+    updateMainChart(d.fitted,d.forecast);
+    showMetrics(d.metrics,null);
+    showMeta(d.meta||{});
+    showDetailTable(d.fitted,d.forecast);
+    setStatus(`${action.toUpperCase()} 분석 완료`);
+  }catch(e){setStatus('서버 통신 오류: '+e.message,'err');}
+  setBusy(false);
+}
+
+/* ══════════════════════════════════════════
+   ARIMA — Pyodide
+══════════════════════════════════════════ */
+let _pyodide=null;
+async function ensurePyodide(){
+  if(_pyodide) return _pyodide;
+  setStatus('분석 엔진 초기화 중... (최초 1회, 잠시 기다려 주세요)','warn');
+  showOverlay('분석 중...');
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js';
+  await new Promise((res,rej)=>{script.onload=res;script.onerror=rej;document.head.appendChild(script);});
+  _pyodide=await loadPyodide();
+  setStatus('분석 모듈 준비 중...','warn');
+  showOverlay('분석 중...');
+  await _pyodide.loadPackage(['pandas','statsmodels','scipy']);
+  hideOverlay();
+  return _pyodide;
+}
+
+const ARIMA_PY=`
+import json, numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.stattools import adfuller, acf, pacf
+result={}
+arr=list(data)
+n=len(arr)
+try:
+    adf=adfuller(arr)
+    result['adf']={'statistic':round(float(adf[0]),4),'pvalue':round(float(adf[1]),4),'critical_1':round(float(adf[4]['1%']),4),'critical_5':round(float(adf[4]['5%']),4),'is_stationary':bool(adf[1]<0.05)}
+except Exception as e:
+    result['adf']={'error':str(e)}
+try:
+    nl=min(40,n//4)
+    result['acf']=[round(float(v),4) for v in acf(arr,nlags=nl)]
+    result['pacf']=[round(float(v),4) for v in pacf(arr,nlags=nl)]
+except:
+    result['acf']=[];result['pacf']=[]
+try:
+    di=int(d)
+    trend='c' if di==0 else ('t' if di==1 else 'n')
+    m=ARIMA(arr,order=(int(p),di,int(q)),trend=trend)
+    fit=m.fit()
+    result['fitted']=[round(float(v),4) for v in fit.fittedvalues]
+    result['forecast']=[round(float(v),4) for v in fit.forecast(steps=int(h))]
+    result['aic']=round(float(fit.aic),2)
+    result['bic']=round(float(fit.bic),2)
+    result['ok']=True
+except Exception as e:
+    result['ok']=False;result['error']=str(e)
+json.dumps(result)
+`;
+
+async function runARIMA(){
+  setBusy(true);
+  try{
+    const py=await ensurePyodide();
+    showOverlay('분석 중...');
+    py.globals.set('data',py.toPy(state.data));
+    py.globals.set('p',+document.getElementById('arima-p').value);
+    py.globals.set('d',+document.getElementById('arima-d').value);
+    py.globals.set('q',+document.getElementById('arima-q').value);
+    py.globals.set('h',+document.getElementById('forecast-h').value||20);
+    setStatus('ARIMA 모델 적합 중...');
+    hideOverlay();
+    const jsonStr=await py.runPythonAsync(ARIMA_PY);
+    const r=JSON.parse(jsonStr);
+    if(!r.ok){setStatus('ARIMA 오류: '+(r.error||'알 수 없음'),'err');setBusy(false);return;}
+    updateMainChart(r.fitted,r.forecast);
+    showMetrics({rmse:calcRMSE(state.data,r.fitted),mae:calcMAE(state.data,r.fitted),mape:calcMAPE(state.data,r.fitted)},r.aic);
+    renderADF(r.adf);
+    renderACFPACF(r.acf,r.pacf);
+    showDetailTable(r.fitted,r.forecast);
+    document.getElementById('arima-diag').style.display='';
+    setStatus(`ARIMA(${document.getElementById('arima-p').value},${document.getElementById('arima-d').value},${document.getElementById('arima-q').value}) 완료 · AIC=${r.aic}`);
+  }catch(e){setStatus('오류: '+e.message,'err');}
+  setBusy(false);
+}
+
+/* ══════════════════════════════════════════
+   차트 관리
+══════════════════════════════════════════ */
+let previewChart=null,mainChart=null,acfChart=null,pacfChart=null;
+
+function renderPreview(){
+  const ctx=document.getElementById('preview-chart').getContext('2d');
+  if(previewChart) previewChart.destroy();
+  const n=state.data.length;
+  const mn=Math.min(...state.data), mx=Math.max(...state.data);
+  const unit=state.currentUnit||'';
+  previewChart=new Chart(ctx,{type:'line',data:{labels:state.labels,datasets:[{data:state.data,borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,tension:.3,fill:false}]},options:{
+    responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:'#64748b',font:{size:9},maxTicksLimit:10},grid:{color:'rgba(30,58,95,.3)'},title:{display:true,text:'관측 시점 (t)',color:'#64748b',font:{size:9}}},
+      y:{ticks:{color:'#64748b',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(30,58,95,.3)'},title:{display:true,text:unit||'값',color:'#64748b',font:{size:9}}}
+    }
+  }});
+  // 축 정보 패널
+  document.getElementById('pv-x-info').textContent=`t1 ~ t${n}`;
+  document.getElementById('pv-y-info').textContent=`${mn.toFixed(2)} ~ ${mx.toFixed(2)}${unit?' ('+unit+')':''}`;
+  document.getElementById('pv-n-info').textContent=`${n}개 관측치`;
+}
+
+function initMainChart(){
+  const ctx=document.getElementById('main-chart').getContext('2d');
+  if(mainChart) mainChart.destroy();
+  const unit=state.currentUnit||'값';
+  mainChart=new Chart(ctx,{type:'line',data:{
+    labels:state.labels,
+    datasets:[{label:'원본 데이터',data:state.data,borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,tension:.3,fill:false}]
+  },options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:300},
+    plugins:{legend:{labels:{color:'#64748b',font:{family:"'Space Mono',monospace",size:11}}}},
+    scales:{
+      x:{ticks:{color:'#64748b',maxTicksLimit:12},grid:{color:'rgba(30,58,95,.4)'},title:{display:true,text:'관측 시점 (t)',color:'#64748b',font:{size:10}}},
+      y:{ticks:{color:'#64748b'},grid:{color:'rgba(30,58,95,.4)'},title:{display:true,text:unit,color:'#64748b',font:{size:10}}}
+    }
+  }});
+}
+
+function updateMainChart(fitted,forecast){
+  if(!mainChart) return;
+  const n=state.data.length;
+  const forecastLabels=forecast.map((_,i)=>'f'+(i+1));
+  const allLabels=[...state.labels,...forecastLabels];
+  const origPad=[...state.data,...Array(forecast.length).fill(null)];
+  const fittedPad=[...fitted,...Array(forecast.length).fill(null)];
+  const fcstPad=[...Array(n-1).fill(null),state.data[n-1],...forecast];
+
+  mainChart.data.labels=allLabels;
+  mainChart.data.datasets=[
+    {label:'원본 데이터',data:origPad,borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,tension:.3,fill:false},
+    {label:'적합값 (Fitted)',data:fittedPad,borderColor:'#ff6b35',borderWidth:1.5,pointRadius:0,tension:.3,fill:false,borderDash:[4,2]},
+    {label:'예측 (Forecast)',data:fcstPad,borderColor:'#39ff14',borderWidth:2,pointRadius:0,tension:.3,fill:false,borderDash:[6,3]}
+  ];
+  mainChart.update();
+  document.getElementById('chart-title').textContent=state.currentModel.toUpperCase()+' — '+(state.currentLabel||'결과');
+}
+
+function renderADF(adf){
+  const el=document.getElementById('adf-result-box');
+  if(!adf||adf.error){el.innerHTML=`<div class="adf-ng">ADF 검정 실패</div>`;return;}
+  const ok=adf.is_stationary;
+  const currentD=+document.getElementById('arima-d').value;
+  let conclusion;
+  if(ok){
+    conclusion=`✓ 정상 시계열 — d=0 적절${currentD>0?' (현재 d='+currentD+', 줄여도 됩니다)':''}`;
+  } else {
+    conclusion=currentD>=1
+      ? `✓ 비정상 시계열 — 현재 d=${currentD} 설정이 적절합니다`
+      : `✗ 비정상 시계열 — d를 1 이상으로 올리세요 (현재 d=${currentD})`;
+  }
+  el.innerHTML=`<div class="${ok||currentD>=1?'adf-ok':'adf-ng'}">
+    ADF 검정 통계량: ${adf.statistic} &nbsp;·&nbsp; p-value: ${adf.pvalue}<br>
+    임계값: 1%=${adf.critical_1}, 5%=${adf.critical_5}<br>
+    결론: ${conclusion}
+  </div>`;
+}
+
+function renderACFPACF(acfVals,pacfVals){
+  const mkBar=(vals,id,color)=>{
+    const ctx=document.getElementById(id).getContext('2d');
+    if(window[id+'Ch']) window[id+'Ch'].destroy();
+    const lags=vals.map((_,i)=>i);
+    const ci=1.96/Math.sqrt(state.data.length);
+    window[id+'Ch']=new Chart(ctx,{type:'bar',data:{
+      labels:lags,
+      datasets:[
+        {data:vals,backgroundColor:vals.map(v=>Math.abs(v)>ci?color+'cc':color+'44'),borderColor:color,borderWidth:1},
+        {type:'line',data:lags.map(()=>ci),borderColor:'#ff6b3577',borderDash:[4,2],borderWidth:1,pointRadius:0,fill:false},
+        {type:'line',data:lags.map(()=>-ci),borderColor:'#ff6b3577',borderDash:[4,2],borderWidth:1,pointRadius:0,fill:false}
+      ]
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',font:{size:9}}},y:{min:-1,max:1,ticks:{color:'#64748b'}}},animation:{duration:200}}});
+  };
+  mkBar(acfVals,'acf-chart','#00d4ff');
+  mkBar(pacfVals,'pacf-chart','#ff6b35');
+}
+
+/* ══════════════════════════════════════════
+   메트릭 & 메타
+══════════════════════════════════════════ */
+function showMetrics(m,aic){
+  document.getElementById('metric-row').style.display='';
+  document.getElementById('m-rmse').textContent=m?.rmse??'-';
+  document.getElementById('m-mae').textContent=m?.mae??'-';
+  document.getElementById('m-mape').textContent=m?.mape!=null?m.mape+'%':'-';
+  document.getElementById('m-aic').textContent=aic??'-';
+}
+function showMeta(meta){
+  const w=document.getElementById('meta-wrap');
+  const t=document.getElementById('meta-table');
+  const rows=Object.entries(meta).map(([k,v])=>`<tr><td>${k}</td><td>${Array.isArray(v)?v.join(', '):v}</td></tr>`).join('');
+  if(!rows){w.style.display='none';return;}
+  t.innerHTML=rows; w.style.display='';
+}
+function clearResults(){
+  document.getElementById('metric-row').style.display='none';
+  document.getElementById('meta-wrap').style.display='none';
+  document.getElementById('arima-diag').style.display='none';
+  document.getElementById('dtbl-wrap').style.display='none';
+  if(mainChart) initMainChart();
+}
+
+/* ══════════════════════════════════════════
+   오차 상세 테이블
+══════════════════════════════════════════ */
+function showDetailTable(fitted, forecast) {
+  const y = state.data;
+  const n = y.length;
+  let rows = '', sumAe = 0, sumE2 = 0, sumPct = 0, cnt = 0, cntM = 0;
+
+  for (let i = 0; i < n; i++) {
+    const yhat = fitted[i];
+    if (yhat === null || yhat === undefined || isNaN(+yhat)) {
+      rows += `<tr><td>${state.labels[i]}</td><td>${y[i]}</td>` +
+        `<td class="cell-na">—</td><td class="cell-na">—</td>` +
+        `<td class="cell-na">—</td><td class="cell-na">—</td><td class="cell-na">—</td></tr>`;
+      continue;
+    }
+    const e   = y[i] - yhat;
+    const ae  = Math.abs(e);
+    const e2  = e * e;
+    const pct = y[i] !== 0 ? ae / Math.abs(y[i]) * 100 : null;
+    sumAe += ae; sumE2 += e2;
+    if (pct !== null) { sumPct += pct; cntM++; }
+    cnt++;
+    const ec = e > 0.0001 ? 'cell-pos' : e < -0.0001 ? 'cell-neg' : '';
+    rows += `<tr>
+      <td>${state.labels[i]}</td>
+      <td>${y[i]}</td>
+      <td>${(+yhat).toFixed(4)}</td>
+      <td class="${ec}">${e >= 0 ? '+' : ''}${e.toFixed(4)}</td>
+      <td>${ae.toFixed(4)}</td>
+      <td>${e2.toFixed(4)}</td>
+      <td>${pct !== null ? pct.toFixed(2) + '%' : '—'}</td>
+    </tr>`;
+  }
+
+  if (forecast && forecast.length) {
+    rows += `<tr class="row-fc-hdr"><td colspan="7">▼ 예측 구간 (f1 ~ f${forecast.length})</td></tr>`;
+    forecast.forEach((v, i) => {
+      rows += `<tr class="row-fc"><td>f${i+1}</td><td class="cell-na">—</td>` +
+        `<td>${(+v).toFixed(4)}</td>` +
+        `<td class="cell-na">—</td><td class="cell-na">—</td><td class="cell-na">—</td><td class="cell-na">—</td></tr>`;
+    });
+  }
+
+  const rmse = cnt ? +Math.sqrt(sumE2 / cnt).toFixed(4) : 0;
+  const mae  = cnt ? +(sumAe  / cnt).toFixed(4) : 0;
+  const mape = cntM ? +(sumPct / cntM).toFixed(2) : 0;
+
+  document.getElementById('dtbl-body').innerHTML = rows;
+  document.getElementById('dtbl-foot').innerHTML = `
+    <tr class="row-sum">
+      <td colspan="2">합계 (유효 ${cnt}개)</td>
+      <td>—</td><td>—</td>
+      <td>Σ|e| = ${sumAe.toFixed(4)}</td>
+      <td>Σe² = ${sumE2.toFixed(4)}</td>
+      <td>Σ(|e/y|×100) = ${sumPct.toFixed(2)}%</td>
+    </tr>
+    <tr class="row-metric">
+      <td colspan="2">오차 지표</td>
+      <td>—</td><td>—</td>
+      <td><strong>MAE</strong> = ${sumAe.toFixed(4)} ÷ ${cnt} = <strong>${mae}</strong></td>
+      <td><strong>RMSE</strong> = √(${sumE2.toFixed(4)} ÷ ${cnt}) = <strong>${rmse}</strong></td>
+      <td><strong>MAPE</strong> = ${sumPct.toFixed(2)}% ÷ ${cntM} = <strong>${mape}%</strong></td>
+    </tr>`;
+
+  document.getElementById('formula-box').innerHTML =
+    `<span class="fn">RMSE</span> = √(Σe² ÷ n) = √(${sumE2.toFixed(4)} ÷ ${cnt}) = <span class="fv">${rmse}</span>` +
+    `&emsp;&emsp;<span class="fn">MAE</span> = Σ|e| ÷ n = ${sumAe.toFixed(4)} ÷ ${cnt} = <span class="fv">${mae}</span>` +
+    `&emsp;&emsp;<span class="fn">MAPE</span> = Σ(|e/y|×100%) ÷ n = ${sumPct.toFixed(2)}% ÷ ${cntM} = <span class="fv">${mape}%</span>`;
+
+  document.getElementById('dtbl-info').textContent =
+    `관측 ${n}개 · 유효예측 ${cnt}개 · 예측 ${forecast?.length ?? 0}스텝`;
+  document.getElementById('dtbl-wrap').style.display = '';
+}
+
+/* ══════════════════════════════════════════
+   자기상관 / 교차상관 분석
+══════════════════════════════════════════ */
+function switchCorrTab(t) {
+  document.querySelectorAll('.corr-tab').forEach((b, i) =>
+    b.classList.toggle('active', ['acf','ccf'][i] === t));
+  document.getElementById('corr-acf').style.display = t === 'acf' ? '' : 'none';
+  document.getElementById('corr-ccf').style.display = t === 'ccf' ? '' : 'none';
+}
+
+// Y 시계열 입력 헬퍼
+function updateCCFYInfo() {
+  const raw = document.getElementById('ccf-y-input').value.replace(/[\n\r]+/g, ',');
+  const vals = raw.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+  const el = document.getElementById('ccf-y-count');
+  if (!vals.length) { el.textContent = '입력 없음'; el.style.color = 'var(--text-dim)'; return; }
+  el.textContent = `${vals.length}개 감지 · min=${Math.min(...vals).toFixed(2)} · max=${Math.max(...vals).toFixed(2)}`;
+  el.style.color = 'var(--accent3)';
+}
+function loadCCFYCSV(input) {
+  const file = input.files[0]; if (!file) return;
+  readTableFile(file, parsed => {
+    if (!parsed) { alert('파일을 읽지 못했습니다. 형식을 확인하세요.'); return; }
+    const { headers, rows } = parsed;
+    // 첫 번째 숫자 컬럼 자동 감지
+    let colIdx = -1;
+    for (let i = 0; i < headers.length; i++) {
+      if (rows.some(r => !isNaN(parseFloat(r[i])))) { colIdx = i; break; }
+    }
+    let vals;
+    if (colIdx >= 0) {
+      vals = rows.map(r => parseFloat(r[colIdx])).filter(v => !isNaN(v));
+      // 헤더 행이 숫자면 헤더 없는 파일 — 첫 값 복원
+      const h = parseFloat(headers[colIdx]);
+      if (!isNaN(h)) vals.unshift(h);
+    } else {
+      vals = [headers, ...rows].flat().map(v => parseFloat(v)).filter(v => !isNaN(v));
+    }
+    if (!vals.length) { alert('파일에서 숫자 데이터를 찾지 못했습니다'); return; }
+    document.getElementById('ccf-y-input').value = vals.join(', ');
+    updateCCFYInfo();
+  });
+  input.value = '';  // 같은 파일 재선택 허용
+}
+
+// ACF: r(k) = Σ(y_t - ȳ)(y_{t-k} - ȳ) / Σ(y_t - ȳ)²
+function computeACF(data, maxLag) {
+  const n = data.length;
+  const mean = data.reduce((a, b) => a + b, 0) / n;
+  const c0 = data.reduce((s, v) => s + (v - mean) ** 2, 0);
+  const acf = [1];
+  for (let k = 1; k <= maxLag; k++) {
+    let num = 0;
+    for (let t = k; t < n; t++) num += (data[t] - mean) * (data[t - k] - mean);
+    acf.push(c0 > 0 ? num / c0 : 0);
+  }
+  return acf;
+}
+
+// PACF via Durbin-Levinson recursion
+function computePACF(acf) {
+  const maxLag = acf.length - 1;
+  const pacf = [1];
+  const phi = [null, null]; // phi[k] = Array(k+1), 1-indexed
+  phi[1] = [null, acf[1]];
+  pacf.push(acf[1]);
+  for (let k = 2; k <= maxLag; k++) {
+    const prev = phi[k - 1];
+    let num = acf[k], den = 1;
+    for (let j = 1; j < k; j++) { num -= prev[j] * acf[k - j]; den -= prev[j] * acf[j]; }
+    const pkk = Math.abs(den) > 1e-10 ? num / den : 0;
+    const curr = new Array(k + 1).fill(null);
+    curr[k] = pkk;
+    for (let j = 1; j < k; j++) curr[j] = prev[j] - pkk * (prev[k - j] ?? 0);
+    phi[k] = curr;
+    pacf.push(pkk);
+  }
+  return pacf;
+}
+
+// CCF: r_xy(k) = corr(X_t, Y_{t+k})  (k>0: X선행, k<0: Y선행)
+function computeCCF(x, y, maxLag) {
+  const n = Math.min(x.length, y.length);
+  const xm = x.slice(0, n).reduce((a, b) => a + b, 0) / n;
+  const ym = y.slice(0, n).reduce((a, b) => a + b, 0) / n;
+  const xStd = Math.sqrt(x.slice(0, n).reduce((s, v) => s + (v - xm) ** 2, 0) / n);
+  const yStd = Math.sqrt(y.slice(0, n).reduce((s, v) => s + (v - ym) ** 2, 0) / n);
+  const lags = [], vals = [];
+  for (let k = -maxLag; k <= maxLag; k++) {
+    let sum = 0, cnt = 0;
+    const t0 = Math.max(0, -k), t1 = Math.min(n - 1, n - 1 - k);
+    for (let t = t0; t <= t1; t++) { sum += (x[t] - xm) * (y[t + k] - ym); cnt++; }
+    lags.push(k);
+    vals.push(xStd > 0 && yStd > 0 && cnt > 0 ? sum / (cnt * xStd * yStd) : 0);
+  }
+  return { lags, vals };
+}
+
+function runACFPanel() {
+  if (!state.data.length) return;
+  const n = state.data.length;
+  const maxLag = Math.min(+document.getElementById('acf-maxlag').value || 40, n - 2);
+  const acf  = computeACF(state.data, maxLag);
+  const pacf = computePACF(acf);
+  const ci   = 1.96 / Math.sqrt(n);
+  const lags = acf.map((_, i) => i);
+
+  renderCorrBar(acf,  lags, 'acf-sa-chart',  '#00d4ff', ci, 'acfSaChart');
+  renderCorrBar(pacf, lags, 'pacf-sa-chart', '#ff6b35', ci, 'pacfSaChart');
+
+  let rows = '';
+  for (let k = 0; k <= maxLag; k++) {
+    const a = acf[k], p = pacf[k];
+    const aSig = Math.abs(a) > ci, pSig = Math.abs(p) > ci;
+    const interp = k === 0 ? '기준값 (= 1)' :
+      aSig && pSig ? '양쪽 유의 — AR·MA 혼합 가능성' :
+      aSig ? 'ACF만 유의 — MA(q) 패턴' :
+      pSig ? 'PACF만 유의 — AR(p) 패턴' : '유의하지 않음';
+    rows += `<tr>
+      <td>${k}</td>
+      <td class="${Math.abs(a)>ci?(a>0?'cell-pos':'cell-neg'):''}">${a.toFixed(4)}</td>
+      <td class="${Math.abs(p)>ci?(p>0?'cell-pos':'cell-neg'):''}">${p.toFixed(4)}</td>
+      <td style="text-align:center">${aSig||pSig?'<span style="color:var(--accent3)">●</span>':'<span style="color:var(--border)">○</span>'}</td>
+      <td style="font-size:10px;color:var(--text-dim)">${interp}</td>
+    </tr>`;
+  }
+  document.getElementById('acf-sa-tbody').innerHTML = rows;
+  document.getElementById('acf-ci-info').textContent =
+    `95% 신뢰구간: ±1.96 / √n = ±1.96 / √${n} = ±${ci.toFixed(4)}  (막대가 점선 초과 시 통계적으로 유의)`;
+  document.getElementById('acf-panel-result').style.display = '';
+}
+
+function runCCFPanel() {
+  if (!state.data.length) { alert('X 시계열(원본 데이터)을 먼저 로드하세요'); return; }
+  const raw = document.getElementById('ccf-y-input').value.replace(/[\n\r]+/g, ',');
+  const yData = raw.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+  if (yData.length < 4) { alert('Y 시계열 데이터를 4개 이상 입력하세요'); return; }
+
+  const n = Math.min(state.data.length, yData.length);
+  const maxLag = Math.min(+document.getElementById('ccf-maxlag').value || 20, Math.floor(n / 3));
+  const { lags, vals } = computeCCF(state.data, yData, maxLag);
+  const ci = 1.96 / Math.sqrt(n);
+
+  // 차트
+  renderCCFBar(vals, lags, ci);
+
+  // 최대 상관 시차 탐색
+  let peakIdx = 0;
+  vals.forEach((v, i) => { if (Math.abs(v) > Math.abs(vals[peakIdx])) peakIdx = i; });
+  const peakLag = lags[peakIdx], peakR = vals[peakIdx];
+  const peakInterp = peakLag > 0 ? `X가 Y보다 ${peakLag}시점 선행 (X → Y 영향 가능)`
+    : peakLag < 0 ? `Y가 X보다 ${-peakLag}시점 선행 (Y → X 영향 가능)`
+    : '동시 상관 (k = 0)';
+
+  document.getElementById('ccf-peak-box').innerHTML =
+    `<span class="fn">최대 상관</span> &nbsp;r<sub>xy</sub>(${peakLag}) = <span class="fv">${peakR.toFixed(4)}</span>` +
+    `&emsp;&emsp;해석: ${peakInterp}` +
+    `&emsp;&emsp;<span class="fn">95% CI</span>: ±${ci.toFixed(4)} (n = ${n})`;
+
+  // 테이블
+  let rows = '';
+  lags.forEach((k, i) => {
+    const r = vals[i], sig = Math.abs(r) > ci;
+    const interp = k === 0 ? '동시 상관' : k > 0 ? `X가 ${k}시점 선행` : `Y가 ${-k}시점 선행`;
+    const isPeak = i === peakIdx;
+    rows += `<tr${isPeak ? ' style="background:rgba(57,255,20,.08)"' : ''}>
+      <td>${k}${isPeak ? ' ★' : ''}</td>
+      <td class="${sig?(r>0?'cell-pos':'cell-neg'):''}">${r.toFixed(4)}</td>
+      <td style="text-align:center">${sig?'<span style="color:var(--accent3)">●</span>':'<span style="color:var(--border)">○</span>'}</td>
+      <td style="font-size:10px;color:var(--text-dim)">${interp}</td>
+    </tr>`;
+  });
+  document.getElementById('ccf-sa-tbody').innerHTML = rows;
+  document.getElementById('ccf-panel-result').style.display = '';
+}
+
+function renderCorrBar(vals, labels, canvasId, color, ci, chartKey) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (window[chartKey]) window[chartKey].destroy();
+  window[chartKey] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { data: vals, backgroundColor: vals.map(v => Math.abs(v) > ci ? color + 'cc' : color + '33'),
+          borderColor: color, borderWidth: 1 },
+        { type: 'line', data: labels.map(() => ci),  borderColor: '#ff6b3566', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
+        { type: 'line', data: labels.map(() => -ci), borderColor: '#ff6b3566', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 20 }, grid: { color: 'rgba(30,58,95,.3)' } },
+        y: { min: -1, max: 1, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,58,95,.3)' } }
+      },
+      animation: { duration: 200 }
+    }
+  });
+}
+
+function renderCCFBar(vals, lags, ci) {
+  const ctx = document.getElementById('ccf-sa-chart').getContext('2d');
+  if (window.ccfSaChart) window.ccfSaChart.destroy();
+  window.ccfSaChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: lags,
+      datasets: [
+        { data: vals,
+          backgroundColor: vals.map((v, i) => {
+            if (Math.abs(v) <= ci) return '#00d4ff22';
+            return lags[i] === 0 ? '#ffffff88' : lags[i] > 0 ? '#39ff1499' : '#ff6b3599';
+          }),
+          borderColor: vals.map((v, i) => Math.abs(v) > ci ? (lags[i] > 0 ? '#39ff14' : lags[i] < 0 ? '#ff6b35' : '#ffffff') : '#00d4ff44'),
+          borderWidth: 1 },
+        { type: 'line', data: lags.map(() => ci),  borderColor: '#ff6b3566', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
+        { type: 'line', data: lags.map(() => -ci), borderColor: '#ff6b3566', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxTicksLimit: 41 }, grid: { color: 'rgba(30,58,95,.3)' } },
+        y: { min: -1, max: 1, ticks: { color: '#64748b' }, grid: { color: 'rgba(30,58,95,.3)' } }
+      },
+      animation: { duration: 200 }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   클라이언트 측 메트릭 계산
+══════════════════════════════════════════ */
+function calcRMSE(y,yh){let s=0,n=0;y.forEach((v,i)=>{if(yh[i]==null)return;const e=v-yh[i];s+=e*e;n++;});return n?+Math.sqrt(s/n).toFixed(4):null;}
+function calcMAE(y,yh){let s=0,n=0;y.forEach((v,i)=>{if(yh[i]==null)return;s+=Math.abs(v-yh[i]);n++;});return n?+(s/n).toFixed(4):null;}
+function calcMAPE(y,yh){let s=0,n=0;y.forEach((v,i)=>{if(yh[i]==null||v===0)return;s+=Math.abs((v-yh[i])/v);n++;});return n?+(s/n*100).toFixed(2):null;}
+
+/* ══════════════════════════════════════════
+   UI 헬퍼
+══════════════════════════════════════════ */
+function setStatus(msg,type='info'){
+  const el=document.getElementById('status-bar');
+  const col={info:'var(--text-dim)',warn:'var(--warning)',err:'var(--danger)',ok:'var(--accent3)'};
+  el.style.color=col[type]||col.info;
+  el.textContent=msg;
+}
+function setBusy(on){
+  document.getElementById('run-btn').disabled=on;
+  if(!on){setProgress(0);document.getElementById('prog-wrap').style.display='none';}
+  else{document.getElementById('prog-wrap').style.display='';}
+}
+function setProgress(pct){document.getElementById('prog-bar').style.width=pct+'%';}
+function showOverlay(msg){document.getElementById('load-text').textContent=msg;document.getElementById('load-overlay').classList.add('show');}
+function hideOverlay(){document.getElementById('load-overlay').classList.remove('show');}
+
+/* ══════════════════════════════════════════
+   초기화
+══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded',()=>{
+  loadSample('airpass');
+});
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+</div><!-- /.page-wrap -->
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

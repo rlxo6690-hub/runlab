@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>탄력성 분석 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="탄력성 분석 시뮬레이터 — DataForge">
+<meta property="og:description" content="가격대별 수요량을 입력해 구간별 가격탄력성(PED)을 분석하고 수요·매출 곡선을 시각화합니다.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title span{color:var(--accent);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+
+.page{padding:0 24px 80px;}
+
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:24px;}
+.intro-box strong{color:var(--text);}
+
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+.bep-inp{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;font-family:inherit;}
+.bep-inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
+.bep-sel{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;padding:9px 12px;outline:none;cursor:pointer;font-family:inherit;}
+.bep-sel:focus{border-color:var(--accent);}
+.field{display:flex;flex-direction:column;gap:5px;}
+.sec-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+.add-row-btn{font-size:12px;font-weight:600;padding:4px 11px;border:1px solid var(--border2);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.add-row-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.data-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.data-tbl th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--card2);border-bottom:1px solid var(--border);}
+.data-tbl th.r{text-align:right;}
+.data-tbl td{padding:4px 6px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-tbl tr:last-child td{border-bottom:none;}
+.t-inp{width:100%;background:transparent;border:1px solid transparent;border-radius:5px;color:var(--text);font-size:13px;padding:5px 7px;outline:none;font-family:'Space Mono',monospace;text-align:right;transition:all .15s;}
+.t-inp:hover{border-color:var(--border2);}
+.t-inp:focus{background:var(--card2);border-color:var(--accent);}
+.t-del{width:26px;height:26px;border:none;border-radius:5px;background:transparent;color:var(--dim);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.t-del:hover{background:rgba(220,38,38,.1);color:var(--red);}
+
+.dash-divider{display:flex;align-items:center;gap:12px;margin:28px 0 20px;}
+.dash-divider-line{flex:1;height:1px;background:var(--border);}
+.dash-divider-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+
+.summary-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.sum-icon{font-size:22px;opacity:.85;flex-shrink:0;}
+.sum-v{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:3px;}
+
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.chart-title{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+
+.result-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.result-tbl th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--card2);border-bottom:1px solid var(--border);}
+.result-tbl th.r{text-align:right;}
+.result-tbl td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.06);}
+.result-tbl tr:last-child td{border-bottom:none;}
+.result-tbl tr:hover td{background:rgba(37,99,235,.02);}
+.mono{font-family:'Space Mono',monospace;}
+.r{text-align:right;}
+.ped-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--card2);}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+
+@media(max-width:900px){
+  .charts-grid{grid-template-columns:1fr;}
+  .summary-row{grid-template-columns:repeat(3,1fr);}
+  .grid-3{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .summary-row{grid-template-columns:repeat(2,1fr);}
+  .grid-3{grid-template-columns:1fr;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .bep-inp,.bep-sel{font-size:16px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>탄력성</span> 분석 시뮬레이터</div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="downloadHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="pr-open-btn" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:#0d9488;" onclick="exportMD()">⬇️ 마크다운</button>
+    <button class="pr-open-btn" onclick="openPrompt()">🤖 분석 프롬프트</button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>가격 탄력성 분석 시뮬레이터</strong> — 가격대별 수요량을 입력하면 구간별 탄력성(PED)을 중점 공식으로 계산하고
+    수요 곡선·총수입(TR) 곡선을 시각화합니다.<br>
+    <strong>탄력적 구간</strong>(|PED|&gt;1): 가격 인하 → 매출 증가 &nbsp;·&nbsp;
+    <strong>비탄력적 구간</strong>(|PED|&lt;1): 가격 인상 → 매출 증가 &nbsp;·&nbsp;
+    <strong>TR 최대 가격</strong>: 단위탄력점 부근
+  </div>
+
+  <!-- 기본 설정 -->
+  <div class="a-card">
+    <div class="a-card-title">기본 설정</div>
+    <div class="grid-3">
+      <div class="field">
+        <div class="sec-label">제품 / 서비스명</div>
+        <input class="bep-inp" id="prod-name" type="text" value="샘플 제품 A" oninput="calc()">
+      </div>
+      <div class="field">
+        <div class="sec-label">가격 단위</div>
+        <select class="bep-sel" id="price-unit" onchange="calc()">
+          <option value="원">원 (₩)</option>
+          <option value="달러">달러 ($)</option>
+          <option value="유로">유로 (€)</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="sec-label">수요 단위</div>
+        <input class="bep-inp" id="qty-unit" type="text" value="개" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 가격–수요량 데이터 -->
+  <div class="a-card">
+    <div class="a-card-title">
+      <span>가격 — 수요량 데이터 <span id="row-count" style="font-weight:400;color:var(--dim);text-transform:none;letter-spacing:0;"></span></span>
+      <button class="add-row-btn" onclick="addRow()">+ 행 추가</button>
+    </div>
+    <table class="data-tbl">
+      <thead>
+        <tr>
+          <th style="width:28px">#</th>
+          <th>가격</th>
+          <th class="r">수요량</th>
+          <th style="width:34px"></th>
+        </tr>
+      </thead>
+      <tbody id="data-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 결과 구분선 -->
+  <div class="dash-divider">
+    <div class="dash-divider-line"></div>
+    <span class="dash-divider-label">탄력성 분석 결과</span>
+    <div class="dash-divider-line"></div>
+  </div>
+
+  <!-- 요약 카드 -->
+  <div class="summary-row" id="summary-row"></div>
+
+  <!-- 차트 -->
+  <div class="charts-grid">
+    <div class="a-card" style="margin-bottom:0;">
+      <div class="chart-title">수요 곡선</div>
+      <div style="position:relative;height:280px;"><canvas id="demand-chart"></canvas></div>
+    </div>
+    <div class="a-card" style="margin-bottom:0;">
+      <div class="chart-title">총수입 (TR) 곡선</div>
+      <div style="position:relative;height:280px;"><canvas id="revenue-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 구간별 탄력성 테이블 -->
+  <div class="a-card" style="margin-top:16px;">
+    <div class="a-card-title">구간별 탄력성 분석</div>
+    <table class="result-tbl">
+      <thead>
+        <tr>
+          <th>구간</th>
+          <th class="r">가격 변화</th>
+          <th class="r">수요량 변화</th>
+          <th class="r">PED</th>
+          <th class="r">총수입 변화</th>
+          <th>판정</th>
+        </tr>
+      </thead>
+      <tbody id="result-tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<script>
+var rows = [
+  {price:5000,  qty:1200},
+  {price:8000,  qty:900},
+  {price:10000, qty:720},
+  {price:13000, qty:540},
+  {price:15000, qty:420},
+  {price:18000, qty:300},
+  {price:20000, qty:210}
+];
+var demandChart = null, revenueChart = null;
+
+function renderTable() {
+  var tbody = document.getElementById('data-tbody');
+  document.getElementById('row-count').textContent = rows.length + '개';
+  tbody.innerHTML = rows.map(function(r, i) {
+    return '<tr>' +
+      '<td style="font-size:11px;color:var(--dim);text-align:center;">' + (i+1) + '</td>' +
+      '<td><input class="t-inp" type="number" min="0" step="any" value="' + r.price + '" oninput="setVal(' + i + ',\'price\',this.value)"></td>' +
+      '<td><input class="t-inp" type="number" min="0" step="any" value="' + r.qty + '" oninput="setVal(' + i + ',\'qty\',this.value)"></td>' +
+      '<td><button class="t-del" onclick="removeRow(' + i + ')"' + (rows.length <= 2 ? ' style="opacity:.3;pointer-events:none;"' : '') + '>&times;</button></td>' +
+      '</tr>';
+  }).join('');
+  calc();
+}
+
+function setVal(i, field, v) { rows[i][field] = parseFloat(v) || 0; calc(); }
+
+function addRow() {
+  var last = rows[rows.length - 1];
+  rows.push({price: last ? last.price + 2000 : 1000, qty: last ? Math.max(0, last.qty - 100) : 100});
+  renderTable();
+}
+function removeRow(i) {
+  if (rows.length <= 2) return;
+  rows.splice(i, 1);
+  renderTable();
+}
+
+function calcIntervals(sorted) {
+  var out = [];
+  for (var i = 0; i < sorted.length - 1; i++) {
+    var p1=sorted[i].price, q1=sorted[i].qty, p2=sorted[i+1].price, q2=sorted[i+1].qty;
+    var pMid=(p1+p2)/2, qMid=(q1+q2)/2;
+    var ped = (pMid && qMid) ? Math.abs(((q2-q1)/qMid) / ((p2-p1)/pMid)) : Infinity;
+    out.push({p1:p1,q1:q1,p2:p2,q2:q2,ped:ped,tr1:p1*q1,tr2:p2*q2});
+  }
+  return out;
+}
+
+function pedStatus(ped) {
+  if (!isFinite(ped)) return 'elastic';
+  return ped > 1.05 ? 'elastic' : ped < 0.95 ? 'inelastic' : 'unit';
+}
+function pedColor(ped) {
+  var s = pedStatus(ped);
+  return s==='elastic'?'var(--accent)':s==='inelastic'?'var(--orange)':'var(--green)';
+}
+function pedLabel(ped) {
+  var s = pedStatus(ped);
+  return s==='elastic'?'탄력적':s==='inelastic'?'비탄력적':'단위탄력적';
+}
+function pedBg(ped) {
+  var s = pedStatus(ped);
+  return s==='elastic'?'rgba(37,99,235,.12)':s==='inelastic'?'rgba(234,88,12,.12)':'rgba(5,150,105,.12)';
+}
+
+function calc() {
+  var sorted = rows.slice().sort(function(a,b){return a.price-b.price;});
+  var priceUnit = document.getElementById('price-unit').value;
+  var qtyUnit   = document.getElementById('qty-unit').value;
+  var intervals = calcIntervals(sorted);
+
+  var pedVals = intervals.map(function(d){return d.ped;}).filter(function(v){return isFinite(v);});
+  var avgPed  = pedVals.length ? pedVals.reduce(function(a,b){return a+b;},0)/pedVals.length : 0;
+  var trData  = sorted.map(function(r){return r.price*r.qty;});
+  var maxTr   = Math.max.apply(null, trData);
+  var maxTrPrice = sorted[trData.indexOf(maxTr)] ? sorted[trData.indexOf(maxTr)].price : 0;
+  var elasticCnt  = intervals.filter(function(d){return d.ped>1.05;}).length;
+  var inelasticCnt= intervals.filter(function(d){return d.ped<0.95;}).length;
+  var avgLabel = avgPed>1.05?'탄력적':avgPed<0.95?'비탄력적':'단위탄력적';
+  var avgColor = avgPed>1.05?'var(--accent)':avgPed<0.95?'var(--orange)':'var(--green)';
+
+  /* 요약 카드 */
+  document.getElementById('summary-row').innerHTML =
+    sumCard('📉', avgLabel, '평균 탄력성', 'var(--border)', 'var(--text)', '16px') +
+    sumCard('📐', fmt2(avgPed), '평균 PED', 'rgba(37,99,235,.3)', 'var(--accent)', '20px', 'rgba(37,99,235,.04)') +
+    sumCard('💰', fmtP(maxTrPrice,priceUnit), 'TR 최대 가격', 'rgba(5,150,105,.3)', 'var(--green)', '15px', 'rgba(5,150,105,.04)') +
+    sumCard('⚡', elasticCnt + '구간', '탄력적', 'rgba(37,99,235,.3)', 'var(--accent)', '20px', 'rgba(37,99,235,.04)') +
+    sumCard('🔒', inelasticCnt + '구간', '비탄력적', 'rgba(234,88,12,.3)', 'var(--orange)', '20px', 'rgba(234,88,12,.04)');
+
+  function sumCard(icon, val, lbl, bc, vc, fs, bg) {
+    return '<div class="sum-card" style="border-color:' + bc + ';' + (bg?'background:'+bg+';':'') + '">' +
+      '<div class="sum-icon">' + icon + '</div>' +
+      '<div><div class="sum-v" style="color:' + vc + ';font-size:' + (fs||'20px') + ';">' + val + '</div>' +
+      '<div class="sum-l" style="color:' + vc + ';">' + lbl + '</div></div></div>';
+  }
+
+  /* 수요 곡선 */
+  if (demandChart) { demandChart.destroy(); }
+  demandChart = new Chart(document.getElementById('demand-chart'), {
+    type: 'line',
+    data: {
+      labels: sorted.map(function(r){ return fmtP(r.price, priceUnit); }),
+      datasets: [{
+        data: sorted.map(function(r){ return r.qty; }),
+        borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)',
+        borderWidth: 2, fill: true, tension: 0.35,
+        pointRadius: 5, pointBackgroundColor: '#2563eb'
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(c){return ' ' + fmtN(c.parsed.y) + qtyUnit;}}}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#64748b',font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#64748b',font:{size:10},callback:function(v){return fmtN(v);}}}
+      }
+    }
+  });
+
+  /* TR 곡선 */
+  if (revenueChart) { revenueChart.destroy(); }
+  revenueChart = new Chart(document.getElementById('revenue-chart'), {
+    type: 'line',
+    data: {
+      labels: sorted.map(function(r){ return fmtP(r.price, priceUnit); }),
+      datasets: [{
+        data: trData,
+        borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)',
+        borderWidth: 2, fill: true, tension: 0.35,
+        pointRadius: trData.map(function(v){ return v === maxTr ? 8 : 5; }),
+        pointBackgroundColor: trData.map(function(v){ return v === maxTr ? '#059669' : '#2563eb'; }),
+        pointBorderColor: trData.map(function(v){ return v === maxTr ? '#059669' : '#2563eb'; })
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(c){return ' TR: ' + fmtN(c.parsed.y) + priceUnit;}}}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#64748b',font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#64748b',font:{size:10},callback:function(v){return fmtK(v);}}}
+      }
+    }
+  });
+
+  /* 구간별 테이블 */
+  document.getElementById('result-tbody').innerHTML = intervals.map(function(d) {
+    var pedStr   = isFinite(d.ped) ? fmt2(d.ped) : '∞';
+    var trChange = d.tr2 - d.tr1;
+    var trColor  = trChange > 0 ? 'var(--green)' : trChange < 0 ? 'var(--red)' : 'var(--muted)';
+    return '<tr>' +
+      '<td style="color:var(--muted);font-size:12px;">' + fmtP(d.p1,priceUnit) + ' → ' + fmtP(d.p2,priceUnit) + '</td>' +
+      '<td class="r mono">' + (d.p2>d.p1?'+':'-') + fmtN(Math.abs(d.p2-d.p1)) + priceUnit + '</td>' +
+      '<td class="r mono">' + (d.q2>d.q1?'+':'-') + fmtN(Math.abs(d.q2-d.q1)) + qtyUnit + '</td>' +
+      '<td class="r mono" style="font-weight:700;">' + pedStr + '</td>' +
+      '<td class="r mono" style="color:' + trColor + ';">' + (trChange>=0?'+':'') + fmtN(Math.round(trChange)) + priceUnit + '</td>' +
+      '<td><span class="ped-badge" style="background:' + pedBg(d.ped) + ';color:' + pedColor(d.ped) + ';">' + pedLabel(d.ped) + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+/* ── HTML 저장 ── */
+function downloadHTML() {
+  var sorted     = rows.slice().sort(function(a,b){return a.price-b.price;});
+  var priceUnit  = document.getElementById('price-unit').value;
+  var qtyUnit    = document.getElementById('qty-unit').value;
+  var prodName   = document.getElementById('prod-name').value || '제품';
+  var date       = new Date().toLocaleDateString('ko-KR');
+  var intervals  = calcIntervals(sorted);
+  var pedVals    = intervals.map(function(d){return d.ped;}).filter(function(v){return isFinite(v);});
+  var avgPed     = pedVals.length ? pedVals.reduce(function(a,b){return a+b;},0)/pedVals.length : 0;
+  var trData     = sorted.map(function(r){return r.price*r.qty;});
+  var maxTr      = Math.max.apply(null, trData);
+  var maxTrPrice = sorted[trData.indexOf(maxTr)] ? sorted[trData.indexOf(maxTr)].price : 0;
+  var elasticCnt = intervals.filter(function(d){return d.ped>1.05;}).length;
+  var inelasticCnt=intervals.filter(function(d){return d.ped<0.95;}).length;
+  var avgLabel   = avgPed>1.05?'탄력적':avgPed<0.95?'비탄력적':'단위탄력적';
+
+  var chartLabels = JSON.stringify(sorted.map(function(r){return fmtP(r.price,priceUnit);}));
+  var qtyArr      = JSON.stringify(sorted.map(function(r){return r.qty;}));
+  var trArr       = JSON.stringify(trData);
+  var maxTrVal    = maxTr;
+
+  function ec(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  var tblRows = intervals.map(function(d) {
+    var pedStr   = isFinite(d.ped)?fmt2(d.ped):'∞';
+    var trChange = d.tr2 - d.tr1;
+    var trColor  = trChange>0?'#059669':trChange<0?'#dc2626':'#94a3b8';
+    var s = pedStatus(d.ped);
+    var bc = s==='elastic'?'rgba(37,99,235,.12)':s==='inelastic'?'rgba(234,88,12,.12)':'rgba(5,150,105,.12)';
+    var vc = s==='elastic'?'#2563eb':s==='inelastic'?'#ea580c':'#059669';
+    var lbl = s==='elastic'?'탄력적':s==='inelastic'?'비탄력적':'단위탄력적';
+    return '<tr>' +
+      '<td style="color:var(--muted);font-size:12px;">'+fmtP(d.p1,priceUnit)+' → '+fmtP(d.p2,priceUnit)+'</td>' +
+      '<td class="r mono">'+(d.p2>d.p1?'+':'-')+fmtN(Math.abs(d.p2-d.p1))+priceUnit+'</td>' +
+      '<td class="r mono">'+(d.q2>d.q1?'+':'-')+fmtN(Math.abs(d.q2-d.q1))+qtyUnit+'</td>' +
+      '<td class="r mono" style="font-weight:700;">'+pedStr+'</td>' +
+      '<td class="r mono" style="color:'+trColor+';">'+(trChange>=0?'+':'')+fmtN(Math.round(trChange))+priceUnit+'</td>' +
+      '<td><span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:'+bc+';color:'+vc+';">'+lbl+'</span></td>' +
+      '</tr>';
+  }).join('');
+
+  var html =
+    '<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n' +
+    '<title>탄력성 분석: ' + ec(prodName) + '</title>\n' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n' +
+    '<style>\n' +
+    ':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;}\n' +
+    '*{margin:0;padding:0;box-sizing:border-box;}\n' +
+    'body{font-family:\'Noto Sans KR\',\'Segoe UI\',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}\n' +
+    '.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}\n' +
+    '.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}\n' +
+    '.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}\n' +
+    '.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}\n' +
+    '.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}\n' +
+    '.sum-icon{font-size:22px;opacity:.85;flex-shrink:0;}\n' +
+    '.sum-v{font-family:\'Noto Sans KR\',sans-serif;font-size:18px;font-weight:700;line-height:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}\n' +
+    '.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}\n' +
+    '.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}\n' +
+    '.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}\n' +
+    '.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}\n' +
+    'table{width:100%;border-collapse:collapse;font-size:12px;}\n' +
+    'th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--card2);border-bottom:1px solid var(--border);}\n' +
+    'th.r,td.r{text-align:right;}\n' +
+    'td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.06);}\n' +
+    'tr:last-child td{border-bottom:none;}\n' +
+    '.mono{font-family:\'Noto Sans KR\',sans-serif;}\n' +
+    '.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}\n' +
+    '@media(max-width:700px){.charts-grid{grid-template-columns:1fr;}.sum-row{grid-template-columns:repeat(2,1fr);}}\n' +
+    '</style>\n</head>\n<body>\n<div class="wrap">\n' +
+
+    '<div class="page-title">📉 탄력성 분석 결과</div>\n' +
+    '<div class="meta"><b style="color:var(--muted)">'+ec(prodName)+'</b> &nbsp;·&nbsp; '+date+' &nbsp;·&nbsp; DataForge</div>\n' +
+
+    '<div class="sum-row">\n' +
+    '<div class="sum-c" style="border-color:var(--border);"><div class="sum-icon">📉</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--text);font-size:16px;">'+avgLabel+'</div><div class="sum-l" style="color:var(--muted);">평균 탄력성</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(37,99,235,.3);background:rgba(37,99,235,.04);"><div class="sum-icon">📐</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--accent);">'+fmt2(avgPed)+'</div><div class="sum-l" style="color:var(--accent);">평균 PED</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.04);"><div class="sum-icon">💰</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--green);font-size:15px;">'+fmtP(maxTrPrice,priceUnit)+'</div><div class="sum-l" style="color:var(--green);">TR 최대 가격</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(37,99,235,.3);background:rgba(37,99,235,.04);"><div class="sum-icon">⚡</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--accent);">'+elasticCnt+'구간</div><div class="sum-l" style="color:var(--accent);">탄력적</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(234,88,12,.3);background:rgba(234,88,12,.04);"><div class="sum-icon">🔒</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--orange);">'+inelasticCnt+'구간</div><div class="sum-l" style="color:var(--orange);">비탄력적</div></div></div>\n' +
+    '</div>\n' +
+
+    '<div class="charts-grid">\n' +
+    '<div class="section-card" style="margin-bottom:0;"><div class="section-title">수요 곡선</div><div style="position:relative;height:280px;"><canvas id="exp-demand"></canvas></div></div>\n' +
+    '<div class="section-card" style="margin-bottom:0;"><div class="section-title">총수입 (TR) 곡선</div><div style="position:relative;height:280px;"><canvas id="exp-revenue"></canvas></div></div>\n' +
+    '</div>\n' +
+
+    '<div class="section-card"><div class="section-title">구간별 탄력성 분석</div>\n' +
+    '<table><thead><tr><th>구간</th><th class="r">가격 변화</th><th class="r">수요량 변화</th><th class="r">PED</th><th class="r">총수입 변화</th><th>판정</th></tr></thead>' +
+    '<tbody>' + tblRows + '</tbody></table></div>\n' +
+
+    '<div class="footer">DataForge · dataforge.ai.kr · '+date+'</div>\n' +
+    '</div>\n' +
+    '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>\n' +
+    '<script>\n' +
+    'var trArr='+trArr+',maxTr='+maxTrVal+';\n' +
+    'new Chart(document.getElementById("exp-demand"),{type:"line",data:{labels:'+chartLabels+',datasets:[{data:'+qtyArr+',borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",borderWidth:2,fill:true,tension:.35,pointRadius:5,pointBackgroundColor:"#2563eb"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(0,0,0,.04)"},ticks:{color:"#64748b",font:{size:10}}},y:{grid:{color:"rgba(0,0,0,.04)"},ticks:{color:"#64748b",font:{size:10}}}}}});\n' +
+    'new Chart(document.getElementById("exp-revenue"),{type:"line",data:{labels:'+chartLabels+',datasets:[{data:trArr,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",borderWidth:2,fill:true,tension:.35,pointRadius:trArr.map(function(v){return v===maxTr?8:5;}),pointBackgroundColor:trArr.map(function(v){return v===maxTr?"#059669":"#2563eb";})}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"rgba(0,0,0,.04)"},ticks:{color:"#64748b",font:{size:10}}},y:{grid:{color:"rgba(0,0,0,.04)"},ticks:{color:"#64748b",font:{size:10}}}}}});\n' +
+    '<\/script>\n</body>\n</html>';
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'elasticity-' + (prodName||'analysis') + '-' + new Date().toISOString().slice(0,10) + '.html';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function fmtN(n)     { return Number(n).toLocaleString('ko-KR'); }
+function fmt2(n)     { return isFinite(n) ? (+n).toFixed(2) : '∞'; }
+function fmtK(n)     { return Math.abs(n)>=1000000?(n/1000000).toFixed(1)+'M':Math.abs(n)>=1000?(n/1000).toFixed(0)+'K':fmtN(Math.round(n)); }
+function fmtP(p, u)  { return fmtN(p) + (u==='원'?'원':u==='달러'?'$':'€'); }
+
+renderTable();
+</script>
+<script>(function(){var k='tf_manage_elasticity';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+
+<!-- ── AI 분석 프롬프트 팝업 (자동 삽입) ── -->
+<style>
+.pr-open-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:8px;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.pr-open-btn:hover{background:rgba(124,58,237,.18);}
+.pr-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.pr-bg.open{display:flex;}
+.pr-modal{background:var(--card,#fff);border:1px solid var(--border,rgba(0,0,0,.1));border-radius:14px;max-width:720px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.pr-head{padding:16px 20px 12px;border-bottom:1px solid var(--border,rgba(0,0,0,.1));}
+.pr-head h3{font-size:15px;font-weight:800;color:var(--text,#1e293b);}
+.pr-head p{font-size:11.5px;color:var(--muted,#64748b);margin-top:4px;line-height:1.6;}
+.pr-tabs{display:flex;gap:6px;margin-top:10px;}
+.pr-tab{font-size:11px;font-weight:700;padding:5px 12px;border-radius:14px;border:1px solid var(--border2,rgba(0,0,0,.15));background:transparent;color:var(--muted,#64748b);cursor:pointer;font-family:inherit;transition:all .15s;}
+.pr-tab.active{background:#2563eb;border-color:#2563eb;color:#fff;}
+.pr-body{padding:14px 20px;overflow-y:auto;flex:1;}
+.pf-guide{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.pf-step{font-size:11.5px;color:var(--muted,#64748b);line-height:1.6;}
+.pf-step b{color:var(--text,#1e293b);}
+.pf-no{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#2563eb;color:#fff;font-size:10px;font-weight:800;margin-right:6px;}
+.pr-out{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;font-family:inherit;font-size:12px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word;}
+.pf-fill{color:#fbbf24;}
+.pf-sect{color:#67e8f9;font-weight:700;}
+.pf-note{font-size:11px;color:var(--muted,#64748b);margin-top:8px;line-height:1.6;}
+.pr-foot{padding:12px 20px 16px;border-top:1px solid var(--border,rgba(0,0,0,.1));display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.pr-copy{font-size:12px;font-weight:700;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;transition:opacity .15s;}
+.pr-copy:hover{opacity:.88;}
+.pr-copy.ok{background:#059669;}
+.pr-ai-link{font-size:11px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;border:1px solid;transition:all .2s;font-family:inherit;}
+.pr-ai-link:hover{opacity:.8;}
+.pr-close{margin-left:auto;font-size:12px;font-weight:600;padding:8px 14px;background:transparent;border:1px solid var(--border2,rgba(0,0,0,.15));color:var(--muted,#64748b);border-radius:7px;cursor:pointer;font-family:inherit;}
+.pr-close:hover{color:var(--text,#1e293b);}
+</style>
+<div class="pr-bg" id="pr-bg" onclick="if(event.target===this)closePrompt()">
+  <div class="pr-modal">
+    <div class="pr-head">
+      <h3>🤖 탄력성 분석 프롬프트</h3>
+      <p id="pr-desc"></p>
+      <div class="pr-tabs">
+        <button class="pr-tab" id="pr-tab-tpl" onclick="showPrMode('tpl')">📝 입력값 준비</button>
+        <button class="pr-tab" id="pr-tab-rev" onclick="showPrMode('rev')">🔍 결과 해석</button>
+      </div>
+    </div>
+    <div class="pr-body">
+      <div class="pf-guide" id="pf-guide">
+        <div class="pf-step"><span class="pf-no">1</span><b>역할 지정</b> — AI가 어떤 관점으로 답할지 정합니다</div>
+        <div class="pf-step"><span class="pf-no">2</span><b>배경·숫자</b> — AI는 내 사업의 숫자를 모릅니다. 아는 값은 주고, 모르는 값은 질문하게 하세요</div>
+        <div class="pf-step"><span class="pf-no">3</span><b>작업 요청</b> — 무엇을 만들지(입력값 정리) 또는 무엇을 해석할지 지정합니다</div>
+        <div class="pf-step"><span class="pf-no">4</span><b>조건</b> — 추정 금지 · 모르면 질문 · 확인 방법 요구 같은 안전장치를 겁니다</div>
+      </div>
+      <div class="pr-out" id="pr-out"></div>
+      <div class="pf-note">💡 <span style="color:#b45309;font-weight:700">(예: …)</span> 부분을 내 숫자·상황으로 바꿔서 사용하세요.</div>
+    </div>
+    <div class="pr-foot">
+      <button class="pr-copy" id="pr-copy" onclick="copyPrompt()">📋 프롬프트 복사</button>
+      <a href="https://chatgpt.com" target="_blank" class="pr-ai-link" style="background:rgba(16,163,127,.12);border-color:rgba(16,163,127,.3);color:#0d9668;" onclick="copyPrompt()">ChatGPT</a>
+      <a href="https://claude.ai" target="_blank" class="pr-ai-link" style="background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.3);color:#ea580c;" onclick="copyPrompt()">Claude</a>
+      <a href="https://gemini.google.com" target="_blank" class="pr-ai-link" style="background:rgba(79,142,247,.12);border-color:rgba(79,142,247,.3);color:#2563eb;" onclick="copyPrompt()">Gemini</a>
+      <button class="pr-close" onclick="closePrompt()">닫기</button>
+    </div>
+  </div>
+</div>
+<script>
+var PR_TPL = "당신은 가격 전략 전문가입니다.\n\n[사업 배경]\n- 상품: (예: 아메리카노)\n- 현재 가격·판매량: (예: 4,500원에 일 평균 180잔)\n\n[요청]\n가격탄력성 분석에 넣을 \"가격대별 예상 판매량\" 데이터를 만드는 것을 도와주세요.\n1) 우리 판매량을 확인할 수 있는 데이터 소스(POS·판매기록)를 물어봐 주세요.\n2) 과거에 가격을 바꾼 적이 있다면 그때의 가격·판매량 변화를 물어봐 주세요.\n3) 데이터가 없다면 설문·기간 한정 테스트 등으로 가격대별 수요를 추정하는 방법을 단계별로 알려주세요.\n\n[조건]\n- 임의의 숫자를 지어내지 마세요. 실측·추정 방법 중심으로 안내해 주세요.\n- 정리가 끝나면 가격대별 예상 판매량을 표로 요약해 주세요.";
+var PR_REV = "당신은 가격 전략 전문가입니다.\n아래는 가격탄력성 분석 시뮬레이터로 계산한 결과입니다.\n\n[분석 결과]\n- 구간별 가격탄력성(PED): (예: 4,000→4,500원 구간 -0.8 / 4,500→5,000원 구간 -1.6)\n- 매출(TR) 최대 가격: (예: 4,700원 부근)\n\n[요청]\n1. 탄력적/비탄력적 구간이 의미하는 바를 우리 상품 기준으로 해석해 주세요.\n2. 매출 최대화와 이익 최대화가 다를 수 있는 이유를 설명하고, 단위당 변동비 (예: 1,800원) 기준으로 이익 최대 가격도 계산해 주세요.\n3. 가격 변경 시 고객 반발을 줄이는 실행 방법을 2가지 제안해 주세요.\n4. 확실하지 않은 부분은 추정하지 말고 나에게 질문해 주세요.";
+function renderPrompt(text){
+  var esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  esc = esc.replace(/\(예:[^)]*\)/g, function(m){ return '<span class="pf-fill">'+m+'</span>'; });
+  esc = esc.replace(/^\[[^\]]+\]$/gm, function(m){ return '<span class="pf-sect">'+m+'</span>'; });
+  document.getElementById('pr-out').innerHTML = esc;
+}
+function showPrMode(m){
+  renderPrompt(m==='tpl' ? PR_TPL : PR_REV);
+  document.getElementById('pr-tab-tpl').classList.toggle('active', m==='tpl');
+  document.getElementById('pr-tab-rev').classList.toggle('active', m==='rev');
+  document.getElementById('pf-guide').style.display = m==='tpl' ? '' : 'none';
+  document.getElementById('pr-desc').textContent = m==='tpl'
+    ? '분석에 넣을 입력값을 AI와 함께 준비하는 프롬프트입니다. 노란 부분만 내 상황으로 바꾸면 완성됩니다.'
+    : '시뮬레이터 결과를 붙여넣고 AI에게 해석·개선 방향을 묻는 프롬프트입니다. 노란 부분을 내 결과 숫자로 바꾸세요.';
+}
+function openPrompt(){ showPrMode('tpl'); document.getElementById('pr-bg').classList.add('open'); }
+function closePrompt(){ document.getElementById('pr-bg').classList.remove('open'); }
+function copyPrompt(){
+  var text = document.getElementById('pr-out').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    var b = document.getElementById('pr-copy');
+    b.textContent = '✅ 복사됨'; b.classList.add('ok');
+    setTimeout(function(){ b.textContent = '📋 프롬프트 복사'; b.classList.remove('ok'); }, 1800);
+  });
+}
+</script>
+<script>
+/* ── 마크다운 내보내기 (자동 삽입) ── */
+function dlMD(md, prefix){
+  var today = new Date().toISOString().slice(0,10);
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download = prefix+'-'+today+'.md';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+function safeName(n){ return String(n).replace(/[\\/:*?"<>|#]/g,'').replace(/\s+/g,'-').slice(0,40)||'analysis'; }
+
+function exportMD(){
+  var today = new Date().toISOString().slice(0,10);
+  var sorted = rows.slice().sort(function(a,b){ return a.price-b.price; });
+  var pu = document.getElementById('price-unit').value;
+  var qu = document.getElementById('qty-unit').value;
+  var prod = document.getElementById('prod-name').value || '상품';
+  var iv = calcIntervals(sorted);
+  var pedVals = iv.map(function(d){ return d.ped; }).filter(function(v){ return isFinite(v); });
+  var avg = pedVals.length ? pedVals.reduce(function(a,b){ return a+b; },0)/pedVals.length : 0;
+  var tr = sorted.map(function(x){ return x.price*x.qty; });
+  var maxTr = Math.max.apply(null, tr);
+  var maxP = sorted[tr.indexOf(maxTr)] ? sorted[tr.indexOf(maxTr)].price : 0;
+  var md = '# 📉 가격탄력성 분석 결과 — ' + prod + '\n\n' + today + ' · DataForge\n\n';
+  md += '## 입력 데이터\n\n| 가격('+pu+') | 판매량('+qu+') | 매출(TR) |\n|---:|---:|---:|\n';
+  md += sorted.map(function(x){ return '| ' + fmtN(x.price) + ' | ' + fmtN(x.qty) + ' | ' + fmtN(x.price*x.qty) + ' |'; }).join('\n') + '\n\n';
+  md += '## 구간별 가격탄력성 (중점 공식)\n\n| 구간 | PED | 판정 |\n|---|---:|---|\n';
+  md += iv.map(function(d){ return '| ' + fmtN(d.p1) + ' → ' + fmtN(d.p2) + pu + ' | ' + (isFinite(d.ped)?d.ped.toFixed(2):'∞') + ' | ' + pedLabel(d.ped) + ' |'; }).join('\n') + '\n\n';
+  md += '## 요약\n\n';
+  md += '- 평균 PED: ' + avg.toFixed(2) + ' (' + (avg>1.05?'탄력적':avg<0.95?'비탄력적':'단위탄력적') + ')\n';
+  md += '- 매출(TR) 최대 가격: ' + fmtN(maxP) + pu + ' (TR ' + fmtN(maxTr) + ')\n';
+  dlMD(md, 'elasticity-'+safeName(prod));
+}
+</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

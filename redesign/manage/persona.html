@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>페르소나 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="페르소나 시뮬레이터 — DataForge">
+<meta property="og:description" content="타겟 고객의 기본 정보, 목표, 고충, 행동 패턴을 입력해 전문적인 페르소나 카드를 생성하세요">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --r:10px;
+  --violet:#7c3aed; --violet2:#a855f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title span{color:var(--accent);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+/* 헤더 마크다운 저장 버튼 — bep.php와 동일 규격 */
+.md-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:8px;color:#0d9488;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.md-btn:hover{background:rgba(13,148,136,.18);}
+
+.page{padding:0 24px 80px;}
+
+/* ── Intro ── */
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:28px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Section label ── */
+.sec-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;}
+
+/* ── Input ── */
+.bep-inp{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;font-family:inherit;}
+.bep-inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(124,58,237,.1);}
+.bep-inp.area{resize:vertical;min-height:72px;line-height:1.6;}
+.bep-sel{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;padding:9px 12px;outline:none;cursor:pointer;font-family:inherit;transition:border-color .2s;}
+.bep-sel:focus{border-color:var(--accent);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:16px;}
+
+/* ── Grid layouts ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+
+/* ── Avatar / Photo ── */
+.avatar-wrap{display:flex;align-items:flex-start;gap:18px;margin-bottom:16px;}
+.avatar-left{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;}
+.avatar-display{width:80px;height:80px;border-radius:50%;background:rgba(124,58,237,.1);border:2px solid rgba(124,58,237,.25);display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer;transition:.2s;flex-shrink:0;overflow:hidden;position:relative;}
+.avatar-display:hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.12);}
+.avatar-display.has-photo{border-color:var(--accent);}
+.avatar-display img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.avatar-display .photo-overlay{position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;text-align:center;line-height:1.3;}
+.avatar-display:hover .photo-overlay{display:flex;}
+.photo-btns{display:flex;flex-direction:column;gap:5px;align-items:center;}
+.photo-upload-btn{font-size:11px;font-weight:600;padding:4px 11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.photo-upload-btn:hover{border-color:var(--accent);color:var(--accent);}
+.photo-clear-btn{font-size:11px;font-weight:600;padding:4px 11px;border:1px solid rgba(239,68,68,.3);border-radius:6px;background:transparent;color:var(--red);cursor:pointer;transition:all .2s;font-family:inherit;}
+.photo-clear-btn:hover{background:rgba(239,68,68,.08);}
+.avatar-right{flex:1;}
+.avatar-right-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+.avatar-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.av-btn{font-size:22px;cursor:pointer;padding:4px;border-radius:8px;border:2px solid transparent;transition:.15s;line-height:1;}
+.av-btn:hover,.av-btn.sel{border-color:var(--accent);background:rgba(124,58,237,.08);}
+.avatar-right.dimmed .avatar-grid{opacity:.3;pointer-events:none;}
+
+/* ── Dynamic list (motivations / pains / channels) ── */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.list-title{font-size:13px;font-weight:600;color:var(--text);}
+.bep-add-btn{font-size:12px;font-weight:600;padding:4px 11px;border:1px solid var(--border2);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.bep-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+.persona-item{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.persona-item .bep-inp{font-size:13px;padding:6px 10px;}
+.bep-del{width:26px;height:26px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;}
+.bep-del:hover{border-color:var(--red);color:var(--red);}
+.list-empty{font-size:12px;color:var(--dim);padding:6px 0;}
+
+/* ── Tag input ── */
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;cursor:text;min-height:44px;align-items:center;}
+.tag-wrap:focus-within{border-color:var(--accent);}
+.tag-pill{background:rgba(124,58,237,.1);color:var(--accent);border:1px solid rgba(124,58,237,.2);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.tag-remove{cursor:pointer;opacity:.6;font-size:13px;line-height:1;}
+.tag-remove:hover{opacity:1;}
+.tag-input-field{border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:var(--text);min-width:80px;flex:1;}
+
+/* ── Divider ── */
+.dash-divider{display:flex;align-items:center;gap:12px;margin:28px 0 24px;}
+.dash-divider-line{flex:1;height:1px;background:var(--border);}
+.dash-divider-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+
+/* ── Persona card preview ── */
+.persona-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06);}
+.pc-header{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);padding:28px 32px;display:flex;align-items:flex-start;gap:22px;color:#fff;}
+.pc-avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;border:3px solid rgba(255,255,255,.35);}
+.pc-identity{flex:1;}
+.pc-name{font-size:26px;font-weight:800;margin-bottom:4px;letter-spacing:-.3px;}
+.pc-demo{font-size:13px;opacity:.85;margin-bottom:6px;}
+.pc-quote{font-size:13px;font-style:italic;opacity:.75;line-height:1.5;}
+.pc-body{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);}
+.pc-col{padding:22px 24px;border-right:1px solid var(--border);}
+.pc-col:last-child{border-right:none;}
+.pc-col-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.pc-goal-text{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
+.pc-motive-list,.pc-pain-list,.pc-channel-list{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.pc-motive-list li,.pc-pain-list li,.pc-channel-list li{font-size:13px;color:var(--text);display:flex;align-items:flex-start;gap:6px;line-height:1.4;}
+.pc-motive-list li::before{content:'→';color:var(--accent);font-weight:700;flex-shrink:0;}
+.pc-pain-list li::before{content:'!';color:var(--red);font-weight:700;width:14px;text-align:center;flex-shrink:0;}
+.pc-channel-list li::before{content:'·';color:var(--accent);font-weight:700;flex-shrink:0;}
+.pc-sub-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);margin:12px 0 5px;}
+.pc-decision{font-size:12px;color:var(--muted);line-height:1.6;}
+.pc-footer{padding:16px 24px;border-top:1px solid var(--border);background:var(--card2);display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.pc-footer-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-right:4px;}
+.pc-tag{background:rgba(124,58,237,.1);color:var(--accent);border:1px solid rgba(124,58,237,.2);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--card2);}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+
+@media(max-width:860px){
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr 1fr;}
+  .pc-body{grid-template-columns:1fr;}
+  .pc-col{border-right:none;border-bottom:1px solid var(--border);}
+  .pc-col:last-child{border-bottom:none;}
+  .page{padding:20px 14px 60px;}
+}
+@media(max-width:560px){
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .bep-inp,.bep-sel{font-size:16px;}
+  .md-btn{font-size:11px;padding:6px 9px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>페르소나</span> 시뮬레이터</div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="downloadHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>페르소나 시뮬레이터</strong> — 타겟 고객의 기본 정보, 목표, 고충, 행동 패턴을 입력하면
+    전문적인 페르소나 카드를 실시간으로 생성합니다.<br>
+    완성된 페르소나 카드를 <strong>HTML 파일</strong>로 저장해 팀에 공유하세요.
+  </div>
+
+  <!-- 기본 프로필 -->
+  <div class="a-card">
+    <div class="a-card-title">기본 프로필</div>
+
+    <!-- 아바타 / 사진 -->
+    <div class="avatar-wrap">
+      <div class="avatar-left">
+        <div class="avatar-display" id="avatar-display"
+             onclick="document.getElementById('photo-input').click()"
+             ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+             ondragleave="this.style.borderColor=''"
+             ondrop="event.preventDefault();this.style.borderColor='';handlePhotoUpload(event.dataTransfer.files[0])"
+             title="클릭 또는 드래그로 사진 업로드">
+          <span id="avatar-emoji">👤</span>
+          <div class="photo-overlay">사진<br>변경</div>
+        </div>
+        <div class="photo-btns">
+          <label class="photo-upload-btn" for="photo-input">📷 사진 업로드</label>
+          <button class="photo-clear-btn" id="photo-clear-btn" style="display:none" onclick="clearPhoto()">✕ 사진 삭제</button>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this.files[0])">
+      </div>
+      <div class="avatar-right" id="avatar-right">
+        <div class="avatar-right-label">이모지 아바타</div>
+        <div class="avatar-grid" id="avatar-grid"></div>
+      </div>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:14px;">
+      <div class="field">
+        <div class="sec-label">이름</div>
+        <input class="bep-inp" id="p-name" type="text" value="김지연" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <div class="sec-label">나이</div>
+        <input class="bep-inp" id="p-age" type="number" value="35" min="1" max="99" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <div class="sec-label">성별</div>
+        <select class="bep-sel" id="p-gender" onchange="updatePreview()">
+          <option value="여성">여성</option>
+          <option value="남성">남성</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="sec-label">직업 / 직위</div>
+        <input class="bep-inp" id="p-job" type="text" value="마케팅 매니저" oninput="updatePreview()">
+      </div>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:14px;">
+      <div class="field">
+        <div class="sec-label">소득 수준</div>
+        <select class="bep-sel" id="p-income" onchange="updatePreview()">
+          <option>하 (2,000만원 미만)</option>
+          <option>중하 (2,000~4,000만원)</option>
+          <option selected>중상 (4,000~7,000만원)</option>
+          <option>상 (7,000만원~1억)</option>
+          <option>고소득 (1억 이상)</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="sec-label">거주지</div>
+        <input class="bep-inp" id="p-location" type="text" value="서울 강남구" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <div class="sec-label">학력</div>
+        <select class="bep-sel" id="p-education" onchange="updatePreview()">
+          <option>고등학교 졸업</option>
+          <option>전문대 졸업</option>
+          <option selected>대학교 졸업</option>
+          <option>대학원 졸업</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="sec-label">가족 관계</div>
+        <input class="bep-inp" id="p-family" type="text" value="기혼, 자녀 1명" oninput="updatePreview()">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="sec-label">한 줄 인용 / 핵심 가치관</div>
+      <input class="bep-inp" id="p-quote" type="text" value="데이터가 말하게 하라." placeholder="페르소나의 생각이나 가치관을 한 문장으로 표현하세요" oninput="updatePreview()">
+    </div>
+  </div>
+
+  <!-- 목표 & 동기 -->
+  <div class="a-card">
+    <div class="a-card-title">목표 &amp; 동기</div>
+    <div class="grid-2">
+      <div>
+        <div class="field" style="margin-bottom:14px;">
+          <div class="sec-label">핵심 목표</div>
+          <textarea class="bep-inp area" id="p-goal" oninput="updatePreview()" placeholder="이 페르소나가 달성하고자 하는 핵심 목표를 서술하세요">데이터 기반 마케팅으로 ROI를 향상시키고 팀의 성과를 객관적으로 측정하고 싶다.</textarea>
+        </div>
+      </div>
+      <div>
+        <div class="list-header">
+          <span class="list-title">동기 요인</span>
+          <button class="bep-add-btn" onclick="addItem('motivations','동기 요인')">+ 추가</button>
+        </div>
+        <div id="motivations-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 고충 & 불만 -->
+  <div class="a-card">
+    <div class="a-card-title">고충 &amp; 불만</div>
+    <div class="list-header">
+      <span class="list-title">페인포인트</span>
+      <button class="bep-add-btn" onclick="addItem('pains','고충 항목')">+ 추가</button>
+    </div>
+    <div id="pains-list"></div>
+  </div>
+
+  <!-- 행동 패턴 -->
+  <div class="a-card">
+    <div class="a-card-title">행동 패턴 &amp; 채널</div>
+    <div class="grid-2">
+      <div>
+        <div class="list-header">
+          <span class="list-title">주요 채널 / 미디어</span>
+          <button class="bep-add-btn" onclick="addItem('channels','채널명')">+ 추가</button>
+        </div>
+        <div id="channels-list"></div>
+      </div>
+      <div>
+        <div class="field" style="margin-bottom:14px;">
+          <div class="sec-label">구매 빈도</div>
+          <select class="bep-sel" id="p-freq" onchange="updatePreview()">
+            <option>주 1회 이상</option>
+            <option>월 2~3회</option>
+            <option selected>월 1~2회</option>
+            <option>분기 1회</option>
+            <option>연 1~2회</option>
+            <option>충동 구매형</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="sec-label">구매 결정 요인</div>
+          <textarea class="bep-inp area" id="p-decision" style="min-height:60px;" oninput="updatePreview()" placeholder="예: 신뢰성, 사용 편의성, 가성비">신뢰성, 사용 편의성, 비용 대비 효과</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 성격 & 가치관 태그 -->
+  <div class="a-card">
+    <div class="a-card-title">성격 &amp; 가치관 태그</div>
+    <div class="sec-label" style="margin-bottom:8px;">태그 입력 후 Enter 또는 쉼표(,)로 추가</div>
+    <div class="tag-wrap" id="tag-wrap" onclick="document.getElementById('tag-field').focus()">
+      <input class="tag-input-field" id="tag-field" placeholder="태그 추가..." onkeydown="tagKeyDown(event)" oninput="tagInput(event)">
+    </div>
+  </div>
+
+  <!-- 미리보기 -->
+  <div class="dash-divider">
+    <div class="dash-divider-line"></div>
+    <span class="dash-divider-label">페르소나 카드 미리보기</span>
+    <div class="dash-divider-line"></div>
+  </div>
+
+  <div id="persona-preview"></div>
+
+</div>
+</div>
+
+<script>
+/* ── 상태 ── */
+var state = {
+  avatar: '👤',
+  name: '김지연',
+  age: 35,
+  gender: '여성',
+  job: '마케팅 매니저',
+  income: '중상 (4,000~7,000만원)',
+  location: '서울 강남구',
+  education: '대학교 졸업',
+  family: '기혼, 자녀 1명',
+  quote: '데이터가 말하게 하라.',
+  goal: '데이터 기반 마케팅으로 ROI를 향상시키고 팀의 성과를 객관적으로 측정하고 싶다.',
+  motivations: ['커리어 성장', '팀 성과 향상', '새로운 기술 습득'],
+  pains: ['복잡한 데이터 정리에 소요되는 시간', '직관에 의존하는 의사결정 문화', '반복적인 보고서 작성'],
+  channels: ['Instagram', 'LinkedIn', 'YouTube', '뉴스레터'],
+  freq: '월 1~2회',
+  decision: '신뢰성, 사용 편의성, 비용 대비 효과',
+  tags: ['분석적', '목표지향', '얼리어답터', '팀플레이어', '완벽주의']
+};
+
+var AVATARS = ['👤','👩','👨','👩‍💼','👨‍💼','👩‍💻','👨‍💻','👩‍🔬','👨‍🔬','👩‍🎨','👨‍🎨','👩‍🏫','👨‍🏫','👩‍⚕️','👨‍⚕️','🧑‍🚀','👩‍🍳','👨‍🍳','👴','👵','🧑','👱'];
+var photoDataUrl = null;
+
+/* ── 아바타 이모지 ── */
+(function initAvatarGrid(){
+  var g = document.getElementById('avatar-grid');
+  AVATARS.forEach(function(av){
+    var b = document.createElement('span');
+    b.className = 'av-btn' + (av === state.avatar ? ' sel' : '');
+    b.textContent = av;
+    b.onclick = function(){
+      if (photoDataUrl) return; // 사진 있을 때 무시
+      state.avatar = av;
+      document.getElementById('avatar-emoji').textContent = av;
+      document.querySelectorAll('.av-btn').forEach(function(x){ x.classList.remove('sel'); });
+      b.classList.add('sel');
+      updatePreview();
+    };
+    g.appendChild(b);
+  });
+})();
+
+/* ── 사진 업로드 ── */
+function handlePhotoUpload(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    photoDataUrl = e.target.result;
+    var display = document.getElementById('avatar-display');
+    display.classList.add('has-photo');
+    document.getElementById('avatar-emoji').style.display = 'none';
+    // 이미지 엘리먼트 삽입 (overlay 앞에)
+    var existing = display.querySelector('img');
+    if (existing) existing.remove();
+    var img = document.createElement('img');
+    img.src = photoDataUrl;
+    display.insertBefore(img, display.querySelector('.photo-overlay'));
+    document.getElementById('photo-clear-btn').style.display = '';
+    document.getElementById('avatar-right').classList.add('dimmed');
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+  photoDataUrl = null;
+  var display = document.getElementById('avatar-display');
+  display.classList.remove('has-photo');
+  var img = display.querySelector('img');
+  if (img) img.remove();
+  document.getElementById('avatar-emoji').style.display = '';
+  document.getElementById('photo-clear-btn').style.display = 'none';
+  document.getElementById('avatar-right').classList.remove('dimmed');
+  updatePreview();
+}
+
+/* ── 동적 리스트 ── */
+var listData = {
+  motivations: state.motivations.slice(),
+  pains:       state.pains.slice(),
+  channels:    state.channels.slice()
+};
+
+function renderList(key) {
+  var el = document.getElementById(key + '-list');
+  if (!el) return;
+  var arr = listData[key];
+  if (!arr.length) {
+    el.innerHTML = '<div class="list-empty">항목이 없습니다.</div>';
+    updatePreview(); return;
+  }
+  el.innerHTML = '';
+  arr.forEach(function(val, i) {
+    var row = document.createElement('div');
+    row.className = 'persona-item';
+    var inp = document.createElement('input');
+    inp.className = 'bep-inp';
+    inp.type = 'text';
+    inp.value = val;
+    inp.placeholder = '내용 입력';
+    inp.oninput = function() { listData[key][i] = this.value; updatePreview(); };
+    var del = document.createElement('button');
+    del.className = 'bep-del';
+    del.innerHTML = '&times;';
+    del.onclick = function() { listData[key].splice(i, 1); renderList(key); };
+    row.appendChild(inp);
+    row.appendChild(del);
+    el.appendChild(row);
+  });
+  updatePreview();
+}
+
+function addItem(key, placeholder) {
+  listData[key].push('');
+  renderList(key);
+  var rows = document.querySelectorAll('#' + key + '-list .bep-inp');
+  if (rows.length) rows[rows.length - 1].focus();
+}
+
+/* ── 태그 ── */
+var tags = state.tags.slice();
+
+function renderTags() {
+  var wrap = document.getElementById('tag-wrap');
+  var field = document.getElementById('tag-field');
+  wrap.querySelectorAll('.tag-pill').forEach(function(p){ p.remove(); });
+  tags.forEach(function(t, i){
+    var pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = escH(t) + '<span class="tag-remove" onclick="removeTag('+i+')">&times;</span>';
+    wrap.insertBefore(pill, field);
+  });
+  updatePreview();
+}
+
+function removeTag(i){ tags.splice(i,1); renderTags(); }
+
+function tagKeyDown(e){
+  var v = e.target.value.trim();
+  if ((e.key === 'Enter' || e.key === ',') && v) {
+    e.preventDefault();
+    var clean = v.replace(/,$/, '').trim();
+    if (clean && !tags.includes(clean)) { tags.push(clean); }
+    e.target.value = '';
+    renderTags();
+  } else if (e.key === 'Backspace' && !e.target.value && tags.length) {
+    tags.pop(); renderTags();
+  }
+}
+function tagInput(e){
+  if (e.target.value.includes(',')) {
+    var parts = e.target.value.split(',');
+    parts.forEach(function(p){ var c=p.trim(); if(c && !tags.includes(c)) tags.push(c); });
+    e.target.value = '';
+    renderTags();
+  }
+}
+
+/* ── 현재값 수집 ── */
+function getState() {
+  return {
+    avatar:    state.avatar,
+    name:      v('p-name'),
+    age:       v('p-age'),
+    gender:    v('p-gender'),
+    job:       v('p-job'),
+    income:    v('p-income'),
+    location:  v('p-location'),
+    education: v('p-education'),
+    family:    v('p-family'),
+    quote:     v('p-quote'),
+    goal:      v('p-goal'),
+    motivations: listData.motivations.filter(function(x){return x.trim();}),
+    pains:       listData.pains.filter(function(x){return x.trim();}),
+    channels:    listData.channels.filter(function(x){return x.trim();}),
+    freq:      v('p-freq'),
+    decision:  v('p-decision'),
+    tags:      tags.slice()
+  };
+}
+function v(id){ var el=document.getElementById(id); return el ? el.value : ''; }
+
+/* ── 미리보기 렌더 ── */
+function updatePreview() {
+  var s = getState();
+  var demo = [s.age + '세', s.gender, s.job].filter(Boolean).join(' · ');
+  var meta = [s.location, s.education, s.family].filter(Boolean).join(' · ');
+
+  var motivHtml = s.motivations.length
+    ? '<ul class="pc-motive-list">' + s.motivations.map(function(m){ return '<li>'+escH(m)+'</li>'; }).join('') + '</ul>'
+    : '<div style="font-size:12px;color:#94a3b8;">동기 요인을 추가하세요.</div>';
+
+  var painHtml = s.pains.length
+    ? '<ul class="pc-pain-list">' + s.pains.map(function(p){ return '<li>'+escH(p)+'</li>'; }).join('') + '</ul>'
+    : '<div style="font-size:12px;color:#94a3b8;">고충 항목을 추가하세요.</div>';
+
+  var chanHtml = s.channels.length
+    ? '<ul class="pc-channel-list">' + s.channels.map(function(c){ return '<li>'+escH(c)+'</li>'; }).join('') + '</ul>'
+    : '<div style="font-size:12px;color:#94a3b8;">채널을 추가하세요.</div>';
+
+  var tagsHtml = s.tags.length
+    ? s.tags.map(function(t){ return '<span class="pc-tag">'+escH(t)+'</span>'; }).join('')
+    : '<span style="font-size:12px;color:#94a3b8;">성격 태그를 추가하세요.</span>';
+
+  var avatarHtml = photoDataUrl
+    ? '<img src="' + photoDataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+    : s.avatar;
+
+  document.getElementById('persona-preview').innerHTML =
+    '<div class="persona-card">' +
+      '<div class="pc-header">' +
+        '<div class="pc-avatar">' + avatarHtml + '</div>' +
+        '<div class="pc-identity">' +
+          '<div class="pc-name">' + escH(s.name || '이름 없음') + '</div>' +
+          '<div class="pc-demo">' + escH(demo) + (meta ? ' &nbsp;·&nbsp; ' + escH(meta) : '') + '</div>' +
+          (s.income ? '<div class="pc-demo" style="opacity:.7;font-size:12px;">' + escH(s.income) + '</div>' : '') +
+          (s.quote ? '<div class="pc-quote">"' + escH(s.quote) + '"</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="pc-body">' +
+        '<div class="pc-col">' +
+          '<div class="pc-col-title" style="color:#7c3aed;">🎯&nbsp; 목표 &amp; 동기</div>' +
+          '<div class="pc-goal-text">' + escH(s.goal || '').replace(/\n/g,'<br>') + '</div>' +
+          (s.motivations.length ? '<div class="pc-sub-label">동기 요인</div>' + motivHtml : motivHtml) +
+        '</div>' +
+        '<div class="pc-col">' +
+          '<div class="pc-col-title" style="color:#ef4444;">😤&nbsp; 고충 &amp; 불만</div>' +
+          painHtml +
+        '</div>' +
+        '<div class="pc-col">' +
+          '<div class="pc-col-title" style="color:#2563eb;">📱&nbsp; 행동 패턴</div>' +
+          chanHtml +
+          (s.freq ? '<div class="pc-sub-label">구매 빈도</div><div class="pc-decision">' + escH(s.freq) + '</div>' : '') +
+          (s.decision ? '<div class="pc-sub-label">구매 결정 요인</div><div class="pc-decision">' + escH(s.decision) + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="pc-footer">' +
+        '<span class="pc-footer-label">성격 &amp; 가치관</span>' +
+        tagsHtml +
+      '</div>' +
+    '</div>';
+}
+
+/* ── HTML 내보내기 ── */
+function downloadHTML() {
+  var s = getState();
+  var html = buildExportHTML(s);
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'persona-' + (s.name || 'card') + '-' + new Date().toISOString().slice(0,10) + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function buildExportHTML(s) {
+  function ec(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  var demo = [s.age + '세', s.gender, s.job].filter(Boolean).join(' · ');
+  var meta = [s.location, s.education, s.family].filter(Boolean).join(' · ');
+  var motivItems = s.motivations.map(function(m){ return '<li>'+ec(m)+'</li>'; }).join('');
+  var painItems  = s.pains.map(function(p){ return '<li>'+ec(p)+'</li>'; }).join('');
+  var chanItems  = s.channels.map(function(c){ return '<li>'+ec(c)+'</li>'; }).join('');
+  var tagItems   = s.tags.map(function(t){ return '<span class="pc-tag">'+ec(t)+'</span>'; }).join('');
+  var date = new Date().toLocaleDateString('ko-KR');
+
+  var exportAvatar = photoDataUrl
+    ? '<img src="' + photoDataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+    : s.avatar;
+
+  return '<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n<title>페르소나: '+ec(s.name)+'</title>\n' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">\n' +
+    '<style>\n' +
+    ':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--violet:#7c3aed;--violet2:#a855f7;}\n' +
+    '*{margin:0;padding:0;box-sizing:border-box;}\n' +
+    'body{font-family:\'Noto Sans KR\',\'Segoe UI\',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}\n' +
+    '.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}\n' +
+    '.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}\n' +
+    '.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}\n' +
+    '.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}\n' +
+    '.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}\n' +
+    '.sum-icon{font-size:22px;opacity:.85;flex-shrink:0;}\n' +
+    '.sum-v{font-family:\'Space Mono\',monospace;font-size:18px;font-weight:700;line-height:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}\n' +
+    '.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}\n' +
+    '.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}\n' +
+    '.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}\n' +
+    '.pc{border:1px solid var(--border);border-radius:16px;overflow:hidden;}\n' +
+    '.pc-hdr{background:linear-gradient(135deg,var(--violet),var(--violet2));padding:28px 32px;display:flex;align-items:flex-start;gap:22px;color:#fff;}\n' +
+    '.pc-av{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;border:3px solid rgba(255,255,255,.35);overflow:hidden;}\n' +
+    '.pc-name{font-size:26px;font-weight:800;margin-bottom:4px;}\n' +
+    '.pc-demo{font-size:13px;opacity:.85;margin-bottom:4px;}\n' +
+    '.pc-inc{font-size:12px;opacity:.7;margin-bottom:6px;}\n' +
+    '.pc-quote{font-size:13px;font-style:italic;opacity:.75;}\n' +
+    '.pc-body{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);}\n' +
+    '.pc-col{padding:22px 24px;border-right:1px solid var(--border);}\n' +
+    '.pc-col:last-child{border-right:none;}\n' +
+    '.pc-ct{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}\n' +
+    '.pc-gt{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px;}\n' +
+    '.pc-sl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);margin:10px 0 5px;}\n' +
+    'ul.motive,ul.pain,ul.chan{list-style:none;display:flex;flex-direction:column;gap:5px;}\n' +
+    'ul.motive li::before{content:"→ ";color:var(--violet);font-weight:700;}\n' +
+    'ul.pain li::before{content:"! ";color:var(--red);font-weight:700;}\n' +
+    'ul.chan li::before{content:"· ";color:var(--accent);font-weight:700;}\n' +
+    'ul li{font-size:13px;color:var(--text);line-height:1.5;}\n' +
+    '.pc-dt{font-size:12px;color:var(--muted);line-height:1.6;}\n' +
+    '.pc-ft{padding:16px 24px;border-top:1px solid var(--border);background:var(--card2);display:flex;align-items:center;flex-wrap:wrap;gap:8px;}\n' +
+    '.pc-fl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-right:4px;}\n' +
+    '.pc-tag{background:rgba(124,58,237,.1);color:var(--violet);border:1px solid rgba(124,58,237,.2);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;}\n' +
+    '.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}\n' +
+    '@media(max-width:700px){.pc-body{grid-template-columns:1fr;}.pc-col{border-right:none;border-bottom:1px solid var(--border);}.sum-row{grid-template-columns:repeat(2,1fr);}}\n' +
+    '</style>\n</head>\n<body>\n<div class="wrap">\n' +
+
+    '<div class="page-title">👤 페르소나 카드</div>\n' +
+    '<div class="meta"><b style="color:var(--muted)">'+ec(s.name||'페르소나')+'</b> &nbsp;·&nbsp; '+ec(date)+' &nbsp;·&nbsp; DataForge</div>\n' +
+
+    '<div class="sum-row">\n' +
+    '<div class="sum-c" style="border-color:var(--border);"><div class="sum-icon">👤</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--text);">'+ec(s.name||'-')+'</div><div class="sum-l" style="color:var(--muted);">'+ec(s.age)+'세 · '+ec(s.gender)+'</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.04);"><div class="sum-icon">💼</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--violet);">'+ec(s.job||'-')+'</div><div class="sum-l" style="color:var(--violet);">직업 / 직위</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(37,99,235,.3);background:rgba(37,99,235,.04);"><div class="sum-icon">📍</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--accent);">'+ec(s.location||'-')+'</div><div class="sum-l" style="color:var(--accent);">거주지</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.04);"><div class="sum-icon">🎯</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--green);">'+s.motivations.length+'개</div><div class="sum-l" style="color:var(--green);">동기 요인</div></div></div>\n' +
+    '<div class="sum-c" style="border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.04);"><div class="sum-icon">😤</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--red);">'+s.pains.length+'개</div><div class="sum-l" style="color:var(--red);">페인포인트</div></div></div>\n' +
+    '</div>\n' +
+
+    '<div class="section-card">\n<div class="section-title">페르소나 프로필</div>\n' +
+    '<div class="pc">\n' +
+    '<div class="pc-hdr"><div class="pc-av">'+exportAvatar+'</div>' +
+    '<div style="flex:1;"><div class="pc-name">'+ec(s.name||'이름 없음')+'</div>' +
+    '<div class="pc-demo">'+ec(demo)+(meta?' &nbsp;·&nbsp; '+ec(meta):'')+'</div>' +
+    (s.income?'<div class="pc-inc">'+ec(s.income)+'</div>':'')+
+    (s.quote?'<div class="pc-quote">"'+ec(s.quote)+'"</div>':'')+
+    '</div></div>\n' +
+    '<div class="pc-body">\n' +
+    '<div class="pc-col"><div class="pc-ct" style="color:var(--violet);">🎯 목표 &amp; 동기</div>' +
+    (s.goal?'<div class="pc-gt">'+ec(s.goal).replace(/\n/g,'<br>')+'</div>':'')+
+    (motivItems?'<div class="pc-sl">동기 요인</div><ul class="motive">'+motivItems+'</ul>':'')+
+    '</div>\n' +
+    '<div class="pc-col"><div class="pc-ct" style="color:var(--red);">😤 고충 &amp; 불만</div>' +
+    (painItems?'<ul class="pain">'+painItems+'</ul>':'<div class="pc-dt">항목 없음</div>')+
+    '</div>\n' +
+    '<div class="pc-col"><div class="pc-ct" style="color:var(--accent);">📱 행동 패턴</div>' +
+    (chanItems?'<ul class="chan">'+chanItems+'</ul>':'')+
+    (s.freq?'<div class="pc-sl">구매 빈도</div><div class="pc-dt">'+ec(s.freq)+'</div>':'')+
+    (s.decision?'<div class="pc-sl">구매 결정 요인</div><div class="pc-dt">'+ec(s.decision)+'</div>':'')+
+    '</div>\n</div>\n' +
+    '<div class="pc-ft"><span class="pc-fl">성격 &amp; 가치관</span>' +
+    (tagItems||'<span style="font-size:12px;color:var(--dim);">태그 없음</span>')+
+    '</div>\n</div>\n</div>\n' +
+
+    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(date)+'</div>\n' +
+    '</div>\n</body>\n</html>';
+}
+
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── 마크다운으로 저장 — 페르소나 카드를 .md 파일로 내려받는다 (bep.php와 같은 패턴) ── */
+function exportMD(){
+  var s = getState();
+  var today = new Date().toISOString().slice(0,10);
+  /* 표 칸에 들어가는 값은 파이프만 이스케이프한다 */
+  function mdc(x){ return String(x||'').replace(/\|/g,'\\|'); }
+  var md = '# 👤 페르소나 — ' + (s.name||'이름 없음') + '\n\n';
+  if (s.quote) md += '> "' + s.quote + '"\n\n';
+  md += today + ' · DataForge 페르소나 시뮬레이터\n\n';
+  md += '## 기본 프로필\n\n| 항목 | 내용 |\n|---|---|\n';
+  md += '| 나이 · 성별 | ' + mdc(s.age + '세 · ' + s.gender) + ' |\n';
+  if (s.job)       md += '| 직업 / 직위 | ' + mdc(s.job) + ' |\n';
+  if (s.income)    md += '| 소득 수준 | ' + mdc(s.income) + ' |\n';
+  if (s.location)  md += '| 거주지 | ' + mdc(s.location) + ' |\n';
+  if (s.education) md += '| 학력 | ' + mdc(s.education) + ' |\n';
+  if (s.family)    md += '| 가족 관계 | ' + mdc(s.family) + ' |\n';
+  md += '\n## 🎯 목표 & 동기\n\n';
+  if (s.goal) md += s.goal + '\n\n';
+  if (s.motivations.length)
+    md += '**동기 요인**\n\n' + s.motivations.map(function(m){ return '- ' + m; }).join('\n') + '\n\n';
+  if (s.pains.length)
+    md += '## 😤 고충 & 불만\n\n' + s.pains.map(function(p){ return '- ' + p; }).join('\n') + '\n\n';
+  md += '## 📱 행동 패턴\n\n';
+  if (s.channels.length) md += '**주요 채널**: ' + s.channels.join(', ') + '\n\n';
+  if (s.freq)     md += '**구매 빈도**: ' + s.freq + '\n\n';
+  if (s.decision) md += '**구매 결정 요인**: ' + s.decision + '\n\n';
+  if (s.tags.length)
+    md += '## 성격 & 가치관\n\n' + s.tags.map(function(t){ return '`' + t + '`'; }).join(' ') + '\n\n';
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download = 'persona-' + (s.name||'card') + '-' + today + '.md';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+
+/* ── 초기화 ── */
+renderList('motivations');
+renderList('pains');
+renderList('channels');
+renderTags();
+updatePreview();
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

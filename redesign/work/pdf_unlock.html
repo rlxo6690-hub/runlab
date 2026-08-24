@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 암호 제거 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta name="description" content="서버 업로드 없이 브라우저에서 PDF 열기 암호와 인쇄·복사 제한을 제거합니다. 원본 텍스트·서식 그대로 유지.">
+  <meta property="og:title" content="PDF 암호 제거 — DataForge">
+  <meta property="og:description" content="서버 업로드 없이 브라우저에서 직접 PDF 암호와 인쇄·복사 제한을 제거합니다.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+
+    :root{
+      --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+      --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+      --accent:#2563eb;--accent2:#6366f1;
+      --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+      --r:10px;
+    }
+
+    body{
+      font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;font-size:14px;line-height:1.6;
+    }
+
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;
+    }
+
+    /* ── 헤더 ── */
+    .site-header{
+      padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;
+    }
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+                color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:#ea580c;font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;
+                 border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    /* ── 레이아웃 ── */
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+    .page{padding:0 24px 80px;}
+
+    .intro-box{
+      background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+      border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);
+      line-height:1.7;margin-top:20px;margin-bottom:16px;
+    }
+    .intro-box strong{color:var(--text);}
+
+    .two-col{display:flex;flex-direction:column;gap:16px;margin-bottom:16px;}
+
+    /* ── 카드 ── */
+    .a-card{background:var(--card);border:1px solid var(--border);
+            border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+    .a-card:last-child{margin-bottom:0;}
+    .a-card-title{font-size:10px;font-weight:700;color:var(--muted);
+                  letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+                  display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+    /* ── 업로드 존 ── */
+    .upload-zone{
+      border:2px dashed rgba(37,99,235,.3);border-radius:10px;
+      padding:36px 18px;text-align:center;cursor:pointer;transition:all .2s;
+      background:rgba(37,99,235,.03);position:relative;
+    }
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{font-size:36px;margin-bottom:10px;}
+    .upload-main{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .upload-sub{font-size:12px;color:var(--muted);}
+
+    .file-info{display:none;margin-top:12px;padding:10px 14px;
+               background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);
+               border-radius:8px;font-size:12px;color:#065f46;line-height:1.8;}
+    .file-info.show{display:block;}
+
+    /* ── 보호 상태 ── */
+    .status-card{display:none;}
+    .status-card.show{display:block;}
+    .status-line{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;
+                 font-size:13px;font-weight:700;margin-bottom:12px;line-height:1.5;}
+    .status-line .si{font-size:18px;flex-shrink:0;}
+    .status-locked{background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.25);color:#92400e;}
+    .status-restricted{background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.2);color:#1e40af;}
+    .status-clean{background:rgba(100,116,139,.07);border:1px solid rgba(100,116,139,.2);color:var(--muted);}
+    .status-error{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.25);color:#991b1b;}
+
+    .chip-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;}
+    .chip{font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;
+          border:1px solid var(--border2);background:var(--card2);color:var(--muted);
+          display:inline-flex;align-items:center;gap:5px;}
+    .chip.deny{background:rgba(220,38,38,.07);border-color:rgba(220,38,38,.25);color:#b91c1c;}
+    .chip.allow{background:rgba(5,150,105,.07);border-color:rgba(5,150,105,.25);color:#047857;}
+
+    /* ── 암호 입력 ── */
+    .pw-wrap{display:none;}
+    .pw-wrap.show{display:block;}
+    .pw-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:7px;}
+    .pw-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;}
+    .pw-input{
+      flex:1;min-width:180px;padding:10px 13px;font-size:16px;
+      font-family:'Space Mono',monospace;letter-spacing:1px;
+      border:1.5px solid var(--border2);border-radius:8px;background:var(--card);
+      color:var(--text);transition:.2s;
+    }
+    .pw-input:focus{outline:none;border-color:var(--accent);background:#fff;}
+    .pw-toggle{
+      padding:0 14px;border:1.5px solid var(--border2);border-radius:8px;
+      background:var(--card2);cursor:pointer;font-size:15px;transition:.2s;flex-shrink:0;
+    }
+    .pw-toggle:hover{border-color:var(--accent);}
+    .pw-err{font-size:12px;color:var(--red);font-weight:700;min-height:18px;margin-top:7px;}
+
+    /* ── 진행 ── */
+    .progress-wrap{display:none;margin-bottom:16px;}
+    .progress-wrap.show{display:block;}
+    .progress-label{font-size:12px;color:var(--muted);margin-bottom:8px;
+                    display:flex;justify-content:space-between;}
+    .progress-bar-bg{height:8px;background:var(--card2);border-radius:4px;overflow:hidden;}
+    .progress-bar{height:100%;background:var(--accent);border-radius:4px;
+                  transition:width .25s;width:0%;}
+
+    /* ── 통계 ── */
+    .stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+    .stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;
+              padding:12px;text-align:center;}
+    .stat-val{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);}
+    .stat-val.green{color:var(--green);}
+    .stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+    /* ── 결과 미리보기 ── */
+    .preview-row{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;}
+    .preview-box{
+      width:132px;flex-shrink:0;border:1px solid var(--border2);border-radius:8px;
+      overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);
+    }
+    .preview-box canvas{display:block;width:100%;height:auto;}
+    .preview-cap{font-size:10px;color:var(--dim);text-align:center;padding:4px 2px;
+                 background:var(--card2);border-top:1px solid var(--border);}
+    .preview-note{flex:1;min-width:0;}
+
+    /* ── 버튼 ── */
+    .btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+         font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;
+         cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:#1d4ed8;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#047857;}
+    .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+    .btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+    /* ── 정보 블록 ── */
+    .info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;
+                background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+    .info-block strong{color:var(--text);}
+    .info-block + .info-block{margin-top:12px;}
+    .info-warn{background:rgba(217,119,6,.04);border-color:rgba(217,119,6,.15);}
+    .info-warn strong{color:var(--amber);}
+
+    .result-section{display:none;}
+    .result-section.show{display:block;}
+
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .stat-grid-3{grid-template-columns:repeat(3,1fr);gap:6px;}
+      .stat-val{font-size:15px;}
+      .site-header{padding:12px 14px;}
+      .pw-input{width:100%;}
+      .btn{width:100%;text-align:center;}
+      .btn-row .btn{width:100%;}
+      .preview-row{flex-direction:column;align-items:center;}
+      .preview-box{width:160px;}
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">PDF 암호 제거</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      <strong>서버 업로드 없이</strong> 브라우저 안에서 PDF의 <strong>열기 암호</strong>와
+      <strong>인쇄·복사·편집 제한</strong>을 제거합니다.
+      페이지를 이미지로 바꾸지 않고 원본 <strong>텍스트·서식·화질을 그대로</strong> 유지합니다.
+      <br>
+      본인이 열 수 있는(암호를 아는) 문서에만 사용하세요 — 암호를 추측하거나 알아내는 기능은 없습니다.
+    </div>
+
+    <div class="two-col">
+      <div>
+
+        <!-- 파일 선택 -->
+        <div class="a-card">
+          <div class="a-card-title">📂 PDF 파일 선택</div>
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="file-input" accept=".pdf,application/pdf" onchange="onFileSelect(this)">
+            <div class="upload-icon">🔒</div>
+            <div class="upload-main">PDF 파일을 여기에 드래그하거나 클릭해 선택</div>
+            <div class="upload-sub">최대 100MB · 브라우저 내에서만 처리 (서버 전송 없음)</div>
+          </div>
+          <div class="file-info" id="file-info"></div>
+        </div>
+
+        <!-- 보호 상태 -->
+        <div class="a-card status-card" id="status-card">
+          <div class="a-card-title">🔐 문서 보호 상태</div>
+          <div id="status-line" class="status-line status-clean">
+            <span class="si">⏳</span><span id="status-text">분석 중...</span>
+          </div>
+          <div class="chip-grid" id="chip-grid"></div>
+
+          <div class="pw-wrap" id="pw-wrap">
+            <div class="pw-label">🔑 문서 열기 암호</div>
+            <div class="pw-row">
+              <input type="password" class="pw-input" id="pw-input" placeholder="암호를 입력하세요"
+                     autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')startUnlock()">
+              <button class="pw-toggle" id="pw-toggle" onclick="togglePw()" title="암호 보기">👁</button>
+            </div>
+            <div class="pw-err" id="pw-err"></div>
+          </div>
+        </div>
+
+        <!-- 실행 -->
+        <div class="a-card">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="run-btn" onclick="startUnlock()" disabled>🔓 암호 제거 시작</button>
+            <button class="btn btn-outline" onclick="resetAll()">↺ 초기화</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div>
+
+        <!-- 진행 -->
+        <div class="a-card progress-wrap" id="progress-wrap">
+          <div class="a-card-title">⏳ 처리 중</div>
+          <div class="progress-label">
+            <span id="progress-text">준비 중...</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
+        </div>
+
+        <!-- 결과 -->
+        <div class="a-card result-section" id="result-section">
+          <div class="a-card-title">✅ 암호 제거 완료</div>
+          <div class="stat-grid-3">
+            <div class="stat-box">
+              <div class="stat-val" id="r-pages">—</div>
+              <div class="stat-lbl">페이지 수</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="r-orig">—</div>
+              <div class="stat-lbl">원본 크기</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val green" id="r-out">—</div>
+              <div class="stat-lbl">결과 크기</div>
+            </div>
+          </div>
+          <div class="preview-row">
+            <div class="preview-box" id="preview-box" style="display:none">
+              <canvas id="preview-canvas"></canvas>
+              <div class="preview-cap">1쪽 미리보기</div>
+            </div>
+            <div class="preview-note">
+              <div class="info-block" id="result-note"></div>
+            </div>
+          </div>
+          <button class="btn btn-green" id="dl-btn" onclick="downloadResult()">⬇ 암호 없는 PDF 다운로드</button>
+        </div>
+
+        <!-- 안내 -->
+        <div class="a-card" id="guide-card">
+          <div class="a-card-title">💡 사용 안내</div>
+          <div class="info-block">
+            <strong>열기 암호</strong> — 파일을 열 때 암호를 묻는 경우입니다. 그 암호를 입력해야 제거할 수 있습니다.
+            (소유자 암호를 알고 있다면 그것을 넣어도 됩니다)
+          </div>
+          <div class="info-block">
+            <strong>권한 암호(인쇄·복사 제한)</strong> — 파일은 그냥 열리는데 인쇄·복사·편집만 막혀 있는 경우입니다.
+            이때는 <strong>암호 입력 없이</strong> 바로 제거됩니다.
+          </div>
+          <div class="info-block">
+            <strong>원본 품질 유지</strong> — 문서 구조는 그대로 두고 암호화만 벗겨내므로,
+            텍스트 선택·검색·글꼴·해상도가 원본과 동일합니다. 스캔본도 화질 손실이 없습니다.
+          </div>
+          <div class="info-block info-warn">
+            <strong>주의</strong> — 저작권이 있거나 타인이 보호한 문서의 제한을 무단으로 푸는 것은
+            법적 문제가 될 수 있습니다. 본인 문서이거나 권한이 있는 경우에만 사용하세요.
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /.two-col -->
+
+  </div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+/* qpdf(WASM) — 자체 호스팅. 문서 구조를 유지한 채 암호화만 제거한다
+   (pdf-lib는 암호화된 PDF를 복호화하지 못하고, 래스터 변환은 원본 품질을 잃는다) */
+const QPDF_JS   = '/work/vendor/qpdf.js';
+const QPDF_WASM = '/work/vendor/qpdf.wasm';
+const MAX_BYTES = 100 * 1024 * 1024;
+
+/* pdf.js 권한 플래그 (getPermissions()가 '허용된' 플래그 배열을 돌려준다) */
+const PERM = { PRINT:0x04, MODIFY:0x08, COPY:0x10, ANNOT:0x20,
+               FORMS:0x100, A11Y:0x200, ASSEMBLE:0x400, PRINT_HQ:0x800 };
+
+let pdfBytes     = null;   // 원본 바이트
+let resultBytes  = null;   // 해제 결과
+let origFileName = 'document.pdf';
+let needPassword = false;  // 열기 암호가 걸려 있는지
+let isProtected  = false;  // 제거할 암호(암호화)가 있는지
+let qpdfFactory  = null;
+
+/* ── qpdf 엔진 로드 (첫 실행 때만 내려받는다) ── */
+function loadQpdf() {
+  if (qpdfFactory) return Promise.resolve(qpdfFactory);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = QPDF_JS;
+    s.onload = () => {
+      // UMD 빌드 — 전역 Module 이 팩토리 함수
+      if (typeof window.Module !== 'function') { reject(new Error('qpdf 엔진 초기화 실패')); return; }
+      qpdfFactory = window.Module;
+      resolve(qpdfFactory);
+    };
+    s.onerror = () => reject(new Error('qpdf 엔진을 내려받지 못했습니다 (네트워크 확인)'));
+    document.head.appendChild(s);
+  });
+}
+
+/* qpdf 1회 실행 — callMain 후에는 런타임이 종료되므로 매번 새 인스턴스를 만든다 */
+async function runQpdf(args, input) {
+  const factory = await loadQpdf();
+  const mod = await factory({ locateFile: () => QPDF_WASM, noInitialRun: true });
+  if (input) mod.FS.writeFile('/in.pdf', input);
+  let code;
+  try {
+    code = mod.callMain(args);
+  } catch (e) {
+    code = (e && typeof e.status === 'number') ? e.status : -1;
+  }
+  let out = null;
+  try { out = mod.FS.readFile('/out.pdf'); } catch (e) { /* 실패 시 출력 없음 */ }
+  return { code, out };
+}
+
+/* ── 파일 선택 ── */
+function onFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > MAX_BYTES) {
+    alert('파일이 너무 큽니다 (최대 100MB).\n현재: ' + fmtSize(file.size));
+    input.value = '';
+    return;
+  }
+  origFileName = file.name;
+  resultBytes  = null;
+  document.getElementById('result-section').className = 'a-card result-section';
+  document.getElementById('guide-card').style.display = '';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    pdfBytes = new Uint8Array(e.target.result);
+    document.getElementById('file-info').className = 'file-info show';
+    document.getElementById('file-info').innerHTML =
+      `📄 <strong>${escapeHtml(file.name)}</strong> &nbsp;·&nbsp; ${fmtSize(file.size)}`;
+    inspectFile();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* 드래그 & 드롭 */
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.toLowerCase().endsWith('.pdf')) return;
+  const dt = new DataTransfer(); dt.items.add(file);
+  document.getElementById('file-input').files = dt.files;
+  onFileSelect(document.getElementById('file-input'));
+});
+
+/* ── 보호 상태 분석 (pdf.js) ── */
+async function inspectFile() {
+  const card = document.getElementById('status-card');
+  card.className = 'a-card status-card show';
+  setStatus('clean', '⏳', '분석 중...');
+  document.getElementById('chip-grid').innerHTML = '';
+  document.getElementById('pw-wrap').className = 'pw-wrap';
+  document.getElementById('pw-err').textContent = '';
+  document.getElementById('run-btn').disabled = true;
+  needPassword = false;
+  isProtected  = false;
+
+  try {
+    const doc   = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+    const perms = await doc.getPermissions();
+    doc.destroy();
+
+    if (perms === null) {
+      // 암호화 정보 없음 = 제거할 암호가 없다
+      setStatus('clean', '🔓', '이 PDF에는 제거할 암호가 없습니다.');
+      renderChips(null);
+      return;
+    }
+    isProtected = true;
+    const denied = deniedList(perms);
+    if (denied.length === 0) {
+      setStatus('restricted', '🔐', '암호화되어 있지만 권한 제한은 없습니다. 암호화 자체를 제거할 수 있습니다.');
+    } else {
+      setStatus('restricted', '🔐',
+        '권한 암호가 걸려 있습니다 — ' + denied.join(' · ') + ' 제한. 암호 입력 없이 제거할 수 있습니다.');
+    }
+    renderChips(perms);
+    document.getElementById('run-btn').disabled = false;
+
+  } catch (err) {
+    if (err && err.name === 'PasswordException') {
+      needPassword = true;
+      isProtected  = true;
+      setStatus('locked', '🔒', '문서 열기 암호가 걸려 있습니다. 아래에 암호를 입력하세요.');
+      document.getElementById('pw-wrap').className = 'pw-wrap show';
+      document.getElementById('run-btn').disabled = false;
+      document.getElementById('pw-input').focus();
+    } else if (err && err.name === 'InvalidPDFException') {
+      setStatus('error', '⚠️', 'PDF 파일이 아니거나 파일이 손상되었습니다.');
+    } else {
+      setStatus('error', '⚠️', '파일을 읽지 못했습니다: ' + (err && err.message ? err.message : '알 수 없는 오류'));
+    }
+  }
+}
+
+function deniedList(perms) {
+  const out = [];
+  if (!perms.includes(PERM.PRINT))  out.push('인쇄');
+  if (!perms.includes(PERM.COPY))   out.push('복사');
+  if (!perms.includes(PERM.MODIFY)) out.push('편집');
+  if (!perms.includes(PERM.ANNOT))  out.push('주석');
+  return out;
+}
+
+function renderChips(perms) {
+  const items = [
+    ['🖨', '인쇄',  PERM.PRINT],
+    ['📋', '복사',  PERM.COPY],
+    ['✏️', '편집',  PERM.MODIFY],
+    ['💬', '주석',  PERM.ANNOT],
+  ];
+  document.getElementById('chip-grid').innerHTML = items.map(([ic, label, flag]) => {
+    if (perms === null) return `<span class="chip allow">${ic} ${label} 허용</span>`;
+    const ok = perms.includes(flag);
+    return `<span class="chip ${ok ? 'allow' : 'deny'}">${ic} ${label} ${ok ? '허용' : '차단'}</span>`;
+  }).join('');
+}
+
+function setStatus(kind, icon, text) {
+  document.getElementById('status-line').className = 'status-line status-' + kind;
+  document.getElementById('status-line').querySelector('.si').textContent = icon;
+  document.getElementById('status-text').textContent = text;
+}
+
+function togglePw() {
+  const inp = document.getElementById('pw-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  document.getElementById('pw-toggle').textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+/* ── 암호 제거 실행 ── */
+async function startUnlock() {
+  if (!pdfBytes || !isProtected) return;
+  const password = needPassword ? document.getElementById('pw-input').value : '';
+  document.getElementById('pw-err').textContent = '';
+
+  if (needPassword && !password) {
+    document.getElementById('pw-err').textContent = '암호를 입력해주세요';
+    document.getElementById('pw-input').focus();
+    return;
+  }
+
+  setProgress(true);
+  document.getElementById('result-section').className = 'a-card result-section';
+  document.getElementById('guide-card').style.display = 'none';
+  resultBytes = null;
+
+  try {
+    /* 1) 암호 확인 — 틀린 암호를 여기서 걸러 사용자에게 바로 알린다 */
+    if (needPassword) {
+      updateProgress(15, '암호 확인 중...');
+      try {
+        const doc = await pdfjsLib.getDocument({ data: pdfBytes.slice(), password }).promise;
+        doc.destroy();
+      } catch (e) {
+        if (e && e.name === 'PasswordException') {
+          document.getElementById('pw-err').textContent = '암호가 올바르지 않습니다. 다시 확인해주세요.';
+          document.getElementById('pw-input').select();
+          throw new Error('__handled__');
+        }
+        throw e;
+      }
+    }
+
+    /* 2) qpdf 엔진 로드 (최초 1회 약 1.3MB) */
+    updateProgress(35, '암호 해제 엔진 준비 중...');
+    await loadQpdf();
+
+    /* 3) 복호화 — 구조를 그대로 두고 암호화만 제거 */
+    updateProgress(60, '암호 제거 중...');
+    const args = ['--decrypt'];
+    if (password) args.push('--password=' + password);
+    args.push('/in.pdf', '/out.pdf');
+    const { code, out } = await runQpdf(args, pdfBytes);
+
+    if (code !== 0 || !out || out.length === 0) {
+      if (needPassword) {
+        document.getElementById('pw-err').textContent = '암호가 올바르지 않거나 지원하지 않는 암호화 방식입니다.';
+        throw new Error('__handled__');
+      }
+      throw new Error('암호를 제거하지 못했습니다 (qpdf 종료 코드 ' + code + ')');
+    }
+
+    /* 4) 검증 — 결과물이 암호 없이 열리는지 직접 확인 */
+    updateProgress(85, '결과 검증 중...');
+    const verified = await pdfjsLib.getDocument({ data: out.slice() }).promise;
+    const pages    = verified.numPages;
+    const stillRestricted = await verified.getPermissions();
+    await renderPreview(verified);
+    verified.destroy();
+
+    resultBytes = out;
+    updateProgress(100, '완료');
+    showResult(pdfBytes.byteLength, out.length, pages, stillRestricted);
+
+  } catch (err) {
+    if (!err || err.message !== '__handled__') {
+      alert('암호 제거 중 오류가 발생했습니다: ' + (err && err.message ? err.message : err));
+    }
+    document.getElementById('guide-card').style.display = '';
+  } finally {
+    setProgress(false);
+  }
+}
+
+async function renderPreview(doc) {
+  try {
+    const page   = await doc.getPage(1);
+    const scale  = 264 / page.getViewport({ scale: 1 }).width;   // 미리보기 폭 132px @2x
+    const vp     = page.getViewport({ scale });
+    const canvas = document.getElementById('preview-canvas');
+    canvas.width  = Math.floor(vp.width);
+    canvas.height = Math.floor(vp.height);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    document.getElementById('preview-box').style.display = '';
+  } catch (e) {
+    document.getElementById('preview-box').style.display = 'none';
+  }
+}
+
+function showResult(origB, outB, pages, stillRestricted) {
+  document.getElementById('r-pages').textContent = pages + '쪽';
+  document.getElementById('r-orig').textContent  = fmtSize(origB);
+  document.getElementById('r-out').textContent   = fmtSize(outB);
+
+  const note = stillRestricted === null
+    ? '암호와 권한 제한이 <strong>모두 제거</strong>되었습니다. 이제 암호 없이 열리고 인쇄·복사·편집이 가능합니다.<br>' +
+      '원본 텍스트와 서식은 그대로입니다 — 아래에서 내려받으세요.'
+    : '암호는 제거했지만 일부 제한 정보가 남아 있습니다. 뷰어에 따라 다르게 표시될 수 있습니다.';
+  document.getElementById('result-note').innerHTML = note;
+  document.getElementById('result-section').className = 'a-card result-section show';
+}
+
+function downloadResult() {
+  if (!resultBytes) return;
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([resultBytes], { type: 'application/pdf' }));
+  a.download = origFileName.replace(/\.pdf$/i, '') + '_unlocked.pdf';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ── 진행 표시 ── */
+function updateProgress(pct, text) {
+  document.getElementById('progress-text').textContent = text;
+  document.getElementById('progress-pct').textContent  = pct + '%';
+  document.getElementById('progress-bar').style.width  = pct + '%';
+}
+
+function setProgress(show) {
+  document.getElementById('progress-wrap').className = 'a-card progress-wrap' + (show ? ' show' : '');
+  document.getElementById('run-btn').disabled = show || !isProtected;
+  if (show) updateProgress(0, '준비 중...');
+}
+
+function resetAll() {
+  pdfBytes = null; resultBytes = null; needPassword = false; isProtected = false;
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-info').className = 'file-info';
+  document.getElementById('status-card').className = 'a-card status-card';
+  document.getElementById('pw-wrap').className = 'pw-wrap';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').textContent = '';
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('result-section').className = 'a-card result-section';
+  document.getElementById('preview-box').style.display = 'none';
+  document.getElementById('guide-card').style.display = '';
+  setProgress(false);
+}
+
+function fmtSize(b) {
+  if (b < 1024)    return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+</script>
+<script>(function(){
+  var k='tf_work_pdf_unlock';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=work&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

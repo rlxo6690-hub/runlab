@@ -1,0 +1,70 @@
+/* ══════════════════════════════════════════════════════════════
+   DataForge 노트북 스킨 — 기존 도구(site/)에 덧입히는 재색 레이어.
+   도구 68/71개가 공유하는 CSS 변수·공통 클래스를 노트북 언어로 재정의한다.
+   ★도구의 <style> "뒤"에 로드돼야 카스케이드에서 이긴다(문서 순서).
+   마크업·JS는 건드리지 않는다 — 변수/공통 클래스만 갈아끼운다.
+   ══════════════════════════════════════════════════════════════ */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+/* ── 팔레트·토큰 재정의 (도구 변수명 그대로 덮어씀) ── */
+:root{
+  --bg:#fbfbfa; --card:#ffffff; --card2:#f4f4f2;
+  --border:#e7e7e4; --border2:#dcdcd8;
+  --text:#18181b; --muted:#71717a; --dim:#a1a1aa;
+  --accent:#4f46e5; --accent2:#6366f1;
+  --green:#0d9488; --amber:#d97706; --red:#dc2626; --orange:#ea580c;
+  --r:10px;
+  --df-mono:'IBM Plex Mono','JetBrains Mono',ui-monospace,monospace;
+  --df-sans:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;
+}
+
+/* ── 바탕·글꼴 ── */
+html,body{font-family:var(--df-sans)!important}
+body{background:#fbfbfa!important}
+/* 청사진 그리드 배경 제거 → 깨끗한 노트북 종이 */
+body::before{display:none!important}
+
+/* ── 헤더 → 노트북 상단바 ── */
+.site-header{background:rgba(251,251,250,.85)!important;border-bottom:1px solid var(--border)!important;
+  backdrop-filter:blur(10px)}
+.logo-brand{font-family:var(--df-mono)!important;color:var(--text)!important;letter-spacing:-.01em!important;
+  font-size:15px!important;display:inline-flex;align-items:center;gap:7px}
+.logo-brand::before{content:'▶';color:var(--green);font-size:11px}
+.logo-brand em{color:var(--accent)!important}
+.logo-title{color:var(--muted)!important;font-weight:500!important}
+.header-back{font-family:var(--df-mono);border-radius:7px!important;border-color:var(--border2)!important;
+  color:var(--muted)!important}
+.header-back:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+
+/* ── 카드 → 노트북 셀 카드 ── */
+.a-card{border:1px solid var(--border)!important;border-radius:var(--r)!important;
+  box-shadow:0 1px 2px rgba(24,24,27,.04),0 6px 20px rgba(24,24,27,.04)}
+.a-card-title{font-family:var(--df-mono)!important;color:var(--muted)!important;letter-spacing:.06em!important}
+
+/* ── 탭 → 노트북 탭 ── */
+.stat-tab{font-family:var(--df-sans)!important}
+.stat-tab.active{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+
+/* ── 데이터셋/토글 칩 → 모노 칩 ── */
+.ds-btn,.src-btn{font-family:var(--df-mono)!important;border-radius:6px!important}
+.ds-btn.active,.src-btn.active{background:var(--accent-wash,#eef0fe)!important;
+  border-color:var(--accent)!important;color:var(--accent)!important}
+
+/* ── 인트로 박스 → 모노 주석 톤 ── */
+.intro-box{background:#f4f4f2!important;border:1px solid var(--border)!important;
+  border-left:3px solid var(--green)!important;border-radius:8px!important}
+
+/* ── 버튼(공통 패턴) ── */
+button.btn,.btn-primary,.run-btn,.primary-btn,.action-btn{
+  font-family:var(--df-mono)!important;border-radius:7px!important}
+
+/* ── 입력 컨트롤 포커스 통일 ── */
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent)!important;box-shadow:0 0 0 3px #eef0fe!important;outline:none}
+
+/* ── 표 헤더 모노 ── */
+table th{font-family:var(--df-mono)}
+
+/* 접근성: 모션 최소화 존중 */
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}

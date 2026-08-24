@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge TEXT — 텍스트 데이터 생성기</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="DataForge TEXT — 텍스트 데이터 생성기">
+<meta property="og:description" content="고객 리뷰·SNS·뉴스 등 텍스트 데이터를 AI 프롬프트로 자동 생성하는 교육용 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;--border:#cbd5e1;--accent:#0284c7;--accent2:#ea580c;--accent3:#16a34a;--accent4:#7c3aed;--text-gen:#059669;--text:#1e293b;--text-dim:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(2,132,199,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(2,132,199,.05) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none}
+.logo-brand em{color:#ea580c;font-style:normal}
+.logo-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0}
+.logo-title{font-size:14px;font-weight:600;color:var(--text)}
+.header-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3)}
+
+.wrap{padding:32px 24px 80px;position:relative;z-index:1}
+
+.page-title{margin-bottom:8px}
+.page-title h1{font-family:'Noto Sans KR', sans-serif;font-size:20px;color:var(--text-gen);letter-spacing:1px}
+.page-desc{font-size:13px;color:var(--text-dim);line-height:1.8;margin-bottom:32px;padding:10px 14px;background:rgba(16,185,129,.04);border-left:2px solid var(--text-gen);border-radius:0 3px 3px 0}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:20px}
+.card-title{font-family:'Noto Sans KR', sans-serif;font-size:11px;color:var(--text-gen);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:.5px}
+select,input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;border-radius:3px;outline:none;font-family:inherit;transition:.15s}
+select:focus,input[type=text]:focus{border-color:var(--text-gen)}
+
+.step-label{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--text-gen);background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);padding:2px 8px;border-radius:2px;letter-spacing:1px;display:inline-block;margin-bottom:12px}
+
+.btn-generate{font-family:'Noto Sans KR', sans-serif;font-size:13px;font-weight:700;background:var(--text-gen);color:#fff;border:none;padding:11px 28px;border-radius:3px;cursor:pointer;letter-spacing:.5px;transition:.2s;display:block;width:100%}
+.btn-generate:hover{background:#059669}
+
+.prompt-box{position:relative;margin-top:16px}
+textarea.prompt-output{width:100%;min-height:200px;background:rgba(0,0,0,.04);border:1px solid var(--text-gen);border-radius:3px;padding:14px;font-family:'Space Mono',monospace;font-size:12px;color:var(--text);line-height:1.8;resize:vertical;outline:none}
+.copy-btn{position:absolute;top:10px;right:10px;font-family:'Noto Sans KR', sans-serif;font-size:11px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:var(--text-gen);padding:5px 12px;border-radius:2px;cursor:pointer;transition:.15s}
+.copy-btn:hover{background:rgba(16,185,129,.25)}
+
+.guide-box{margin-top:16px;padding:14px 16px;background:rgba(2,132,199,.07);border-left:2px solid var(--accent);border-radius:0 3px 3px 0;font-size:13px;color:var(--text-dim);line-height:1.9}
+.guide-box strong{color:var(--text)}
+.guide-box .ai-links{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.ai-link{font-family:'Noto Sans KR', sans-serif;font-size:11px;color:var(--accent);border:1px solid rgba(2,132,199,.3);padding:5px 14px;border-radius:2px;text-decoration:none;transition:.15s}
+.ai-link:hover{background:rgba(2,132,199,.1)}
+.ai-link.analysis{color:var(--text-gen);border-color:rgba(5,150,105,.3)}
+.ai-link.analysis:hover{background:rgba(5,150,105,.1)}
+
+@media(max-width:600px){
+  .site-header{padding:10px 16px}
+  .logo-sep,.logo-title{display:none}
+  .wrap{padding:20px 16px 60px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">TXT · 텍스트 데이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="wrap">
+
+  <div class="page-title"><h1>💬 TXT · 텍스트 데이터 생성기</h1></div>
+  <div class="page-desc">
+    조건을 선택하면 <strong>AI 프롬프트를 자동 생성</strong>합니다. 복사한 프롬프트를 ChatGPT 또는 Claude에 붙여넣어 텍스트 데이터를 생성한 뒤, <strong>텍스트 분석</strong> 페이지에서 바로 분석하세요.
+  </div>
+
+  <!-- STEP 1: 조건 설정 -->
+  <div class="card">
+    <div class="card-title">STEP 1 — 생성 조건 설정</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>도메인</label>
+        <select id="pg-domain">
+          <option value="review">고객 리뷰</option>
+          <option value="sns">SNS 포스트</option>
+          <option value="news">뉴스 기사</option>
+          <option value="product">상품 설명</option>
+          <option value="report">사내 보고서</option>
+          <option value="abstract">학술 논문 초록</option>
+          <option value="blog">블로그 포스트</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>어조 / 감성</label>
+        <select id="pg-tone">
+          <option value="positive">긍정적</option>
+          <option value="negative">부정적</option>
+          <option value="mixed">혼합 (긍/부정)</option>
+          <option value="neutral">중립</option>
+          <option value="professional">전문적</option>
+          <option value="casual">캐주얼</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>생성 수</label>
+        <select id="pg-count">
+          <option value="5">5개</option>
+          <option value="10" selected>10개</option>
+          <option value="20">20개</option>
+          <option value="30">30개</option>
+          <option value="50">50개</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>텍스트 길이</label>
+        <select id="pg-length">
+          <option value="short">짧게 (30~50자)</option>
+          <option value="medium" selected>보통 (80~150자)</option>
+          <option value="long">길게 (200~300자)</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>포함 키워드 <span style="font-weight:400;color:var(--text-dim)">(쉼표 구분, 선택사항)</span></label>
+        <input id="pg-keywords" type="text" placeholder="예: 배송, 품질, 가격, AS">
+      </div>
+      <div class="form-group full" style="flex-direction:row;align-items:center;gap:10px;padding:12px 14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:3px">
+        <input type="checkbox" id="pg-excel" style="width:16px;height:16px;accent-color:var(--text-gen);flex-shrink:0;cursor:pointer">
+        <label for="pg-excel" style="cursor:pointer;color:var(--text);font-size:13px;font-family:'Noto Sans KR',sans-serif;letter-spacing:0">
+          <strong style="color:var(--text-gen)">엑셀 저장용 형식으로 출력</strong>
+          <span style="color:var(--text-dim);font-size:12px"> — 번호·텍스트·감성 열로 구분하여 엑셀에 바로 붙여넣기 가능</span>
+        </label>
+      </div>
+    </div>
+    <button class="btn-generate" onclick="generatePrompt()">프롬프트 생성</button>
+  </div>
+
+  <!-- STEP 2: 생성된 프롬프트 -->
+  <div class="card" id="result-card" style="display:none">
+    <div class="card-title">STEP 2 — 프롬프트 복사 후 AI에 붙여넣기</div>
+    <div class="prompt-box">
+      <textarea class="prompt-output" id="prompt-output" readonly></textarea>
+      <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">📋 복사</button>
+    </div>
+    <div class="guide-box">
+      <strong>① 위 프롬프트를 복사</strong>해서 AI 도구에 붙여넣고 텍스트를 생성하세요.<br>
+      <strong>② 생성된 텍스트</strong>를 텍스트 분석 페이지의 <strong>직접 입력</strong> 탭에 붙여넣어 분석하세요.
+      <div class="ai-links">
+        <a href="https://chat.openai.com" target="_blank" class="ai-link">ChatGPT →</a>
+        <a href="https://claude.ai" target="_blank" class="ai-link">Claude →</a>
+        <a href="https://gemini.google.com" target="_blank" class="ai-link">Gemini →</a>
+        <a href="https://dataforge.ai.kr/sim/text" class="ai-link analysis">📝 텍스트 분석으로 →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function generatePrompt() {
+  const domainMap = {
+    review:   { label: '고객 리뷰', sep: '각 리뷰는 빈 줄로 구분', extra: '별점 기반 실제 구매 후기처럼 자연스럽게 작성하세요.' },
+    sns:      { label: 'SNS 포스트 (인스타그램/트위터 스타일)', sep: '각 포스트는 빈 줄로 구분', extra: '해시태그를 2~4개 포함하세요.' },
+    news:     { label: '뉴스 기사 요약 (첫 단락)', sep: '각 기사는 빈 줄로 구분', extra: '육하원칙(누가, 언제, 어디서, 무엇을, 어떻게, 왜)을 포함하세요.' },
+    product:  { label: '상품 설명 (이커머스)', sep: '각 설명은 빈 줄로 구분', extra: '주요 기능과 혜택을 중심으로 구매를 유도하는 문체로 작성하세요.' },
+    report:   { label: '사내 보고서 단락', sep: '각 단락은 빈 줄로 구분', extra: '비즈니스 문서 형식의 격식체를 사용하세요.' },
+    abstract: { label: '학술 논문 초록', sep: '각 초록은 빈 줄로 구분', extra: '연구 목적, 방법, 결과를 포함하는 형식으로 작성하세요.' },
+    blog:     { label: '블로그 포스트 도입부', sep: '각 포스트는 빈 줄로 구분', extra: '독자의 흥미를 끄는 문체로 시작하세요.' },
+  };
+  const toneMap = {
+    positive:     '긍정적이고 만족스러운',
+    negative:     '부정적이고 불만족스러운',
+    mixed:        '긍정과 부정이 혼합된 (장단점 모두 언급)',
+    neutral:      '중립적이고 사실 위주의',
+    professional: '전문적이고 격식 있는',
+    casual:       '친근하고 캐주얼한',
+  };
+  const lengthMap = { short: '30~50자', medium: '80~150자', long: '200~300자' };
+
+  const domain   = document.getElementById('pg-domain').value;
+  const tone     = document.getElementById('pg-tone').value;
+  const count    = document.getElementById('pg-count').value;
+  const length   = document.getElementById('pg-length').value;
+  const keywords = document.getElementById('pg-keywords').value.trim();
+  const excel    = document.getElementById('pg-excel').checked;
+  const d = domainMap[domain];
+  const kwLine = keywords ? `\n- 다음 키워드를 자연스럽게 포함하세요: ${keywords}` : '';
+
+  const excelFormat = excel ? `
+
+출력 형식 (엑셀 저장용):
+- 헤더 행: NO\t텍스트\t감성
+- 각 행: 번호[탭]텍스트[탭]감성(긍정/부정/중립 중 하나)
+- 탭(Tab)으로 열을 구분하여 엑셀에 그대로 붙여넣기 가능하도록 출력하세요.
+- 텍스트 안에 줄바꿈 없이 한 줄로 작성하세요.` : `
+- 번호, 제목, 설명 없이 텍스트 본문만 출력하세요.
+- 각 텍스트 사이에 빈 줄 하나를 넣어 구분하세요.`;
+
+  const prompt =
+`한국어로 ${d.label}을(를) ${count}개 생성해주세요.
+
+조건:
+- 어조: ${toneMap[tone]}
+- 각 텍스트 길이: ${lengthMap[length]}${kwLine}
+- ${d.extra}
+- ${d.sep}${excelFormat}`;
+
+  document.getElementById('prompt-output').value = prompt;
+  document.getElementById('result-card').style.display = '';
+  document.getElementById('copy-btn').textContent = '📋 복사';
+  document.getElementById('result-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyPrompt() {
+  const ta = document.getElementById('prompt-output');
+  ta.select();
+  document.execCommand('copy');
+  const btn = document.getElementById('copy-btn');
+  btn.textContent = '✅ 복사됨';
+  setTimeout(() => btn.textContent = '📋 복사', 2000);
+}
+</script>
+</div><!-- /.page-wrap -->
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

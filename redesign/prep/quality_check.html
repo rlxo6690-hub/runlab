@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>데이터 품질 체크리스트 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="데이터 품질 체크리스트 — DataForge">
+<meta property="og:description" content="CSV 파일을 업로드하면 완전성·유일성·유효성·일관성·정확성을 자동으로 측정합니다">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;
+  --orange:#ea580c;--r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* Page */
+.page{padding:0 24px 80px;}
+
+/* Section title */
+.sec-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+
+/* Cards */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* Upload zone */
+.upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:12px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.03);position:relative;margin-bottom:0;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:36px;margin-bottom:10px;}
+.upload-main{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.upload-sub{font-size:12px;color:var(--muted);}
+
+/* File info */
+.file-info{display:none;padding:12px 16px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);border-radius:10px;font-size:12px;color:#065f46;line-height:1.8;margin-bottom:16px;}
+.file-info.show{display:block;}
+
+/* Overall score ring */
+.score-ring-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0 4px;}
+.score-ring-svg{width:130px;height:130px;}
+.score-ring-num{font-size:28px;font-weight:800;font-family:'Space Mono',monospace;}
+.score-ring-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.score-grade{font-size:13px;font-weight:700;margin-top:6px;}
+
+/* 6 dimension cards */
+.dim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.dim-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px 14px;}
+.dim-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dim-name{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.dim-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;}
+.dim-score{font-size:26px;font-weight:800;font-family:'Space Mono',monospace;margin-bottom:4px;}
+.dim-bar-bg{height:5px;background:rgba(0,0,0,.08);border-radius:3px;overflow:hidden;}
+.dim-bar{height:100%;border-radius:3px;transition:width .6s ease;}
+.dim-detail{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;}
+
+/* Dim info button */
+.dim-info-btn{background:none;border:1px solid var(--border2);border-radius:4px;color:var(--dim);font-size:10px;cursor:pointer;padding:1px 7px;transition:.15s;font-family:inherit;line-height:1.6;white-space:nowrap;}
+.dim-info-btn:hover{color:var(--accent);border-color:rgba(37,99,235,.4);background:rgba(37,99,235,.06);}
+
+/* Modal overlay */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal-box{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:28px 28px 24px;width:min(520px,92vw);max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);transform:translateY(12px) scale(.97);transition:transform .22s,opacity .2s;opacity:0;}
+.modal-overlay.show .modal-box{transform:translateY(0) scale(1);opacity:1;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:16px;font-weight:800;color:var(--text);}
+.modal-title small{font-size:11px;font-weight:500;color:var(--muted);margin-left:8px;font-family:'Noto Sans KR', sans-serif;}
+.modal-close{background:none;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:15px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;}
+.modal-close:hover{background:var(--card2);color:var(--text);}
+.modal-section{margin-bottom:16px;}
+.modal-section:last-child{margin-bottom:0;}
+.modal-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.modal-concept{font-size:13px;color:var(--text);line-height:1.75;}
+.modal-formula{font-family:'Space Mono',monospace;font-size:12px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:10px 14px;color:var(--accent);line-height:1.6;}
+.modal-criteria{display:flex;flex-direction:column;gap:6px;}
+.crit-row{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 10px;background:var(--card2);border-radius:7px;}
+.crit-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.crit-val{font-family:'Space Mono',monospace;font-weight:700;color:var(--text);min-width:78px;}
+.crit-desc{color:var(--muted);}
+.modal-tip{font-size:12px;color:#92400e;background:rgba(217,119,6,.07);border-left:3px solid var(--amber);padding:10px 14px;border-radius:0 8px 8px 0;line-height:1.7;}
+
+/* Score colors */
+.score-high{color:var(--green);}
+.score-mid{color:var(--amber);}
+.score-low{color:var(--red);}
+.bar-high{background:var(--green);}
+.bar-mid{background:var(--amber);}
+.bar-low{background:var(--red);}
+.badge-high{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.badge-mid{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.2);}
+.badge-low{background:rgba(220,38,38,.1);color:var(--red);border:1px solid rgba(220,38,38,.2);}
+
+/* Two col layout */
+.two-col{display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:16px;align-items:start;}
+
+/* Column table */
+.col-table{width:100%;border-collapse:collapse;font-size:12px;}
+.col-table th{padding:8px 10px;background:var(--card2);color:var(--muted);font-size:10px;font-weight:700;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.col-table td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.05);vertical-align:middle;}
+.col-table tr:last-child td{border-bottom:none;}
+.col-table-wrap{max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;}
+
+/* Mini bar */
+.mini-bar-bg{width:80px;height:8px;background:rgba(0,0,0,.07);border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;}
+.mini-bar{height:100%;border-radius:4px;}
+
+/* Type badge */
+.type-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.type-num{background:rgba(37,99,235,.08);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.type-date{background:rgba(99,102,241,.08);color:var(--accent2);border:1px solid rgba(99,102,241,.2);}
+.type-text{background:rgba(0,0,0,.05);color:var(--muted);border:1px solid var(--border2);}
+
+/* Issue list */
+.issue-list{display:flex;flex-direction:column;gap:8px;}
+.issue-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.6;}
+.issue-ok{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);}
+.issue-warn{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);}
+.issue-err{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);}
+.issue-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.issue-text{color:var(--text);}
+.issue-text strong{font-weight:700;}
+
+/* Results hidden by default */
+#results{display:none;}
+
+/* Download btn */
+.dl-btn{padding:8px 18px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s;}
+.dl-btn:hover{opacity:.85;}
+
+/* Intro */
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* Formula tooltip */
+.formula-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+.formula-chip{font-size:11px;padding:4px 10px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--muted);}
+.formula-chip strong{color:var(--accent);font-family:'Noto Sans KR', sans-serif;}
+
+@media(max-width:700px){
+  .dim-grid{grid-template-columns:1fr 1fr;}
+  .two-col{grid-template-columns:1fr;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">데이터 품질 체크리스트</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>CSV 파일을 업로드하면 5가지 품질 지표를 자동으로 계산합니다.</strong><br>
+    완전성 · 유일성 · 유효성 · 일관성 · 정확성 — 모든 계산은 브라우저에서만 처리됩니다.
+    <div class="formula-row">
+      <span class="formula-chip">완전성 <strong>비어있지않은셀 / 전체셀</strong></span>
+      <span class="formula-chip">유일성 <strong>고유행 / 전체행</strong></span>
+      <span class="formula-chip">유효성 <strong>타입일치값 / 비어있지않은셀</strong></span>
+      <span class="formula-chip">일관성 <strong>논리규칙통과행 / 검사행</strong></span>
+      <span class="formula-chip">정확성 <strong>정상범위값 / 수치형값 (±3σ)</strong></span>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="a-card" style="margin-bottom:16px;">
+    <div class="a-card-title">파일 업로드</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
+      <div class="upload-icon">📂</div>
+      <div class="upload-main">CSV 파일을 여기에 드래그하거나 클릭하여 선택</div>
+      <div class="upload-sub">UTF-8 / EUC-KR · CSV · TSV 지원 · 업로드 즉시 자동 분석</div>
+    </div>
+    <div class="file-info" id="fileInfo"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Overall + Dim grid -->
+    <div class="two-col">
+      <!-- Overall score -->
+      <div class="a-card" style="margin-bottom:0;">
+        <div class="a-card-title">종합 품질 점수</div>
+        <div class="score-ring-wrap">
+          <svg class="score-ring-svg" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(0,0,0,.07)" stroke-width="12"/>
+            <circle id="ringBg" cx="65" cy="65" r="54" fill="none" stroke="#e5e7eb" stroke-width="12" stroke-dasharray="339.3 339.3" stroke-linecap="round" transform="rotate(-90 65 65)"/>
+            <circle id="ringFill" cx="65" cy="65" r="54" fill="none" stroke="#059669" stroke-width="12" stroke-dasharray="0 339.3" stroke-linecap="round" transform="rotate(-90 65 65)" style="transition:stroke-dasharray .8s ease,stroke .4s"/>
+          </svg>
+          <div class="score-ring-num" id="overallNum" style="margin-top:-10px;">—</div>
+          <div class="score-ring-lbl">종합 점수</div>
+          <div class="score-grade" id="overallGrade"></div>
+        </div>
+      </div>
+
+      <!-- 6 dimensions -->
+      <div>
+        <div class="dim-grid" id="dimGrid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Column breakdown -->
+    <div class="a-card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="a-card-title" style="margin-bottom:0;">컬럼별 상세 분석</div>
+        <button class="dl-btn" onclick="downloadReport()">보고서 다운로드 (CSV)</button>
+      </div>
+      <div class="col-table-wrap">
+        <table class="col-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>컬럼명</th>
+              <th>타입</th>
+              <th>완전성</th>
+              <th>유효성</th>
+              <th>정확성</th>
+              <th>결측</th>
+              <th>이상치</th>
+              <th>고유값</th>
+            </tr>
+          </thead>
+          <tbody id="colTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Issues -->
+    <div class="a-card">
+      <div class="a-card-title">주요 이슈 목록</div>
+      <div class="issue-list" id="issueList"></div>
+    </div>
+
+  </div><!-- /results -->
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+// ── CSV Parser ────────────────────────────────────────────
+function parseCSV(text, delim) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], nx = text[i+1];
+    if (inQ) {
+      if (c === '"' && nx === '"') { cell += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else cell += c;
+    } else {
+      if (c === '"') { inQ = true; }
+      else if (c === delim) { row.push(cell.trim()); cell = ''; }
+      else if (c === '\n' || (c === '\r' && nx === '\n')) {
+        if (c === '\r') i++;
+        row.push(cell.trim()); rows.push(row); row = []; cell = '';
+      } else if (c === '\r') {
+        row.push(cell.trim()); rows.push(row); row = []; cell = '';
+      } else cell += c;
+    }
+  }
+  if (cell !== '' || row.length) { row.push(cell.trim()); rows.push(row); }
+  while (rows.length && rows[rows.length-1].every(c => c === '')) rows.pop();
+  return rows;
+}
+
+function detectDelim(text) {
+  const line = text.split('\n')[0] || '';
+  const tabs = (line.match(/\t/g) || []).length;
+  const commas = (line.match(/,/g) || []).length;
+  return tabs > commas ? '\t' : ',';
+}
+
+// ── Type detection ────────────────────────────────────────
+const DATE_RE = [
+  /^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2})?/,
+  /^\d{4}\/\d{2}\/\d{2}$/,
+  /^\d{2}\/\d{2}\/\d{4}$/,
+  /^\d{4}\.\d{2}\.\d{2}$/,
+  /^\d{8}$/,
+];
+function isDate(v) { return DATE_RE.some(r => r.test(v)); }
+function isNum(v)  { return v !== '' && !isNaN(Number(v)); }
+
+function detectType(vals) {
+  const ne = vals.filter(v => v !== '');
+  if (!ne.length) return 'empty';
+  const numR = ne.filter(isNum).length / ne.length;
+  if (numR >= 0.8) return 'numeric';
+  const dateR = ne.filter(isDate).length / ne.length;
+  if (dateR >= 0.8) return 'date';
+  return 'text';
+}
+
+// ── Column analysis ───────────────────────────────────────
+function analyzeCol(name, values) {
+  const total = values.length;
+  const ne = values.filter(v => v !== '');
+  const type = detectType(ne);
+
+  let invalid = 0;
+  if (type === 'numeric') {
+    invalid = ne.filter(v => !isNum(v)).length;
+  } else if (type === 'date') {
+    invalid = ne.filter(v => !isDate(v)).length;
+  }
+  // text: no format rule → invalid stays 0
+
+  const nums = type === 'numeric'
+    ? ne.filter(isNum).map(Number)
+    : [];
+
+  let mean = 0, std = 0, outliers = 0;
+  if (nums.length >= 4) {
+    mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+    std  = Math.sqrt(nums.reduce((s, v) => s + (v - mean) ** 2, 0) / nums.length);
+    outliers = std > 0 ? nums.filter(v => Math.abs(v - mean) > 3 * std).length : 0;
+  }
+
+  const uniq = new Set(ne).size;
+
+  return {
+    name, type, total,
+    empty: total - ne.length,
+    neCount: ne.length,
+    invalid,
+    completeness: total > 0 ? (ne.length / total * 100) : 100,
+    validity: ne.length > 0 ? ((ne.length - invalid) / ne.length * 100) : 100,
+    accuracy: nums.length > 0 ? ((nums.length - outliers) / nums.length * 100) : null,
+    nums, mean, std, outliers, uniq,
+  };
+}
+
+// ── Consistency check ─────────────────────────────────────
+function calcConsistency(headers, data, cols) {
+  const START = ['start','begin','from','min','low','open','시작'];
+  const END   = ['end','finish','to','max','high','close','종료'];
+
+  const pairs = [];
+  headers.forEach((h, i) => {
+    const hl = h.toLowerCase();
+    START.forEach((sp, si) => {
+      if (!hl.includes(sp)) return;
+      headers.forEach((h2, j) => {
+        if (i === j) return;
+        const h2l = h2.toLowerCase();
+        const expected = hl.replace(sp, END[si]);
+        if (h2l === expected || (hl.replace(sp,'') === h2l.replace(END[si],'') && h2l.includes(END[si]))) {
+          if (!pairs.find(p => p[0]===i && p[1]===j)) pairs.push([i, j]);
+        }
+      });
+    });
+  });
+
+  if (!pairs.length) return { score: 100, violations: 0, total: 0, note: '검사할 범위 규칙 없음' };
+
+  let total = 0, violations = 0, details = [];
+  pairs.forEach(([si, ei]) => {
+    const st = cols[si].type, et = cols[ei].type;
+    data.forEach((row, ri) => {
+      const sv = (row[si]||'').trim(), ev = (row[ei]||'').trim();
+      if (!sv || !ev) return;
+      total++;
+      let bad = false;
+      if (st === 'numeric' && et === 'numeric') bad = Number(sv) > Number(ev);
+      else bad = sv > ev; // lexicographic (works for ISO dates)
+      if (bad) { violations++; details.push({ row: ri+2, a: headers[si], b: headers[ei], sv, ev }); }
+    });
+  });
+
+  const score = total > 0 ? ((total - violations) / total * 100) : 100;
+  return { score, violations, total, details, pairs };
+}
+
+// ── Main analysis ─────────────────────────────────────────
+function analyze(text) {
+  const delim = detectDelim(text);
+  const rows = parseCSV(text, delim);
+  if (rows.length < 2) return null;
+
+  const headers = rows[0];
+  const data = rows.slice(1);
+  const rowCount = data.length;
+  const colCount = headers.length;
+
+  // Normalize row lengths
+  data.forEach(r => { while (r.length < colCount) r.push(''); });
+
+  // Per-column
+  const cols = headers.map((h, i) => analyzeCol(h, data.map(r => r[i] ?? '')));
+
+  // 1. Completeness
+  const totalCells = rowCount * colCount;
+  const nonEmptyCells = cols.reduce((s, c) => s + c.neCount, 0);
+  const completeness = totalCells > 0 ? (nonEmptyCells / totalCells * 100) : 100;
+
+  // 2. Uniqueness
+  const rowStrs = data.map(r => r.join('\x00'));
+  const uniqueRows = new Set(rowStrs).size;
+  const uniqueness = rowCount > 0 ? (uniqueRows / rowCount * 100) : 100;
+  const dupCount = rowCount - uniqueRows;
+
+  // 3. Validity
+  const neTotal = cols.reduce((s, c) => s + c.neCount, 0);
+  const invalidTotal = cols.reduce((s, c) => s + c.invalid, 0);
+  const validity = neTotal > 0 ? ((neTotal - invalidTotal) / neTotal * 100) : 100;
+
+  // 4. Consistency
+  const consistency = calcConsistency(headers, data, cols);
+
+  // 5. Accuracy (numeric cols only)
+  const numCols = cols.filter(c => c.nums.length >= 4);
+  const accTotal = numCols.reduce((s, c) => s + c.nums.length, 0);
+  const accOutliers = numCols.reduce((s, c) => s + c.outliers, 0);
+  const accuracy = accTotal > 0 ? ((accTotal - accOutliers) / accTotal * 100) : null;
+
+  return {
+    rowCount, colCount, headers, cols, dupCount,
+    completeness, uniqueness, validity,
+    consistency, accuracy,
+  };
+}
+
+// ── Rendering helpers ─────────────────────────────────────
+function scoreClass(s) {
+  if (s === null) return 'score-mid';
+  if (s >= 90) return 'score-high';
+  if (s >= 70) return 'score-mid';
+  return 'score-low';
+}
+function barClass(s) {
+  if (s === null) return 'bar-mid';
+  if (s >= 90) return 'bar-high';
+  if (s >= 70) return 'bar-mid';
+  return 'bar-low';
+}
+function badgeClass(s) {
+  if (s === null) return 'badge-mid';
+  if (s >= 90) return 'badge-high';
+  if (s >= 70) return 'badge-mid';
+  return 'badge-low';
+}
+function gradeLbl(s) {
+  if (s === null) return '측정 불가';
+  if (s >= 95) return '우수';
+  if (s >= 85) return '양호';
+  if (s >= 70) return '보통';
+  if (s >= 50) return '불량';
+  return '심각';
+}
+function fmtPct(v, na='N/A') { return v === null ? na : v.toFixed(1)+'%'; }
+function fmtN(n) { return n.toLocaleString(); }
+
+const DIM_INFO = {
+  '완전성': {
+    concept: '데이터셋에서 필수 값이 빠짐없이 채워진 정도입니다. NULL, 빈 문자열, 공백만 있는 값을 결측(missing)으로 처리합니다.',
+    formula: '비어있지 않은 셀 수 ÷ 전체 셀 수 × 100',
+    criteria: [
+      { val:'≥ 95%', dot:'bar-high', desc:'우수' },
+      { val:'70 ~ 95%', dot:'bar-mid', desc:'보통 — 보간 검토 필요' },
+      { val:'< 70%', dot:'bar-low', desc:'불량 — 컬럼 제거 또는 전수 보완 필요' },
+    ],
+    tip: '결측이 많은 컬럼은 평균·중앙값·최빈값으로 보간하거나, 80% 이상 결측이면 컬럼 삭제를 고려합니다.',
+  },
+  '유일성': {
+    concept: '동일한 레코드(행 전체)가 중복 없이 고유하게 존재하는 정도입니다. 모든 컬럼 값이 완전히 동일한 행을 중복으로 판정합니다.',
+    formula: '고유 행 수 ÷ 전체 행 수 × 100',
+    criteria: [
+      { val:'100%', dot:'bar-high', desc:'이상적 (중복 없음)' },
+      { val:'95 ~ 99%', dot:'bar-mid', desc:'경미한 중복 — 원인 확인 필요' },
+      { val:'< 95%', dot:'bar-low', desc:'심각한 중복 — 수집 파이프라인 점검 필요' },
+    ],
+    tip: '중복 제거 전, 의도된 중복(집계 데이터, 이력 데이터)인지 수집 오류인지를 반드시 구분하세요.',
+  },
+  '유효성': {
+    concept: '각 컬럼의 값이 자동 감지된 타입(수치·날짜·텍스트)에 맞는 형식인지를 측정합니다. 수치 컬럼에 문자열이 섞이거나 날짜 컬럼에 잘못된 형식이 있으면 유효하지 않은 값으로 처리합니다.',
+    formula: '타입에 맞는 값 수 ÷ 비어있지 않은 값 수 × 100',
+    criteria: [
+      { val:'≥ 98%', dot:'bar-high', desc:'우수' },
+      { val:'85 ~ 98%', dot:'bar-mid', desc:'보통 — 타입 변환 처리 필요' },
+      { val:'< 85%', dot:'bar-low', desc:'불량 — 수집 단계 입력 검증 필요' },
+    ],
+    tip: '타입 불일치가 많다면 데이터 수집 단계의 입력 검증 로직을 점검하거나, 전처리 단계에서 강제 변환(pd.to_numeric, pd.to_datetime)이 필요합니다.',
+  },
+  '일관성': {
+    concept: '관련된 컬럼 간의 논리 규칙이 지켜지는 정도입니다. 컬럼명을 분석하여 start/end, min/max, from/to 등의 범위 쌍을 자동 탐지하고 시작 ≤ 종료 규칙을 검사합니다.',
+    formula: '논리 규칙 통과 행 수 ÷ 전체 검사 행 수 × 100',
+    criteria: [
+      { val:'100%', dot:'bar-high', desc:'완전 일관 (위반 없음)' },
+      { val:'95 ~ 99%', dot:'bar-mid', desc:'경미한 위반 — 개별 행 수정 필요' },
+      { val:'< 95%', dot:'bar-low', desc:'심각한 위반 — 수집 로직 전면 검토 필요' },
+    ],
+    tip: '범위 쌍 컬럼이 없으면 "검사할 규칙 없음"으로 표시됩니다. start_date/end_date, price_min/price_max 같은 명명 규칙을 따르면 자동 탐지됩니다.',
+  },
+  '정확성': {
+    concept: '수치형 컬럼의 값이 통계적 정상 범위 내에 있는 정도입니다. 외부 기준값 없이 측정하기 위해 평균 ± 3σ(표준편차의 3배) 범위를 벗어난 값을 잠재적 오류(이상치)로 간주합니다.',
+    formula: '평균 ± 3σ 범위 내 값 수 ÷ 수치형 값 전체 수 × 100',
+    criteria: [
+      { val:'≥ 99%', dot:'bar-high', desc:'우수 (이상치 드묾)' },
+      { val:'95 ~ 99%', dot:'bar-mid', desc:'보통 — 이상치 개별 확인 필요' },
+      { val:'< 95%', dot:'bar-low', desc:'불량 — 수집 오류 또는 분포 이상' },
+    ],
+    tip: '이상치가 실제 오류인지 자연적 극단값인지는 도메인 지식으로 판단해야 합니다. 수치형 컬럼이 없으면 N/A로 표시됩니다.',
+  },
+};
+
+function openDimInfo(key) {
+  const info = DIM_INFO[key] || {};
+  const criteriaHtml = (info.criteria || []).map(c =>
+    `<div class="crit-row">
+      <span class="crit-dot ${c.dot}"></span>
+      <span class="crit-val">${c.val}</span>
+      <span class="crit-desc">${c.desc}</span>
+    </div>`
+  ).join('');
+  document.getElementById('modalTitle').innerHTML =
+    `${key} <small>Data Quality</small>`;
+  document.getElementById('modalBody').innerHTML = `
+    ${info.concept ? `<div class="modal-section"><div class="modal-lbl">개념</div><div class="modal-concept">${info.concept}</div></div>` : ''}
+    ${info.formula ? `<div class="modal-section"><div class="modal-lbl">계산 공식</div><div class="modal-formula">${info.formula}</div></div>` : ''}
+    ${criteriaHtml ? `<div class="modal-section"><div class="modal-lbl">판단 기준</div><div class="modal-criteria">${criteriaHtml}</div></div>` : ''}
+    ${info.tip ? `<div class="modal-section"><div class="modal-lbl">개선 방법</div><div class="modal-tip">${info.tip}</div></div>` : ''}
+  `;
+  document.getElementById('dimModal').classList.add('show');
+}
+function closeDimInfo() {
+  document.getElementById('dimModal').classList.remove('show');
+}
+
+function renderDim(key, score, detail) {
+  const sc = scoreClass(score), bc = barClass(score), bdc = badgeClass(score);
+  const pct = fmtPct(score);
+  const bar = score !== null ? Math.min(100, score) : 50;
+  return `<div class="dim-card">
+    <div class="dim-card-top">
+      <div class="dim-name">${key}</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="dim-badge ${bdc}">${gradeLbl(score)}</span>
+        <button class="dim-info-btn" onclick="openDimInfo('${key}')">개념 ?</button>
+      </div>
+    </div>
+    <div class="dim-score ${sc}">${pct}</div>
+    <div class="dim-bar-bg"><div class="dim-bar ${bc}" style="width:${bar}%"></div></div>
+    <div class="dim-detail">${detail}</div>
+  </div>`;
+}
+
+function miniBar(pct, cls) {
+  return `<span class="mini-bar-bg"><span class="mini-bar ${cls}" style="width:${Math.min(100,pct)}%"></span></span>`;
+}
+
+function renderResults(r) {
+  // Overall
+  const dims = [r.completeness, r.uniqueness, r.validity, r.consistency.score, r.accuracy];
+  const measured = dims.filter(d => d !== null);
+  const overall = measured.length ? measured.reduce((a,b) => a+b, 0) / measured.length : 0;
+  const circumference = 2 * Math.PI * 54; // 339.3
+
+  document.getElementById('overallNum').textContent = overall.toFixed(1) + '%';
+  document.getElementById('overallNum').className = 'score-ring-num ' + scoreClass(overall);
+  document.getElementById('overallGrade').textContent = gradeLbl(overall);
+  document.getElementById('overallGrade').className = 'score-grade ' + scoreClass(overall);
+
+  const fill = (overall / 100) * circumference;
+  const ring = document.getElementById('ringFill');
+  ring.setAttribute('stroke-dasharray', `${fill} ${circumference}`);
+  ring.setAttribute('stroke', overall >= 90 ? '#059669' : overall >= 70 ? '#d97706' : '#dc2626');
+
+  // Dim grid
+  const accNote = r.accuracy === null ? '수치형 컬럼 없음' : `이상치 ${fmtN(r.cols.reduce((s,c)=>s+c.outliers,0))}개`;
+  const conNote = r.consistency.total > 0
+    ? `위반 ${fmtN(r.consistency.violations)}건 / ${fmtN(r.consistency.total)}건 검사`
+    : r.consistency.note;
+
+  document.getElementById('dimGrid').innerHTML = [
+    renderDim('완전성', r.completeness, `결측 셀 ${fmtN(r.cols.reduce((s,c)=>s+c.empty,0))}개`),
+    renderDim('유일성', r.uniqueness, `중복 행 ${fmtN(r.dupCount)}개`),
+    renderDim('유효성', r.validity, `타입 불일치 ${fmtN(r.cols.reduce((s,c)=>s+c.invalid,0))}개`),
+    renderDim('일관성', r.consistency.score, conNote),
+    renderDim('정확성', r.accuracy, accNote),
+  ].join('');
+
+  // Column table
+  const tbody = document.getElementById('colTableBody');
+  tbody.innerHTML = r.cols.map((c, i) => {
+    const typeCls = c.type === 'numeric' ? 'type-num' : c.type === 'date' ? 'type-date' : 'type-text';
+    const typeLabel = c.type === 'numeric' ? '수치' : c.type === 'date' ? '날짜' : '텍스트';
+    const compPct = c.completeness;
+    const validPct = c.validity;
+    const accPct = c.accuracy;
+    return `<tr>
+      <td style="color:var(--dim);font-family:'Space Mono',monospace;font-size:11px;">${i+1}</td>
+      <td style="font-weight:700;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.name}">${c.name}</td>
+      <td><span class="type-badge ${typeCls}">${typeLabel}</span></td>
+      <td>${miniBar(compPct, barClass(compPct))} <span style="font-size:11px;font-family:'Space Mono',monospace;">${compPct.toFixed(0)}%</span></td>
+      <td>${miniBar(validPct, barClass(validPct))} <span style="font-size:11px;font-family:'Space Mono',monospace;">${validPct.toFixed(0)}%</span></td>
+      <td>${accPct !== null ? miniBar(accPct, barClass(accPct)) + ` <span style="font-size:11px;font-family:'Space Mono',monospace;">${accPct.toFixed(0)}%</span>` : '<span style="color:var(--dim);font-size:11px;">—</span>'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:${c.empty > 0?'var(--red)':'var(--green)'};">${fmtN(c.empty)}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:${c.outliers > 0?'var(--amber)':'var(--green)'};">${c.nums.length ? fmtN(c.outliers) : '—'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;">${fmtN(c.uniq)}</td>
+    </tr>`;
+  }).join('');
+
+  // Issues
+  const issues = [];
+  // Completeness issues
+  r.cols.filter(c => c.completeness < 100).sort((a,b) => a.completeness - b.completeness).slice(0,5).forEach(c => {
+    const sev = c.completeness < 70 ? 'err' : 'warn';
+    issues.push({ sev, msg: `<strong>${c.name}</strong> 컬럼: 결측 ${fmtN(c.empty)}개 (완전성 ${c.completeness.toFixed(1)}%)` });
+  });
+  // Duplicates
+  if (r.dupCount > 0) {
+    issues.push({ sev: r.dupCount > r.rowCount * 0.05 ? 'err' : 'warn', msg: `중복 행 <strong>${fmtN(r.dupCount)}개</strong> 발견 (전체 ${fmtN(r.rowCount)}행의 ${(r.dupCount/r.rowCount*100).toFixed(1)}%)` });
+  }
+  // Validity issues
+  r.cols.filter(c => c.invalid > 0).forEach(c => {
+    issues.push({ sev: 'warn', msg: `<strong>${c.name}</strong> 컬럼: 타입 불일치 ${fmtN(c.invalid)}개 (${c.type} 컬럼에 예상 외 값)` });
+  });
+  // Consistency issues
+  if (r.consistency.violations > 0) {
+    issues.push({ sev: 'err', msg: `일관성 위반 <strong>${fmtN(r.consistency.violations)}건</strong> — 범위 규칙(시작≤종료 등) 위반` });
+    if (r.consistency.details && r.consistency.details.length) {
+      const ex = r.consistency.details[0];
+      issues.push({ sev: 'warn', msg: `예시: 행 ${ex.row} — ${ex.a}(${ex.sv}) > ${ex.b}(${ex.ev})` });
+    }
+  }
+  // Accuracy issues
+  const totalOutliers = r.cols.reduce((s,c) => s+c.outliers, 0);
+  if (totalOutliers > 0) {
+    const worstCol = r.cols.filter(c=>c.outliers>0).sort((a,b)=>b.outliers-a.outliers)[0];
+    issues.push({ sev: totalOutliers > 10 ? 'err' : 'warn', msg: `이상치 총 <strong>${fmtN(totalOutliers)}개</strong> (±3σ 기준) — 가장 많은 컬럼: <strong>${worstCol.name}</strong> ${fmtN(worstCol.outliers)}개` });
+  }
+  if (!issues.length) {
+    issues.push({ sev: 'ok', msg: '발견된 이슈 없음 — 데이터 품질이 우수합니다.' });
+  }
+
+  const iconMap = { ok: '✅', warn: '⚠️', err: '🔴' };
+  document.getElementById('issueList').innerHTML = issues.map(({ sev, msg }) =>
+    `<div class="issue-item issue-${sev}">
+      <span class="issue-icon">${iconMap[sev]}</span>
+      <span class="issue-text">${msg}</span>
+    </div>`
+  ).join('');
+
+  document.getElementById('results').style.display = 'block';
+}
+
+// ── Download report ───────────────────────────────────────
+let _lastResult = null;
+function downloadReport() {
+  if (!_lastResult) return;
+  const r = _lastResult;
+  const dims = [
+    ['완전성', r.completeness],
+    ['유일성', r.uniqueness],
+    ['유효성', r.validity],
+    ['일관성', r.consistency.score],
+    ['정확성', r.accuracy],
+  ];
+  const measured = dims.filter(d => d[1] !== null);
+  const overall = measured.reduce((a,[,v]) => a+v, 0) / measured.length;
+
+  let csv = '﻿항목,점수\n';
+  dims.forEach(([name, score]) => {
+    csv += `${name},${score !== null ? score.toFixed(2) : 'N/A'}\n`;
+  });
+  csv += `종합,${overall.toFixed(2)}\n\n`;
+  csv += '컬럼,타입,완전성(%),유효성(%),정확성(%),결측수,이상치수,고유값수\n';
+  r.cols.forEach(c => {
+    csv += `${c.name},${c.type},${c.completeness.toFixed(2)},${c.validity.toFixed(2)},${c.accuracy !== null ? c.accuracy.toFixed(2) : 'N/A'},${c.empty},${c.outliers},${c.uniq}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `quality_report_${Date.now()}.csv`;
+  a.click();
+}
+
+// ── File input handler ────────────────────────────────────
+function decodeBuffer(buffer) {
+  const bytes = new Uint8Array(buffer);
+  // UTF-8 BOM 존재하면 UTF-8 확정
+  if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return new TextDecoder('utf-8').decode(buffer);
+  }
+  // UTF-8 strict 디코드 시도 — 실패하면 EUC-KR
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+  } catch (_) {
+    return new TextDecoder('euc-kr').decode(buffer);
+  }
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeBuffer(e.target.result);
+    const result = analyze(text);
+    if (!result) {
+      alert('파일 파싱에 실패했습니다. 헤더 행이 포함된 CSV인지 확인하세요.');
+      return;
+    }
+    _lastResult = result;
+
+    const fi = document.getElementById('fileInfo');
+    fi.innerHTML = `<strong>${file.name}</strong> — ${fmtN(result.rowCount)}행 × ${fmtN(result.colCount)}열 · ${(file.size/1024).toFixed(1)} KB<br>
+      <span style="font-size:11px;color:var(--muted);">컬럼: ${result.headers.join(', ')}</span>`;
+    fi.classList.add('show');
+
+    renderResults(result);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Upload zone events ────────────────────────────────────
+const zone = document.getElementById('uploadZone');
+const inp  = document.getElementById('fileInput');
+
+inp.addEventListener('change', () => handleFile(inp.files[0]));
+
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+});
+</script>
+<!-- Dim info modal -->
+<div class="modal-overlay" id="dimModal" onclick="if(event.target===this)closeDimInfo()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="closeDimInfo()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<script>(function(){var k='tf_prep_qc';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

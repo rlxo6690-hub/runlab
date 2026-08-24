@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원페이지 아이디어 기획서 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta name="description" content="아이디어·고객·수익 모델을 한 장으로 정리하는 기획서 작성 도구. 완성된 기획서를 HTML 파일로 저장하세요.">
+<meta property="og:title" content="원페이지 아이디어 기획서 — DataForge">
+<meta property="og:description" content="아이디어·고객·수익 모델을 한 장으로 정리하고 HTML로 저장합니다.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --purple:#7c3aed; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;min-width:0;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;white-space:nowrap;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.logo-title span{color:var(--green);}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+/* 헤더 HTML 저장 버튼 — manage_PHP 공통 규격 (scenario.php와 동일) */
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+/* 헤더 마크다운 저장 버튼 — bep.php와 동일 규격 */
+.md-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:8px;color:#0d9488;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.md-btn:hover{background:rgba(13,148,136,.18);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.16);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin:20px 0 16px;}
+.intro-box strong{color:var(--text);}
+
+.shared-banner{display:none;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.22);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin:20px 0 0;}
+.shared-banner.show{display:block;}
+.shared-banner strong{color:var(--accent);}
+
+/* 페이지는 1열 — 입력 영역들이 위, 완성된 기획서가 아래 */
+.layout{display:grid;grid-template-columns:1fr;gap:16px;}
+/* 입력 영역: 기본·수익 방식을 한 묶음(2열)으로, 내용은 그 아래 전체 폭 */
+.edit-row{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;margin-bottom:16px;}
+/* align-items 기본값(stretch) → 두 열이 같은 높이로 늘어난다 */
+.top-row{display:grid;grid-template-columns:1fr;gap:16px;}
+.col-stack{display:flex;flex-direction:column;gap:16px;}
+/* 오른쪽 열이 더 짧으면 마지막 카드가 남는 높이를 흡수해 바닥을 맞춘다 */
+.col-stack>.a-card:last-child{flex:1;}
+/* 그리드 gap이 간격을 담당하므로 카드 자체 여백은 없앤다 */
+.edit-row>.a-card,.top-row>.a-card,.col-stack>.a-card{margin-bottom:0;}
+
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+/* 카드 제목 줄에 들어가는 도구 버튼 */
+.btn.btn-sm{padding:8px 12px;min-height:36px;font-size:11px;letter-spacing:0;}
+@media (max-width:640px){ .btn.btn-sm{min-height:44px;flex:1;} }
+.a-card-title b{font-family:'Space Mono',monospace;color:var(--green);letter-spacing:0;}
+
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.field-label .req{font-size:10px;color:var(--red);}
+.field-hint{font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5;}
+.inp{width:100%;padding:10px 12px;font-size:16px;font-family:inherit;border:1px solid var(--border2);border-radius:8px;background:var(--card);color:var(--text);min-height:44px;line-height:1.6;}
+.inp:focus{outline:none;border-color:var(--green);}
+.inp::placeholder{color:var(--dim);font-size:13px;}
+textarea.inp{resize:vertical;min-height:84px;}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{padding:8px 13px;border:1.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--muted);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:.2s;min-height:38px;}
+.chip:hover{border-color:rgba(5,150,105,.4);}
+.chip.on{background:rgba(5,150,105,.1);border-color:var(--green);color:var(--green);}
+
+.prog-bg{height:7px;background:var(--card2);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-top:4px;}
+.prog-bar{height:100%;background:var(--green);border-radius:4px;transition:width .25s;width:0%;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;font-size:12px;font-weight:700;min-height:44px;font-family:inherit;border:none;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{opacity:.88;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(5,150,105,.04);border-radius:8px;border:1px solid rgba(5,150,105,.1);}
+.info-block strong{color:var(--text);}
+.info-block + .info-block{margin-top:10px;}
+.info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.18);}
+.info-block.warn strong{color:var(--amber);}
+
+/* ── 산출물(리포트) 스타일 — html.md 규격. 내보낸 HTML과 동일한 값을 쓴다.
+      미리보기에서는 .doc 안쪽으로 한정해 페이지 자체 스타일과 섞이지 않게 한다. ── */
+.doc{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:26px 24px 22px;}
+.doc .page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.35;word-break:keep-all;}
+.doc .lead{font-size:15px;font-weight:700;color:var(--green);line-height:1.6;margin-bottom:6px;word-break:keep-all;}
+.doc .meta{font-size:12px;color:var(--dim);margin-bottom:24px;}
+.doc .sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.doc .sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}
+.doc .sum-icon{font-size:22px;opacity:.85;}
+.doc .sum-v{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;line-height:1;}
+.doc .sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}
+.doc .card-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+.doc .section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:0;}
+.doc .section-card.wide{grid-column:1/-1;}
+.doc .section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.doc .sec-body{font-size:13px;color:var(--text);line-height:1.75;word-break:keep-all;white-space:pre-wrap;}
+.doc .sec-body.empty{color:var(--dim);font-style:italic;}
+.doc .rev-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.doc .rev-tag{font-size:11px;font-weight:700;color:var(--green);background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);border-radius:20px;padding:3px 11px;}
+@media (max-width:640px){ .doc .sum-row{grid-template-columns:repeat(2,1fr);} }
+
+@media (min-width:768px){
+  /* 영역이 전체 폭을 쓰므로 안쪽 항목을 나눠 담는다 — 한 줄 소개를 가장 넓게 */
+  #baseFields{display:grid;grid-template-columns:1fr 2fr 1fr;gap:14px 16px;}
+  /* 줄 간격은 gap이 담당한다 — .field의 margin-bottom을 쓰면 :last-child만 0이라 칸 높이가 어긋난다.
+     설명 줄 수가 칸마다 달라도 입력창은 바닥에 붙여 같은 높이에 오게 한다 */
+  #baseFields .field{margin-bottom:0;display:flex;flex-direction:column;}
+  #baseFields .field .inp{margin-top:auto;}
+}
+@media (min-width:1024px){
+  /* 기본 | 수익 방식 2열. 기본은 칸이 3개라 더 넓게 잡아 한 줄에 나란히 들어가게 한다
+     — 세로로 쌓으면 왼쪽만 길어져 오른쪽 수익 방식 칸 아래가 비어 보인다 */
+  .top-row{grid-template-columns:1.55fr 1fr;}
+  #bodyFields{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;}
+
+  .doc .card-grid{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .btn-row .btn{flex:1;}
+  .doc{padding:20px 18px 18px;}
+  .save-btn{font-size:12px;padding:6px 10px;}
+  .save-btn svg{display:none;}
+  .md-btn{font-size:11px;padding:6px 9px;}
+}
+@media print{
+  body::before,.site-header,.intro-box,.shared-banner,#editCol,.no-print{display:none!important;}
+  body{background:#fff;}
+  .page{padding:0;}
+  .layout{grid-template-columns:1fr;gap:0;}
+  .edit-row{display:none!important;}
+  .a-card{border:none;padding:0;margin:0;}
+  .a-card-title{display:none;}
+  .doc{border:none;padding:0;}
+  .doc .card-grid{grid-template-columns:1fr 1fr;}
+  .doc .section-card{break-inside:avoid;}
+  @page{size:A4;margin:14mm;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>원페이지 아이디어 기획서</span></div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="saveHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="shared-banner" id="sharedBanner">
+    <strong>공유받은 기획서입니다.</strong>
+    아래가 원본 내용이에요. 그대로 읽어도 되고, 위쪽에서 <strong>고쳐 쓸 수도</strong> 있습니다.
+    고친 내용은 <strong>이 브라우저에만 저장</strong>되고 원본 링크는 그대로 남습니다.
+  </div>
+
+  <div class="intro-box">
+    아이디어를 <strong>한 장으로</strong> 정리합니다. 문제 → 해결 → 고객 → 수익, 네 가지만 채우면 기획서가 완성돼요.
+    작성한 내용은 이 브라우저에만 저장되고 서버로 보내지 않으며, 완성된 기획서는
+    오른쪽 위 <strong>HTML로 저장</strong>으로 파일 하나로 받을 수 있습니다.
+  </div>
+
+  <div class="layout">
+
+    <!-- ══════ 위: 입력 영역 (기본·수익 방식은 2열, 내용은 전체 폭) ══════ -->
+    <div id="editCol">
+      <div class="edit-row">
+        <div class="top-row">
+          <div class="a-card">
+            <div class="a-card-title"><span>✏️ 기본</span><b id="progTxt">0 / 6</b></div>
+            <div class="prog-bg" style="margin-bottom:14px;"><div class="prog-bar" id="progBar"></div></div>
+            <div id="baseFields"></div>
+          </div>
+
+          <!-- 오른쪽 열: 수익 방식 (왼쪽 기본 칸과 높이를 맞춘다) -->
+          <div class="col-stack">
+            <div class="a-card">
+              <div class="a-card-title"><span>💰 수익 방식</span><b id="revCnt">0 / 8</b></div>
+              <div class="chips" id="revChips"></div>
+              <div class="info-block" style="margin-top:12px;">
+                고객이 <strong>어떤 방식으로 돈을 내는지</strong> 고르세요. 여러 개를 함께 쓰는 모델도 많습니다 —
+                예) <strong>월 구독 + 단품 판매</strong>. 고른 항목은 기획서 상단에 태그로 붙습니다.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="a-card">
+          <div class="a-card-title">
+            <span>📝 내용</span>
+            <div class="btn-row no-print">
+              <button class="btn btn-outline btn-sm" onclick="importBMC()">🧩 BMC에서 가져오기</button>
+              <button class="btn btn-outline btn-sm" onclick="loadSample()">✨ 예시 채우기</button>
+              <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 전체 지우기</button>
+            </div>
+          </div>
+          <div id="bodyFields"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ 아래: 완성된 기획서 ══════ -->
+    <div>
+      <div class="a-card">
+        <div class="a-card-title no-print">📄 완성된 기획서</div>
+        <div class="doc" id="doc"></div>
+      </div>
+
+      <div class="a-card no-print">
+        <div class="a-card-title">💡 잘 쓰는 요령</div>
+        <div class="info-block">
+          <strong>한 줄 소개</strong>가 가장 중요합니다. <strong>"누가 무엇을 얻는지"</strong>를 한 문장으로 —
+          읽는 사람이 이 한 줄로 판단합니다.
+        </div>
+        <div class="info-block">
+          <strong>문제를 먼저, 해결은 나중에.</strong> 아이디어부터 쓰면 "그래서 누가 아쉬운데?"라는 질문에 막힙니다.
+          고객이 지금 <strong>겪고 있는 불편</strong>부터 적으세요.
+        </div>
+        <div class="info-block">
+          더 깊이 파고들려면 → <a href="/manage/bmc" style="color:var(--green);font-weight:700;">비즈니스 모델 캔버스</a>(9블록) ·
+          <a href="/manage/bizmodel" style="color:var(--green);font-weight:700;">비즈니스 모델 도식화</a>(관계도) ·
+          <a href="/manage/bep" style="color:var(--green);font-weight:700;">BEP 분석</a>(손익)
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   필드 정의
+   ══════════════════════════════════════════ */
+var BASE=[
+  {k:'title',  label:'아이디어 이름', req:true, type:'input',
+   ph:'예) 이웃 로스터리 구독',
+   hint:'짧고 기억되는 이름. 아직 없으면 "OO를 위한 OO" 형태로.'},
+  {k:'oneline',label:'한 줄 소개',   req:true, type:'input',
+   ph:'예) 반경 1km 이웃에게 매주 갓 볶은 원두를 문 앞으로 배달합니다',
+   hint:'누가 무엇을 얻는지 한 문장으로. 이 기획서에서 가장 중요한 칸입니다.'},
+  {k:'author', label:'작성자 · 팀',  req:false, type:'input', ph:'예) 창업 1팀 이지형',
+   hint:'기획서 머리말에 표시됩니다. 비워 두어도 됩니다.'}
+];
+
+var BODY=[
+  {k:'problem', label:'어떤 문제인가',        req:true, icon:'🔥',
+   ph:'고객이 지금 겪는 불편을 구체적으로.\n예) 근처에 갓 볶은 원두를 파는 곳이 없어 매번 온라인 주문 후 3일을 기다린다.',
+   hint:'"불편하다"보다 "무엇 때문에 얼마나 번거로운지"를 적으세요.'},
+  {k:'solution',label:'어떻게 해결하나',      req:true, icon:'💡',
+   ph:'예) 매주 화요일 로스팅한 원두를 수요일 아침 문 앞에 배달합니다. 앱에서 취향을 고르면 자동으로 바뀝니다.',
+   hint:'기능 나열보다 고객이 겪게 될 변화 중심으로.'},
+  {k:'customer',label:'누가 쓰나 (고객)',     req:true, icon:'🎯',
+   ph:'예) 홈카페를 즐기는 30대 1인 가구\n주 3회 이상 원두를 내려 마시는 사람\n반경 1km 아파트 단지 거주자',
+   hint:'"모든 사람"은 답이 아닙니다. 가장 먼저 돈을 낼 한 무리를 적으세요.'},
+  {k:'revenue', label:'어떻게 버나 (수익 모델)', req:true, icon:'💰',
+   ph:'예) 월 구독 19,000원 (원두 200g × 2회)\n단품 판매 12,000원\n예상 객단가 19,000원 · 원가율 45%',
+   hint:'얼마를 누가 언제 내는지. 숫자가 하나라도 들어가면 설득력이 크게 올라갑니다.'},
+  {k:'edge',    label:'왜 우리인가 (차별점)',  req:false, icon:'⭐',
+   ph:'예) 직접 로스팅 설비 보유 — 주문 후 24시간 내 배송 가능\n동네 단위 배달로 물류비가 경쟁사의 1/3',
+   hint:'선택 사항. 따라 하기 어려운 점이 있다면 적으세요.'},
+  {k:'next',    label:'다음 할 일',           req:false, icon:'✅',
+   ph:'예) 아파트 단지 200가구 대상 사전 신청 받기\n로스터 견적 3곳 비교\n한 달 시범 운영',
+   hint:'선택 사항. 가장 먼저 확인해야 할 것부터.'}
+];
+
+var REV_TYPES=['제품 판매','월 구독','중개 수수료','서비스 이용료','광고','라이선스','교육·컨설팅','기타'];
+
+var LS_KEY='df_onepager_v1';
+var data={}, revSel=[], saveTimer=null, isShared=false;
+
+/* ══════════════════════════════════════════
+   렌더
+   ══════════════════════════════════════════ */
+function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function v(k){ return String(data[k]||'').trim(); }
+
+function renderFields(){
+  document.getElementById('baseFields').innerHTML = BASE.map(function(f){
+    return '<div class="field">'
+      + '<label class="field-label" for="f-'+f.k+'">'+f.label+(f.req?' <span class="req">필수</span>':'')+'</label>'
+      + (f.hint?'<div class="field-hint">'+f.hint+'</div>':'')
+      + '<input class="inp" id="f-'+f.k+'" placeholder="'+xe(f.ph)+'" oninput="setV(\''+f.k+'\',this.value)">'
+      + '</div>';
+  }).join('');
+
+  document.getElementById('bodyFields').innerHTML = BODY.map(function(f){
+    return '<div class="field">'
+      + '<label class="field-label" for="f-'+f.k+'">'+f.icon+' '+f.label+(f.req?' <span class="req">필수</span>':'')+'</label>'
+      + (f.hint?'<div class="field-hint">'+f.hint+'</div>':'')
+      + '<textarea class="inp" id="f-'+f.k+'" rows="4" placeholder="'+xe(f.ph)+'" oninput="setV(\''+f.k+'\',this.value)"></textarea>'
+      + '</div>';
+  }).join('');
+
+  document.getElementById('revChips').innerHTML = REV_TYPES.map(function(t,i){
+    return '<button class="chip'+(revSel.indexOf(t)>=0?' on':'')+'" onclick="toggleRev('+i+')">'+t+'</button>';
+  }).join('');
+}
+
+function syncInputs(){
+  BASE.concat(BODY).forEach(function(f){
+    var el=document.getElementById('f-'+f.k);
+    if(el) el.value=data[f.k]||'';
+  });
+  document.getElementById('revChips').innerHTML = REV_TYPES.map(function(t,i){
+    return '<button class="chip'+(revSel.indexOf(t)>=0?' on':'')+'" onclick="toggleRev('+i+')">'+t+'</button>';
+  }).join('');
+}
+
+function setV(k,val){ data[k]=val; onEdit(); }
+function toggleRev(i){
+  var t=REV_TYPES[i], p=revSel.indexOf(t);
+  if(p>=0) revSel.splice(p,1); else revSel.push(t);
+  document.getElementById('revChips').innerHTML = REV_TYPES.map(function(tt,j){
+    return '<button class="chip'+(revSel.indexOf(tt)>=0?' on':'')+'" onclick="toggleRev('+j+')">'+tt+'</button>';
+  }).join('');
+  onEdit();
+}
+
+/* 산출물 렌더 */
+/* 산출물 마크업 — html.md(리포트 디자인 시스템) 구조를 따른다.
+   page-title / lead / meta / sum-row+sum-c / section-card+section-title / footer
+   미리보기와 내보낸 HTML이 같은 마크업을 쓰므로 화면과 파일이 항상 일치한다. */
+function docHTML(forExport){
+  var today=new Date().toISOString().slice(0,10);
+  var title=v('title')||'제목 없는 아이디어';
+  var one=v('oneline');
+  var author=v('author');
+
+  var req=BASE.concat(BODY).filter(function(f){return f.req;});
+  var done=req.filter(function(f){return v(f.k);}).length;
+  var isFull=done===req.length;
+
+  var head='<div class="page-title">💡 '+xe(title)+'</div>'
+    + (one?'<div class="lead">'+xe(one)+'</div>':'')
+    + '<div class="meta">'
+    +   (author?'<b style="color:var(--muted)">'+xe(author)+'</b> &nbsp;·&nbsp; ':'')
+    +   today+' &nbsp;·&nbsp; DataForge 원페이지 기획서</div>';
+
+  /* 요약 카드 행 (html.md §6) — 상태별 색상은 인라인으로 */
+  var okB='rgba(5,150,105,.3)', okG='rgba(5,150,105,.04)';
+  var amB='rgba(217,119,6,.3)', amG='rgba(217,119,6,.04)';
+  head+='<div class="sum-row">'
+    + '<div class="sum-c" style="border-color:'+(isFull?okB:amB)+';background:'+(isFull?okG:amG)+';">'
+    +   '<div class="sum-icon">'+(isFull?'✅':'⚡')+'</div><div>'
+    +   '<div class="sum-v" style="color:var(--'+(isFull?'green':'amber')+');">'+done+' / '+req.length+'</div>'
+    +   '<div class="sum-l" style="color:var(--'+(isFull?'green':'amber')+');">필수 항목</div></div></div>'
+    + '<div class="sum-c" style="border-color:rgba(37,99,235,.3);background:rgba(37,99,235,.04);">'
+    +   '<div class="sum-icon">💰</div><div>'
+    +   '<div class="sum-v" style="color:var(--accent);">'+revSel.length+'</div>'
+    +   '<div class="sum-l" style="color:var(--accent);">수익 방식</div></div></div>'
+    + '<div class="sum-c" style="border-color:var(--border);">'
+    +   '<div class="sum-icon">📅</div><div>'
+    +   '<div class="sum-v" style="font-size:16px;">'+today+'</div>'
+    +   '<div class="sum-l" style="color:var(--muted);">작성일</div></div></div>'
+    + '</div>';
+
+  if(revSel.length)
+    head+='<div class="section-card"><div class="section-title">수익 방식</div>'
+      + '<div class="rev-tags">'+revSel.map(function(t){return '<span class="rev-tag">'+xe(t)+'</span>';}).join('')+'</div></div>';
+
+  var core=BODY.filter(function(f){return f.req;});
+  var opt =BODY.filter(function(f){return !f.req;});
+
+  function sec(f,wide){
+    var val=v(f.k);
+    if(forExport && !val) return '';
+    return '<div class="section-card'+(wide?' wide':'')+'">'
+      + '<div class="section-title">'+f.icon+' '+xe(f.label)+'</div>'
+      + '<div class="sec-body'+(val?'':' empty')+'">'+(val?xe(val):'아직 작성하지 않았습니다')+'</div>'
+      + '</div>';
+  }
+  var body='<div class="card-grid">'
+    + core.map(function(f){return sec(f,false);}).join('')
+    + opt.map(function(f){return sec(f,true);}).join('')
+    + '</div>';
+
+  return head + body;
+}
+
+function onEdit(){
+  document.getElementById('doc').innerHTML = docHTML(false);
+  var req=BASE.concat(BODY).filter(function(f){return f.req;});
+  var done=req.filter(function(f){return v(f.k);}).length;
+  document.getElementById('progTxt').textContent=done+' / '+req.length;
+  document.getElementById('progBar').style.width=(done/req.length*100)+'%';
+  /* 배지는 숫자만 — 한글이 섞이면 Space Mono에 글리프가 없어 서체가 튄다 (design.md) */
+  document.getElementById('revCnt').textContent=revSel.length+' / '+REV_TYPES.length;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveLocal,500);
+}
+
+/* ══════════════════════════════════════════
+   저장 · 예시
+   ══════════════════════════════════════════ */
+function state(){ return {d:data, r:revSel}; }
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state())); }catch(e){} }
+function loadLocal(){
+  var raw; try{ raw=localStorage.getItem(LS_KEY); }catch(e){ return false; }
+  if(!raw) return false;
+  try{
+    var s=JSON.parse(raw);
+    if(!s||typeof s.d!=='object') return false;
+    data=s.d||{}; revSel=Array.isArray(s.r)?s.r:[];
+    return true;
+  }catch(e){ return false; }
+}
+
+function loadSample(){
+  if(Object.keys(data).some(function(k){return v(k);}) && !confirm('작성한 내용을 예시로 덮어씁니다. 계속할까요?')) return;
+  data={
+    title:'이웃 로스터리 구독',
+    oneline:'반경 1km 이웃에게 매주 갓 볶은 원두를 문 앞으로 배달합니다',
+    author:'창업 1팀',
+    problem:'홈카페를 즐기는 사람은 신선한 원두를 원하지만, 동네에 로스터리가 없어 매번 온라인으로 주문하고 3~4일을 기다린다.\n도착할 즈음엔 이미 로스팅 후 일주일이 지나 향이 많이 죽어 있다.',
+    solution:'매주 화요일에 로스팅한 원두를 수요일 아침 문 앞에 배달합니다.\n앱에서 취향(산미·바디)을 고르면 다음 주부터 자동으로 바뀌고, 언제든 건너뛰거나 멈출 수 있습니다.',
+    customer:'홈카페를 즐기는 30대 1인 가구\n주 3회 이상 직접 원두를 내려 마시는 사람\n반경 1km 아파트 단지 거주자 (초기 2개 단지, 약 1,200가구)',
+    revenue:'월 구독 19,000원 — 원두 200g × 2회\n단품 판매 12,000원 (구독 전환 유도용)\n예상 객단가 19,000원 · 원가율 45% · 목표 200가구 시 월매출 380만원',
+    edge:'직접 로스팅 설비를 갖춰 주문 후 24시간 내 배송이 가능합니다.\n동네 단위로 묶어 배달하므로 물류비가 택배 대비 1/3 수준입니다.',
+    next:'아파트 2개 단지 대상 사전 신청 200가구 모으기\n중고 로스터 견적 3곳 비교\n한 달 시범 운영 후 재구독률 확인'
+  };
+  revSel=['월 구독','제품 판매'];
+  syncInputs(); onEdit();
+}
+
+function clearAll(){
+  if(!confirm('작성한 내용을 모두 지웁니다. 계속할까요?')) return;
+  data={}; revSel=[];
+  syncInputs(); onEdit();
+}
+
+function firstLine(t){
+  if(!t) return '';
+  var a=String(t).split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  return a.length?a[0]:'';
+}
+function importBMC(){
+  var raw; try{ raw=localStorage.getItem('df_bmc_v1'); }catch(e){ raw=null; }
+  if(!raw){ alert('비즈니스 모델 캔버스에 저장된 내용이 없습니다.\n\n먼저 /manage/bmc 에서 캔버스를 작성해 주세요.\n(같은 브라우저에서 작성한 내용만 불러옵니다.)'); return; }
+  var d; try{ d=JSON.parse(raw); }catch(e){ d=null; }
+  if(!d||!d.blocks){ alert('캔버스 내용을 읽지 못했습니다.'); return; }
+  if(!confirm('BMC 내용으로 이름·고객·수익·해결 칸을 채웁니다.\n지금 입력한 내용은 덮어써집니다. 계속할까요?')) return;
+
+  var n=0;
+  function put(k,val){ if(val){ data[k]=val; n++; } }
+  put('title',    d.name||'');
+  put('author',   d.author||'');
+  put('oneline',  firstLine(d.blocks.value));
+  put('solution', d.blocks.value||'');
+  put('customer', d.blocks.segments||'');
+  put('revenue',  d.blocks.revenue||'');
+  syncInputs(); onEdit();
+  alert(n+'칸을 캔버스 내용으로 채웠습니다.\n\n"어떤 문제인가"는 캔버스에 없는 항목이라 비어 있습니다 — 직접 채워 주세요.');
+}
+
+/* ══════════════════════════════════════════
+   공유 링크 열기 — 예전에 만들어 배포된 #d= 링크를 계속 열 수 있도록 읽기만 남겨 둔다
+   (링크 만들기 기능은 제거됨 — 내보내기는 HTML 저장 하나로 통일)
+   ══════════════════════════════════════════ */
+function b64ToBytes(b){
+  b=String(b).replace(/-/g,'+').replace(/_/g,'/');
+  while(b.length%4) b+='=';
+  var s=atob(b), u=new Uint8Array(s.length);
+  for(var i=0;i<s.length;i++) u[i]=s.charCodeAt(i);
+  return u;
+}
+async function inflate(u8){
+  var ds=new DecompressionStream('deflate-raw');
+  var w=ds.writable.getWriter(); w.write(u8); w.close();
+  return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+}
+
+async function decodeState(str){
+  var mode=str.charAt(0), body=str.slice(1), bytes=b64ToBytes(body);
+  if(mode==='z'){
+    if(!window.DecompressionStream) throw new Error('이 브라우저는 압축 링크를 열 수 없습니다');
+    bytes=await inflate(bytes);
+  }else if(mode!=='u'){ throw new Error('형식을 알 수 없는 링크입니다'); }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+async function loadFromHash(){
+  var h=location.hash||'';
+  if(h.indexOf('#d=')!==0) return false;
+  try{
+    var s=await decodeState(h.slice(3));
+    if(!s||typeof s.d!=='object') return false;
+    data=s.d||{}; revSel=Array.isArray(s.r)?s.r:[];
+    isShared=true;
+    return true;
+  }catch(e){
+    alert('공유 링크를 읽지 못했습니다.\n링크가 중간에 잘렸을 수 있습니다.\n\n('+e.message+')');
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   HTML 저장
+   ══════════════════════════════════════════ */
+function saveHTML(){
+  if(!v('title') && !v('oneline')){ alert('먼저 내용을 작성해 주세요.'); return; }
+  var today=new Date().toISOString().slice(0,10);
+  var title=v('title')||'원페이지 기획서';
+  var html='<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
+    +'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'
+    +'<title>'+xe(title)+' — 원페이지 기획서</title>\n'
+    +'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+    +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n'
+    /* ── html.md(리포트 디자인 시스템) 규격 — 다른 도구의 저장 HTML과 동일 ── */
+    +'<style>\n'
+    +':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);'
+    +'--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;'
+    +'--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;}\n'
+    +'*{margin:0;padding:0;box-sizing:border-box;}\n'
+    +'body{font-family:"Noto Sans KR","Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}\n'
+    +'.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}\n'
+    +'.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.35;word-break:keep-all;}\n'
+    +'.lead{font-size:15px;font-weight:700;color:var(--green);line-height:1.6;margin-bottom:6px;word-break:keep-all;}\n'
+    +'.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}\n'
+    +'.sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}\n'
+    +'.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}\n'
+    +'.sum-icon{font-size:22px;opacity:.85;}\n'
+    +'.sum-v{font-family:"Noto Sans KR",sans-serif;font-size:22px;font-weight:700;line-height:1;}\n'
+    +'.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}\n'
+    +'.card-grid{display:grid;grid-template-columns:1fr;gap:16px;}\n'
+    +'.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}\n'
+    +'.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}\n'
+    +'.sec-body{font-size:13px;color:var(--text);line-height:1.75;word-break:keep-all;white-space:pre-wrap;}\n'
+    +'.rev-tags{display:flex;flex-wrap:wrap;gap:6px;}\n'
+    +'.rev-tag{font-size:11px;font-weight:700;color:var(--green);background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);border-radius:20px;padding:3px 11px;}\n'
+    +'.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}\n'
+    +'@media(min-width:820px){.card-grid{grid-template-columns:1fr 1fr;}.section-card.wide{grid-column:1/-1;}}\n'
+    +'@media(max-width:640px){.sum-row{grid-template-columns:repeat(2,1fr);}.wrap{padding:24px 16px 40px;}}\n'
+    +'@media print{@page{size:A4;margin:14mm;}body{background:#fff;}.wrap{padding:0;max-width:none;}'
+    +'.section-card,.sum-c{break-inside:avoid;}.footer{margin-top:24px;}}\n'
+    +'</style>\n</head>\n<body>\n<div class="wrap">\n'
+    + docHTML(true)
+    + '\n<div class="footer">DataForge · dataforge.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
+
+  var safe=title.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'onepager';
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download='기획서-'+safe+'-'+today+'.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+
+/* ══════════════════════════════════════════
+   시작
+   ══════════════════════════════════════════ */
+renderFields();
+(async function(){
+  var fromLink=await loadFromHash();
+  if(!fromLink) loadLocal();
+  syncInputs();
+  onEdit();
+  if(isShared){
+    document.getElementById('sharedBanner').className='shared-banner show';
+    /* 기획서가 입력 영역 아래에 있으므로, 공유 링크로 들어오면 항상 기획서로 스크롤 */
+    document.getElementById('doc').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+})();
+</script>
+<script>
+/* ── 마크다운으로 저장 — 기획서 내용을 .md 파일로 내려받는다 (bep.php와 같은 패턴) ── */
+function exportMD(){
+  if(!v('title') && !v('oneline')){ alert('먼저 내용을 작성해 주세요.'); return; }
+  var today=new Date().toISOString().slice(0,10);
+  var title=v('title')||'제목 없는 아이디어';
+  var md='# 💡 '+title+'\n\n';
+  if(v('oneline')) md+='> '+v('oneline')+'\n\n';
+  md+=(v('author')?v('author')+' · ':'')+today+' · DataForge 원페이지 기획서\n\n';
+  if(revSel.length) md+='**수익 방식**: '+revSel.join(' · ')+'\n\n';
+  BODY.forEach(function(f){
+    var val=v(f.k);
+    if(!val) return;
+    md+='## '+f.icon+' '+f.label+'\n\n'+val+'\n\n';
+  });
+  var safe=title.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'onepager';
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download='기획서-'+safe+'-'+today+'.md';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+</script>
+<script>(function(){var k='tf_manage_onepager';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

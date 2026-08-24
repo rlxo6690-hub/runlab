@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 용량 축소 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="PDF 용량 축소 — DataForge">
+  <meta property="og:description" content="서버 업로드 없이 브라우저에서 직접 PDF 용량을 줄입니다.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+
+    :root{
+      --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+      --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+      --accent:#2563eb;--accent2:#6366f1;
+      --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+      --r:10px;
+    }
+
+    body{
+      font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;font-size:14px;line-height:1.6;
+    }
+
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;
+    }
+
+    /* ── 헤더 ── */
+    .site-header{
+      padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;
+    }
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+                color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:#ea580c;font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;
+                 border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    /* ── 레이아웃 ── */
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+    .page{padding:0 24px 80px;}
+
+    .intro-box{
+      background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+      border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);
+      line-height:1.7;margin-top:20px;margin-bottom:16px;
+    }
+    .intro-box strong{color:var(--text);}
+
+    /* 2열 그리드 */
+    /* 1열 구성: 설정 영역 아래에 진행/결과/사용 안내 표시 */
+    .two-col{display:flex;flex-direction:column;gap:16px;margin-bottom:16px;}
+
+    /* ── 카드 ── */
+    .a-card{background:var(--card);border:1px solid var(--border);
+            border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+    .a-card:last-child{margin-bottom:0;}
+    .a-card-title{font-size:10px;font-weight:700;color:var(--muted);
+                  letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+                  display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+    /* ── 업로드 존 ── */
+    .upload-zone{
+      border:2px dashed rgba(37,99,235,.3);border-radius:10px;
+      padding:36px 18px;text-align:center;cursor:pointer;transition:all .2s;
+      background:rgba(37,99,235,.03);position:relative;
+    }
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{font-size:36px;margin-bottom:10px;}
+    .upload-main{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .upload-sub{font-size:12px;color:var(--muted);}
+
+    .file-info{display:none;margin-top:12px;padding:10px 14px;
+               background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);
+               border-radius:8px;font-size:12px;color:#065f46;line-height:1.8;}
+    .file-info.show{display:block;}
+
+    /* ── 품질 선택 ── */
+    .quality-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+    .quality-btn{
+      padding:12px 8px;border:1.5px solid var(--border2);border-radius:10px;
+      background:transparent;cursor:pointer;text-align:center;
+      transition:all .2s;font-family:inherit;
+    }
+    .quality-btn:hover{border-color:rgba(37,99,235,.4);}
+    .quality-btn.active{background:rgba(37,99,235,.08);border-color:var(--accent);}
+    .quality-btn.active .quality-name{color:var(--accent);}
+    .quality-icon{font-size:20px;margin-bottom:5px;}
+    .quality-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+    .quality-sub{font-size:10px;color:var(--muted);line-height:1.4;}
+
+    /* ── 진행 ── */
+    .progress-wrap{display:none;margin-bottom:16px;}
+    .progress-wrap.show{display:block;}
+    .progress-label{font-size:12px;color:var(--muted);margin-bottom:8px;
+                    display:flex;justify-content:space-between;}
+    .progress-bar-bg{height:8px;background:var(--card2);border-radius:4px;overflow:hidden;}
+    .progress-bar{height:100%;background:var(--accent);border-radius:4px;
+                  transition:width .25s;width:0%;}
+
+    /* ── 통계 ── */
+    .stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+    .stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;
+              padding:12px;text-align:center;}
+    .stat-val{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);}
+    .stat-val.green{color:var(--green);}
+    .stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+    /* ── 버튼 ── */
+    .btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+         font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;
+         cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:#1d4ed8;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#047857;}
+    .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+    .btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+    /* ── 정보 블록 ── */
+    .info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;
+                background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+    .info-block strong{color:var(--text);}
+
+    .result-section{display:none;}
+    .result-section.show{display:block;}
+
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .quality-grid{grid-template-columns:1fr 1fr 1fr;}
+      .stat-grid-3{grid-template-columns:repeat(2,1fr);}
+      .site-header{padding:12px 14px;}
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">PDF 용량 축소</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      <strong>서버 업로드 없이</strong> 브라우저에서 직접 PDF 용량을 줄입니다.
+      각 페이지를 이미지로 변환·압축하므로 <strong>이미지 비율이 높은 PDF</strong>에 효과적입니다.
+      텍스트 위주 PDF는 압축 효율이 낮을 수 있습니다.
+    </div>
+
+    <div class="two-col">
+
+      <!-- 왼쪽: 설정 -->
+      <div>
+
+        <!-- 파일 업로드 -->
+        <div class="a-card">
+          <div class="a-card-title">📂 PDF 파일 선택</div>
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="file-input" accept=".pdf" onchange="onFileSelect(this)">
+            <div class="upload-icon">📄</div>
+            <div class="upload-main">PDF 파일을 여기에 드래그하거나 클릭해 선택</div>
+            <div class="upload-sub">최대 100MB · 브라우저 내에서만 처리 (서버 전송 없음)</div>
+          </div>
+          <div class="file-info" id="file-info"></div>
+        </div>
+
+        <!-- 품질 설정 -->
+        <div class="a-card">
+          <div class="a-card-title">⚙️ 압축 품질 선택</div>
+          <div class="quality-grid">
+            <button class="quality-btn" data-q="low" onclick="selectQuality('low')">
+              <div class="quality-icon">🗜️</div>
+              <div class="quality-name">최대 압축</div>
+              <div class="quality-sub">파일 최소화<br>화질 다소 저하</div>
+            </button>
+            <button class="quality-btn active" data-q="mid" onclick="selectQuality('mid')">
+              <div class="quality-icon">⚖️</div>
+              <div class="quality-name">균형 (권장)</div>
+              <div class="quality-sub">크기·화질 균형<br>일반 용도 최적</div>
+            </button>
+            <button class="quality-btn" data-q="high" onclick="selectQuality('high')">
+              <div class="quality-icon">🔍</div>
+              <div class="quality-name">고화질</div>
+              <div class="quality-sub">화질 우선<br>적당한 압축</div>
+            </button>
+          </div>
+          <div class="info-block" id="quality-desc">
+            <strong>균형 모드</strong> — 화질과 파일 크기의 균형을 맞춥니다. 이메일 첨부·웹 업로드에 적합합니다.
+          </div>
+        </div>
+
+        <!-- 실행 -->
+        <div class="a-card">
+          <div class="btn-row">
+            <button class="btn btn-primary" id="run-btn" onclick="startCompress()" disabled>▶ 압축 시작</button>
+            <button class="btn btn-outline" onclick="reset()">↺ 초기화</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 오른쪽: 결과 -->
+      <div>
+
+        <!-- 진행 상태 -->
+        <div class="a-card progress-wrap" id="progress-wrap">
+          <div class="a-card-title">⏳ 처리 중</div>
+          <div class="progress-label">
+            <span id="progress-text">준비 중...</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
+        </div>
+
+        <!-- 결과 -->
+        <div class="a-card result-section" id="result-section">
+          <div class="a-card-title">✅ 압축 완료</div>
+          <div class="stat-grid-3">
+            <div class="stat-box">
+              <div class="stat-val" id="r-orig">—</div>
+              <div class="stat-lbl">원본 크기</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val green" id="r-comp">—</div>
+              <div class="stat-lbl">압축 후 크기</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val green" id="r-ratio">—</div>
+              <div class="stat-lbl">용량 절감</div>
+            </div>
+          </div>
+          <div class="info-block" id="result-note" style="margin-bottom:14px;"></div>
+          <button class="btn btn-green" id="dl-btn" onclick="downloadResult()">⬇ 압축 PDF 다운로드</button>
+        </div>
+
+        <!-- 안내 (기본 표시) -->
+        <div class="a-card" id="guide-card">
+          <div class="a-card-title">💡 사용 안내</div>
+          <div class="info-block" style="margin-bottom:12px;">
+            <strong>이미지 위주 PDF</strong>에 효과적입니다.<br>
+            스캔본, 사진이 많은 보고서, 프레젠테이션 PDF 등에서 큰 압축 효과를 기대할 수 있습니다.
+          </div>
+          <div class="info-block" style="background:rgba(217,119,6,.04);border-color:rgba(217,119,6,.15);">
+            <strong style="color:var(--amber);">텍스트 위주 PDF</strong>는 압축 효과가 제한적입니다.<br>
+            Word·한글에서 내보낸 텍스트 PDF는 이 방식으로 용량이 오히려 늘어날 수 있습니다.
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /.two-col -->
+
+  </div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+const QUALITY_PRESETS = {
+  low:  { scale: 1.0, jpegQ: 0.42,
+          desc: '<strong>최대 압축 모드</strong> — 파일 크기를 최대한 줄입니다. 이미지 화질은 다소 낮아집니다.' },
+  mid:  { scale: 1.5, jpegQ: 0.65,
+          desc: '<strong>균형 모드</strong> — 화질과 파일 크기의 균형을 맞춥니다. 이메일 첨부·웹 업로드에 적합합니다.' },
+  high: { scale: 2.0, jpegQ: 0.84,
+          desc: '<strong>고화질 모드</strong> — 화질을 최대한 유지하면서 재압축합니다. 인쇄·공유용에 적합합니다.' },
+};
+
+let selectedQuality = 'mid';
+let pdfBytes        = null;
+let resultBytes     = null;
+let origFileName    = 'document.pdf';
+
+function selectQuality(q) {
+  selectedQuality = q;
+  document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.quality-btn[data-q="${q}"]`).classList.add('active');
+  document.getElementById('quality-desc').innerHTML = QUALITY_PRESETS[q].desc;
+}
+
+function onFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  origFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pdfBytes = new Uint8Array(e.target.result);
+    document.getElementById('file-info').className = 'file-info show';
+    document.getElementById('file-info').innerHTML =
+      `📄 <strong>${file.name}</strong> &nbsp;·&nbsp; ${fmtSize(file.size)}`;
+    document.getElementById('run-btn').disabled = false;
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* 드래그&드롭 */
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.toLowerCase().endsWith('.pdf')) return;
+  const dt = new DataTransfer(); dt.items.add(file);
+  document.getElementById('file-input').files = dt.files;
+  onFileSelect(document.getElementById('file-input'));
+});
+
+async function startCompress() {
+  if (!pdfBytes) return;
+  const preset = QUALITY_PRESETS[selectedQuality];
+
+  setProgress(true);
+  document.getElementById('result-section').className = 'a-card result-section';
+  document.getElementById('guide-card').style.display = 'none';
+  resultBytes = null;
+
+  try {
+    const pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+    const total  = pdfDoc.numPages;
+    const newPdf = await PDFLib.PDFDocument.create();
+
+    for (let i = 1; i <= total; i++) {
+      updateProgress(i, total);
+      const page   = await pdfDoc.getPage(i);
+      const vp     = page.getViewport({ scale: preset.scale });
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.floor(vp.width);
+      canvas.height = Math.floor(vp.height);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+      const jpegData = dataUrlToUint8Array(canvas.toDataURL('image/jpeg', preset.jpegQ));
+      const jpegImg  = await newPdf.embedJpg(jpegData);
+      newPdf.addPage([vp.width, vp.height]).drawImage(jpegImg, { x:0, y:0, width:vp.width, height:vp.height });
+    }
+
+    resultBytes = await newPdf.save();
+    showResult(pdfBytes.byteLength, resultBytes.byteLength);
+  } catch (err) {
+    alert('압축 중 오류가 발생했습니다: ' + err.message);
+    document.getElementById('guide-card').style.display = '';
+  } finally {
+    setProgress(false);
+  }
+}
+
+function updateProgress(cur, total) {
+  const pct = Math.round((cur / total) * 100);
+  document.getElementById('progress-text').textContent = `페이지 ${cur} / ${total} 처리 중...`;
+  document.getElementById('progress-pct').textContent  = pct + '%';
+  document.getElementById('progress-bar').style.width  = pct + '%';
+}
+
+function setProgress(show) {
+  document.getElementById('progress-wrap').className = 'a-card progress-wrap' + (show ? ' show' : '');
+  document.getElementById('run-btn').disabled = show;
+  if (show) {
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-text').textContent = '준비 중...';
+    document.getElementById('progress-pct').textContent  = '0%';
+  }
+}
+
+function showResult(origB, compB) {
+  const saved = origB - compB;
+  const ratio = ((saved / origB) * 100).toFixed(1);
+  document.getElementById('r-orig').textContent  = fmtSize(origB);
+  document.getElementById('r-comp').textContent  = fmtSize(compB);
+  document.getElementById('r-ratio').textContent = ratio + '%';
+
+  let note;
+  if (compB >= origB) {
+    note = '⚠️ 원본보다 크기가 커졌습니다. 텍스트 위주 PDF는 이 방식으로 압축 효과가 없습니다. <strong>최대 압축</strong> 모드를 시도해 보세요.';
+    document.getElementById('r-ratio').className = 'stat-val';
+    document.getElementById('r-comp').className  = 'stat-val';
+  } else {
+    note = `<strong>${fmtSize(saved)}</strong> 절감되었습니다. 압축 PDF를 다운로드하세요.`;
+  }
+  document.getElementById('result-note').innerHTML = note;
+  document.getElementById('result-section').className = 'a-card result-section show';
+}
+
+function downloadResult() {
+  if (!resultBytes) return;
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([resultBytes], { type: 'application/pdf' }));
+  a.download = origFileName.replace(/\.pdf$/i, '') + '_compressed.pdf';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function reset() {
+  pdfBytes = null; resultBytes = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-info').className = 'file-info';
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('result-section').className = 'a-card result-section';
+  document.getElementById('guide-card').style.display = '';
+  setProgress(false);
+}
+
+function fmtSize(b) {
+  if (b < 1024)        return b + ' B';
+  if (b < 1048576)     return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+
+function dataUrlToUint8Array(dataUrl) {
+  const bin = atob(dataUrl.split(',')[1]);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+</script>
+<script>(function(){
+  var k='tf_work_pdf_compress';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=work&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

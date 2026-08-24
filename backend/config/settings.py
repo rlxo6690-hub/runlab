@@ -118,7 +118,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # --- DataForge 복구 설정 ---
-SITE_DIR = str(BASE_DIR.parent / "site")   # 회수한 정적 프론트
+SITE_DIR = str(BASE_DIR.parent / "site")   # 회수한 정적 프론트(원본, 폴백)
+REDESIGN_DIR = str(BASE_DIR.parent / "redesign")  # 재디자인 프론트(우선)
 DEMO_PASSWORD = "dataforge"                 # ads/biz 데모 게이트 비번(임시)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024   # 파일 업로드(마크다운 이미지 등)
 

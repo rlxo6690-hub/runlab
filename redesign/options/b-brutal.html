@@ -1,0 +1,54 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B · 네오 브루탈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f3ee;--ink:#111;--paper:#fff;--blue:#2f4cff;--yellow:#ffe14d;--pink:#ff5c8a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR','Archivo',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+.mono{font-family:'Space Mono',monospace}
+.disp{font-family:'Archivo',sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.nav{border-bottom:3px solid var(--ink);background:var(--yellow)}
+.nav .in{max-width:1080px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Archivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.03em;text-transform:uppercase}
+.pill{border:3px solid var(--ink);background:#fff;font-weight:700;font-size:13px;padding:8px 14px;
+box-shadow:3px 3px 0 var(--ink)}
+.hero{padding:48px 0 30px}
+.eyebrow{display:inline-block;background:var(--ink);color:#fff;font-family:'Space Mono',monospace;
+font-size:12px;font-weight:700;padding:6px 12px;text-transform:uppercase;letter-spacing:.05em}
+h1{font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(40px,7vw,78px);line-height:.98;
+letter-spacing:-.04em;text-transform:uppercase;margin:20px 0}
+h1 .box{background:var(--blue);color:#fff;padding:0 12px;display:inline-block;transform:rotate(-1.5deg)}
+.lead{font-size:17px;font-weight:500;max-width:52ch}
+.cta{margin-top:26px;display:flex;gap:14px;flex-wrap:wrap}
+.btn{font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:-.01em;border:3px solid var(--ink);
+padding:13px 22px;cursor:pointer;box-shadow:5px 5px 0 var(--ink);transition:.1s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.btn.b{background:var(--blue);color:#fff}.btn.w{background:#fff}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:14px}
+.card{border:3px solid var(--ink);background:var(--paper);padding:20px;box-shadow:6px 6px 0 var(--ink)}
+.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+.card .n{font-family:'Space Mono',monospace;font-weight:700;font-size:12px;background:var(--pink);
+color:#fff;display:inline-block;padding:2px 8px}
+.card h3{font-family:'Archivo',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;margin:12px 0 6px;letter-spacing:-.02em}
+.card p{font-size:14px;font-weight:500}
+.sec-label{font-family:'Space Mono',monospace;font-weight:700;font-size:14px;margin:36px 0 4px;text-transform:uppercase}
+</style></head><body>
+<div class="nav"><div class="in"><span class="logo">◼ Data<span style="color:var(--blue)">Forge</span></span>
+<span style="display:flex;gap:10px"><span class="pill">교육 코드</span><span class="pill" style="background:var(--blue);color:#fff">실습 →</span></span></div></div>
+<div class="wrap">
+<section class="hero">
+<span class="eyebrow">BuildUp Lab · AI 실무 훈련장</span>
+<h1>데이터를<br><span class="box">직접 부순다</span></h1>
+<p class="lead">이론 말고 실행. 생성·전처리·분석·머신러닝·딥러닝·자동화까지 60여 종 도구를 브라우저에서 바로 굴려 원리를 몸으로 익힙니다.</p>
+<div class="cta"><a class="btn b">실습 시작하기</a><a class="btn w">가이드 보기</a></div>
+</section>
+<div class="sec-label">// 실습 트랙</div>
+<div class="grid">
+<div class="card"><span class="n">ML</span><h3>머신러닝</h3><p>K-Means부터 XGBoost까지 실제 학습·평가. 파일 올리고 지표 확인.</p></div>
+<div class="card"><span class="n">PREP</span><h3>전처리</h3><p>결측치·이상치·정규화·인코딩을 단계별로 직접 처리.</p></div>
+<div class="card"><span class="n">WORK</span><h3>자동화</h3><p>PDF·OCR·마크다운·유튜브. 실무 노가다를 도구로.</p></div>
+</div>
+</div></body></html>

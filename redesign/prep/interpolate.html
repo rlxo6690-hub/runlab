@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV 보간 · 병합 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="CSV 보간 · 병합 — DataForge">
+<meta property="og:description" content="CSV 결측치를 8가지 알고리즘으로 보간하고, 여러 파일을 결합하는 실습 도구">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* ── Header ─────────────────────────────────────── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Page ────────────────────────────────────────── */
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Tabs ────────────────────────────────────────── */
+.stat-tabs{display:flex;border-bottom:1px solid var(--border);margin-top:20px;}
+.stat-tab{padding:14px 24px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;padding-top:24px;}
+.stat-panel.active{display:block;}
+
+/* ── Cards ───────────────────────────────────────── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* ── Layout ──────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.three-col-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+
+/* ── Controls ────────────────────────────────────── */
+.ctrl-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.ctrl-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.ctrl-val{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);min-width:36px;}
+.range-inp{-webkit-appearance:none;width:150px;height:5px;border-radius:3px;background:rgba(37,99,235,.15);outline:none;cursor:pointer;}
+.range-inp::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.sel{background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;cursor:pointer;font-family:inherit;}
+.sel:focus{border-color:var(--accent);}
+
+/* ── Upload ──────────────────────────────────────── */
+.upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:10px;padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.03);position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);}
+
+.file-info{display:none;padding:12px 16px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);border-radius:8px;font-size:12px;color:#065f46;margin-top:12px;line-height:1.8;}
+.file-info.show{display:block;}
+.file-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.file-col-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.file-col-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(37,99,235,.08);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.file-col-tag.ignored{background:rgba(0,0,0,.04);color:var(--dim);border-color:var(--border2);}
+
+/* ── Column Pills ────────────────────────────────── */
+.col-pill-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.col-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;user-select:none;transition:all .2s;color:var(--muted);}
+.col-pill:hover{border-color:rgba(37,99,235,.4);color:var(--text);}
+.col-pill.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.col-pill-check{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;}
+.col-pill.selected .col-pill-check::after{content:'✓';}
+.pill-actions{display:flex;gap:6px;margin-bottom:10px;}
+.pill-action-btn{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.pill-action-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Algorithm buttons ───────────────────────────── */
+.method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.method-btn{padding:10px 6px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;}
+.method-btn:hover{border-color:rgba(37,99,235,.4);}
+.method-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);}
+.method-btn-icon{font-size:16px;margin-bottom:3px;}
+.method-btn-name{font-size:11px;font-weight:700;color:var(--text);}
+.method-btn-sub{font-size:9px;color:var(--muted);margin-top:1px;}
+
+.method-desc-box{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.12);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.7;min-height:80px;}
+.method-desc-icon{font-size:22px;flex-shrink:0;padding-top:2px;}
+.method-desc-body strong{color:var(--text);}
+.method-desc-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin:2px 2px 0 0;}
+.tag-good{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.tag-caution{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.2);}
+.tag-time{background:rgba(37,99,235,.1);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.tag-new{background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.2);}
+
+/* ── Stats ───────────────────────────────────────── */
+.stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.stat-val{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#047857;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+
+/* ── Tables ──────────────────────────────────────── */
+.table-wrap{overflow-x:auto;max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{background:var(--card2);color:var(--accent);padding:7px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0;}
+.data-table td{padding:5px 12px;border-bottom:1px solid var(--border);color:var(--muted);white-space:nowrap;font-family:'Space Mono',monospace;font-size:11px;}
+.data-table tr:hover td{background:rgba(37,99,235,.04);color:var(--text);}
+.data-table td.null-val{color:rgba(220,38,38,.5);font-style:italic;}
+.data-table td.interp-val{color:var(--orange);font-weight:700;}
+.data-table td.ok-val{color:var(--green);}
+
+/* col-summary table */
+.summary-table{width:100%;border-collapse:collapse;font-size:12px;}
+.summary-table th{background:var(--card2);color:var(--accent);padding:7px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:10px;border-bottom:1px solid var(--border);}
+.summary-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--muted);}
+.summary-table tr:last-child td{border-bottom:none;}
+.summary-table .col-name{font-weight:700;color:var(--text);}
+.miss-bar-wrap{width:80px;height:6px;background:rgba(0,0,0,.08);border-radius:3px;display:inline-block;vertical-align:middle;}
+.miss-bar{height:100%;border-radius:3px;background:var(--red);transition:width .3s;}
+
+/* ── Chart ───────────────────────────────────────── */
+.chart-container{position:relative;height:240px;}
+.chart-col-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.chart-col-tab{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.chart-col-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── 결과 시각화 전체 화면 ───────────────────────── */
+.viz-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.btn-viz-full{
+  font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:700;
+  padding:7px 12px;min-height:36px;border:1px solid var(--border2);border-radius:6px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:.15s;
+  text-transform:none;letter-spacing:0;white-space:nowrap;
+}
+.btn-viz-full:hover,.btn-viz-full:focus{color:var(--accent);border-color:var(--accent);outline:none;}
+.viz-card.is-full .btn-viz-full{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+body.viz-locked{overflow:hidden;}
+.viz-card.is-full{
+  position:fixed;inset:0;z-index:9000;margin:0;border:none;border-radius:0;
+  display:flex;flex-direction:column;padding:16px 20px 18px;overflow:hidden;
+}
+.viz-card.is-full .chart-container{flex:1 1 auto;height:auto;min-height:0;}
+.viz-card.is-full .viz-legend{flex:0 0 auto;font-size:12px;margin-top:10px;}
+.viz-hint{display:none;font-size:11px;color:var(--dim);margin-left:8px;}
+.viz-card.is-full .viz-hint{display:inline;}
+
+/* ── Merge styles ────────────────────────────────── */
+.merge-file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.merge-file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:12px;}
+.merge-file-order{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.merge-file-name{font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.merge-file-meta{color:var(--muted);font-size:11px;white-space:nowrap;}
+.merge-file-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:.2s;flex-shrink:0;}
+.merge-file-del:hover{color:var(--red);background:rgba(220,38,38,.08);}
+
+.merge-type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.merge-type-btn{padding:12px 8px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;}
+.merge-type-btn:hover{border-color:rgba(37,99,235,.4);}
+.merge-type-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);}
+.merge-type-icon{font-size:20px;margin-bottom:4px;}
+.merge-type-name{font-size:12px;font-weight:700;color:var(--text);}
+.merge-type-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+.info-block strong{color:var(--text);}
+
+/* ── Misc ────────────────────────────────────────── */
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;}
+.badge-green{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.badge-orange{background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2);}
+.badge-dim{background:rgba(0,0,0,.05);color:var(--dim);border:1px solid var(--border2);}
+
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .stat-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;}
+  .stat-tab{padding:10px 12px;font-size:12px;white-space:nowrap;}
+  .two-col,.three-col-charts{grid-template-columns:1fr;}
+  .method-grid{grid-template-columns:repeat(2,1fr);}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+  .merge-type-grid{grid-template-columns:repeat(2,1fr);}
+  .sel{font-size:16px;}
+  .btn{min-height:44px;}
+  .viz-actions{width:100%;justify-content:flex-start;}
+  .btn-viz-full{min-height:44px;width:100%;}
+  .viz-card.is-full{padding:12px 14px 14px;}
+  .range-inp{width:120px;}
+  .method-desc-box{flex-direction:column;gap:8px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">CSV 보간 · 병합</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+  <div class="intro-box">
+    <strong>CSV 데이터 보간 · 파일 병합 도구</strong> — CSV를 업로드하고 결측값이 있는 컬럼을 여러 개 선택해 한 번에 보간하거나,
+    여러 파일을 세로 결합·조인으로 합칩니다. 모든 처리는 브라우저에서 수행됩니다.
+  </div>
+
+  <div class="stat-tabs">
+    <button class="stat-tab active" onclick="switchTab('interp')">📊 데이터 보간</button>
+    <button class="stat-tab" onclick="switchTab('merge')">🔗 파일 병합</button>
+  </div>
+
+  <!-- ══════════════════════ INTERPOLATION PANEL ══════════════════════ -->
+  <div id="panel-interp" class="stat-panel active">
+
+    <!-- Step 1: Upload -->
+    <div class="a-card">
+      <div class="a-card-title">① CSV / XLSX 파일 업로드</div>
+      <div class="upload-zone" id="interp-upload-zone">
+        <input type="file" id="interp-file-input" accept=".csv,.tsv,.xlsx,.xls" onchange="handleInterpFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV 또는 XLSX 파일을 드래그하거나 클릭하세요</div>
+        <div class="upload-sub">UTF-8 · EUC-KR 자동 감지 · 행 수 제한 없음 · 쉼표/탭/XLSX 지원</div>
+      </div>
+      <div class="file-info" id="interp-file-info">
+        <div class="file-meta-row">
+          <span id="file-name-lbl" style="font-weight:700;color:#065f46"></span>
+          <span id="file-dim-lbl" style="color:#047857"></span>
+          <button class="btn-outline btn" onclick="clearInterpFile()" style="font-size:10px;padding:3px 10px;margin-left:auto">✕ 제거</button>
+        </div>
+        <div class="file-col-tags" id="file-col-tags"></div>
+      </div>
+    </div>
+
+    <!-- Step 2 & 3: column selection + algorithm (side by side) -->
+    <div id="interp-config" style="display:none">
+      <div class="two-col">
+
+        <!-- Col: column selection -->
+        <div class="a-card">
+          <div class="a-card-title">
+            ② 보간할 컬럼 선택
+            <span id="selected-count-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--dim)"></span>
+          </div>
+          <div class="pill-actions">
+            <button class="pill-action-btn" onclick="selectAllCols()">전체 선택</button>
+            <button class="pill-action-btn" onclick="selectMissingCols()">결측 있는 컬럼만</button>
+            <button class="pill-action-btn" onclick="clearAllCols()">전체 해제</button>
+          </div>
+          <div class="col-pill-grid" id="col-pill-grid"></div>
+        </div>
+
+        <!-- Col: algorithm selection -->
+        <div class="a-card">
+          <div class="a-card-title">③ 보간 알고리즘</div>
+          <div class="method-grid">
+            <button class="method-btn" data-method="mean" onclick="selectMethod(this)">
+              <div class="method-btn-icon">📊</div>
+              <div class="method-btn-name">평균값</div>
+              <div class="method-btn-sub">Mean</div>
+            </button>
+            <button class="method-btn" data-method="median" onclick="selectMethod(this)">
+              <div class="method-btn-icon">📏</div>
+              <div class="method-btn-name">중앙값</div>
+              <div class="method-btn-sub">Median</div>
+            </button>
+            <button class="method-btn" data-method="ffill" onclick="selectMethod(this)">
+              <div class="method-btn-icon">→</div>
+              <div class="method-btn-name">전진채우기</div>
+              <div class="method-btn-sub">Forward Fill</div>
+            </button>
+            <button class="method-btn" data-method="bfill" onclick="selectMethod(this)">
+              <div class="method-btn-icon">←</div>
+              <div class="method-btn-name">후진채우기</div>
+              <div class="method-btn-sub">Backward Fill</div>
+            </button>
+            <button class="method-btn active" data-method="linear" onclick="selectMethod(this)">
+              <div class="method-btn-icon">📈</div>
+              <div class="method-btn-name">선형 보간</div>
+              <div class="method-btn-sub">Linear</div>
+            </button>
+            <button class="method-btn" data-method="spline" onclick="selectMethod(this)">
+              <div class="method-btn-icon">〜</div>
+              <div class="method-btn-name">스플라인</div>
+              <div class="method-btn-sub">Spline</div>
+            </button>
+            <button class="method-btn" data-method="poly" onclick="selectMethod(this)">
+              <div class="method-btn-icon">⌒</div>
+              <div class="method-btn-name">다항식</div>
+              <div class="method-btn-sub">Polynomial</div>
+            </button>
+            <button class="method-btn" data-method="mavg" onclick="selectMethod(this)">
+              <div class="method-btn-icon">〰</div>
+              <div class="method-btn-name">이동 평균</div>
+              <div class="method-btn-sub">Moving Avg</div>
+            </button>
+          </div>
+          <div class="method-desc-box" id="method-desc"></div>
+          <div id="poly-ctrl" style="display:none;margin-top:10px">
+            <div class="ctrl-row">
+              <span class="ctrl-label">다항식 차수</span>
+              <input class="range-inp" type="range" id="poly-deg-inp" min="2" max="5" value="2"
+                oninput="document.getElementById('poly-deg-val').textContent=this.value;_polyDeg=parseInt(this.value)">
+              <span class="ctrl-val" id="poly-deg-val">2</span>
+            </div>
+          </div>
+          <div id="mavg-ctrl" style="display:none;margin-top:10px">
+            <div class="ctrl-row">
+              <span class="ctrl-label">윈도우 크기</span>
+              <input class="range-inp" type="range" id="mavg-win-inp" min="2" max="10" value="3"
+                oninput="document.getElementById('mavg-win-val').textContent=this.value;_mavgWin=parseInt(this.value)">
+              <span class="ctrl-val" id="mavg-win-val">3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="runInterp()" id="run-btn">보간 실행 ▶</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="interp-result" style="display:none">
+      <div class="stat-grid-4" id="interp-stats"></div>
+
+      <div class="three-col-charts">
+        <!-- Per-column summary -->
+        <div class="a-card">
+          <div class="a-card-title">컬럼별 보간 요약</div>
+          <div class="table-wrap" style="max-height:220px">
+            <table class="summary-table" id="summary-table"></table>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="a-card viz-card" id="viz-card">
+          <div class="a-card-title">
+            <span>결과 시각화<span class="viz-hint">ESC 키로 닫기</span></span>
+            <div class="viz-actions">
+              <div class="chart-col-tabs" id="chart-col-tabs" style="margin-bottom:0"></div>
+              <button class="btn-viz-full" id="viz-full-btn" onclick="toggleVizFull()"
+                      aria-expanded="false" title="차트를 화면 전체로 크게 봅니다">⛶ 전체 화면으로 보기</button>
+            </div>
+          </div>
+          <div class="chart-container"><canvas id="interp-chart"></canvas></div>
+          <div class="viz-legend" style="font-size:10px;color:var(--dim);margin-top:6px">
+            <span style="display:inline-block;width:20px;border-top:2px dashed rgba(147,197,253,.9);vertical-align:middle;margin-right:4px"></span>원본(결측 포함) &nbsp;
+            <span style="display:inline-block;width:10px;height:10px;background:#f97316;border-radius:50%;vertical-align:middle;margin:0 4px 0 8px"></span>보간된 값
+          </div>
+        </div>
+      </div>
+
+      <!-- Full data preview -->
+      <div class="a-card">
+        <div class="a-card-title">
+          보간 결과 전체 미리보기
+          <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--dim)">주황색 = 보간된 값</span>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="interp-table"></table></div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="downloadInterp()">⬇ 보간 결과 CSV 다운로드</button>
+          <span style="font-size:11px;color:var(--muted)" id="dl-info"></span>
+        </div>
+      </div>
+    </div>
+    <div class="intro-box" style="margin-top:20px">
+      💡 어떤 보간 방법을 골라야 할지 모르겠다면 <a href="/prep/missing#impute" style="color:var(--accent);font-weight:700">결측치 보간 시뮬레이터 →</a>에서
+      방법별 정확도(RMSE)를 비교하며 원리를 먼저 익혀보세요.
+    </div>
+  </div>
+
+  <!-- ══════════════════════ MERGE PANEL ══════════════════════ -->
+  <div id="panel-merge" class="stat-panel">
+    <div class="two-col">
+      <div>
+        <div class="a-card">
+          <div class="a-card-title">
+            CSV 파일 목록
+            <span id="merge-count-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--dim)">(0개)</span>
+          </div>
+          <div class="merge-file-list" id="merge-file-list"></div>
+          <div class="upload-zone" id="merge-upload-zone">
+            <input type="file" id="merge-file-input" accept=".csv,.tsv,.xlsx,.xls" multiple onchange="handleMergeFiles(this.files)">
+            <div class="upload-icon">📁</div>
+            <div class="upload-main">파일 드래그 또는 클릭</div>
+            <div class="upload-sub">CSV · TSV · XLSX · UTF-8 · EUC-KR 지원</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="a-card">
+          <div class="a-card-title">병합 방식</div>
+          <div class="merge-type-grid">
+            <button class="merge-type-btn active" data-type="concat" onclick="selectMergeType(this)">
+              <div class="merge-type-icon">📋</div>
+              <div class="merge-type-name">세로 결합</div>
+              <div class="merge-type-sub">Concat / Stack</div>
+            </button>
+            <button class="merge-type-btn" data-type="inner" onclick="selectMergeType(this)">
+              <div class="merge-type-icon">⋂</div>
+              <div class="merge-type-name">내부 결합</div>
+              <div class="merge-type-sub">Inner Join</div>
+            </button>
+            <button class="merge-type-btn" data-type="left" onclick="selectMergeType(this)">
+              <div class="merge-type-icon">⊂</div>
+              <div class="merge-type-name">왼쪽 결합</div>
+              <div class="merge-type-sub">Left Join</div>
+            </button>
+            <button class="merge-type-btn" data-type="outer" onclick="selectMergeType(this)">
+              <div class="merge-type-icon">⋃</div>
+              <div class="merge-type-name">전체 결합</div>
+              <div class="merge-type-sub">Outer Join</div>
+            </button>
+          </div>
+          <div id="concat-config" class="info-block">
+            <strong>세로 결합</strong> — 모든 파일의 행을 순서대로 쌓습니다.
+            컬럼명이 다른 경우 빈 값으로 채우며, <code>_source</code> 컬럼이 추가됩니다.
+          </div>
+          <div id="join-config" style="display:none">
+            <div class="ctrl-label" style="margin-bottom:10px">결합 키 컬럼 선택</div>
+            <div id="join-key-selectors"></div>
+            <div id="join-info" class="info-block" style="margin-top:10px;font-size:11px;"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runMerge()">병합 실행 ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="merge-result" style="display:none">
+      <div class="stat-grid-4" id="merge-stats"></div>
+      <div class="a-card">
+        <div class="a-card-title">
+          병합 결과 미리보기
+          <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--dim)"></span>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="merge-table"></table></div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="downloadMerge()">⬇ 병합 결과 CSV 다운로드</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let _interpMethod = 'linear';
+let _polyDeg = 2, _mavgWin = 3;
+let _uploadedInterp = null;   // { name, allHeaders, numColIdxs, numColNames, data, rawRows }
+let _selectedCols = new Set();// selected numColIdxs (indices into numColIdxs array)
+let _interpChart = null;
+let _lastInterp = null;       // { imputedData, masks, selectedNums }
+let _chartColIdx = 0;         // which col is currently charted
+let _vizFull = false;         // 결과 시각화 전체 화면 여부
+
+let _mergeFiles = [], _mergeType = 'concat', _mergeResult = null;
+
+// ════════════════════════════════════════════════════
+// ALGORITHMS
+// ════════════════════════════════════════════════════
+const IMPUTERS = {
+  mean(a) {
+    const vals = a.filter(v => v !== null);
+    if (!vals.length) return [...a];
+    const m = vals.reduce((s,v) => s+v, 0) / vals.length;
+    return a.map(v => v === null ? m : v);
+  },
+  median(a) {
+    const s = [...a.filter(v => v !== null)].sort((x,y) => x-y);
+    if (!s.length) return [...a];
+    const m = s[Math.floor(s.length/2)];
+    return a.map(v => v === null ? m : v);
+  },
+  ffill(a) {
+    const r = [...a]; let last = null;
+    for (let i = 0; i < r.length; i++) {
+      if (r[i] !== null) last = r[i];
+      else if (last !== null) r[i] = last;
+    }
+    const first = a.find(v => v !== null);
+    return r.map(v => v === null ? (first ?? 0) : v);
+  },
+  bfill(a) {
+    const r = [...a]; let next = null;
+    for (let i = r.length-1; i >= 0; i--) {
+      if (r[i] !== null) next = r[i];
+      else if (next !== null) r[i] = next;
+    }
+    const last = [...a].reverse().find(v => v !== null);
+    return r.map(v => v === null ? (last ?? 0) : v);
+  },
+  linear(a) {
+    const r = [...a];
+    for (let i = 0; i < r.length; i++) {
+      if (r[i] !== null) continue;
+      let li = -1, ri = -1, lv = null, rv = null;
+      for (let j=i-1; j>=0; j--) { if(r[j]!==null){li=j;lv=r[j];break;} }
+      for (let j=i+1; j<r.length; j++) { if(r[j]!==null){ri=j;rv=r[j];break;} }
+      if (lv!==null && rv!==null) r[i] = lv+(rv-lv)*(i-li)/(ri-li);
+      else if (lv!==null) r[i] = lv;
+      else if (rv!==null) r[i] = rv;
+    }
+    return r;
+  },
+  spline(a) {
+    const lin = IMPUTERS.linear([...a]);
+    const r = [...lin];
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== null) continue;
+      const p0 = a[i-2] ?? a[i-1] ?? lin[i];
+      const p1 = a[i-1] ?? lin[i];
+      const p2 = a[i+1] ?? lin[i];
+      const p3 = a[i+2] ?? a[i+1] ?? lin[i];
+      r[i] = lin[i]*.55 + (-.5*p0 + 1.5*p1 + 1.5*p2 - .5*p3)*.5*.45;
+    }
+    return r;
+  },
+  poly(a) {
+    const deg = _polyDeg;
+    const lin = IMPUTERS.linear([...a]);
+    const r = [...lin];
+    const known = a.filter(v => v !== null);
+    if (!known.length) return r;
+    const mn = Math.min(...known), mx = Math.max(...known), range = mx-mn || 1;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== null) continue;
+      const pts = [];
+      for (let j=Math.max(0,i-deg*3); j<Math.min(a.length,i+deg*3+1); j++) {
+        if (a[j] !== null) pts.push([j, a[j]]);
+      }
+      if (pts.length < 2) continue;
+      const use = pts.slice(0, Math.min(deg+2, pts.length));
+      let y = 0;
+      for (let k=0; k<use.length; k++) {
+        let term = use[k][1];
+        for (let m=0; m<use.length; m++) {
+          if (m!==k) term *= (i-use[m][0])/(use[k][0]-use[m][0]||1e-9);
+        }
+        y += term;
+      }
+      r[i] = Math.max(mn-range*.5, Math.min(mx+range*.5, y));
+    }
+    return r;
+  },
+  mavg(a) {
+    const win = _mavgWin;
+    const r = IMPUTERS.linear([...a]);
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== null) continue;
+      const vals = [];
+      for (let j=Math.max(0,i-win); j<=Math.min(a.length-1,i+win); j++) {
+        if (a[j] !== null) vals.push(a[j]);
+      }
+      if (vals.length) r[i] = vals.reduce((s,v)=>s+v,0)/vals.length;
+    }
+    return r;
+  }
+};
+
+// ════════════════════════════════════════════════════
+// METHOD DESCRIPTIONS
+// ════════════════════════════════════════════════════
+const METHOD_DESC = {
+  mean:{icon:'📊',title:'평균값 대체 (Mean)',body:'비결측 값들의 <strong>산술 평균</strong>으로 결측치를 채웁니다.',tags:[['good','단순·빠름'],['caution','분산 축소'],['caution','이상치 영향']],note:'무작위 결측(MCAR)에 적합. 시계열·연속 구간 결측에는 부적합.'},
+  median:{icon:'📏',title:'중앙값 대체 (Median)',body:'비결측 값을 정렬했을 때 <strong>중앙값</strong>으로 결측치를 채웁니다.',tags:[['good','이상치에 강함'],['good','왜도 데이터 유리'],['caution','분산 축소']],note:'이상치나 치우친 분포의 데이터에 평균값 대체보다 안정적.'},
+  ffill:{icon:'→',title:'전진 채우기 (Forward Fill)',body:'결측 직전의 <strong>마지막 관측값</strong>을 앞으로 복사해 채웁니다.',tags:[['time','시계열 적합'],['good','추세 유지'],['caution','연속 결측 시 오차 누적']],note:'센서·주가처럼 값이 일정 기간 유지되는 시계열에 효과적.'},
+  bfill:{icon:'←',title:'후진 채우기 (Backward Fill)',body:'결측 직후의 <strong>다음 관측값</strong>을 거꾸로 복사해 채웁니다.',tags:[['time','시계열 적합'],['good','미래 참조'],['caution','인과 역전 주의']],note:'다음 값이 이미 알려진 배치 처리 상황에 활용.'},
+  linear:{icon:'📈',title:'선형 보간 (Linear Interpolation)',body:'결측 앞뒤 값을 <strong>직선으로 연결</strong>해 등간격으로 추정합니다.',tags:[['time','시계열 필수'],['good','연속 구간 결측'],['good','추세 반영']],note:'완만하게 변화하는 시계열에 가장 흔히 쓰이는 방법.'},
+  spline:{icon:'〜',title:'스플라인 보간 (Spline)',body:'<strong>Catmull-Rom 곡선</strong>으로 앞뒤 여러 점을 부드럽게 이어 추정합니다.',tags:[['time','시계열 필수'],['good','곡선 추세'],['caution','계산 비용↑']],note:'사인파·계절성 패턴의 데이터에서 선형 보간보다 정확.'},
+  poly:{icon:'⌒',title:'다항식 보간 (Polynomial)',body:'<strong>라그랑주(Lagrange) 보간법</strong>으로 주변 n+1개 점을 지나는 다항식 추정.',tags:[['new','2~5차 선택'],['good','비선형 패턴'],['caution','Runge 현상']],note:'차수가 높을수록 유연하지만 경계에서 발산할 수 있음. 2~3차 권장.'},
+  mavg:{icon:'〰',title:'이동 평균 (Moving Average)',body:'결측 위치 <strong>전후 N개 값의 평균</strong>으로 결측치를 채웁니다.',tags:[['new','윈도우 조절'],['good','노이즈 제거'],['caution','급변 구간 평탄화']],note:'윈도우가 클수록 부드럽지만 급격한 변화를 놓칠 수 있음.'}
+};
+
+// ════════════════════════════════════════════════════
+// TAB SWITCH
+// ════════════════════════════════════════════════════
+function switchTab(name) {
+  TAB_IDS.forEach((n,i) => {
+    document.querySelectorAll('.stat-tab')[i].classList.toggle('active', n===name);
+    document.getElementById('panel-'+n).classList.toggle('active', n===name);
+  });
+  if (history.replaceState) history.replaceState(null, '', '#'+name);
+}
+// 해시 딥링크: /prep/interpolate#merge 형태로 탭 직접 연결
+const TAB_IDS = ['interp','merge'];
+// 2026-07 이사한 도구들 — 옛 해시 링크는 /prep/edit로 넘긴다
+if (['blank','colsel','date','diff'].includes(location.hash.slice(1))) {
+  location.replace('/prep/edit' + location.hash);
+}
+
+// ════════════════════════════════════════════════════
+// CSV PARSING (shared)
+// ════════════════════════════════════════════════════
+function decodeFile(buf) {
+  const b = new Uint8Array(buf);
+  const hasBom = b[0]===0xEF && b[1]===0xBB && b[2]===0xBF;
+  let text = new TextDecoder('utf-8').decode(buf);
+  if (!hasBom && text.includes('\uFFFD')) {
+    try { const e=new TextDecoder('euc-kr').decode(buf); if(!e.includes('\uFFFD')) text=e; } catch(_){}
+  }
+  return text;
+}
+
+function splitLine(line, sep) {
+  const res=[]; let cur='', inQ=false;
+  for (let i=0; i<line.length; i++) {
+    const c=line[i];
+    if (c==='"') { if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+    else if (c===sep&&!inQ) { res.push(cur.trim()); cur=''; }
+    else cur+=c;
+  }
+  res.push(cur.trim()); return res;
+}
+
+const MISSING_VALS = new Set(['','na','null','nan','-','n/a','none','#n/a','#na']);
+function isMissing(v) { return MISSING_VALS.has((v||'').trim().toLowerCase()); }
+
+// ════════════════════════════════════════════════════
+// INTERP FILE HANDLING
+// ════════════════════════════════════════════════════
+function handleInterpFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data.length) { alert('빈 파일입니다.'); return; }
+      const allHeaders = data[0].map(String);
+      const rawRows = data.slice(1).map(r => allHeaders.map((_, i) => r[i] !== undefined ? String(r[i]) : ''));
+      setupInterpData(file, allHeaders, rawRows);
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeFile(e.target.result);
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { alert('2행 이상 필요합니다.'); return; }
+
+    const sep = lines[0].includes('\t') ? '\t' : ',';
+    const allHeaders = splitLine(lines[0], sep);
+    const rawRows = lines.slice(1).map(l => splitLine(l, sep));
+    setupInterpData(file, allHeaders, rawRows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setupInterpData(file, allHeaders, rawRows) {
+    // Detect numeric columns (≥60% non-missing numeric values)
+    const numColIdxs = [], ignoredCols = [];
+    allHeaders.forEach((h, ci) => {
+      const vals = rawRows.map(r => r[ci] ?? '');
+      const nonMiss = vals.filter(v => !isMissing(v));
+      const numericCnt = nonMiss.filter(v => v.trim() !== '' && !isNaN(Number(v))).length;
+      if (nonMiss.length && numericCnt / vals.length >= 0.6) numColIdxs.push(ci);
+      else ignoredCols.push(h);
+    });
+
+    if (!numColIdxs.length) { alert('숫자형 컬럼이 없습니다. 파일을 확인해주세요.'); return; }
+
+    // Parse numeric data matrix (rows × numCols)
+    const data = rawRows.map(row =>
+      numColIdxs.map(ci => {
+        const v = (row[ci]||'').trim();
+        if (isMissing(v)) return null;
+        const n = Number(v); return isNaN(n) ? null : n;
+      })
+    );
+
+    _uploadedInterp = {
+      name: file.name.replace(/\.[^.]+$/,''),
+      fileName: file.name,
+      allHeaders,
+      numColIdxs,
+      numColNames: numColIdxs.map(ci => allHeaders[ci]),
+      ignoredCols,
+      data,        // [row][numColIdx] → number|null
+      rawRows      // original raw string rows
+    };
+
+    // File info UI
+    const fi = document.getElementById('interp-file-info');
+    fi.classList.add('show');
+    document.getElementById('file-name-lbl').textContent = `📄 ${file.name}`;
+    document.getElementById('file-dim-lbl').textContent =
+      `${rawRows.length.toLocaleString()}행 × ${allHeaders.length}열 (숫자 ${numColIdxs.length}개)`;
+    document.getElementById('file-col-tags').innerHTML =
+      numColIdxs.map(ci => `<span class="file-col-tag">${allHeaders[ci]}</span>`).join('') +
+      ignoredCols.map(h => `<span class="file-col-tag ignored">${h}</span>`).join('');
+
+    // Show config section + init pills
+    document.getElementById('interp-config').style.display = '';
+    document.getElementById('interp-result').style.display = 'none';
+    initColPills();
+}
+
+function clearInterpFile() {
+  _uploadedInterp = null;
+  _selectedCols.clear();
+  document.getElementById('interp-file-info').classList.remove('show');
+  document.getElementById('interp-file-input').value = '';
+  document.getElementById('interp-config').style.display = 'none';
+  document.getElementById('interp-result').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════
+// COLUMN PILLS
+// ════════════════════════════════════════════════════
+function initColPills() {
+  const ds = _uploadedInterp;
+  _selectedCols.clear();
+  // Auto-select columns that have at least 1 missing value
+  ds.numColNames.forEach((name, ni) => {
+    const hasMiss = ds.data.some(row => row[ni] === null);
+    if (hasMiss) _selectedCols.add(ni);
+  });
+  renderColPills();
+}
+
+function renderColPills() {
+  const ds = _uploadedInterp;
+  const grid = document.getElementById('col-pill-grid');
+  grid.innerHTML = ds.numColNames.map((name, ni) => {
+    const missCnt = ds.data.filter(row => row[ni] === null).length;
+    const sel = _selectedCols.has(ni);
+    return `<div class="col-pill${sel?' selected':''}" onclick="toggleCol(${ni})">
+      <div class="col-pill-check"></div>
+      <span>${name}</span>
+      ${missCnt ? `<span style="font-size:9px;color:var(--red);opacity:.8">(${missCnt})</span>` : ''}
+    </div>`;
+  }).join('');
+  updateSelectedCount();
+}
+
+function toggleCol(ni) {
+  if (_selectedCols.has(ni)) _selectedCols.delete(ni);
+  else _selectedCols.add(ni);
+  renderColPills();
+}
+
+function selectAllCols() {
+  _uploadedInterp.numColNames.forEach((_, ni) => _selectedCols.add(ni));
+  renderColPills();
+}
+
+function selectMissingCols() {
+  _selectedCols.clear();
+  _uploadedInterp.data.forEach((row, ri) => {
+    row.forEach((v, ni) => { if (v === null) _selectedCols.add(ni); });
+  });
+  renderColPills();
+}
+
+function clearAllCols() {
+  _selectedCols.clear();
+  renderColPills();
+}
+
+function updateSelectedCount() {
+  const total = _uploadedInterp ? _uploadedInterp.numColNames.length : 0;
+  document.getElementById('selected-count-lbl').textContent =
+    `${_selectedCols.size} / ${total}개 선택`;
+}
+
+// ════════════════════════════════════════════════════
+// ALGORITHM SELECTION
+// ════════════════════════════════════════════════════
+function selectMethod(btn) {
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _interpMethod = btn.dataset.method;
+  updateMethodDesc(_interpMethod);
+  document.getElementById('poly-ctrl').style.display = _interpMethod==='poly' ? '' : 'none';
+  document.getElementById('mavg-ctrl').style.display = _interpMethod==='mavg' ? '' : 'none';
+}
+
+function updateMethodDesc(method) {
+  const d = METHOD_DESC[method]; if (!d) return;
+  const tags = d.tags.map(([cls,lbl]) => `<span class="method-desc-tag tag-${cls}">${lbl}</span>`).join('');
+  document.getElementById('method-desc').innerHTML =
+    `<div class="method-desc-icon">${d.icon}</div>
+    <div class="method-desc-body"><strong>${d.title}</strong><br>${d.body}<br>
+    <span style="margin-top:4px;display:inline-block">${tags}</span><br>
+    <span style="font-size:11px;color:var(--dim)">${d.note}</span></div>`;
+}
+
+// ════════════════════════════════════════════════════
+// RUN INTERPOLATION (multi-column)
+// ════════════════════════════════════════════════════
+function runInterp() {
+  if (!_uploadedInterp) { alert('파일을 먼저 업로드해주세요.'); return; }
+  if (_selectedCols.size === 0) { alert('보간할 컬럼을 1개 이상 선택해주세요.'); return; }
+
+  const ds = _uploadedInterp;
+  const n = ds.data.length;
+  const selectedNums = [..._selectedCols].sort((a,b)=>a-b); // sorted numCol indices
+
+  // Run imputer on each selected column
+  const imputedCols = {};   // ni -> imputed array
+  const masks = {};         // ni -> boolean array (true = was null, now filled)
+  const missCounts = {};    // ni -> count of missing
+
+  selectedNums.forEach(ni => {
+    const col = ds.data.map(row => row[ni]);
+    const mc = col.filter(v => v === null).length;
+    missCounts[ni] = mc;
+    if (mc === 0) {
+      imputedCols[ni] = col;
+      masks[ni] = Array(n).fill(false);
+    } else {
+      imputedCols[ni] = IMPUTERS[_interpMethod](col);
+      masks[ni] = col.map(v => v === null);
+    }
+  });
+
+  _lastInterp = { imputedCols, masks, missCounts, selectedNums };
+
+  // ── Stats grid ──────────────────────────────────
+  const totalMiss = selectedNums.reduce((s,ni) => s + missCounts[ni], 0);
+  const totalFilled = selectedNums.reduce((s,ni) => s + masks[ni].filter(Boolean).length, 0);
+  const totalCells = n * selectedNums.length;
+
+  document.getElementById('interp-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${n.toLocaleString()}</div><div class="stat-lbl">전체 행 수</div></div>
+    <div class="stat-box"><div class="stat-val">${selectedNums.length}</div><div class="stat-lbl">보간 컬럼 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--red)">${totalMiss.toLocaleString()}</div><div class="stat-lbl">총 결측값</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">${totalFilled.toLocaleString()}</div><div class="stat-lbl">보간 완료</div></div>
+  `;
+
+  // ── Per-column summary table ─────────────────────
+  const methodLabel = {mean:'평균',median:'중앙값',ffill:'전진채우기',bfill:'후진채우기',linear:'선형보간',spline:'스플라인',poly:'다항식',mavg:'이동평균'}[_interpMethod];
+  const summaryRows = [];
+  ds.numColNames.forEach((name, ni) => {
+    const mc = ds.data.filter(row => row[ni] === null).length;
+    const pct = (mc/n*100).toFixed(1);
+    const isSelected = _selectedCols.has(ni);
+    let status;
+    if (!isSelected) status = `<span class="badge badge-dim">미선택</span>`;
+    else if (mc === 0) status = `<span class="badge badge-green">결측없음</span>`;
+    else status = `<span class="badge badge-orange">${methodLabel} 적용</span>`;
+    summaryRows.push(`<tr>
+      <td class="col-name">${name}</td>
+      <td style="text-align:right">${mc.toLocaleString()}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="miss-bar-wrap"><div class="miss-bar" style="width:${Math.min(parseFloat(pct),100)}%"></div></div>
+          <span style="font-size:10px;font-family:'Space Mono',monospace">${pct}%</span>
+        </div>
+      </td>
+      <td>${status}</td>
+    </tr>`);
+  });
+  document.getElementById('summary-table').innerHTML = `
+    <thead><tr><th>컬럼</th><th>결측</th><th>결측률</th><th>처리</th></tr></thead>
+    <tbody>${summaryRows.join('')}</tbody>`;
+
+  // ── Chart column tabs ────────────────────────────
+  _chartColIdx = selectedNums[0];
+  const tabsEl = document.getElementById('chart-col-tabs');
+  tabsEl.innerHTML = selectedNums.map(ni =>
+    `<button class="chart-col-tab${ni===_chartColIdx?' active':''}" onclick="switchChartCol(${ni})">${ds.numColNames[ni]}</button>`
+  ).join('');
+  renderInterpChart(_chartColIdx);
+
+  // ── Preview table (all columns, interp cells highlighted) ──
+  const previewRows = ds.data;
+  const ths = ['#', ...ds.allHeaders].map(h => `<th>${h}</th>`).join('');
+  const tbody = previewRows.map((row, ri) => {
+    const tds = [`<td>${ri+1}</td>`];
+    ds.allHeaders.forEach((_, hi) => {
+      const numIdx = ds.numColIdxs.indexOf(hi);
+      if (numIdx === -1) {
+        // non-numeric col: show raw
+        tds.push(`<td>${ds.rawRows[ri][hi] ?? ''}</td>`);
+      } else {
+        const origVal = row[numIdx];
+        const ni = numIdx; // index into numColNames / imputedCols
+        if (_selectedCols.has(ni) && masks[ni] && masks[ni][ri]) {
+          // was null, now imputed
+          const v = imputedCols[ni][ri];
+          tds.push(`<td class="interp-val">${v !== null ? fmtNum(v) : '—'}</td>`);
+        } else if (origVal === null) {
+          tds.push(`<td class="null-val">null</td>`);
+        } else {
+          tds.push(`<td>${fmtNum(origVal)}</td>`);
+        }
+      }
+    });
+    return `<tr>${tds.join('')}</tr>`;
+  }).join('');
+  document.getElementById('interp-table').innerHTML =
+    `<thead><tr>${ths}</tr></thead><tbody>${tbody}</tbody>`;
+
+  // ── Download info ────────────────────────────────
+  document.getElementById('dl-info').textContent =
+    `전체 ${n.toLocaleString()}행 · ${ds.allHeaders.length}컬럼 · ${totalFilled.toLocaleString()}개 보간값 포함`;
+
+  document.getElementById('interp-result').style.display = '';
+}
+
+// ════════════════════════════════════════════════════
+// CHART (per column)
+// ════════════════════════════════════════════════════
+function switchChartCol(ni) {
+  _chartColIdx = ni;
+  document.querySelectorAll('.chart-col-tab').forEach(t => {
+    t.classList.toggle('active', parseInt(t.textContent.trim()) === -1); // reset
+  });
+  // update active tab
+  document.querySelectorAll('.chart-col-tab').forEach(t => {
+    const ds = _uploadedInterp;
+    t.classList.toggle('active', t.textContent.trim() === ds.numColNames[ni]);
+  });
+  renderInterpChart(ni);
+}
+
+// ── 결과 시각화 전체 화면 ──────────────────────────
+// 카드를 화면 전체로 펼치고 차트를 다시 그린다 (눈금·글자·점을 함께 키운다)
+function toggleVizFull(force) {
+  const card = document.getElementById('viz-card');
+  const btn  = document.getElementById('viz-full-btn');
+  if (!card || !btn) return;
+
+  _vizFull = (typeof force === 'boolean') ? force : !_vizFull;
+  card.classList.toggle('is-full', _vizFull);
+  document.body.classList.toggle('viz-locked', _vizFull);
+  btn.textContent = _vizFull ? '✕ 닫기' : '⛶ 전체 화면으로 보기';
+  btn.setAttribute('aria-expanded', _vizFull ? 'true' : 'false');
+
+  // 크기가 바뀌었으므로 눈금 밀도·점 크기를 다시 잡아 그린다
+  if (_lastInterp) renderInterpChart(_chartColIdx);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && _vizFull) toggleVizFull(false);
+});
+
+function renderInterpChart(ni) {
+  if (!_lastInterp) return;
+  const ds = _uploadedInterp;
+  const { imputedCols, masks } = _lastInterp;
+  const origCol = ds.data.map(row => row[ni]);
+  const imputed = imputedCols[ni] || origCol;
+  const mask = masks[ni] || Array(origCol.length).fill(false);
+  const n = origCol.length;
+  const labels = Array.from({length:n}, (_,i)=>i+1);
+
+  if (_interpChart) _interpChart.destroy();
+  _interpChart = new Chart(document.getElementById('interp-chart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [
+      {
+        label: '원본(결측 포함)',
+        data: origCol,
+        borderColor: 'rgba(147,197,253,.85)',
+        borderWidth: 1.5,
+        pointRadius: origCol.map(v => v===null ? 0 : 2),
+        pointBackgroundColor: '#93c5fd',
+        fill: false, tension: .3, spanGaps: false
+      },
+      {
+        label: '보간 결과',
+        data: imputed,
+        borderColor: '#f97316',
+        borderWidth: 2,
+        pointRadius: mask.map(m => m ? (_vizFull ? 7 : 5) : 0),
+        pointBackgroundColor: mask.map(m => m ? '#f97316' : 'transparent'),
+        pointStyle: mask.map(m => m ? 'circle' : 'circle'),
+        fill: false, tension: .4
+      }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: ctx => {
+            const m = mask[ctx.dataIndex];
+            const prefix = ctx.datasetIndex===1 && m ? '▶ 보간: ' : '';
+            return prefix + (ctx.raw !== null ? fmtNum(ctx.raw) : 'null');
+          }
+        }}
+      },
+      scales: {
+        x: { ticks:{color:'#94a3b8',font:{size:_vizFull?12:9},maxTicksLimit:_vizFull?30:15}, grid:{color:'rgba(0,0,0,.05)'} },
+        y: { ticks:{color:'#94a3b8',font:{size:_vizFull?12:9}}, grid:{color:'rgba(0,0,0,.05)'} }
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════
+// DOWNLOAD (interp)
+// ════════════════════════════════════════════════════
+function downloadInterp() {
+  if (!_lastInterp || !_uploadedInterp) return;
+  const ds = _uploadedInterp;
+  const { imputedCols, masks } = _lastInterp;
+  const n = ds.data.length;
+
+  const csv = '\uFEFF' + [
+    ds.allHeaders.join(','),
+    ...Array.from({length:n}, (_, ri) => {
+      return ds.allHeaders.map((_, hi) => {
+        const numIdx = ds.numColIdxs.indexOf(hi);
+        if (numIdx === -1) {
+          // non-numeric: keep original raw string
+          return escapeCSV(ds.rawRows[ri][hi] ?? '');
+        }
+        const ni = numIdx;
+        if (_selectedCols.has(ni) && masks[ni] && masks[ni][ri]) {
+          const v = imputedCols[ni][ri];
+          return v !== null ? fmtNum(v) : '';
+        }
+        const v = ds.data[ri][ni];
+        return v !== null ? fmtNum(v) : '';
+      }).join(',');
+    })
+  ].join('\n');
+
+  triggerDownload(csv, `interpolated_${_interpMethod}_${today()}.csv`);
+}
+
+// ════════════════════════════════════════════════════
+// MERGE
+// ════════════════════════════════════════════════════
+function parseMergeCSV(text, fileName) {
+  const lines = text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if (lines.length < 2) { alert(`${fileName}: 2행 이상 필요합니다.`); return null; }
+  const sep = lines[0].includes('\t') ? '\t' : ',';
+  const headers = splitLine(lines[0], sep);
+  const rows = lines.slice(1, 2001).map(l => splitLine(l, sep));
+  return { name:fileName.replace(/\.[^.]+$/,''), fileName, headers, rows, rowCount:rows.length, colCount:headers.length };
+}
+
+function handleMergeFiles(fileList) {
+  const files = Array.from(fileList);
+  let loaded = 0;
+  files.forEach(file => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    if (ext === 'xlsx' || ext === 'xls') {
+      reader.onload = e => {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (data.length >= 2) {
+          const headers = data[0].map(String);
+          const rows = data.slice(1, 2001).map(r => headers.map((_, i) => r[i] !== undefined ? String(r[i]) : ''));
+          _mergeFiles.push({ name: file.name.replace(/\.[^.]+$/, ''), fileName: file.name, headers, rows, rowCount: rows.length, colCount: headers.length });
+        } else { alert(`${file.name}: 2행 이상 필요합니다.`); }
+        if (++loaded === files.length) renderMergeList();
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = e => {
+        const parsed = parseMergeCSV(decodeFile(e.target.result), file.name);
+        if (parsed) _mergeFiles.push(parsed);
+        if (++loaded === files.length) renderMergeList();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  });
+}
+
+function removeMergeFile(idx) {
+  _mergeFiles.splice(idx, 1);
+  renderMergeList();
+  document.getElementById('merge-result').style.display = 'none';
+}
+
+function renderMergeList() {
+  document.getElementById('merge-count-lbl').textContent = `(${_mergeFiles.length}개)`;
+  document.getElementById('merge-file-list').innerHTML = _mergeFiles.map((f,i) =>
+    `<div class="merge-file-item">
+      <div class="merge-file-order">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div class="merge-file-name">${f.name}</div>
+        <div class="merge-file-meta">${f.rowCount.toLocaleString()}행 × ${f.colCount}열</div>
+      </div>
+      <button class="merge-file-del" onclick="removeMergeFile(${i})">✕</button>
+    </div>`).join('');
+  document.getElementById('merge-file-input').value = '';
+  updateJoinKeySelectors();
+}
+
+function selectMergeType(btn) {
+  document.querySelectorAll('.merge-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _mergeType = btn.dataset.type;
+  const isJoin = _mergeType !== 'concat';
+  document.getElementById('join-config').style.display = isJoin ? '' : 'none';
+  document.getElementById('concat-config').style.display = isJoin ? 'none' : '';
+  if (isJoin) updateJoinKeySelectors();
+}
+
+function updateJoinKeySelectors() {
+  if (_mergeType === 'concat') return;
+  const el = document.getElementById('join-key-selectors');
+  if (_mergeFiles.length < 2) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted)">파일을 2개 이상 업로드해주세요.</div>';
+    return;
+  }
+  el.innerHTML = _mergeFiles.map((f,i) =>
+    `<div class="ctrl-row" style="margin-bottom:8px">
+      <span class="ctrl-label" style="min-width:52px">파일 ${i+1}</span>
+      <select class="sel" id="join-key-${i}">${f.headers.map((h,hi)=>`<option value="${hi}">${h}</option>`).join('')}</select>
+    </div>`).join('');
+  const infoMap = {inner:'키가 모든 파일에 존재하는 행만',left:'첫 번째 파일 기준 · 미매칭은 빈값',outer:'모든 파일 행 포함 · 미매칭은 빈값'};
+  document.getElementById('join-info').innerHTML =
+    `<strong>${{inner:'내부',left:'왼쪽',outer:'전체'}[_mergeType]} 결합</strong> — ${infoMap[_mergeType]}`;
+}
+
+function runMerge() {
+  if (_mergeFiles.length < 2) { alert('파일을 2개 이상 업로드해주세요.'); return; }
+  let resultHeaders, resultRows;
+
+  if (_mergeType === 'concat') {
+    const allH = [...new Set(_mergeFiles.flatMap(f=>f.headers))];
+    resultHeaders = ['_source', ...allH];
+    resultRows = [];
+    _mergeFiles.forEach(f => {
+      f.rows.forEach(row => {
+        resultRows.push([f.name, ...allH.map(h => { const ci=f.headers.indexOf(h); return ci>=0?(row[ci]??''):''; })]);
+      });
+    });
+  } else {
+    const keyIdxs = _mergeFiles.map((_,i)=>{const el=document.getElementById(`join-key-${i}`);return el?parseInt(el.value):0;});
+    let leftH = [..._mergeFiles[0].headers];
+    let leftRows = _mergeFiles[0].rows.map(r=>[...r]);
+    const leftKeyName = _mergeFiles[0].headers[keyIdxs[0]];
+
+    for (let fi=1; fi<_mergeFiles.length; fi++) {
+      const rf = _mergeFiles[fi]; const rKi = keyIdxs[fi];
+      const lKi = leftH.indexOf(leftKeyName);
+      const rMap = new Map();
+      rf.rows.forEach(row => { const k=row[rKi]??''; if(!rMap.has(k))rMap.set(k,[]); rMap.get(k).push(row); });
+      const rExtra = rf.headers.map((h,i)=>({h,i})).filter(({i})=>i!==rKi);
+      const newH = [...leftH];
+      const hMap = [];
+      rExtra.forEach(({h,i})=>{ let name=h,cnt=2; while(newH.includes(name))name=h+'_'+cnt++; newH.push(name); hMap.push({srcIdx:i}); });
+      const newRows = [];
+      const lKeys = new Set(leftRows.map(r=>r[lKi]??''));
+      const addMatch=(lRow,rRow)=>newRows.push([...lRow,...hMap.map(({srcIdx})=>rRow[srcIdx]??'')]);
+      const addLeft=(lRow)=>newRows.push([...lRow,...hMap.map(()=>'')]);
+      leftRows.forEach(lRow=>{
+        const k=lRow[lKi]??''; const m=rMap.get(k);
+        if(m&&m.length){m.forEach(rRow=>addMatch(lRow,rRow));}
+        else if(_mergeType!=='inner') addLeft(lRow);
+      });
+      if(_mergeType==='outer'){
+        rf.rows.forEach(rRow=>{const k=rRow[rKi]??'';if(!lKeys.has(k)){const e=Array(leftH.length).fill('');if(lKi>=0)e[lKi]=k;newRows.push([...e,...hMap.map(({srcIdx})=>rRow[srcIdx]??'')]);}});
+      }
+      leftH=newH; leftRows=newRows;
+    }
+    resultHeaders=leftH; resultRows=leftRows;
+  }
+
+  _mergeResult = { headers:resultHeaders, rows:resultRows };
+  const empty = resultRows.reduce((s,r)=>s+r.filter(v=>v==='').length, 0);
+  const total = resultRows.length * resultHeaders.length;
+
+  document.getElementById('merge-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${_mergeFiles.length}</div><div class="stat-lbl">병합 파일 수</div></div>
+    <div class="stat-box"><div class="stat-val">${resultRows.length.toLocaleString()}</div><div class="stat-lbl">전체 행 수</div></div>
+    <div class="stat-box"><div class="stat-val">${resultHeaders.length}</div><div class="stat-lbl">컬럼 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:${empty?'var(--amber)':'var(--green)'}">${total?(empty/total*100).toFixed(1):0}%</div><div class="stat-lbl">빈 셀 비율</div></div>
+  `;
+  document.getElementById('merge-table').innerHTML =
+    `<thead><tr>${resultHeaders.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+     <tbody>${resultRows.map(row=>`<tr>${row.map(v=>`<td>${v!==''?v:'<span style="color:rgba(0,0,0,.2)">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  document.getElementById('merge-result').style.display = '';
+}
+
+function downloadMerge() {
+  if (!_mergeResult) return;
+  const { headers, rows } = _mergeResult;
+  const csv = '\uFEFF'+[headers.join(','),...rows.map(r=>r.map(v=>escapeCSV(String(v))).join(','))].join('\n');
+  triggerDownload(csv, `merged_${_mergeType}_${today()}.csv`);
+}
+
+// ════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════
+function fmtNum(v) {
+  if (v === null || v === undefined) return '';
+  if (!Number.isFinite(v)) return String(v);
+  // Show up to 4 significant decimal places, trimming trailing zeros
+  return parseFloat(v.toFixed(4)).toString();
+}
+
+function escapeCSV(s) {
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g,'""')}"`;
+  return s;
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function triggerDownload(csv, filename) {
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+// ════════════════════════════════════════════════════
+// DRAG EVENTS
+// ════════════════════════════════════════════════════
+[['interp-upload-zone', e => handleInterpFile(e.dataTransfer.files[0])],
+ ['merge-upload-zone',  e => handleMergeFiles(e.dataTransfer.files)]
+].forEach(([id, dropFn]) => {
+  const el = document.getElementById(id); if (!el) return;
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag'); dropFn(e); });
+});
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+updateMethodDesc('linear');
+if (TAB_IDS.includes(location.hash.slice(1))) switchTab(location.hash.slice(1));
+</script>
+<script>(function(){var k='tf_prep';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

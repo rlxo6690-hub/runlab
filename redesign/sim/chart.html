@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>차트 분석 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="차트 분석 시뮬레이터 — DataForge">
+<meta property="og:description" content="8가지 차트 유형을 비교하고 인터랙티브 빌더로 최적 시각화를 선택하는 교육용 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --orange:#ea580c;--amber:#d97706;--green:#059669;--red:#dc2626;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,0,0,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid rgba(0,0,0,0.15);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);}
+
+/* Page */
+.page{padding:0 24px 80px;}
+
+/* Tabs */
+.stat-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:28px;}
+.stat-tab{padding:14px 22px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;}
+.stat-panel.active{display:block;}
+
+/* Intro */
+.intro-box{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* Cards */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* Grids */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+.four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+
+/* Canvas */
+.chart-canvas{width:100%;display:block;border-radius:8px;background:#f1f5f9;}
+
+/* Interp */
+.interp{background:rgba(217,119,6,.08);border-left:2px solid var(--amber);padding:8px 12px;border-radius:0 8px 8px 0;font-size:12px;color:#92400e;line-height:1.6;margin-top:12px;}
+
+/* Dataset selector */
+.ds-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.ds-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.ds-btn:hover{color:var(--text);}
+.ds-btn.active{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:var(--accent);}
+
+/* Chart type guide grid */
+.chart-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.chart-type-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;position:relative;}
+.chart-type-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.chart-type-card.selected{border-color:var(--accent);background:rgba(59,130,246,0.06);}
+.ctc-icon{font-size:24px;margin-bottom:8px;}
+.ctc-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.ctc-when{font-size:10px;color:var(--muted);line-height:1.5;}
+.ctc-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;margin-top:6px;letter-spacing:.04em;}
+.badge-compare{background:rgba(59,130,246,.15);color:var(--accent);border:1px solid rgba(59,130,246,.3);}
+.badge-dist{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.badge-trend{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3);}
+.badge-comp{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.badge-rel{background:rgba(167,139,250,.15);color:#7c3aed;border:1px solid rgba(167,139,250,.3);}
+
+/* Detail panel */
+.chart-detail{background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:18px;margin-bottom:20px;display:none;}
+.chart-detail.show{display:block;}
+.detail-header{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.detail-title{font-size:16px;font-weight:700;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.detail-section{font-size:12px;color:var(--muted);line-height:1.7;}
+.detail-section strong{color:var(--text);display:block;font-size:11px;margin-bottom:4px;}
+.pro-item::before{content:"✓ ";color:var(--green);}
+.con-item::before{content:"✗ ";color:var(--red);}
+.use-item::before{content:"▸ ";color:var(--accent);}
+
+/* Comparison view */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+
+/* Builder */
+.builder-wrap{display:grid;grid-template-columns:260px 1fr;gap:16px;}
+.builder-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.builder-section{margin-bottom:18px;}
+.builder-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.chart-btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.chart-btn{padding:8px 6px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;text-align:center;}
+.chart-btn:hover{color:var(--text);}
+.chart-btn.active{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:var(--accent);}
+.builder-select{width:100%;background:rgba(0,0,0,.04);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:8px 10px;outline:none;font-family:inherit;cursor:pointer;margin-bottom:6px;}
+.builder-select:focus{border-color:var(--accent);}
+.builder-preview{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.stat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.stat-chip{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'Courier New',monospace;}
+.stat-chip span{color:var(--accent);font-weight:700;}
+
+/* Responsive */
+@media(max-width:1000px){.chart-grid{grid-template-columns:repeat(3,1fr);}.compare-grid{grid-template-columns:1fr 1fr;}.four-col{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.chart-grid{grid-template-columns:1fr 1fr;}.builder-wrap{grid-template-columns:1fr;}.two-col,.three-col{grid-template-columns:1fr;}.compare-grid{grid-template-columns:1fr;}}
+@media(max-width:500px){.chart-grid{grid-template-columns:1fr 1fr;}.four-col{grid-template-columns:1fr 1fr;}}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title">차트 분석 시뮬레이터</div>
+  </div>
+  <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+  <div class="stat-tabs">
+    <button class="stat-tab active" onclick="showTab('guide',this)">📋 차트 가이드</button>
+    <button class="stat-tab" onclick="showTab('compare',this)">🔄 유형 비교</button>
+    <button class="stat-tab" onclick="showTab('builder',this)">🎨 인터랙티브 빌더</button>
+  </div>
+
+  <!-- ══ TAB 1. 차트 가이드 ══ -->
+  <div id="tab-guide" class="stat-panel active">
+    <div class="intro-box">
+      <strong>어떤 차트를 써야 할까?</strong> 데이터의 성격과 전달하려는 메시지에 따라 최적의 차트가 달라집니다.
+      카드를 클릭하면 사용 목적·장단점·실전 예시를 확인하고, 아래 캔버스에서 미리보기를 볼 수 있습니다.
+    </div>
+
+    <!-- 목적별 필터 -->
+    <div class="ds-selector" id="guide-filter">
+      <button class="ds-btn active" onclick="filterGuide('all',this)">전체</button>
+      <button class="ds-btn" onclick="filterGuide('compare',this)">📊 비교</button>
+      <button class="ds-btn" onclick="filterGuide('dist',this)">📈 분포</button>
+      <button class="ds-btn" onclick="filterGuide('trend',this)">📉 추세</button>
+      <button class="ds-btn" onclick="filterGuide('comp',this)">🥧 구성</button>
+      <button class="ds-btn" onclick="filterGuide('rel',this)">🔵 관계</button>
+    </div>
+
+    <div class="chart-grid" id="chart-type-grid"></div>
+
+    <div class="chart-detail" id="chart-detail">
+      <div class="detail-header">
+        <div style="font-size:32px" id="detail-icon"></div>
+        <div>
+          <div class="detail-title" id="detail-title"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px" id="detail-subtitle"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 280px;gap:16px">
+        <div class="detail-section"><strong>사용하면 좋을 때</strong><div id="detail-use"></div></div>
+        <div class="detail-section">
+          <strong>장점</strong><div id="detail-pros" style="margin-bottom:8px"></div>
+          <strong>주의</strong><div id="detail-cons"></div>
+        </div>
+        <div>
+          <div class="a-card-title">미리보기</div>
+          <canvas id="guide-preview" class="chart-canvas" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 목적별 추천 -->
+    <div class="a-card">
+      <div class="a-card-title">데이터 목적별 차트 추천 매트릭스</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border2)">
+              <th style="padding:10px 12px;text-align:left;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase">데이터 목적</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">막대</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">꺾은선</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">산점도</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">파이</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">히스토그램</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">박스플롯</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">히트맵</th>
+              <th style="padding:10px 8px;text-align:center;color:var(--muted);font-size:10px">영역</th>
+            </tr>
+          </thead>
+          <tbody id="matrix-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 2. 유형 비교 ══ -->
+  <div id="tab-compare" class="stat-panel">
+    <div class="intro-box">
+      <strong>같은 데이터, 다른 차트.</strong> 동일한 데이터셋을 여러 차트 유형으로 표현했을 때 어떻게 달라지는지 비교합니다.
+      데이터셋을 선택하면 6가지 차트로 자동 렌더링되며, 각 차트의 적합도가 표시됩니다.
+    </div>
+    <div class="ds-selector">
+      <button class="ds-btn active" onclick="loadCompareDS(0,this)">🏭 월별 불량률</button>
+      <button class="ds-btn" onclick="loadCompareDS(1,this)">📦 제품별 판매량</button>
+      <button class="ds-btn" onclick="loadCompareDS(2,this)">📊 공정 변수 분포</button>
+      <button class="ds-btn" onclick="loadCompareDS(3,this)">🌡️ 온도-불량 관계</button>
+    </div>
+    <div class="compare-grid" id="compare-grid"></div>
+  </div>
+
+  <!-- ══ TAB 3. 인터랙티브 빌더 ══ -->
+  <div id="tab-builder" class="stat-panel">
+    <div class="intro-box">
+      <strong>직접 만들어보세요.</strong> 샘플 데이터셋을 선택하고 차트 유형을 바꾸며 시각화 결과를 실시간으로 확인합니다.
+    </div>
+    <div class="builder-wrap">
+      <div class="builder-panel">
+        <div class="builder-section">
+          <div class="builder-label">데이터셋</div>
+          <select class="builder-select" id="builder-ds" onchange="renderBuilder()">
+            <option value="0">🏭 공정 온도 vs 불량률 (25개)</option>
+            <option value="1">📦 월별 생산량 (12개월)</option>
+            <option value="2">🔧 설비별 고장 횟수 (6개)</option>
+            <option value="3">📊 불량률 분포 (50개)</option>
+            <option value="4">⭐ 품질 점수 그룹 비교 (3그룹)</option>
+          </select>
+        </div>
+        <div class="builder-section">
+          <div class="builder-label">차트 유형</div>
+          <div class="chart-btn-grid" id="builder-chart-btns">
+            <button class="chart-btn active" data-chart="bar" onclick="setBChart('bar',this)">📊 막대</button>
+            <button class="chart-btn" data-chart="line" onclick="setBChart('line',this)">📈 꺾은선</button>
+            <button class="chart-btn" data-chart="scatter" onclick="setBChart('scatter',this)">🔵 산점도</button>
+            <button class="chart-btn" data-chart="pie" onclick="setBChart('pie',this)">🥧 파이</button>
+            <button class="chart-btn" data-chart="hist" onclick="setBChart('hist',this)">📉 히스토그램</button>
+            <button class="chart-btn" data-chart="box" onclick="setBChart('box',this)">📦 박스플롯</button>
+          </div>
+        </div>
+        <div class="builder-section">
+          <div class="builder-label">색상 테마</div>
+          <select class="builder-select" id="builder-color" onchange="renderBuilder()">
+            <option value="blue">Blue (기본)</option>
+            <option value="green">Green</option>
+            <option value="amber">Amber</option>
+            <option value="multi">Multi-color</option>
+          </select>
+        </div>
+        <div class="builder-section">
+          <div class="builder-label">통계 요약</div>
+          <div class="stat-chips" id="builder-stats"></div>
+        </div>
+        <div class="builder-section">
+          <div class="builder-label">적합도 평가</div>
+          <div id="builder-fit" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
+        </div>
+      </div>
+      <div class="builder-preview">
+        <div class="a-card-title" id="builder-canvas-title">차트 미리보기</div>
+        <canvas id="builder-canvas" class="chart-canvas" height="400"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+/* ═══════════════════════════════════════════
+   TAB SYSTEM
+═══════════════════════════════════════════ */
+function showTab(id,btn){
+  document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>{
+    if(id==='compare') renderCompare();
+    if(id==='builder') renderBuilder();
+  },10);
+}
+
+/* ═══════════════════════════════════════════
+   CHART TYPE DATA
+═══════════════════════════════════════════ */
+const CHART_TYPES=[
+  {id:'bar',icon:'📊',name:'막대 차트',sub:'Bar Chart',category:'compare',
+   badge:'badge-compare',badgeText:'비교',
+   when:['범주간 크기 비교','순위 표현','기간별 단순 변화'],
+   pros:['직관적·누구나 이해','범주 레이블 읽기 쉬움','수평/수직 전환 자유'],
+   cons:['시계열에 꺾은선보다 약함','범주 많으면 복잡','연속 분포 표현 불가'],
+   fit:{compare:5,dist:2,trend:3,comp:2,rel:1}},
+  {id:'line',icon:'📈',name:'꺾은선 차트',sub:'Line Chart',category:'trend',
+   badge:'badge-trend',badgeText:'추세',
+   when:['시간에 따른 변화 추세','연속된 데이터 흐름','다계열 비교 추세'],
+   pros:['시간 흐름 표현 최적','추세·패턴 파악 용이','다계열 겹치기 가능'],
+   cons:['범주형 데이터에 부적합','데이터 포인트 수 적으면 오해','값 비교는 막대보다 어려움'],
+   fit:{compare:3,dist:1,trend:5,comp:2,rel:2}},
+  {id:'scatter',icon:'🔵',name:'산점도',sub:'Scatter Plot',category:'rel',
+   badge:'badge-rel',badgeText:'관계',
+   when:['두 변수 간 상관관계','이상치 탐지','군집 패턴 발견'],
+   pros:['변수 관계 시각화 최강','이상치 즉시 발견','회귀선 오버레이 가능'],
+   cons:['단순 비교에 부적합','데이터 포인트 겹침 주의','3개 변수 동시 표현 어려움'],
+   fit:{compare:1,dist:3,trend:3,comp:1,rel:5}},
+  {id:'pie',icon:'🥧',name:'파이 차트',sub:'Pie / Donut',category:'comp',
+   badge:'badge-comp',badgeText:'구성',
+   when:['전체 중 각 부분의 비율','2~5개 범주 구성 표현'],
+   pros:['비율 직관적 전달','전체 구성 한눈에','도넛형으로 심미성 강화'],
+   cons:['범주 6개 이상 난독','정확한 값 비교 어려움','시간 변화 표현 불가'],
+   fit:{compare:2,dist:1,trend:1,comp:5,rel:1}},
+  {id:'hist',icon:'📉',name:'히스토그램',sub:'Histogram',category:'dist',
+   badge:'badge-dist',badgeText:'분포',
+   when:['연속 변수 분포 형태','정규성 확인','이상치·치우침 파악'],
+   pros:['분포 형태 즉시 파악','정규·비정규 구분 용이','빈도 구간 자유 설정'],
+   cons:['범주형 데이터 불가','구간 크기에 따라 형태 달라짐','두 분포 동시 비교 어려움'],
+   fit:{compare:1,dist:5,trend:1,comp:1,rel:2}},
+  {id:'box',icon:'📦',name:'박스플롯',sub:'Box Plot',category:'dist',
+   badge:'badge-dist',badgeText:'분포',
+   when:['여러 그룹 분포 비교','중앙값·IQR·이상치 동시 표현','품질 편차 비교'],
+   pros:['5가지 통계량 한 번에','그룹 간 분포 비교 탁월','이상치 명확히 표시'],
+   cons:['일반인에게 낯선 형태','원본 데이터 분포 형태 숨겨짐','소수 데이터에 부정확'],
+   fit:{compare:4,dist:5,trend:1,comp:1,rel:3}},
+  {id:'heatmap',icon:'🟥',name:'히트맵',sub:'Heatmap',category:'rel',
+   badge:'badge-rel',badgeText:'관계',
+   when:['다변수 상관관계 행렬','시간×범주 교차 패턴','대량 데이터 패턴'],
+   pros:['다차원 데이터 한눈에','색상으로 패턴 즉시 파악','상관행렬 표준 시각화'],
+   cons:['색상 해석 훈련 필요','정확한 수치 읽기 어려움','변수 수 너무 많으면 복잡'],
+   fit:{compare:2,dist:2,trend:3,comp:1,rel:5}},
+  {id:'area',icon:'🏔️',name:'영역 차트',sub:'Area Chart',category:'trend',
+   badge:'badge-trend',badgeText:'추세',
+   when:['누적 추세·볼륨 강조','전체 중 부분 변화 흐름','여러 계열 누적 비교'],
+   pros:['볼륨·크기감 강조','누적 변화 표현 가능','꺾은선보다 시각적 임팩트'],
+   cons:['앞 계열이 뒤를 가릴 수 있음','정확한 값 읽기 어려움','계열 많으면 혼잡'],
+   fit:{compare:2,dist:1,trend:4,comp:3,rel:1}},
+];
+
+const MATRIX_ROWS=[
+  {label:'범주 간 비교',key:'compare',color:'var(--accent)'},
+  {label:'분포·형태 파악',key:'dist',color:'var(--green)'},
+  {label:'시간 추세',key:'trend',color:'var(--amber)'},
+  {label:'전체 구성 비율',key:'comp',color:'var(--red)'},
+  {label:'두 변수 관계',key:'rel',color:'#7c3aed'},
+];
+
+function fitCell(v){
+  if(v>=5) return{bg:'rgba(16,185,129,.18)',c:'var(--green)',t:'●●●'};
+  if(v>=4) return{bg:'rgba(59,130,246,.15)',c:'var(--accent)',t:'●●○'};
+  if(v>=3) return{bg:'rgba(245,158,11,.12)',c:'var(--amber)',t:'●○○'};
+  return{bg:'rgba(255,255,255,.03)',c:'var(--dim)',t:'○○○'};
+}
+
+function buildMatrix(){
+  const tb=document.getElementById('matrix-tbody');
+  MATRIX_ROWS.forEach(row=>{
+    const tr=document.createElement('tr');
+    tr.style.borderBottom='1px solid rgba(255,255,255,0.04)';
+    tr.innerHTML=`<td style="padding:10px 12px;font-size:12px;color:${row.color};font-weight:600">${row.label}</td>`+
+      CHART_TYPES.map(ct=>{
+        const f=ct.fit[row.key];const c=fitCell(f);
+        return`<td style="padding:10px 8px;text-align:center;background:${c.bg};color:${c.c};font-size:11px;font-weight:700;border-radius:4px">${c.t}</td>`;
+      }).join('');
+    tb.appendChild(tr);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   GUIDE TAB
+═══════════════════════════════════════════ */
+let activeGuideFilter='all';
+let selectedChartType=null;
+
+function buildGuideGrid(){
+  const grid=document.getElementById('chart-type-grid');
+  grid.innerHTML='';
+  CHART_TYPES.forEach(ct=>{
+    if(activeGuideFilter!=='all'&&ct.category!==activeGuideFilter)return;
+    const div=document.createElement('div');
+    div.className='chart-type-card'+(selectedChartType===ct.id?' selected':'');
+    div.onclick=()=>selectChartType(ct.id);
+    div.innerHTML=`<div class="ctc-icon">${ct.icon}</div>
+      <div class="ctc-name">${ct.name}</div>
+      <div class="ctc-when">${ct.when[0]}</div>
+      <span class="ctc-badge ${ct.badge}">${ct.badgeText}</span>`;
+    grid.appendChild(div);
+  });
+}
+
+function filterGuide(cat,btn){
+  activeGuideFilter=cat;
+  document.querySelectorAll('#guide-filter .ds-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildGuideGrid();
+}
+
+function selectChartType(id){
+  selectedChartType=id;
+  buildGuideGrid();
+  const ct=CHART_TYPES.find(c=>c.id===id);
+  if(!ct)return;
+  const det=document.getElementById('chart-detail');
+  det.classList.add('show');
+  document.getElementById('detail-icon').textContent=ct.icon;
+  document.getElementById('detail-title').textContent=ct.name;
+  document.getElementById('detail-subtitle').textContent=ct.sub;
+  document.getElementById('detail-use').innerHTML=ct.when.map(w=>`<div class="use-item">${w}</div>`).join('');
+  document.getElementById('detail-pros').innerHTML=ct.pros.map(p=>`<div class="pro-item">${p}</div>`).join('');
+  document.getElementById('detail-cons').innerHTML=ct.cons.map(c=>`<div class="con-item">${c}</div>`).join('');
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+  drawGuidePreview(id);
+}
+
+function drawGuidePreview(id){
+  const cv=document.getElementById('guide-preview');
+  const W=cv.offsetWidth||260;const H=160;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const colors=['rgba(59,130,246,0.8)','rgba(16,185,129,0.8)','rgba(245,158,11,0.8)','rgba(239,68,68,0.8)','rgba(167,139,250,0.8)','rgba(20,184,166,0.8)'];
+  const pad={l:28,r:10,t:10,b:24};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const labels=['A','B','C','D','E'];
+  const vals=[72,55,88,43,66];
+  if(id==='bar'){
+    drawMiniBar(ctx,vals,labels,colors,pad,cw,ch);
+  } else if(id==='line'){
+    const lv=[40,55,48,72,65,80,74,88,82,95];
+    drawMiniLine(ctx,lv,colors[0],pad,cw,ch);
+  } else if(id==='scatter'){
+    drawMiniScatter(ctx,pad,cw,ch,colors[0]);
+  } else if(id==='pie'){
+    drawMiniPie(ctx,vals,colors,W,H);
+  } else if(id==='hist'){
+    drawMiniHist(ctx,pad,cw,ch,colors[0]);
+  } else if(id==='box'){
+    drawMiniBox(ctx,pad,cw,ch,colors);
+  } else if(id==='heatmap'){
+    drawMiniHeatmap(ctx,pad,cw,ch);
+  } else if(id==='area'){
+    drawMiniArea(ctx,pad,cw,ch,colors[0]);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   COMPARE TAB
+═══════════════════════════════════════════ */
+const COMPARE_DS=[
+  {name:'월별 불량률',labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+   vals:[4.2,3.8,5.1,4.6,3.9,4.8,5.3,4.1,3.7,4.4,5.0,3.5],unit:'%',
+   fits:{bar:5,line:5,scatter:2,pie:1,hist:4,box:4}},
+  {name:'제품별 판매량',labels:['PA-100','PA-200','PB-100','PB-300','PC-50'],
+   vals:[1840,2310,980,1560,720],unit:'개',
+   fits:{bar:5,line:2,scatter:2,pie:4,hist:2,box:2}},
+  {name:'공정 변수 분포',labels:null,
+   vals:[162,165,168,170,172,173,175,176,178,180,181,183,185,186,188,190,192,195,198,202],
+   unit:'℃',fits:{bar:2,line:2,scatter:3,pie:1,hist:5,box:5}},
+  {name:'온도-불량 관계',labels:null,
+   vals:null,scatter:true,unit:'',
+   fits:{bar:1,line:3,scatter:5,pie:1,hist:3,box:3}},
+];
+
+let compareDSIdx=0;
+
+function loadCompareDS(i,btn){
+  compareDSIdx=i;
+  document.querySelectorAll('#tab-compare .ds-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCompare();
+}
+
+function renderCompare(){
+  const ds=COMPARE_DS[compareDSIdx];
+  const types=['bar','line','scatter','pie','hist','box'];
+  const icons={bar:'📊',line:'📈',scatter:'🔵',pie:'🥧',hist:'📉',box:'📦'};
+  const names={bar:'막대',line:'꺾은선',scatter:'산점도',pie:'파이',hist:'히스토그램',box:'박스플롯'};
+  const fitLabel=(f)=>f>=5?{t:'최적',c:'var(--green)'}:f>=4?{t:'적합',c:'var(--accent)'}:f>=3?{t:'보통',c:'var(--amber)'}:{t:'부적합',c:'var(--red)'};
+
+  const grid=document.getElementById('compare-grid');
+  grid.innerHTML='';
+  types.forEach(type=>{
+    const fit=ds.fits[type];
+    const fl=fitLabel(fit);
+    const card=document.createElement('div');
+    card.className='a-card';
+    card.style.marginBottom='0';
+    const fitBar=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:16px">${icons[type]}</span>
+      <span style="font-size:12px;font-weight:700;flex:1">${names[type]}</span>
+      <span style="font-size:11px;font-weight:700;color:${fl.c};background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;border:1px solid ${fl.c}">${fl.t}</span>
+    </div>`;
+    const cvId=`cmp-${type}`;
+    card.innerHTML=`<div>${fitBar}<canvas id="${cvId}" class="chart-canvas" height="140"></canvas></div>`;
+    grid.appendChild(card);
+  });
+
+  // render each canvas after DOM update
+  setTimeout(()=>{
+    types.forEach(type=>{
+      drawCompareChart(type,ds,`cmp-${type}`);
+    });
+  },20);
+}
+
+function drawCompareChart(type,ds,cvId){
+  const cv=document.getElementById(cvId);if(!cv)return;
+  const W=cv.offsetWidth||300;const H=140;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
+  const colors=['rgba(59,130,246,0.8)','rgba(16,185,129,0.8)','rgba(245,158,11,0.8)','rgba(239,68,68,0.8)','rgba(167,139,250,0.8)','rgba(20,184,166,0.8)'];
+  const pad={l:30,r:8,t:8,b:22};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+
+  // generate scatter data if needed
+  let scData=[];
+  if(ds.scatter){
+    for(let i=0;i<20;i++){const t=160+i*4+Math.random()*3;scData.push({x:t,y:2+i*0.4+Math.random()*1.5});}
+  }
+  const vals=ds.vals||(scData.map(p=>p.y));
+  const labels=ds.labels||(vals.map((_,i)=>String(i+1)));
+
+  if(type==='bar') drawMiniBar(ctx,vals.slice(0,8),labels.slice(0,8),colors,pad,cw,ch);
+  else if(type==='line') drawMiniLine(ctx,vals.slice(0,12),colors[0],pad,cw,ch);
+  else if(type==='scatter'){
+    if(ds.scatter) drawMiniScatterData(ctx,scData,colors[0],pad,cw,ch);
+    else drawMiniScatterFromVals(ctx,vals,colors[0],pad,cw,ch);
+  }
+  else if(type==='pie') drawMiniPie(ctx,vals.slice(0,5),colors,W,H);
+  else if(type==='hist') drawMiniHistVals(ctx,vals,colors[0],pad,cw,ch);
+  else if(type==='box') drawMiniBoxVals(ctx,vals,colors[0],pad,cw,ch);
+}
+
+/* ═══════════════════════════════════════════
+   BUILDER TAB
+═══════════════════════════════════════════ */
+const BUILDER_DS=[
+  {name:'공정 온도 vs 불량률',type:'scatter',
+   x:[162,165,168,170,173,176,178,181,184,187,190,193,196,199,202,205,208,211,214,217,220,223,226,229,232],
+   y:[3.1,3.4,3.2,3.8,4.0,4.3,4.1,4.7,5.0,5.2,5.6,5.9,6.1,6.4,6.8,7.0,7.4,7.7,8.0,8.3,8.7,9.0,9.3,9.7,10.1],
+   xl:'온도(℃)',yl:'불량률(%)'},
+  {name:'월별 생산량',type:'line',
+   labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+   vals:[2840,2950,2780,3100,3250,3180,2900,3050,3320,3410,3280,3500],unit:'개'},
+  {name:'설비별 고장 횟수',type:'bar',
+   labels:['설비A','설비B','설비C','설비D','설비E','설비F'],
+   vals:[12,8,21,5,15,9],unit:'회'},
+  {name:'불량률 분포',type:'hist',
+   vals:[3.1,3.4,3.8,4.0,4.2,4.5,4.7,5.0,5.2,5.3,5.5,5.7,5.9,6.1,6.2,6.4,6.6,6.8,7.0,7.2,
+         7.4,7.6,7.8,8.0,8.2,4.3,4.8,5.1,5.4,5.8,6.0,6.3,6.7,7.1,7.5,7.9,3.9,4.6,5.6,6.5,
+         7.3,8.5,8.8,9.0,3.5,4.1,5.3,6.9,7.7,8.3],unit:'%'},
+  {name:'품질 점수 그룹',type:'box',
+   groups:[
+     {name:'라인A',vals:[78,82,85,88,79,83,86,90,81,84,87,92,80,85,89]},
+     {name:'라인B',vals:[65,70,75,68,72,77,63,69,74,71,66,73,78,62,67]},
+     {name:'라인C',vals:[88,91,93,90,94,89,92,95,87,93,96,91,88,94,97]},
+   ]},
+];
+
+let builderChart='bar';
+const COLOR_THEMES={
+  blue:['rgba(59,130,246,0.8)','rgba(59,130,246,0.6)','rgba(59,130,246,0.4)'],
+  green:['rgba(16,185,129,0.8)','rgba(16,185,129,0.6)','rgba(16,185,129,0.4)'],
+  amber:['rgba(245,158,11,0.8)','rgba(245,158,11,0.6)','rgba(245,158,11,0.4)'],
+  multi:['rgba(59,130,246,0.8)','rgba(16,185,129,0.8)','rgba(245,158,11,0.8)','rgba(239,68,68,0.8)','rgba(167,139,250,0.8)','rgba(20,184,166,0.8)'],
+};
+
+const FIT_NOTES={
+  bar:{
+    0:'막대 차트로 X vs Y를 비교하면 추세는 볼 수 있지만 연속 관계 표현은 꺾은선·산점도가 더 적합합니다.',
+    1:'막대 차트 최적! 시간축 데이터의 값 비교에 효과적입니다.',
+    2:'막대 차트 최적! 범주별 크기 비교에 가장 적합한 차트입니다.',
+    3:'히스토그램과 다릅니다. 개별 값들을 구간별로 묶어 막대로 표현하면 분포 왜곡이 생깁니다.',
+    4:'그룹 간 단순 비교에는 쓸 수 있지만 분포 형태는 표현되지 않습니다.',
+  },
+  line:{
+    0:'꺾은선으로 X 순서에 따른 Y 변화를 볼 수 있습니다. 단, 온도-불량의 관계는 산점도가 더 정확합니다.',
+    1:'꺾은선 최적! 시간 순서에 따른 생산량 추세를 명확하게 표현합니다.',
+    2:'설비 간 비교에는 막대 차트가 더 적합합니다. 꺾은선은 순서·연속성이 있을 때 사용하세요.',
+    3:'값의 순서에 따른 변화로 볼 수는 있지만, 분포 형태는 히스토그램이 훨씬 명확합니다.',
+    4:'그룹 간 추세 비교에 쓸 수 있지만 분포 정보가 사라집니다. 박스플롯을 권장합니다.',
+  },
+  scatter:{
+    0:'산점도 최적! 온도(X)와 불량률(Y)의 상관관계를 가장 직관적으로 표현합니다.',
+    1:'시계열 데이터를 산점도로 그리면 시간 순서 정보가 사라집니다. 꺾은선을 사용하세요.',
+    2:'범주형 비교에 산점도는 부적합합니다. 막대 차트를 사용하세요.',
+    3:'히스토그램의 대안으로 개별 값 분포를 볼 수 있지만 분포 형태 파악은 더 어렵습니다.',
+    4:'그룹별 데이터 포인트를 볼 수 있지만 박스플롯이 통계적 비교에 더 적합합니다.',
+  },
+  pie:{
+    0:'파이 차트로 연속 관계 데이터를 표현하는 것은 부적합합니다.',
+    1:'12개 시계열을 파이로 그리면 비율로만 보여 추세 정보가 완전히 사라집니다.',
+    2:'5개 설비의 구성 비율 표현에 쓸 수 있지만, 정확한 수치 비교는 막대 차트가 낫습니다.',
+    3:'분포 데이터를 파이로 표현하는 것은 의미가 없습니다.',
+    4:'그룹 크기 비율을 표현할 때는 쓸 수 있지만 분포 비교에는 부적합합니다.',
+  },
+  hist:{
+    0:'히스토그램으로 불량률 값의 분포를 볼 수 있지만 X-Y 관계는 산점도가 더 명확합니다.',
+    1:'시계열 값의 분포를 볼 수 있지만 시간 흐름 정보가 사라집니다.',
+    2:'범주형 카운트 데이터를 히스토그램으로 그리는 것은 막대 차트와 혼동될 수 있습니다.',
+    3:'히스토그램 최적! 불량률의 분포 형태, 정규성, 치우침을 한눈에 파악합니다.',
+    4:'그룹별로 히스토그램을 그릴 수 있지만 겹치면 보기 어렵습니다. 박스플롯을 권장합니다.',
+  },
+  box:{
+    0:'박스플롯으로 불량률 값의 IQR·이상치를 볼 수 있습니다. 관계는 산점도가 더 직접적입니다.',
+    1:'시계열 값의 통계 요약에 쓸 수 있지만 시간 흐름 정보가 사라집니다.',
+    2:'설비 간 단일 값은 박스플롯보다 막대 차트가 적합합니다.',
+    3:'불량률 분포의 IQR·이상치 파악에 유용하지만 히스토그램과 함께 사용하면 더 좋습니다.',
+    4:'박스플롯 최적! 세 라인의 분포·중앙값·이상치를 한 번에 비교할 수 있습니다.',
+  },
+};
+
+function setBChart(type,btn){
+  builderChart=type;
+  document.querySelectorAll('#builder-chart-btns .chart-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBuilder();
+}
+
+function renderBuilder(){
+  const dsIdx=parseInt(document.getElementById('builder-ds').value);
+  const ds=BUILDER_DS[dsIdx];
+  const theme=document.getElementById('builder-color').value;
+  const colors=COLOR_THEMES[theme];
+
+  document.getElementById('builder-canvas-title').textContent=`${ds.name} — ${builderChart==='bar'?'막대':builderChart==='line'?'꺾은선':builderChart==='scatter'?'산점도':builderChart==='pie'?'파이':builderChart==='hist'?'히스토그램':'박스플롯'} 차트`;
+
+  // Fit note
+  const notes=FIT_NOTES[builderChart];
+  const note=notes[dsIdx]||'';
+  document.getElementById('builder-fit').innerHTML=`<div class="interp" style="margin-top:0">${note}</div>`;
+
+  // Stats
+  const statsEl=document.getElementById('builder-stats');
+  statsEl.innerHTML='';
+  const allVals=ds.type==='box'?ds.groups.flatMap(g=>g.vals):(ds.type==='scatter'?ds.y:ds.vals);
+  if(allVals){
+    const mn=allVals.reduce((a,b)=>a+b,0)/allVals.length;
+    const mx=Math.max(...allVals),mi=Math.min(...allVals);
+    const sd=Math.sqrt(allVals.reduce((a,b)=>a+(b-mn)**2,0)/allVals.length);
+    [['n',allVals.length],['평균',mn.toFixed(1)+(ds.unit||'')],['SD',sd.toFixed(2)],['최솟값',mi+(ds.unit||'')],['최댓값',mx+(ds.unit||'')]].forEach(([l,v])=>{
+      statsEl.innerHTML+=`<div class="stat-chip">${l} <span>${v}</span></div>`;
+    });
+  }
+
+  // Draw
+  const cv=document.getElementById('builder-canvas');
+  const W=cv.offsetWidth||600;const H=400;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
+  const pad={l:50,r:20,t:20,b:50};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+
+  if(builderChart==='bar'&&ds.vals){
+    drawFullBar(ctx,ds.vals,ds.labels||ds.vals.map((_,i)=>String(i+1)),colors,pad,cw,ch,ds.unit||'');
+  } else if(builderChart==='line'&&ds.vals){
+    drawFullLine(ctx,ds.vals,ds.labels||ds.vals.map((_,i)=>String(i+1)),colors[0],pad,cw,ch,ds.unit||'');
+  } else if(builderChart==='scatter'){
+    if(ds.type==='scatter') drawFullScatter(ctx,ds.x,ds.y,colors[0],pad,cw,ch,ds.xl,ds.yl);
+    else if(ds.vals) drawFullScatterFromVals(ctx,ds.vals,colors[0],pad,cw,ch,ds.unit||'');
+    else{const flat=ds.groups.flatMap((g,gi)=>g.vals.map((v,i)=>({x:i+gi*0.3,y:v})));drawFullScatterFromVals(ctx,flat.map(p=>p.y),colors[0],pad,cw,ch,ds.unit||'');}
+  } else if(builderChart==='pie'){
+    const v=ds.vals?ds.vals.slice(0,6):(ds.groups?ds.groups.map(g=>g.vals.length):[1]);
+    const l=ds.labels?ds.labels.slice(0,6):(ds.groups?ds.groups.map(g=>g.name):['A']);
+    drawFullPie(ctx,v,l,colors,W,H);
+  } else if(builderChart==='hist'){
+    const v=ds.vals||(ds.type==='scatter'?ds.y:ds.groups.flatMap(g=>g.vals));
+    drawFullHist(ctx,v,colors[0],pad,cw,ch,ds.unit||'');
+  } else if(builderChart==='box'){
+    if(ds.type==='box') drawFullBox(ctx,ds.groups,colors,pad,cw,ch);
+    else if(ds.vals){drawFullBox(ctx,[{name:ds.name,vals:ds.vals}],colors,pad,cw,ch);}
+    else{const g=[{name:'라인A',vals:ds.x||[]},{name:'라인B',vals:ds.y||[]}];drawFullBox(ctx,g,colors,pad,cw,ch);}
+  }
+}
+
+/* ═══════════════════════════════════════════
+   MINI DRAWING HELPERS
+═══════════════════════════════════════════ */
+function axes(ctx,pad,cw,ch){
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ch);ctx.lineTo(pad.l+cw,pad.t+ch);ctx.stroke();
+}
+function yTicks(ctx,min,max,pad,ch,n=4){
+  ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='9px monospace';ctx.textAlign='right';
+  for(let i=0;i<=n;i++){const v=min+i*(max-min)/n;const y=pad.t+ch*(1-i/n);ctx.fillText(v.toFixed(0),pad.l-3,y+3);}
+}
+function xLabels(ctx,labels,pad,cw,ch,maxShow=6){
+  ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='9px monospace';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(labels.length/maxShow));
+  labels.forEach((l,i)=>{if(i%step===0)ctx.fillText(l,pad.l+i*(cw/labels.length)+cw/labels.length/2,pad.t+ch+13);});
+}
+
+function drawMiniBar(ctx,vals,labels,colors,pad,cw,ch){
+  const mx=Math.max(...vals)*1.1;const n=vals.length;const bW=cw/n*0.7;
+  axes(ctx,pad,cw,ch);
+  vals.forEach((v,i)=>{
+    const x=pad.l+i*(cw/n)+cw/n*0.15;const h=v/mx*ch;
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();ctx.roundRect(x,pad.t+ch-h,bW,h,2);ctx.fill();
+  });
+  xLabels(ctx,labels,pad,cw,ch,6);
+}
+function drawMiniLine(ctx,vals,color,pad,cw,ch){
+  const mn=Math.min(...vals)*0.95,mx=Math.max(...vals)*1.05;
+  axes(ctx,pad,cw,ch);
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
+  vals.forEach((v,i)=>{const x=pad.l+i/(vals.length-1)*cw;const y=pad.t+ch*(1-(v-mn)/(mx-mn));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  ctx.fillStyle=color;
+  vals.forEach((v,i)=>{const x=pad.l+i/(vals.length-1)*cw;const y=pad.t+ch*(1-(v-mn)/(mx-mn));ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();});
+}
+function drawMiniScatter(ctx,pad,cw,ch,color){
+  axes(ctx,pad,cw,ch);
+  ctx.fillStyle=color;
+  for(let i=0;i<20;i++){const x=pad.l+Math.random()*cw;const y=pad.t+Math.random()*ch;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();}
+}
+function drawMiniScatterData(ctx,data,color,pad,cw,ch){
+  const xs=data.map(p=>p.x),ys=data.map(p=>p.y);
+  const xmn=Math.min(...xs),xmx=Math.max(...xs),ymn=Math.min(...ys)*0.9,ymx=Math.max(...ys)*1.1;
+  axes(ctx,pad,cw,ch);ctx.fillStyle=color;
+  data.forEach(p=>{const x=pad.l+(p.x-xmn)/(xmx-xmn)*cw;const y=pad.t+ch*(1-(p.y-ymn)/(ymx-ymn));ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();});
+}
+function drawMiniScatterFromVals(ctx,vals,color,pad,cw,ch){
+  const mn=Math.min(...vals)*0.9,mx=Math.max(...vals)*1.1;
+  axes(ctx,pad,cw,ch);ctx.fillStyle=color;
+  vals.forEach((v,i)=>{const x=pad.l+i/(vals.length-1)*cw;const y=pad.t+ch*(1-(v-mn)/(mx-mn));ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();});
+}
+function drawMiniPie(ctx,vals,colors,W,H){
+  const total=vals.reduce((a,b)=>a+b,0);const cx=W/2,cy=H/2,r=Math.min(W,H)*0.38;
+  let angle=-Math.PI/2;
+  vals.forEach((v,i)=>{const slice=v/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle=ctx.fillStyle.replace('0.8','0.3');ctx.lineWidth=1;ctx.stroke();angle+=slice;});
+}
+function drawMiniHist(ctx,pad,cw,ch,color){
+  const n=8;const bW=cw/n*0.85;
+  const heights=[0.3,0.55,0.75,0.9,0.85,0.65,0.4,0.2];
+  axes(ctx,pad,cw,ch);
+  heights.forEach((h,i)=>{const x=pad.l+i*(cw/n)+cw/n*0.075;ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,pad.t+ch*(1-h),bW,ch*h,2);ctx.fill();});
+}
+function drawMiniHistVals(ctx,vals,color,pad,cw,ch){
+  const nB=8;const mn=Math.min(...vals),mx=Math.max(...vals);const bSize=(mx-mn)/nB;
+  const bins=new Array(nB).fill(0);vals.forEach(v=>{const i=Math.min(nB-1,Math.floor((v-mn)/bSize));bins[i]++;});
+  const maxB=Math.max(...bins);
+  const bW=cw/nB*0.85;
+  axes(ctx,pad,cw,ch);
+  bins.forEach((cnt,i)=>{if(!cnt)return;const x=pad.l+i*(cw/nB)+cw/nB*0.075;const h=cnt/maxB*ch;ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,pad.t+ch-h,bW,h,2);ctx.fill();});
+}
+function drawMiniBox(ctx,pad,cw,ch,colors){
+  const groups=[[20,30,40,50,60],[35,45,55,65,75],[55,65,75,85,95]];
+  const mn=15,mx=100;const n=groups.length;const bW=cw/n*0.4;
+  axes(ctx,pad,cw,ch);
+  const toY=v=>pad.t+ch*(1-(v-mn)/(mx-mn));
+  groups.forEach((g,i)=>{
+    const x=pad.l+(i+0.5)*(cw/n);
+    ctx.strokeStyle=colors[i%colors.length];ctx.fillStyle=colors[i%colors.length].replace('0.8','0.15');ctx.lineWidth=1.5;
+    ctx.fillRect(x-bW/2,toY(g[3]),bW,toY(g[1])-toY(g[3]));ctx.strokeRect(x-bW/2,toY(g[3]),bW,toY(g[1])-toY(g[3]));
+    ctx.beginPath();ctx.moveTo(x-bW/2,toY(g[2]));ctx.lineTo(x+bW/2,toY(g[2]));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x,toY(g[1]));ctx.lineTo(x,toY(g[4]));ctx.moveTo(x,toY(g[3]));ctx.lineTo(x,toY(g[0]));ctx.stroke();
+  });
+}
+function drawMiniBoxVals(ctx,vals,color,pad,cw,ch){
+  const sorted=[...vals].sort((a,b)=>a-b);const n=sorted.length;
+  const q1=sorted[Math.floor(n*0.25)],med=sorted[Math.floor(n*0.5)],q3=sorted[Math.floor(n*0.75)];
+  const mn=sorted[0]*0.95,mx=sorted[n-1]*1.05;
+  const toY=v=>pad.t+ch*(1-(v-mn)/(mx-mn));
+  axes(ctx,pad,cw,ch);
+  const x=pad.l+cw/2,bW=cw*0.4;
+  ctx.strokeStyle=color;ctx.fillStyle=color.replace('0.8','0.15');ctx.lineWidth=1.5;
+  ctx.fillRect(x-bW/2,toY(q3),bW,toY(q1)-toY(q3));ctx.strokeRect(x-bW/2,toY(q3),bW,toY(q1)-toY(q3));
+  ctx.beginPath();ctx.moveTo(x-bW/2,toY(med));ctx.lineTo(x+bW/2,toY(med));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,toY(q1));ctx.lineTo(x,toY(mn));ctx.moveTo(x,toY(q3));ctx.lineTo(x,toY(mx));ctx.stroke();
+}
+function drawMiniArea(ctx,pad,cw,ch,color){
+  const vals=[40,55,48,72,65,80,74,88,82,95];
+  const mn=35,mx=100;
+  axes(ctx,pad,cw,ch);
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t+ch);
+  vals.forEach((v,i)=>{const x=pad.l+i/(vals.length-1)*cw;const y=pad.t+ch*(1-(v-mn)/(mx-mn));ctx.lineTo(x,y);});
+  ctx.lineTo(pad.l+cw,pad.t+ch);ctx.closePath();
+  ctx.fillStyle=color.replace('0.8','0.2');ctx.fill();
+  ctx.beginPath();vals.forEach((v,i)=>{const x=pad.l+i/(vals.length-1)*cw;const y=pad.t+ch*(1-(v-mn)/(mx-mn));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+}
+function drawMiniHeatmap(ctx,pad,cw,ch){
+  const n=5;const cS=Math.min(cw,ch)/n;
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+    const v=r===c?1:Math.random()*0.8-0.4;
+    const alpha=Math.abs(v);
+    ctx.fillStyle=v>0?`rgba(59,130,246,${alpha*0.9})`:`rgba(239,68,68,${alpha*0.9})`;
+    ctx.fillRect(pad.l+c*cS,pad.t+r*cS,cS-2,cS-2);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FULL-SIZE DRAWING (BUILDER)
+═══════════════════════════════════════════ */
+function grid(ctx,min,max,pad,cw,ch,n=5){
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(let i=0;i<=n;i++){const y=pad.t+ch*i/n;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();}
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px monospace';ctx.textAlign='right';
+  for(let i=0;i<=n;i++){const v=max-(max-min)*i/n;const y=pad.t+ch*i/n;ctx.fillText(v.toFixed(1),pad.l-5,y+4);}
+}
+
+function drawFullBar(ctx,vals,labels,colors,pad,cw,ch,unit){
+  const mx=Math.max(...vals)*1.12;
+  grid(ctx,0,mx,pad,cw,ch);
+  axes(ctx,pad,cw,ch);
+  const n=vals.length;const bW=cw/n*0.65;
+  vals.forEach((v,i)=>{
+    const x=pad.l+i*(cw/n)+cw/n*0.175;const h=v/mx*ch;
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();ctx.roundRect(x,pad.t+ch-h,bW,h,3);ctx.fill();
+    if(bW>30){ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText(v+unit,x+bW/2,pad.t+ch-h-5);}
+  });
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px monospace';ctx.textAlign='center';
+  labels.forEach((l,i)=>{ctx.fillText(l,pad.l+i*(cw/n)+cw/n/2,pad.t+ch+16);});
+}
+
+function drawFullLine(ctx,vals,labels,color,pad,cw,ch,unit){
+  const mn=Math.min(...vals)*0.9,mx=Math.max(...vals)*1.1;
+  grid(ctx,mn,mx,pad,cw,ch);axes(ctx,pad,cw,ch);
+  const toX=i=>pad.l+i/(vals.length-1)*cw;
+  const toY=v=>pad.t+ch*(1-(v-mn)/(mx-mn));
+  // area fill
+  ctx.beginPath();ctx.moveTo(toX(0),pad.t+ch);
+  vals.forEach((v,i)=>ctx.lineTo(toX(i),toY(v)));
+  ctx.lineTo(toX(vals.length-1),pad.t+ch);ctx.closePath();
+  ctx.fillStyle=color.replace('0.8','0.12');ctx.fill();
+  // line
+  ctx.beginPath();vals.forEach((v,i)=>{i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v));});
+  ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.stroke();
+  // dots
+  ctx.fillStyle=color;
+  vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),4,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px monospace';ctx.textAlign='center';
+  labels.forEach((l,i)=>{ctx.fillText(l,toX(i),pad.t+ch+16);});
+}
+
+function drawFullScatter(ctx,xs,ys,color,pad,cw,ch,xl,yl){
+  const xmn=Math.min(...xs)*0.98,xmx=Math.max(...xs)*1.02;
+  const ymn=Math.min(...ys)*0.9,ymx=Math.max(...ys)*1.1;
+  grid(ctx,ymn,ymx,pad,cw,ch);axes(ctx,pad,cw,ch);
+  const toX=x=>pad.l+(x-xmn)/(xmx-xmn)*cw;
+  const toY=y=>pad.t+ch*(1-(y-ymn)/(ymx-ymn));
+  // regression line
+  const n=xs.length;const xm=xs.reduce((a,b)=>a+b)/n,ym=ys.reduce((a,b)=>a+b)/n;
+  const num=xs.reduce((a,x,i)=>a+(x-xm)*(ys[i]-ym),0);
+  const den=xs.reduce((a,x)=>a+(x-xm)**2,0);
+  const slope=num/den,intercept=ym-slope*xm;
+  ctx.strokeStyle='rgba(245,158,11,0.6)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(toX(xmn),toY(slope*xmn+intercept));ctx.lineTo(toX(xmx),toY(slope*xmx+intercept));ctx.stroke();ctx.setLineDash([]);
+  // points
+  ctx.fillStyle=color;
+  xs.forEach((x,i)=>{ctx.beginPath();ctx.arc(toX(x),toY(ys[i]),4,0,Math.PI*2);ctx.fill();});
+  // axis labels
+  ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText(xl,pad.l+cw/2,pad.t+ch+34);
+  ctx.save();ctx.translate(12,pad.t+ch/2);ctx.rotate(-Math.PI/2);ctx.fillText(yl,0,0);ctx.restore();
+  // r value
+  const r=num/Math.sqrt(den*ys.reduce((a,y)=>a+(y-ym)**2,0));
+  ctx.fillStyle='rgba(245,158,11,0.85)';ctx.font='bold 12px monospace';ctx.textAlign='left';
+  ctx.fillText(`r = ${r.toFixed(3)}`,pad.l+8,pad.t+18);
+}
+
+function drawFullScatterFromVals(ctx,vals,color,pad,cw,ch,unit){
+  const n=vals.length;const mn=Math.min(...vals)*0.9,mx=Math.max(...vals)*1.1;
+  grid(ctx,mn,mx,pad,cw,ch);axes(ctx,pad,cw,ch);
+  ctx.fillStyle=color;
+  vals.forEach((v,i)=>{const x=pad.l+i/(n-1)*cw;const y=pad.t+ch*(1-(v-mn)/(mx-mn));ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();});
+}
+
+function drawFullPie(ctx,vals,labels,colors,W,H){
+  const total=vals.reduce((a,b)=>a+b,0);
+  const cx=W/2,cy=H/2-10,r=Math.min(W,H)*0.35,ir=r*0.5;
+  let angle=-Math.PI/2;
+  vals.forEach((v,i)=>{
+    const slice=v/total*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];ctx.fill();
+    ctx.strokeStyle='rgba(7,9,15,0.5)';ctx.lineWidth=2;ctx.stroke();
+    // label
+    const mid=angle+slice/2;const lx=cx+Math.cos(mid)*(r*0.72);const ly=cy+Math.sin(mid)*(r*0.72);
+    ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText((v/total*100).toFixed(1)+'%',lx,ly+4);
+    angle+=slice;
+  });
+  // donut hole
+  ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);ctx.fillStyle='#07090f';ctx.fill();
+  // legend
+  ctx.font='11px sans-serif';ctx.textAlign='left';
+  labels.forEach((l,i)=>{
+    const lx=pad_left=20,ly=H-20-i*18;
+    ctx.fillStyle=colors[i%colors.length];ctx.fillRect(lx,ly-8,10,10);
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText(l,lx+14,ly);
+  });
+}
+
+function drawFullHist(ctx,vals,color,pad,cw,ch,unit){
+  const mn=Math.min(...vals),mx=Math.max(...vals);const nB=12;const bSize=(mx-mn)/nB;
+  const bins=new Array(nB).fill(0);vals.forEach(v=>{const i=Math.min(nB-1,Math.floor((v-mn)/bSize));bins[i]++;});
+  const maxB=Math.max(...bins);
+  grid(ctx,0,maxB,pad,cw,ch);axes(ctx,pad,cw,ch);
+  const bW=cw/nB*0.88;
+  bins.forEach((cnt,i)=>{
+    const x=pad.l+i*(cw/nB)+cw/nB*0.06;const h=cnt/maxB*ch;
+    ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,pad.t+ch-h,bW,h,3);ctx.fill();
+    ctx.strokeStyle=color.replace('0.8','0.4');ctx.lineWidth=0.5;ctx.strokeRect(x,pad.t+ch-h,bW,h);
+  });
+  // x axis ticks
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='10px monospace';ctx.textAlign='center';
+  for(let i=0;i<=4;i++){const v=mn+i*(mx-mn)/4;ctx.fillText(v.toFixed(1)+unit,pad.l+i*cw/4,pad.t+ch+16);}
+  // mean line
+  const mean=vals.reduce((a,b)=>a+b)/vals.length;
+  const mx2=pad.l+(mean-mn)/(mx-mn)*cw;
+  ctx.setLineDash([5,4]);ctx.strokeStyle='rgba(245,158,11,0.8)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(mx2,pad.t);ctx.lineTo(mx2,pad.t+ch);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(245,158,11,0.85)';ctx.font='bold 11px monospace';ctx.textAlign='left';
+  ctx.fillText(`μ=${mean.toFixed(1)}`,mx2+5,pad.t+16);
+}
+
+function drawFullBox(ctx,groups,colors,pad,cw,ch){
+  const allVals=groups.flatMap(g=>g.vals);
+  const mn=Math.min(...allVals)*0.95,mx=Math.max(...allVals)*1.05;
+  grid(ctx,mn,mx,pad,cw,ch);axes(ctx,pad,cw,ch);
+  const toY=v=>pad.t+ch*(1-(v-mn)/(mx-mn));
+  const n=groups.length;const bW=Math.min(60,cw/n*0.45);
+  groups.forEach((g,gi)=>{
+    const sorted=[...g.vals].sort((a,b)=>a-b);const m=sorted.length;
+    const q1=sorted[Math.floor(m*0.25)],med=sorted[Math.floor(m*0.5)],q3=sorted[Math.floor(m*0.75)];
+    const iqr=q3-q1;const loW=Math.max(sorted[0],q1-1.5*iqr),hiW=Math.min(sorted[m-1],q3+1.5*iqr);
+    const cx=pad.l+(gi+0.5)*(cw/n);
+    const col=colors[gi%colors.length];
+    // whiskers
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(cx,toY(hiW));ctx.lineTo(cx,toY(q3));ctx.moveTo(cx,toY(q1));ctx.lineTo(cx,toY(loW));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-bW/3,toY(hiW));ctx.lineTo(cx+bW/3,toY(hiW));ctx.moveTo(cx-bW/3,toY(loW));ctx.lineTo(cx+bW/3,toY(loW));ctx.stroke();
+    // box
+    ctx.fillStyle=col.replace('0.8','0.15');ctx.strokeStyle=col;ctx.lineWidth=2;
+    ctx.fillRect(cx-bW/2,toY(q3),bW,toY(q1)-toY(q3));ctx.strokeRect(cx-bW/2,toY(q3),bW,toY(q1)-toY(q3));
+    // median
+    ctx.beginPath();ctx.moveTo(cx-bW/2,toY(med));ctx.lineTo(cx+bW/2,toY(med));ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.stroke();
+    // outliers
+    sorted.forEach(v=>{if(v<loW||v>hiW){ctx.beginPath();ctx.arc(cx,toY(v),3.5,0,Math.PI*2);ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();}});
+    // jittered points
+    ctx.fillStyle=col.replace('0.8','0.5');
+    sorted.forEach((v,di)=>{if(v>=loW&&v<=hiW){const jx=cx+((di*17+gi*31+3)%40-20)/40*bW*0.6;ctx.beginPath();ctx.arc(jx,toY(v),2,0,Math.PI*2);ctx.fill();}});
+    // label
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillText(g.name,cx,pad.t+ch+18);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+window.addEventListener('load',()=>{
+  buildGuideGrid();
+  buildMatrix();
+  renderCompare();
+  renderBuilder();
+});
+
+window.addEventListener('resize',()=>{
+  if(document.querySelector('#tab-guide.active')&&selectedChartType) drawGuidePreview(selectedChartType);
+  if(document.querySelector('#tab-compare.active')) renderCompare();
+  if(document.querySelector('#tab-builder.active')) renderBuilder();
+});
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

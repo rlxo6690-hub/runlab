@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV 편집 도구 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="CSV 편집 도구 — DataForge">
+<meta property="og:description" content="빈 행 삭제 · 값 필터 · 날짜 분리 · 차분 · 중복 제거 — CSV 편집 실습 도구">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* ── Header ─────────────────────────────────────── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Page ────────────────────────────────────────── */
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Tabs ────────────────────────────────────────── */
+.stat-tabs{display:flex;border-bottom:1px solid var(--border);margin-top:20px;}
+.stat-tab{padding:14px 24px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;padding-top:24px;}
+.stat-panel.active{display:block;}
+
+/* ── Cards ───────────────────────────────────────── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* ── Layout ──────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.three-col-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+
+/* ── Controls ────────────────────────────────────── */
+.ctrl-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.ctrl-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.ctrl-val{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);min-width:36px;}
+.range-inp{-webkit-appearance:none;width:150px;height:5px;border-radius:3px;background:rgba(37,99,235,.15);outline:none;cursor:pointer;}
+.range-inp::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.sel{background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;cursor:pointer;font-family:inherit;}
+.sel:focus{border-color:var(--accent);}
+
+/* ── Upload ──────────────────────────────────────── */
+.upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:10px;padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.03);position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);}
+
+.file-info{display:none;padding:12px 16px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);border-radius:8px;font-size:12px;color:#065f46;margin-top:12px;line-height:1.8;}
+.file-info.show{display:block;}
+.file-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.file-col-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.file-col-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(37,99,235,.08);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.file-col-tag.ignored{background:rgba(0,0,0,.04);color:var(--dim);border-color:var(--border2);}
+
+/* ── Column Pills ────────────────────────────────── */
+.col-pill-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.col-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;user-select:none;transition:all .2s;color:var(--muted);}
+.col-pill:hover{border-color:rgba(37,99,235,.4);color:var(--text);}
+.col-pill.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.col-pill-check{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;}
+.col-pill.selected .col-pill-check::after{content:'✓';}
+.pill-actions{display:flex;gap:6px;margin-bottom:10px;}
+.pill-action-btn{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.pill-action-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+/* 값 필터 다중 조건 그룹 */
+.val-group{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--card2);}
+.val-group:last-child{margin-bottom:0;}
+.val-group-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.val-group-name{font-size:12px;font-weight:700;color:var(--accent);}
+.val-group-cnt{font-size:11px;color:var(--dim);font-family:'Space Mono',monospace;}
+.val-group-acts{margin-left:auto;display:flex;gap:6px;}
+.colsel-mode{display:inline-flex;gap:14px;align-items:center;margin-right:14px;font-size:12px;color:var(--muted);vertical-align:middle;}
+.colsel-mode label{display:inline-flex;gap:5px;align-items:center;cursor:pointer;}
+.colsel-mode input{accent-color:var(--accent);cursor:pointer;}
+
+/* ── Algorithm buttons ───────────────────────────── */
+.method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.method-btn{padding:10px 6px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;}
+.method-btn:hover{border-color:rgba(37,99,235,.4);}
+.method-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);}
+.method-btn-icon{font-size:16px;margin-bottom:3px;}
+.method-btn-name{font-size:11px;font-weight:700;color:var(--text);}
+.method-btn-sub{font-size:9px;color:var(--muted);margin-top:1px;}
+
+.method-desc-box{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.12);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.7;min-height:80px;}
+.method-desc-icon{font-size:22px;flex-shrink:0;padding-top:2px;}
+.method-desc-body strong{color:var(--text);}
+.method-desc-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin:2px 2px 0 0;}
+.tag-good{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.tag-caution{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.2);}
+.tag-time{background:rgba(37,99,235,.1);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.tag-new{background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.2);}
+
+/* ── Stats ───────────────────────────────────────── */
+.stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.stat-val{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#047857;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+
+/* ── Tables ──────────────────────────────────────── */
+.table-wrap{overflow-x:auto;max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{background:var(--card2);color:var(--accent);padding:7px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0;}
+.data-table td{padding:5px 12px;border-bottom:1px solid var(--border);color:var(--muted);white-space:nowrap;font-family:'Space Mono',monospace;font-size:11px;}
+.data-table tr:hover td{background:rgba(37,99,235,.04);color:var(--text);}
+.data-table td.null-val{color:rgba(220,38,38,.5);font-style:italic;}
+.data-table td.interp-val{color:var(--orange);font-weight:700;}
+.data-table td.ok-val{color:var(--green);}
+
+/* col-summary table */
+.summary-table{width:100%;border-collapse:collapse;font-size:12px;}
+.summary-table th{background:var(--card2);color:var(--accent);padding:7px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:10px;border-bottom:1px solid var(--border);}
+.summary-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--muted);}
+.summary-table tr:last-child td{border-bottom:none;}
+.summary-table .col-name{font-weight:700;color:var(--text);}
+.miss-bar-wrap{width:80px;height:6px;background:rgba(0,0,0,.08);border-radius:3px;display:inline-block;vertical-align:middle;}
+.miss-bar{height:100%;border-radius:3px;background:var(--red);transition:width .3s;}
+
+/* ── Chart ───────────────────────────────────────── */
+.chart-container{position:relative;height:240px;}
+.chart-col-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.chart-col-tab{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.chart-col-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── Merge styles ────────────────────────────────── */
+.merge-file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.merge-file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;font-size:12px;}
+.merge-file-order{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.merge-file-name{font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.merge-file-meta{color:var(--muted);font-size:11px;white-space:nowrap;}
+.merge-file-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:.2s;flex-shrink:0;}
+.merge-file-del:hover{color:var(--red);background:rgba(220,38,38,.08);}
+
+.merge-type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.merge-type-btn{padding:12px 8px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;}
+.merge-type-btn:hover{border-color:rgba(37,99,235,.4);}
+.merge-type-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);}
+.merge-type-icon{font-size:20px;margin-bottom:4px;}
+.merge-type-name{font-size:12px;font-weight:700;color:var(--text);}
+.merge-type-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+.info-block strong{color:var(--text);}
+
+/* ── Misc ────────────────────────────────────────── */
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;}
+.badge-green{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.badge-orange{background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2);}
+.badge-dim{background:rgba(0,0,0,.05);color:var(--dim);border:1px solid var(--border2);}
+
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .stat-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;}
+  .stat-tab{padding:10px 12px;font-size:12px;white-space:nowrap;}
+  .two-col,.three-col-charts{grid-template-columns:1fr;}
+  .method-grid{grid-template-columns:repeat(2,1fr);}
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+  .merge-type-grid{grid-template-columns:repeat(2,1fr);}
+  .sel{font-size:16px;}
+  .btn{min-height:44px;}
+  .range-inp{width:120px;}
+  .method-desc-box{flex-direction:column;gap:8px;}
+}
+
+/* ── Dedup (중복 제거 탭) ─────────────────── */
+.dd-file-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.dd-file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.12);border-radius:9px;font-size:12px;}
+.dd-file-name{font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.dd-file-meta{color:var(--muted);white-space:nowrap;font-family:'Space Mono',monospace;font-size:11px;flex-shrink:0;}
+.dd-file-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:3px 10px;border-radius:5px;min-height:36px;}
+.dd-file-remove:hover{color:var(--red);background:rgba(220,38,38,.08);}
+.dd-opt-group{margin-bottom:18px;}
+.dd-opt-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.dd-radio-row{display:flex;gap:10px;flex-wrap:wrap;}
+.dd-radio{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:8px 14px;border:1px solid var(--border2);border-radius:8px;transition:.15s;min-height:44px;}
+.dd-radio:hover{border-color:var(--accent);background:rgba(37,99,235,.04);}
+.dd-radio input{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;}
+.dd-radio.selected{border-color:var(--accent);background:rgba(37,99,235,.07);color:var(--accent);font-weight:600;}
+.dd-col-selector{display:none;margin-top:12px;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;}
+.dd-col-selector.show{display:block;}
+.dd-col-hint{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.dd-col-tags{display:flex;flex-wrap:wrap;gap:7px;}
+.dd-col-tag{display:flex;align-items:center;gap:5px;padding:6px 11px;border:1px solid var(--border2);border-radius:6px;font-size:12px;cursor:pointer;transition:.15s;user-select:none;}
+.dd-col-tag:hover{border-color:var(--accent);}
+.dd-col-tag input{accent-color:var(--accent);width:13px;height:13px;}
+.dd-col-tag.checked{border-color:var(--accent);background:rgba(37,99,235,.07);color:var(--accent);font-weight:500;}
+.dd-col-empty{font-size:12px;color:var(--muted);padding:5px 0;}
+.dd-col-actions{margin-top:10px;display:flex;gap:8px;}
+.dd-col-btn{font-size:11px;color:var(--accent);background:none;border:1px solid rgba(37,99,235,.3);padding:4px 10px;border-radius:6px;cursor:pointer;}
+.dd-run-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;}
+.dd-run-btn:hover{opacity:.88;}
+.dd-run-btn:disabled{opacity:.45;cursor:not-allowed;}
+.dd-results{display:none;}
+.dd-results.show{display:block;}
+.dd-status{padding:9px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;}
+.dd-status.ok{background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.2);color:#065f46;}
+.dd-status.err{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);color:#7f1d1d;}
+.dd-rcard{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.dd-rhead{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+.dd-rname{font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.dd-rbadge{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:700;flex-shrink:0;}
+.dd-rbadge.ok{background:rgba(5,150,105,.1);color:#065f46;}
+.dd-rbadge.warn{background:rgba(217,119,6,.1);color:#92400e;}
+.dd-rbadge.none{background:rgba(100,116,139,.1);color:var(--muted);}
+.dd-chev{color:var(--muted);font-size:11px;transition:transform .2s;}
+.dd-chev.open{transform:rotate(180deg);}
+.dd-rbody{padding:16px;}
+.dd-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.dd-stat{border-radius:8px;padding:12px 10px;text-align:center;}
+.dd-stat.total{background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);}
+.dd-stat.dups{background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);}
+.dd-stat.clean{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.15);}
+.dd-stat .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.dd-stat .v{font-size:24px;font-weight:800;font-family:'Space Mono',monospace;}
+.dd-stat.total .l,.dd-stat.total .v{color:#4f46e5;}
+.dd-stat.dups .l,.dd-stat.dups .v{color:var(--red);}
+.dd-stat.clean .l,.dd-stat.clean .v{color:var(--green);}
+.dd-stat .s{font-size:10px;color:var(--muted);margin-top:2px;}
+.dd-prev-toggle{font-size:11px;color:var(--accent);cursor:pointer;border:none;background:none;font-family:inherit;padding:0;text-decoration:underline;margin-bottom:10px;}
+.dd-prev-wrap{overflow-x:auto;border:1px solid rgba(220,38,38,.15);border-radius:8px;max-height:200px;overflow-y:auto;display:none;margin-bottom:12px;}
+.dd-prev-wrap.show{display:block;}
+.dd-prev-table{width:100%;border-collapse:collapse;font-size:11px;}
+.dd-prev-table th{position:sticky;top:0;padding:6px 10px;background:rgba(220,38,38,.06);font-size:9px;font-weight:700;color:#991b1b;text-transform:uppercase;border-bottom:1px solid rgba(220,38,38,.15);white-space:nowrap;}
+.dd-prev-table td{padding:5px 10px;border-bottom:1px solid rgba(0,0,0,.04);white-space:nowrap;}
+.dd-dl-one{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--accent);color:#fff;min-height:44px;}
+.dd-dl-one:hover{opacity:.85;}
+.dd-dl-all{width:100%;padding:13px;background:var(--text);border:none;border-radius:9px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;}
+.dd-dl-all:hover{opacity:.85;}
+.dd-dl-all:disabled{opacity:.4;}
+.dd-spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ddspin .7s linear infinite;}
+@keyframes ddspin{to{transform:rotate(360deg)}}
+@media(max-width:640px){
+  .dd-stat-row{grid-template-columns:1fr;}
+  .dd-radio-row{flex-direction:column;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">CSV 편집 도구</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+  <div class="intro-box">
+    <strong>CSV 편집 도구</strong> — 빈 행 삭제 · 값 필터 · 날짜 분리 · 데이터 차분 · 중복 제거를 한곳에서 처리합니다.
+    CSV/XLSX를 업로드하면 모든 처리는 브라우저에서 수행됩니다.
+  </div>
+
+  <div class="stat-tabs">
+    <button class="stat-tab active" onclick="switchTab('blank')">🗑️ 빈 행 삭제</button>
+    <button class="stat-tab" onclick="switchTab('colsel')">🔍 값 필터</button>
+    <button class="stat-tab" onclick="switchTab('date')">📅 날짜 분리</button>
+    <button class="stat-tab" onclick="switchTab('diff')">📉 데이터 차분</button>
+    <button class="stat-tab" onclick="switchTab('dedup')">🧬 중복 제거</button>
+  </div>
+
+  <!-- ══════════════════════ BLANK ROW PANEL ══════════════════════ -->
+  <div id="panel-blank" class="stat-panel active">
+
+    <!-- Step 1: Upload -->
+    <div class="a-card">
+      <div class="a-card-title">① CSV / XLSX 파일 업로드</div>
+      <div class="upload-zone" id="blank-upload-zone">
+        <input type="file" id="blank-file-input" accept=".csv,.tsv,.xlsx,.xls" onchange="handleBlankFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV 또는 XLSX 파일을 드래그하거나 클릭하세요</div>
+        <div class="upload-sub">UTF-8 · EUC-KR 자동 감지 · 행 수 제한 없음 · 쉼표/탭/XLSX 지원</div>
+      </div>
+      <div class="file-info" id="blank-file-info">
+        <div class="file-meta-row">
+          <span id="blank-file-name-lbl" style="font-weight:700;color:#065f46"></span>
+          <span id="blank-file-dim-lbl" style="color:#047857"></span>
+          <button class="btn-outline btn" onclick="clearBlankFile()" style="font-size:10px;padding:3px 10px;margin-left:auto">✕ 제거</button>
+        </div>
+        <div class="file-col-tags" id="blank-col-tags"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Config -->
+    <div id="blank-config" style="display:none">
+      <div class="two-col">
+
+        <!-- Col: deletion mode -->
+        <div class="a-card">
+          <div class="a-card-title">② 삭제 기준</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;transition:.2s" id="blank-mode-label-all">
+              <input type="radio" name="blank-mode" value="all" checked onchange="selectBlankMode('all')" style="margin-top:2px;accent-color:var(--accent)">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">모든 셀이 빈 행만 삭제</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">한 행의 모든 값이 비어 있거나 null인 경우에만 삭제합니다.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;transition:.2s" id="blank-mode-label-any">
+              <input type="radio" name="blank-mode" value="any" onchange="selectBlankMode('any')" style="margin-top:2px;accent-color:var(--accent)">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">하나라도 빈 셀이 있는 행 삭제</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">값이 하나라도 비어 있는 행을 모두 삭제합니다.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;transition:.2s" id="blank-mode-label-cols">
+              <input type="radio" name="blank-mode" value="cols" onchange="selectBlankMode('cols')" style="margin-top:2px;accent-color:var(--accent)">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">특정 컬럼이 빈 행 삭제</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px">아래에서 선택한 컬럼 중 하나라도 빈 경우 삭제합니다.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Col: column selection (visible only in 'cols' mode) -->
+        <div class="a-card" id="blank-col-select-card" style="display:none">
+          <div class="a-card-title">
+            ③ 기준 컬럼 선택
+            <span id="blank-sel-count-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--dim)"></span>
+          </div>
+          <div class="pill-actions">
+            <button class="pill-action-btn" onclick="blankSelectAllCols()">전체 선택</button>
+            <button class="pill-action-btn" onclick="blankClearAllCols()">전체 해제</button>
+          </div>
+          <div class="col-pill-grid" id="blank-col-pill-grid"></div>
+        </div>
+
+      </div>
+
+      <div style="text-align:right;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="runBlank()">빈 행 삭제 실행 ▶</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="blank-result" style="display:none">
+      <div class="stat-grid-4" id="blank-stats"></div>
+
+      <div class="a-card">
+        <div class="a-card-title">
+          결과 미리보기
+          <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--dim)">빨간 행 = 삭제됨 · 최대 100행 표시</span>
+        </div>
+        <div class="table-wrap" style="max-height:360px"><table class="data-table" id="blank-table"></table></div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="downloadBlank()">⬇ 정리된 CSV 다운로드</button>
+          <span style="font-size:11px;color:var(--muted)" id="blank-dl-info"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════ VALUE FILTER PANEL ══════════════════════ -->
+  <div id="panel-colsel" class="stat-panel">
+
+    <!-- Step 1: Upload -->
+    <div class="a-card">
+      <div class="a-card-title">① CSV / XLSX 파일 업로드</div>
+      <div class="upload-zone" id="colsel-upload-zone">
+        <input type="file" id="colsel-file-input" accept=".csv,.tsv,.xlsx,.xls" onchange="handleColselFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV 또는 XLSX 파일을 드래그하거나 클릭하세요</div>
+        <div class="upload-sub">UTF-8 · EUC-KR 자동 감지 · 행 수 제한 없음 · 쉼표/탭/XLSX 지원</div>
+      </div>
+      <div class="file-info" id="colsel-file-info">
+        <div class="file-meta-row">
+          <span id="colsel-file-name-lbl" style="font-weight:700;color:#065f46"></span>
+          <span id="colsel-file-dim-lbl" style="color:#047857"></span>
+          <button class="btn-outline btn" onclick="clearColselFile()" style="font-size:10px;padding:3px 10px;margin-left:auto">✕ 제거</button>
+        </div>
+        <div class="file-col-tags" id="colsel-col-tags"></div>
+      </div>
+    </div>
+
+    <!-- Step 2 & 3: Filter column + values (side by side) -->
+    <div id="colsel-config" style="display:none">
+      <div class="two-col">
+
+        <!-- Col: pick filter columns (multi) -->
+        <div class="a-card">
+          <div class="a-card-title">② 필터 기준 컬럼 (다중 선택)</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+            값을 기준으로 행을 필터링할 컬럼을 선택하세요. <strong>여러 컬럼을 동시에 선택</strong>하면 다중 조건 필터가 됩니다.<br>
+            선택한 컬럼마다 <strong>유지할 값</strong>을 오른쪽에서 지정합니다.
+          </div>
+          <div class="col-pill-grid" id="colsel-col-pill-grid"></div>
+        </div>
+
+        <!-- Col: pick values to keep (per column) -->
+        <div class="a-card">
+          <div class="a-card-title">
+            ③ 컬럼별 유지할 값 선택
+            <span id="colsel-val-count-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--dim)"></span>
+          </div>
+          <div id="colsel-val-empty" style="font-size:12px;color:var(--dim);padding:8px 0;">
+            ← 기준 컬럼을 1개 이상 선택해주세요
+          </div>
+          <div id="colsel-val-body" style="display:none">
+            <div id="colsel-val-groups"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="text-align:right;margin-bottom:16px">
+        <span class="colsel-mode" id="colsel-mode-row" style="display:none">
+          <span style="font-weight:700;color:var(--text);">조건 결합</span>
+          <label><input type="radio" name="colsel-mode" value="and" checked> 모든 조건 만족 (AND)</label>
+          <label><input type="radio" name="colsel-mode" value="or"> 하나라도 만족 (OR)</label>
+        </span>
+        <button class="btn btn-primary" onclick="runColsel()">필터 실행 ▶</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="colsel-result" style="display:none">
+      <div class="stat-grid-4" id="colsel-stats"></div>
+      <div class="a-card">
+        <div class="a-card-title">
+          결과 미리보기
+          <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--dim)">빨간 행 = 삭제됨 · 최대 100행 표시</span>
+        </div>
+        <div class="table-wrap" style="max-height:360px"><table class="data-table" id="colsel-table"></table></div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="downloadColsel()">⬇ 필터 결과 CSV 다운로드</button>
+          <span style="font-size:11px;color:var(--muted)" id="colsel-dl-info"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════ DATE SPLIT PANEL ══════════════════════ -->
+  <div id="panel-date" class="stat-panel">
+
+    <!-- Step 1: Upload -->
+    <div class="a-card">
+      <div class="a-card-title">① CSV / XLSX 파일 업로드</div>
+      <div class="upload-zone" id="date-upload-zone">
+        <input type="file" id="date-file-input" accept=".csv,.tsv,.xlsx,.xls" onchange="handleDateFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV 또는 XLSX 파일을 드래그하거나 클릭하세요</div>
+        <div class="upload-sub">UTF-8 · EUC-KR 자동 감지 · 날짜 컬럼 자동 탐지 · XLSX 지원</div>
+      </div>
+      <div class="file-info" id="date-file-info">
+        <div class="file-meta-row">
+          <span id="date-file-name-lbl" style="font-weight:700;color:#065f46"></span>
+          <span id="date-file-dim-lbl" style="color:#047857"></span>
+          <button class="btn-outline btn" onclick="clearDateFile()" style="font-size:10px;padding:3px 10px;margin-left:auto">✕ 제거</button>
+        </div>
+        <div id="date-detected-info" style="margin-top:8px;font-size:11px;color:#047857"></div>
+      </div>
+    </div>
+
+    <!-- Step 2 & 3: column selection + options -->
+    <div id="date-config" style="display:none">
+      <div class="two-col">
+
+        <!-- Col: date columns -->
+        <div class="a-card">
+          <div class="a-card-title">
+            ② 날짜 컬럼 선택
+            <span id="date-col-count-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--dim)"></span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(37,99,235,.25);border:1px solid var(--accent);margin-right:4px;vertical-align:middle"></span>파란색 = 날짜 형식 자동 감지됨
+          </div>
+          <div class="pill-actions">
+            <button class="pill-action-btn" onclick="dateColSelectAll()">전체 선택</button>
+            <button class="pill-action-btn" onclick="dateColClearAll()">전체 해제</button>
+          </div>
+          <div class="col-pill-grid" id="date-col-pill-grid"></div>
+        </div>
+
+        <!-- Col: split options -->
+        <div class="a-card">
+          <div class="a-card-title">③ 분리 옵션</div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">생성할 컬럼</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px" id="date-part-checks">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="date-chk-year"  checked style="accent-color:var(--accent)"> 년 (year)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="date-chk-month" checked style="accent-color:var(--accent)"> 월 (month)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="date-chk-day"   checked style="accent-color:var(--accent)"> 일 (day)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="date-chk-hour"  style="accent-color:var(--accent)"> 시 (hour) — 시각 포함 시
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="date-chk-min"   style="accent-color:var(--accent)"> 분 (minute) — 시각 포함 시
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="date-chk-sec"   style="accent-color:var(--accent)"> 초 (second) — 시각 포함 시
+            </label>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">원본 컬럼</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;transition:.15s" id="date-keep-label">
+              <input type="radio" name="date-orig" value="keep" checked onchange="updateDateOrigUI()" style="margin-top:1px;accent-color:var(--accent)">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">원본 컬럼 유지</div>
+                <div style="font-size:10px;color:var(--muted)">날짜 문자열 컬럼을 그대로 남깁니다</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;transition:.15s" id="date-drop-label">
+              <input type="radio" name="date-orig" value="drop" onchange="updateDateOrigUI()" style="margin-top:1px;accent-color:var(--accent)">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">원본 컬럼 삭제</div>
+                <div style="font-size:10px;color:var(--muted)">분리 후 원본 날짜 컬럼을 제거합니다</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="runDate()">날짜 분리 실행 ▶</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="date-result" style="display:none">
+      <div class="stat-grid-4" id="date-stats"></div>
+      <div class="a-card">
+        <div class="a-card-title">
+          결과 미리보기
+          <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--dim)">주황색 = 분리 생성된 컬럼</span>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="date-table"></table></div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="downloadDate()">⬇ 결과 CSV 다운로드</button>
+          <span style="font-size:11px;color:var(--muted)" id="date-dl-info"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════ DIFF PANEL ══════════════════════ -->
+  <div id="panel-diff" class="stat-panel">
+
+    <!-- Step 1: Upload -->
+    <div class="a-card">
+      <div class="a-card-title">① CSV / XLSX 파일 업로드</div>
+      <div class="upload-zone" id="diff-upload-zone">
+        <input type="file" id="diff-file-input" accept=".csv,.tsv,.xlsx,.xls" onchange="handleDiffFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV 또는 XLSX 파일을 드래그하거나 클릭하세요</div>
+        <div class="upload-sub">UTF-8 · EUC-KR 자동 감지 · 숫자 컬럼 자동 탐지</div>
+      </div>
+      <div class="file-info" id="diff-file-info">
+        <div class="file-meta-row">
+          <span id="diff-file-name-lbl" style="font-weight:700;color:#065f46"></span>
+          <span id="diff-file-dim-lbl" style="color:#047857"></span>
+          <button class="btn-outline btn" onclick="clearDiffFile()" style="font-size:10px;padding:3px 10px;margin-left:auto">✕ 제거</button>
+        </div>
+        <div class="file-col-tags" id="diff-col-tags"></div>
+      </div>
+    </div>
+
+    <!-- Step 2 & 3: column selection + options -->
+    <div id="diff-config" style="display:none">
+      <div class="two-col">
+
+        <!-- Col: column selection -->
+        <div class="a-card">
+          <div class="a-card-title">
+            ② 차분할 컬럼 선택
+            <span id="diff-col-count-lbl" style="font-weight:400;text-transform:none;font-size:11px;color:var(--dim)"></span>
+          </div>
+          <div class="pill-actions">
+            <button class="pill-action-btn" onclick="diffColSelectAll()">전체 선택</button>
+            <button class="pill-action-btn" onclick="diffColClearAll()">전체 해제</button>
+          </div>
+          <div class="col-pill-grid" id="diff-col-pill-grid"></div>
+        </div>
+
+        <!-- Col: options -->
+        <div class="a-card">
+          <div class="a-card-title">③ 차분 옵션</div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">차분 차수</div>
+          <div style="display:flex;gap:16px;margin-bottom:16px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
+              <input type="radio" name="diff-order" value="1" checked style="accent-color:var(--accent)"> 1차 차분
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
+              <input type="radio" name="diff-order" value="2" style="accent-color:var(--accent)"> 2차 차분
+            </label>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">계절 차분 주기</div>
+          <select class="sel" id="diff-seasonal" style="margin-bottom:16px;width:100%">
+            <option value="0">없음 (일반 차분)</option>
+            <option value="4">4 (분기 데이터)</option>
+            <option value="7">7 (요일 주기)</option>
+            <option value="12">12 (월별 계절성)</option>
+            <option value="24">24 (시간 주기)</option>
+            <option value="52">52 (주별 연간)</option>
+          </select>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">패널 차분 (ID별 그룹)</div>
+          <div style="margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="diff-panel-mode" onchange="toggleDiffPanelMode()" style="accent-color:var(--accent)"> ID별로 각각 차분 (패널 데이터)
+            </label>
+          </div>
+          <div id="diff-panel-opts" style="display:none;padding:12px 14px;background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.15);border-radius:8px;margin-bottom:16px">
+            <div style="margin-bottom:10px">
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">ID 컬럼 <span style="color:var(--red)">*</span></div>
+              <select class="sel" id="diff-panel-id-col" style="width:100%"></select>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">그룹 경계마다 차분이 초기화됩니다</div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">정렬 기준 컬럼 (선택)</div>
+              <select class="sel" id="diff-panel-sort-col" style="width:100%">
+                <option value="">정렬 없음 (데이터 순서 유지)</option>
+              </select>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">연도·날짜 컬럼을 선택하면 ID별로 오름차순 정렬 후 차분합니다</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">결과 처리</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="diff-keep-orig" style="accent-color:var(--accent)"> 원본 컬럼 유지 (차분 컬럼과 함께 출력)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px">
+              <input type="checkbox" id="diff-drop-nan" checked style="accent-color:var(--accent)"> 차분으로 생긴 NaN 행 제거
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="runDiff()">차분 실행 ▶</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="diff-result" style="display:none">
+      <div class="stat-grid-4" id="diff-stats"></div>
+      <div class="a-card">
+        <div class="a-card-title">
+          결과 미리보기
+          <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--dim)">주황색 = 차분 컬럼</span>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="diff-table"></table></div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="downloadDiff('csv')">⬇ CSV 다운로드</button>
+          <button class="btn btn-primary" onclick="downloadDiff('xlsx')" style="background:var(--accent2)">⬇ XLSX 다운로드</button>
+          <span style="font-size:11px;color:var(--muted)" id="diff-dl-info"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════ DEDUP PANEL ══════════════════════ -->
+  <div id="panel-dedup" class="stat-panel">
+
+    <div class="a-card">
+      <div class="a-card-title">STEP 1 · 파일 업로드 — 여러 개 동시 선택 가능</div>
+      <div class="upload-zone" id="dedup-upload-zone">
+        <input type="file" id="dd-file-input" accept=".csv,.tsv,.txt,.xlsx,.xls" multiple onchange="ddAddFiles(this.files); this.value='';">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV / XLSX 파일을 드래그하거나 클릭해 선택</div>
+        <div class="upload-sub">여러 파일 동시 선택 가능 · UTF-8/EUC-KR 자동 감지 · 헤더 행 포함</div>
+      </div>
+      <div class="dd-file-list" id="dd-file-list"></div>
+    </div>
+
+    <div class="a-card">
+      <div class="a-card-title">STEP 2 · 옵션</div>
+
+      <div class="dd-opt-group">
+        <div class="dd-opt-label">처리 방식</div>
+        <div class="dd-radio-row">
+          <label class="dd-radio selected" id="dd-op-within-lbl">
+            <input type="radio" name="ddOp" value="within" checked onchange="ddOnOpChange()">
+            파일 내 중복 제거 — 각 파일에서 중복 행 삭제
+          </label>
+          <label class="dd-radio" id="dd-op-cross-lbl">
+            <input type="radio" name="ddOp" value="cross" onchange="ddOnOpChange()">
+            두 파일 공통 제거 — 양쪽에 모두 있는 행 제외 (파일 2개 필요)
+          </label>
+        </div>
+      </div>
+
+      <div class="dd-opt-group">
+        <div class="dd-opt-label">중복 판정 기준</div>
+        <div class="dd-radio-row">
+          <label class="dd-radio selected" id="dd-mode-all-lbl">
+            <input type="radio" name="ddMode" value="all" checked onchange="ddOnModeChange()">
+            전체 컬럼 일치 (완전 동일한 행)
+          </label>
+          <label class="dd-radio" id="dd-mode-sel-lbl">
+            <input type="radio" name="ddMode" value="select" onchange="ddOnModeChange()">
+            선택 컬럼 기준 (키 컬럼 지정)
+          </label>
+        </div>
+        <div class="dd-col-selector" id="dd-col-selector">
+          <div class="dd-col-hint">체크한 컬럼 값이 모두 같으면 중복(공통)으로 판정합니다. 해당 컬럼이 없는 파일은 전체 컬럼 기준으로 처리됩니다.</div>
+          <div class="dd-col-tags" id="dd-col-tags"><span class="dd-col-empty">파일을 먼저 업로드하세요.</span></div>
+          <div class="dd-col-actions">
+            <button class="dd-col-btn" onclick="ddColSelectAll()">전체 선택</button>
+            <button class="dd-col-btn" onclick="ddColSelectNone()">전체 해제</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dd-opt-group" id="dd-keep-group">
+        <div class="dd-opt-label">중복 발견 시 유지할 행</div>
+        <div class="dd-radio-row">
+          <label class="dd-radio selected" id="dd-keep-first-lbl">
+            <input type="radio" name="ddKeep" value="first" checked onchange="ddOnKeepChange()">
+            첫 번째 행 유지
+          </label>
+          <label class="dd-radio" id="dd-keep-last-lbl">
+            <input type="radio" name="ddKeep" value="last" onchange="ddOnKeepChange()">
+            마지막 행 유지
+          </label>
+        </div>
+      </div>
+
+      <button class="dd-run-btn" id="dd-run-btn" onclick="ddRun()" disabled>🧬 실행</button>
+    </div>
+
+    <div class="dd-results" id="dd-results">
+      <div class="a-card">
+        <div class="a-card-title">처리 결과</div>
+        <div id="dd-global-status"></div>
+        <div id="dd-result-cards"></div>
+      </div>
+      <div class="a-card">
+        <div class="a-card-title">전체 다운로드</div>
+        <button class="dd-dl-all" id="dd-dl-all" onclick="ddDownloadAll()">⬇ 전체 파일 ZIP 다운로드</button>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+// ════════════════════════════════════════════════════
+// TAB SWITCH (+ 해시 딥링크: /prep/edit#colsel 형태로 탭 직접 연결)
+// ════════════════════════════════════════════════════
+const TAB_IDS = ['blank','colsel','date','diff','dedup'];
+function switchTab(name) {
+  TAB_IDS.forEach((n,i) => {
+    document.querySelectorAll('.stat-tab')[i].classList.toggle('active', n===name);
+    document.getElementById('panel-'+n).classList.toggle('active', n===name);
+  });
+  if (history.replaceState) history.replaceState(null, '', '#'+name);
+}
+
+// ════════════════════════════════════════════════════
+// CSV PARSING (shared)
+// ════════════════════════════════════════════════════
+function decodeFile(buf) {
+  const b = new Uint8Array(buf);
+  const hasBom = b[0]===0xEF && b[1]===0xBB && b[2]===0xBF;
+  let text = new TextDecoder('utf-8').decode(buf);
+  if (!hasBom && text.includes('\uFFFD')) {
+    try { const e=new TextDecoder('euc-kr').decode(buf); if(!e.includes('\uFFFD')) text=e; } catch(_){}
+  }
+  return text;
+}
+
+function splitLine(line, sep) {
+  const res=[]; let cur='', inQ=false;
+  for (let i=0; i<line.length; i++) {
+    const c=line[i];
+    if (c==='"') { if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+    else if (c===sep&&!inQ) { res.push(cur.trim()); cur=''; }
+    else cur+=c;
+  }
+  res.push(cur.trim()); return res;
+}
+
+const MISSING_VALS = new Set(['','na','null','nan','-','n/a','none','#n/a','#na']);
+function isMissing(v) { return MISSING_VALS.has((v||'').trim().toLowerCase()); }
+
+// ════════════════════════════════════════════════════
+// INTERP FILE HANDLING
+// ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+function fmtNum(v) {
+  if (v === null || v === undefined) return '';
+  if (!Number.isFinite(v)) return String(v);
+  // Show up to 4 significant decimal places, trimming trailing zeros
+  return parseFloat(v.toFixed(4)).toString();
+}
+
+function escapeCSV(s) {
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g,'""')}"`;
+  return s;
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function triggerDownload(csv, filename) {
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+// ════════════════════════════════════════════════════
+// BLANK ROW DELETION
+// ════════════════════════════════════════════════════
+let _blankFile = null;   // { name, fileName, headers, rows }
+let _blankMode = 'all';  // 'all' | 'any' | 'cols'
+let _blankSelCols = new Set();
+let _blankResult = null; // { keptRows, removedIdxs }
+
+function handleBlankFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data.length) { alert('빈 파일입니다.'); return; }
+      const headers = data[0].map(String);
+      const rows = data.slice(1).map(r => headers.map((_, i) => r[i] !== undefined ? String(r[i]) : ''));
+      setupBlankData(file, headers, rows);
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeFile(e.target.result);
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { alert('2행 이상 필요합니다.'); return; }
+    const sep = lines[0].includes('\t') ? '\t' : ',';
+    const headers = splitLine(lines[0], sep);
+    const rows = lines.slice(1).map(l => splitLine(l, sep));
+    setupBlankData(file, headers, rows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setupBlankData(file, headers, rows) {
+    _blankFile = { name: file.name.replace(/\.[^.]+$/, ''), fileName: file.name, headers, rows };
+    _blankSelCols.clear();
+    headers.forEach((_, i) => _blankSelCols.add(i));
+
+    const fi = document.getElementById('blank-file-info');
+    fi.classList.add('show');
+    document.getElementById('blank-file-name-lbl').textContent = `📄 ${file.name}`;
+    document.getElementById('blank-file-dim-lbl').textContent =
+      `${rows.length.toLocaleString()}행 × ${headers.length}열`;
+    document.getElementById('blank-col-tags').innerHTML =
+      headers.map(h => `<span class="file-col-tag">${h}</span>`).join('');
+
+    document.getElementById('blank-config').style.display = '';
+    document.getElementById('blank-result').style.display = 'none';
+    renderBlankColPills();
+    updateBlankModeUI();
+}
+
+function clearBlankFile() {
+  _blankFile = null;
+  _blankSelCols.clear();
+  document.getElementById('blank-file-info').classList.remove('show');
+  document.getElementById('blank-file-input').value = '';
+  document.getElementById('blank-config').style.display = 'none';
+  document.getElementById('blank-result').style.display = 'none';
+}
+
+function selectBlankMode(mode) {
+  _blankMode = mode;
+  updateBlankModeUI();
+}
+
+function updateBlankModeUI() {
+  const showCols = _blankMode === 'cols';
+  document.getElementById('blank-col-select-card').style.display = showCols ? '' : 'none';
+  // highlight active label
+  ['all','any','cols'].forEach(m => {
+    const lbl = document.getElementById(`blank-mode-label-${m}`);
+    if (lbl) lbl.style.borderColor = m === _blankMode ? 'var(--accent)' : 'var(--border2)';
+    if (lbl) lbl.style.background = m === _blankMode ? 'rgba(37,99,235,.05)' : '';
+  });
+}
+
+function renderBlankColPills() {
+  if (!_blankFile) return;
+  const { headers } = _blankFile;
+  const grid = document.getElementById('blank-col-pill-grid');
+  grid.innerHTML = headers.map((h, i) => {
+    const sel = _blankSelCols.has(i);
+    return `<div class="col-pill${sel ? ' selected' : ''}" onclick="toggleBlankCol(${i})">
+      <div class="col-pill-check"></div>
+      <span>${h}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('blank-sel-count-lbl').textContent =
+    `${_blankSelCols.size} / ${headers.length}개 선택`;
+}
+
+function toggleBlankCol(i) {
+  if (_blankSelCols.has(i)) _blankSelCols.delete(i);
+  else _blankSelCols.add(i);
+  renderBlankColPills();
+}
+function blankSelectAllCols() { _blankFile.headers.forEach((_,i) => _blankSelCols.add(i)); renderBlankColPills(); }
+function blankClearAllCols()  { _blankSelCols.clear(); renderBlankColPills(); }
+
+function isRowBlank(row, mode, selCols) {
+  if (mode === 'all') return row.every(v => isMissing(v));
+  if (mode === 'any') return row.some(v => isMissing(v));
+  // cols: any selected column is missing
+  return [...selCols].some(ci => isMissing(row[ci] ?? ''));
+}
+
+function runBlank() {
+  if (!_blankFile) { alert('파일을 먼저 업로드해주세요.'); return; }
+  if (_blankMode === 'cols' && _blankSelCols.size === 0) { alert('기준 컬럼을 1개 이상 선택해주세요.'); return; }
+
+  const { headers, rows } = _blankFile;
+  const removedIdxs = new Set();
+  rows.forEach((row, ri) => {
+    if (isRowBlank(row, _blankMode, _blankSelCols)) removedIdxs.add(ri);
+  });
+  const keptRows = rows.filter((_, ri) => !removedIdxs.has(ri));
+
+  _blankResult = { keptRows, removedIdxs };
+
+  const modeLabel = { all:'모든 셀 빈 행', any:'빈 셀 포함 행', cols:'선택 컬럼 빈 행' }[_blankMode];
+  document.getElementById('blank-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${rows.length.toLocaleString()}</div><div class="stat-lbl">원본 행 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--red)">${removedIdxs.size.toLocaleString()}</div><div class="stat-lbl">삭제된 행 (${modeLabel})</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">${keptRows.length.toLocaleString()}</div><div class="stat-lbl">유지된 행</div></div>
+    <div class="stat-box"><div class="stat-val">${rows.length ? (removedIdxs.size/rows.length*100).toFixed(1) : 0}%</div><div class="stat-lbl">삭제 비율</div></div>
+  `;
+
+  const MAX_P = 100;
+  const ths = ['#', ...headers].map(h => `<th>${h}</th>`).join('');
+  let shown = 0;
+  const tbodyRows = [];
+  for (let ri = 0; ri < rows.length && shown < MAX_P; ri++) {
+    const isRemoved = removedIdxs.has(ri);
+    const rowStyle = isRemoved ? ' style="background:rgba(220,38,38,.06)"' : '';
+    const tds = [`<td style="color:${isRemoved ? 'var(--red)' : 'var(--muted)'};font-weight:${isRemoved ? '700' : '400'}">${isRemoved ? '✕ ' : ''}${ri+1}</td>`];
+    headers.forEach((_, hi) => {
+      const v = rows[ri][hi] ?? '';
+      if (isRemoved && isMissing(v)) tds.push(`<td class="null-val">null</td>`);
+      else tds.push(`<td>${v}</td>`);
+    });
+    tbodyRows.push(`<tr${rowStyle}>${tds.join('')}</tr>`);
+    shown++;
+  }
+  document.getElementById('blank-table').innerHTML =
+    `<thead><tr>${ths}</tr></thead><tbody>${tbodyRows.join('')}</tbody>`;
+
+  document.getElementById('blank-dl-info').textContent =
+    `유지 ${keptRows.length.toLocaleString()}행 · ${headers.length}컬럼`;
+  document.getElementById('blank-result').style.display = '';
+}
+
+function downloadBlank() {
+  if (!_blankResult || !_blankFile) return;
+  const { headers } = _blankFile;
+  const { keptRows } = _blankResult;
+  const csv = '\uFEFF' + [
+    headers.join(','),
+    ...keptRows.map(row => row.map(v => escapeCSV(v ?? '')).join(','))
+  ].join('\n');
+  triggerDownload(csv, `blank_removed_${today()}.csv`);
+}
+
+// ════════════════════════════════════════════════════
+// VALUE FILTER (행 필터: 여러 컬럼 다중 조건, AND/OR)
+// ════════════════════════════════════════════════════
+let _colselFile    = null;      // { name, fileName, headers, rows }
+let _colselConds   = new Map(); // colIdx → Set(유지할 값)
+let _colselResult  = null;      // { keptRows, removedIdxs }
+
+function handleColselFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data.length) { alert('빈 파일입니다.'); return; }
+      const headers = data[0].map(String);
+      const rows = data.slice(1).map(r => headers.map((_, i) => r[i] !== undefined ? String(r[i]) : ''));
+      setupColselData(file, headers, rows);
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeFile(e.target.result);
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { alert('2행 이상 필요합니다.'); return; }
+    const sep = lines[0].includes('\t') ? '\t' : ',';
+    const headers = splitLine(lines[0], sep);
+    const rows = lines.slice(1).map(l => splitLine(l, sep));
+    setupColselData(file, headers, rows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setupColselData(file, headers, rows) {
+    _colselFile = { name: file.name.replace(/\.[^.]+$/, ''), fileName: file.name, headers, rows };
+    _colselConds = new Map();
+
+    const fi = document.getElementById('colsel-file-info');
+    fi.classList.add('show');
+    document.getElementById('colsel-file-name-lbl').textContent = `📄 ${file.name}`;
+    document.getElementById('colsel-file-dim-lbl').textContent =
+      `${rows.length.toLocaleString()}행 × ${headers.length}열`;
+    document.getElementById('colsel-col-tags').innerHTML =
+      headers.map(h => `<span class="file-col-tag">${h}</span>`).join('');
+
+    document.getElementById('colsel-config').style.display = '';
+    document.getElementById('colsel-result').style.display = 'none';
+    renderColselColPills();
+    resetColselValPanel();
+}
+
+function clearColselFile() {
+  _colselFile = null;
+  _colselConds = new Map();
+  _colselResult = null;
+  document.getElementById('colsel-file-info').classList.remove('show');
+  document.getElementById('colsel-file-input').value = '';
+  document.getElementById('colsel-config').style.display = 'none';
+  document.getElementById('colsel-result').style.display = 'none';
+}
+
+// ── 기준 컬럼 pills (다중 선택 토글) ──────────────────
+function renderColselColPills() {
+  if (!_colselFile) return;
+  const { headers } = _colselFile;
+  document.getElementById('colsel-col-pill-grid').innerHTML = headers.map((h, i) => {
+    const active = _colselConds.has(i);
+    return `<div class="col-pill${active ? ' selected' : ''}" onclick="toggleColselCol(${i})">
+      <div class="col-pill-check"></div>
+      <span>${escapeHTML(h)}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleColselCol(i) {
+  if (_colselConds.has(i)) _colselConds.delete(i);
+  else _colselConds.set(i, new Set(colselUniqueAll(i))); // 처음엔 전체 값 유지 = 필터 없음
+  renderColselColPills();
+  renderColselValGroups();
+}
+
+// 해당 컬럼의 전체 고유값 / 표시용(500개 제한·정렬) 고유값
+function colselUniqueAll(ci) {
+  return [...new Set(_colselFile.rows.map(r => (r[ci] ?? '').trim()))];
+}
+function colselUniqueShown(ci) {
+  return colselUniqueAll(ci).slice(0, 500)
+    .sort((a, b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+}
+
+// ── 컬럼별 유지할 값 그룹 ─────────────────────────────
+function resetColselValPanel() {
+  document.getElementById('colsel-val-empty').style.display = '';
+  document.getElementById('colsel-val-body').style.display = 'none';
+  document.getElementById('colsel-val-count-lbl').textContent = '';
+  document.getElementById('colsel-mode-row').style.display = 'none';
+}
+
+function renderColselValGroups() {
+  const cols = [..._colselConds.keys()].sort((a, b) => a - b);
+  document.getElementById('colsel-val-empty').style.display = cols.length ? 'none' : '';
+  document.getElementById('colsel-val-body').style.display = cols.length ? '' : 'none';
+  document.getElementById('colsel-val-count-lbl').textContent = cols.length ? `조건 컬럼 ${cols.length}개` : '';
+  document.getElementById('colsel-mode-row').style.display = cols.length >= 2 ? '' : 'none';
+  if (!cols.length) return;
+
+  const { headers, rows } = _colselFile;
+  document.getElementById('colsel-val-groups').innerHTML = cols.map(ci => {
+    const kept = _colselConds.get(ci);
+    const totalUniq = colselUniqueAll(ci).length;
+    const shown = colselUniqueShown(ci);
+    const freq = {};
+    rows.forEach(r => { const v = (r[ci] ?? '').trim(); freq[v] = (freq[v] || 0) + 1; });
+    const pills = shown.map((v, vi) => {
+      const sel = kept.has(v);
+      return `<div class="col-pill${sel ? ' selected' : ''}" onclick="toggleColselVal(${ci},${vi})"
+        style="${!sel ? 'opacity:.4;text-decoration:line-through;' : ''}">
+        <div class="col-pill-check"></div>
+        <span>${v === '' ? '<em style="color:var(--dim)">(빈값)</em>' : escapeHTML(v)}</span>
+        <span style="font-size:9px;color:var(--dim);margin-left:2px">${freq[v] || 0}</span>
+      </div>`;
+    }).join('');
+    return `<div class="val-group">
+      <div class="val-group-head">
+        <span class="val-group-name">🏷️ ${escapeHTML(headers[ci])}</span>
+        <span class="val-group-cnt">${kept.size} / ${totalUniq}개 값 유지</span>
+        <span class="val-group-acts">
+          <button class="pill-action-btn" onclick="colselValSelectAll(${ci})">전체 선택</button>
+          <button class="pill-action-btn" onclick="colselValClearAll(${ci})">전체 해제</button>
+        </span>
+      </div>
+      ${totalUniq > 500 ? `<div style="font-size:11px;color:var(--amber);margin-bottom:6px;">고유값 ${totalUniq.toLocaleString()}개 — 상위 500개만 표시됩니다 (표시되지 않은 값은 "전체 선택/해제"로 일괄 제어)</div>` : ''}
+      <div class="col-pill-grid">${pills}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleColselVal(ci, vi) {
+  const kept = _colselConds.get(ci); if (!kept) return;
+  const v = colselUniqueShown(ci)[vi]; if (v === undefined) return;
+  if (kept.has(v)) kept.delete(v);
+  else kept.add(v);
+  renderColselValGroups();
+}
+
+function colselValSelectAll(ci) {
+  if (!_colselConds.has(ci)) return;
+  _colselConds.set(ci, new Set(colselUniqueAll(ci)));
+  renderColselValGroups();
+}
+
+function colselValClearAll(ci) {
+  if (!_colselConds.has(ci)) return;
+  _colselConds.get(ci).clear();
+  renderColselValGroups();
+}
+
+// ── Run ──────────────────────────────────────────────
+function runColsel() {
+  if (!_colselFile) { alert('파일을 먼저 업로드해주세요.'); return; }
+  if (_colselConds.size === 0) { alert('필터 기준 컬럼을 1개 이상 선택해주세요.'); return; }
+  const { headers, rows } = _colselFile;
+  for (const [ci, kept] of _colselConds)
+    if (kept.size === 0) { alert(`"${headers[ci]}" 컬럼에서 유지할 값을 1개 이상 선택해주세요.`); return; }
+
+  const mode = document.querySelector('input[name="colsel-mode"]:checked')?.value === 'or' && _colselConds.size >= 2 ? 'or' : 'and';
+  const conds = [..._colselConds.entries()];
+  const removedIdxs = new Set();
+  rows.forEach((row, ri) => {
+    const oks = conds.map(([ci, kept]) => kept.has((row[ci] ?? '').trim()));
+    const keep = mode === 'or' ? oks.some(Boolean) : oks.every(Boolean);
+    if (!keep) removedIdxs.add(ri);
+  });
+  const keptRows = rows.filter((_, ri) => !removedIdxs.has(ri));
+
+  _colselResult = { keptRows, removedIdxs, headers };
+
+  document.getElementById('colsel-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${rows.length.toLocaleString()}</div><div class="stat-lbl">원본 행 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--red)">${removedIdxs.size.toLocaleString()}</div><div class="stat-lbl">삭제된 행</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">${keptRows.length.toLocaleString()}</div><div class="stat-lbl">유지된 행</div></div>
+    <div class="stat-box"><div class="stat-val">${rows.length ? (removedIdxs.size/rows.length*100).toFixed(1) : 0}%</div><div class="stat-lbl">삭제 비율</div></div>
+  `;
+
+  // Preview (up to 100 rows from original, showing removed in red)
+  const MAX_P = 100;
+  const ths = ['#', ...headers].map(h => `<th>${h}</th>`).join('');
+  let shown = 0;
+  const tbodyRows = [];
+  for (let ri = 0; ri < rows.length && shown < MAX_P; ri++) {
+    const isRemoved = removedIdxs.has(ri);
+    const rowStyle = isRemoved ? ' style="background:rgba(220,38,38,.06)"' : '';
+    const tds = [`<td style="color:${isRemoved?'var(--red)':'var(--muted)'};font-weight:${isRemoved?'700':'400'}">${isRemoved?'✕ ':''}${ri+1}</td>`];
+    headers.forEach((_, hi) => {
+      const v = rows[ri][hi] ?? '';
+      const failCell = isRemoved && _colselConds.has(hi) && !_colselConds.get(hi).has(String(v).trim());
+      if (failCell) tds.push(`<td style="color:var(--red);font-weight:700">${v}</td>`);
+      else tds.push(`<td>${v}</td>`);
+    });
+    tbodyRows.push(`<tr${rowStyle}>${tds.join('')}</tr>`);
+    shown++;
+  }
+  document.getElementById('colsel-table').innerHTML =
+    `<thead><tr>${ths}</tr></thead><tbody>${tbodyRows.join('')}</tbody>`;
+
+  const condNames = conds.map(([ci]) => headers[ci]).join(', ');
+  document.getElementById('colsel-dl-info').textContent =
+    `유지 ${keptRows.length.toLocaleString()}행 · ${headers.length}컬럼 · 기준: ${condNames}${conds.length >= 2 ? ` (${mode.toUpperCase()})` : ''}`;
+  document.getElementById('colsel-result').style.display = '';
+}
+
+function downloadColsel() {
+  if (!_colselResult || !_colselFile) return;
+  const { headers, keptRows } = _colselResult;
+  const csv = '\uFEFF' + [
+    headers.join(','),
+    ...keptRows.map(row => row.map(v => escapeCSV(v ?? '')).join(','))
+  ].join('\n');
+  triggerDownload(csv, `val_filtered_${today()}.csv`);
+}
+
+// ════════════════════════════════════════════════════
+// DATE SPLIT
+// ════════════════════════════════════════════════════
+let _dateFile     = null;   // { name, fileName, headers, rows }
+let _dateSelCols  = new Set(); // column indices selected for splitting
+let _dateAutoDetected = new Set(); // auto-detected date column indices
+let _dateResult   = null;
+
+// ── 날짜 파싱 ─────────────────────────────────────────
+// 지원 형식:
+//   YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD
+//   YYYYMMDD
+//   YYYY-MM-DD HH:MM:SS, YYYY-MM-DD HH:MM, YYYY-MM-DDTHH:MM:SS
+//   DD-MM-YYYY, DD/MM/YYYY (일-월-년)
+const DATE_RES = [
+  // YYYY[-/.]MM[-/.]DD [T ]HH:MM[:SS]
+  { re: /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/, y:1, mo:2, d:3, h:4, mi:5, s:6 },
+  // YYYYMMDD
+  { re: /^(\d{4})(\d{2})(\d{2})$/, y:1, mo:2, d:3, h:null, mi:null, s:null },
+  // DD[-/.]MM[-/.]YYYY
+  { re: /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/, y:3, mo:2, d:1, h:4, mi:5, s:6 },
+];
+
+function parseDateVal(v) {
+  const s = (v ?? '').trim();
+  if (!s) return null;
+  for (const pat of DATE_RES) {
+    const m = s.match(pat.re);
+    if (!m) continue;
+    const yr  = parseInt(m[pat.y]);
+    const mo  = parseInt(m[pat.mo]);
+    const dy  = parseInt(m[pat.d]);
+    // sanity check
+    if (yr < 1000 || yr > 9999) continue;
+    if (mo < 1 || mo > 12) continue;
+    if (dy < 1 || dy > 31) continue;
+    return {
+      year: yr, month: mo, day: dy,
+      hour:  pat.h  && m[pat.h]  ? parseInt(m[pat.h])  : null,
+      min:   pat.mi && m[pat.mi] ? parseInt(m[pat.mi]) : null,
+      sec:   pat.s  && m[pat.s]  ? parseInt(m[pat.s])  : null,
+    };
+  }
+  return null;
+}
+
+function isDateColumn(rows, colIdx) {
+  // 비어있지 않은 값 중 60% 이상이 날짜 형식이면 날짜 컬럼으로 판단
+  const vals = rows.map(r => (r[colIdx] ?? '').trim()).filter(v => v !== '');
+  if (!vals.length) return false;
+  const dateCnt = vals.filter(v => parseDateVal(v) !== null).length;
+  return dateCnt / vals.length >= 0.6;
+}
+
+// ── 파일 로드 ──────────────────────────────────────────
+function handleDateFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data.length) { alert('빈 파일입니다.'); return; }
+      const headers = data[0].map(String);
+      const rows = data.slice(1).map(r => headers.map((_, i) => r[i] !== undefined ? String(r[i]) : ''));
+      setupDateData(file, headers, rows);
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeFile(e.target.result);
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { alert('2행 이상 필요합니다.'); return; }
+    const sep = lines[0].includes('\t') ? '\t' : ',';
+    const headers = splitLine(lines[0], sep);
+    const rows = lines.slice(1).map(l => splitLine(l, sep));
+    setupDateData(file, headers, rows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setupDateData(file, headers, rows) {
+    _dateFile = { name: file.name.replace(/\.[^.]+$/, ''), fileName: file.name, headers, rows };
+    _dateAutoDetected = new Set();
+    headers.forEach((_, ci) => { if (isDateColumn(rows, ci)) _dateAutoDetected.add(ci); });
+    _dateSelCols = new Set(_dateAutoDetected); // 자동 감지된 컬럼 기본 선택
+
+    const fi = document.getElementById('date-file-info');
+    fi.classList.add('show');
+    document.getElementById('date-file-name-lbl').textContent = `📄 ${file.name}`;
+    document.getElementById('date-file-dim-lbl').textContent =
+      `${rows.length.toLocaleString()}행 × ${headers.length}열`;
+    document.getElementById('date-detected-info').innerHTML =
+      _dateAutoDetected.size
+        ? `🔍 날짜 형식 자동 감지: <strong>${[..._dateAutoDetected].map(i => headers[i]).join(', ')}</strong>`
+        : '⚠️ 날짜 형식 컬럼이 자동 감지되지 않았습니다. 직접 선택해주세요.';
+
+    document.getElementById('date-config').style.display = '';
+    document.getElementById('date-result').style.display = 'none';
+    renderDateColPills();
+}
+
+function clearDateFile() {
+  _dateFile = null;
+  _dateSelCols.clear();
+  _dateAutoDetected.clear();
+  _dateResult = null;
+  document.getElementById('date-file-info').classList.remove('show');
+  document.getElementById('date-file-input').value = '';
+  document.getElementById('date-config').style.display = 'none';
+  document.getElementById('date-result').style.display = 'none';
+}
+
+// ── 컬럼 pills ────────────────────────────────────────
+function renderDateColPills() {
+  if (!_dateFile) return;
+  const { headers } = _dateFile;
+  document.getElementById('date-col-pill-grid').innerHTML = headers.map((h, i) => {
+    const sel  = _dateSelCols.has(i);
+    const auto = _dateAutoDetected.has(i);
+    return `<div class="col-pill${sel ? ' selected' : ''}" onclick="toggleDateCol(${i})"
+      style="${auto && !sel ? 'border-color:rgba(37,99,235,.3);' : ''}${auto ? 'background:rgba(37,99,235,.04);' : ''}">
+      <div class="col-pill-check"></div>
+      <span>${h}</span>
+      ${auto ? '<span style="font-size:9px;color:var(--accent);opacity:.7">날짜</span>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('date-col-count-lbl').textContent =
+    `${_dateSelCols.size} / ${headers.length}개 선택`;
+}
+
+function toggleDateCol(i) {
+  if (_dateSelCols.has(i)) _dateSelCols.delete(i);
+  else _dateSelCols.add(i);
+  renderDateColPills();
+}
+
+function dateColSelectAll() { _dateFile.headers.forEach((_, i) => _dateSelCols.add(i)); renderDateColPills(); }
+function dateColClearAll()  { _dateSelCols.clear(); renderDateColPills(); }
+
+function updateDateOrigUI() {
+  const keep = document.querySelector('input[name="date-orig"]:checked').value === 'keep';
+  document.getElementById('date-keep-label').style.borderColor = keep  ? 'var(--accent)' : 'var(--border2)';
+  document.getElementById('date-keep-label').style.background  = keep  ? 'rgba(37,99,235,.05)' : '';
+  document.getElementById('date-drop-label').style.borderColor = !keep ? 'var(--accent)' : 'var(--border2)';
+  document.getElementById('date-drop-label').style.background  = !keep ? 'rgba(37,99,235,.05)' : '';
+}
+
+// ── 실행 ──────────────────────────────────────────────
+function runDate() {
+  if (!_dateFile) { alert('파일을 먼저 업로드해주세요.'); return; }
+  if (_dateSelCols.size === 0) { alert('분리할 날짜 컬럼을 1개 이상 선택해주세요.'); return; }
+
+  const { headers, rows } = _dateFile;
+  const keepOrig = document.querySelector('input[name="date-orig"]:checked').value === 'keep';
+  const wantYear  = document.getElementById('date-chk-year').checked;
+  const wantMonth = document.getElementById('date-chk-month').checked;
+  const wantDay   = document.getElementById('date-chk-day').checked;
+  const wantHour  = document.getElementById('date-chk-hour').checked;
+  const wantMin   = document.getElementById('date-chk-min').checked;
+  const wantSec   = document.getElementById('date-chk-sec').checked;
+
+  if (!wantYear && !wantMonth && !wantDay && !wantHour && !wantMin && !wantSec) {
+    alert('생성할 컬럼을 1개 이상 선택해주세요.'); return;
+  }
+
+  // 새 헤더 구성: 각 컬럼 뒤에 분리 컬럼 삽입
+  const newHeaders = [];
+  // newHeaders 구성 정보: {type: 'orig'|'split', srcIdx, part}
+  const colMeta = [];
+
+  headers.forEach((h, ci) => {
+    if (!_dateSelCols.has(ci)) {
+      newHeaders.push(h); colMeta.push({ type:'orig', srcIdx:ci });
+    } else {
+      if (keepOrig) { newHeaders.push(h); colMeta.push({ type:'orig', srcIdx:ci }); }
+      if (wantYear)  { newHeaders.push(h + '_년');  colMeta.push({ type:'split', srcIdx:ci, part:'year'  }); }
+      if (wantMonth) { newHeaders.push(h + '_월');  colMeta.push({ type:'split', srcIdx:ci, part:'month' }); }
+      if (wantDay)   { newHeaders.push(h + '_일');  colMeta.push({ type:'split', srcIdx:ci, part:'day'   }); }
+      if (wantHour)  { newHeaders.push(h + '_시');  colMeta.push({ type:'split', srcIdx:ci, part:'hour'  }); }
+      if (wantMin)   { newHeaders.push(h + '_분');  colMeta.push({ type:'split', srcIdx:ci, part:'min'   }); }
+      if (wantSec)   { newHeaders.push(h + '_초');  colMeta.push({ type:'split', srcIdx:ci, part:'sec'   }); }
+    }
+  });
+
+  // 각 행 변환
+  let parsedCount = 0, failCount = 0;
+  const newRows = rows.map(row => {
+    return colMeta.map(meta => {
+      if (meta.type === 'orig') return row[meta.srcIdx] ?? '';
+      const parsed = parseDateVal(row[meta.srcIdx] ?? '');
+      if (!parsed) { failCount++; return ''; }
+      parsedCount++;
+      const v = parsed[meta.part];
+      return v !== null ? String(v) : '';
+    });
+  });
+  // parsedCount counts per-cell; divide by parts count for row count
+  const partsPerCol = [wantYear,wantMonth,wantDay,wantHour,wantMin,wantSec].filter(Boolean).length;
+  const actualParsed = partsPerCol > 0 ? Math.round(parsedCount / partsPerCol) : 0;
+
+  _dateResult = { newHeaders, newRows, colMeta };
+
+  const addedCols = colMeta.filter(m => m.type === 'split').length;
+  document.getElementById('date-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${rows.length.toLocaleString()}</div><div class="stat-lbl">전체 행 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent)">${_dateSelCols.size}</div><div class="stat-lbl">처리 날짜 컬럼</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${addedCols}</div><div class="stat-lbl">생성된 컬럼 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:${failCount?'var(--red)':'var(--green)'}">${failCount ? failCount.toLocaleString() : '0'}</div><div class="stat-lbl">파싱 실패 셀</div></div>
+  `;
+
+  // 미리보기 — 분리 생성 컬럼은 주황색으로 표시
+  const splitColIdxSet = new Set(colMeta.map((m,i) => m.type==='split' ? i : -1).filter(i => i>=0));
+  const ths = ['#', ...newHeaders].map((h,i) => {
+    const isSplit = i > 0 && splitColIdxSet.has(i-1);
+    return `<th style="${isSplit ? 'color:var(--orange)' : ''}">${h}</th>`;
+  }).join('');
+  const tbody = newRows.map((row, ri) =>
+    `<tr><td>${ri+1}</td>${row.map((v, ci) => {
+      const isSplit = splitColIdxSet.has(ci);
+      return `<td class="${isSplit ? 'interp-val' : ''}">${v}</td>`;
+    }).join('')}</tr>`
+  ).join('');
+  document.getElementById('date-table').innerHTML =
+    `<thead><tr>${ths}</tr></thead><tbody>${tbody}</tbody>`;
+
+  document.getElementById('date-dl-info').textContent =
+    `${rows.length.toLocaleString()}행 · ${newHeaders.length}컬럼 (${addedCols}개 추가)`;
+  document.getElementById('date-result').style.display = '';
+}
+
+function downloadDate() {
+  if (!_dateResult) return;
+  const { newHeaders, newRows } = _dateResult;
+  const csv = '\uFEFF' + [
+    newHeaders.join(','),
+    ...newRows.map(row => row.map(v => escapeCSV(v ?? '')).join(','))
+  ].join('\n');
+  triggerDownload(csv, `date_split_${today()}.csv`);
+}
+
+// ════════════════════════════════════════════════════
+// DIFF (데이터 차분)
+// ════════════════════════════════════════════════════
+let _diffFile   = null;  // { name, headers, rows, numColIdxs }
+let _diffSelCols = new Set();
+let _diffResult = null;  // { finalHeaders, finalRows, diffColIdxSet }
+
+function handleDiffFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data.length) { alert('빈 파일입니다.'); return; }
+      const headers = data[0].map(String);
+      const rows = data.slice(1).map(r => headers.map((_, i) => r[i] !== undefined ? String(r[i]) : ''));
+      setupDiffData(file.name, headers, rows);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = decodeFile(e.target.result);
+      const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { alert('2행 이상 필요합니다.'); return; }
+      const sep = lines[0].includes('\t') ? '\t' : ',';
+      const headers = splitLine(lines[0], sep);
+      const rows = lines.slice(1).map(l => splitLine(l, sep));
+      setupDiffData(file.name, headers, rows);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function setupDiffData(name, headers, rows) {
+  const numColIdxs = headers.map((_, ci) => {
+    const vals = rows.slice(0, 200).map(r => r[ci] ?? '').filter(v => v !== '');
+    const numericCnt = vals.filter(v => !isNaN(parseFloat(v))).length;
+    return vals.length && numericCnt / vals.length >= 0.6 ? ci : -1;
+  }).filter(ci => ci >= 0);
+
+  if (!numColIdxs.length) { alert('숫자형 컬럼이 없습니다. 파일을 확인해주세요.'); return; }
+
+  _diffFile = { name, headers, rows, numColIdxs };
+  _diffSelCols = new Set(numColIdxs);
+
+  document.getElementById('diff-file-name-lbl').textContent = `📄 ${name}`;
+  document.getElementById('diff-file-dim-lbl').textContent =
+    `${rows.length.toLocaleString()}행 × ${headers.length}열 (숫자 ${numColIdxs.length}개)`;
+  document.getElementById('diff-col-tags').innerHTML =
+    headers.map((h, i) => {
+      const isNum = numColIdxs.includes(i);
+      return `<span class="file-col-tag ${isNum ? '' : 'ignored'}">${h}</span>`;
+    }).join('');
+
+  document.getElementById('diff-file-info').classList.add('show');
+  document.getElementById('diff-config').style.display = '';
+  document.getElementById('diff-result').style.display = 'none';
+
+  // Populate panel ID / sort column dropdowns
+  const allOpts = headers.map((h, i) => `<option value="${i}">${h}</option>`).join('');
+  document.getElementById('diff-panel-id-col').innerHTML = allOpts;
+  document.getElementById('diff-panel-sort-col').innerHTML =
+    '<option value="">정렬 없음 (데이터 순서 유지)</option>' + allOpts;
+
+  renderDiffColPills();
+}
+
+function clearDiffFile() {
+  _diffFile = null; _diffSelCols.clear(); _diffResult = null;
+  document.getElementById('diff-file-info').classList.remove('show');
+  document.getElementById('diff-config').style.display = 'none';
+  document.getElementById('diff-result').style.display = 'none';
+  document.getElementById('diff-file-input').value = '';
+  document.getElementById('diff-panel-mode').checked = false;
+  document.getElementById('diff-panel-opts').style.display = 'none';
+}
+
+function toggleDiffPanelMode() {
+  document.getElementById('diff-panel-opts').style.display =
+    document.getElementById('diff-panel-mode').checked ? '' : 'none';
+}
+
+function renderDiffColPills() {
+  if (!_diffFile) return;
+  const { headers, numColIdxs } = _diffFile;
+  document.getElementById('diff-col-pill-grid').innerHTML = numColIdxs.map(ci => {
+    const sel = _diffSelCols.has(ci);
+    return `<div class="col-pill ${sel ? 'selected' : ''}" onclick="toggleDiffCol(${ci})">
+      <div class="col-pill-check"></div>${headers[ci]}
+    </div>`;
+  }).join('');
+  document.getElementById('diff-col-count-lbl').textContent =
+    `${_diffSelCols.size} / ${numColIdxs.length}개 선택`;
+}
+
+function toggleDiffCol(ci) {
+  if (_diffSelCols.has(ci)) _diffSelCols.delete(ci); else _diffSelCols.add(ci);
+  renderDiffColPills();
+}
+
+function diffColSelectAll() { _diffFile.numColIdxs.forEach(ci => _diffSelCols.add(ci)); renderDiffColPills(); }
+function diffColClearAll()  { _diffSelCols.clear(); renderDiffColPills(); }
+
+function runDiff() {
+  if (!_diffFile) { alert('파일을 먼저 업로드해주세요.'); return; }
+  if (_diffSelCols.size === 0) { alert('차분할 컬럼을 1개 이상 선택해주세요.'); return; }
+
+  const { headers, rows } = _diffFile;
+  const order    = parseInt(document.querySelector('input[name="diff-order"]:checked').value);
+  const seasonal = parseInt(document.getElementById('diff-seasonal').value);
+  const keepOrig = document.getElementById('diff-keep-orig').checked;
+  const dropNaN  = document.getElementById('diff-drop-nan').checked;
+
+  // Build output column layout
+  const newHeaders = [];
+  const colMeta = []; // { type:'orig'|'diff', srcIdx }
+  const diffColIdxSet = new Set();
+
+  headers.forEach((h, ci) => {
+    if (!_diffSelCols.has(ci)) {
+      newHeaders.push(h);
+      colMeta.push({ type: 'orig', srcIdx: ci });
+    } else {
+      if (keepOrig) { newHeaders.push(h); colMeta.push({ type: 'orig', srcIdx: ci }); }
+      const suffix = seasonal > 0 ? `_diff${order}_s${seasonal}` : `_diff${order}`;
+      newHeaders.push(h + suffix);
+      diffColIdxSet.add(newHeaders.length - 1);
+      colMeta.push({ type: 'diff', srcIdx: ci });
+    }
+  });
+
+  // Parse numeric arrays
+  function applyLagDiff(arr, lag) {
+    return arr.map((v, i) => (i < lag || arr[i - lag] === null || v === null) ? null : v - arr[i - lag]);
+  }
+
+  const panelMode = document.getElementById('diff-panel-mode').checked;
+  const panelIdColIdx  = panelMode ? parseInt(document.getElementById('diff-panel-id-col').value) : -1;
+  const panelSortColIdx = panelMode ? (document.getElementById('diff-panel-sort-col').value !== '' ? parseInt(document.getElementById('diff-panel-sort-col').value) : -1) : -1;
+
+  const diffedData = {};
+
+  if (!panelMode) {
+    [..._diffSelCols].forEach(ci => {
+      let arr = rows.map(r => { const v = parseFloat(r[ci]); return isNaN(v) ? null : v; });
+      if (seasonal > 0) arr = applyLagDiff(arr, seasonal);
+      for (let d = 0; d < order; d++) arr = applyLagDiff(arr, 1);
+      diffedData[ci] = arr;
+    });
+  } else {
+    // Group rows by ID, sort within group, apply diff per group, map back to original row index
+    const idGroups = new Map(); // idVal -> [originalRowIndex, ...]
+    rows.forEach((r, ri) => {
+      const idVal = r[panelIdColIdx] ?? '';
+      if (!idGroups.has(idVal)) idGroups.set(idVal, []);
+      idGroups.get(idVal).push(ri);
+    });
+
+    [..._diffSelCols].forEach(ci => {
+      const result = new Array(rows.length).fill(null);
+      idGroups.forEach((indices) => {
+        let grpIndices = [...indices];
+        if (panelSortColIdx >= 0) {
+          grpIndices.sort((a, b) => {
+            const va = parseFloat(rows[a][panelSortColIdx]);
+            const vb = parseFloat(rows[b][panelSortColIdx]);
+            if (!isNaN(va) && !isNaN(vb)) return va - vb;
+            return String(rows[a][panelSortColIdx]).localeCompare(String(rows[b][panelSortColIdx]));
+          });
+        }
+        let arr = grpIndices.map(ri => { const v = parseFloat(rows[ri][ci]); return isNaN(v) ? null : v; });
+        if (seasonal > 0) arr = applyLagDiff(arr, seasonal);
+        for (let d = 0; d < order; d++) arr = applyLagDiff(arr, 1);
+        grpIndices.forEach((ri, j) => { result[ri] = arr[j]; });
+      });
+      diffedData[ci] = result;
+    });
+  }
+
+  // Build result rows
+  let newRows = rows.map((row, ri) =>
+    colMeta.map(meta => {
+      if (meta.type === 'orig') return row[meta.srcIdx] ?? '';
+      const v = diffedData[meta.srcIdx][ri];
+      return v === null ? '' : String(+v.toFixed(10));
+    })
+  );
+
+  // Drop NaN rows
+  let droppedRows = 0;
+  if (dropNaN) {
+    const diffCols = [...diffColIdxSet];
+    const before = newRows.length;
+    newRows = newRows.filter(row => diffCols.every(ci => row[ci] !== ''));
+    droppedRows = before - newRows.length;
+  }
+
+  _diffResult = { finalHeaders: newHeaders, finalRows: newRows, diffColIdxSet };
+
+  // Stats
+  const panelGroupCount = panelMode
+    ? (() => { const s = new Set(rows.map(r => r[panelIdColIdx] ?? '')); return s.size; })()
+    : null;
+  document.getElementById('diff-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${rows.length.toLocaleString()}</div><div class="stat-lbl">원본 행 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${newRows.length.toLocaleString()}</div><div class="stat-lbl">결과 행 수</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent)">${_diffSelCols.size}</div><div class="stat-lbl">차분 컬럼 수</div></div>
+    ${panelMode
+      ? `<div class="stat-box"><div class="stat-val" style="color:var(--accent2)">${panelGroupCount.toLocaleString()}</div><div class="stat-lbl">패널 ID 수</div></div>`
+      : `<div class="stat-box"><div class="stat-val" style="color:${droppedRows ? 'var(--red)' : 'var(--green)'}">${droppedRows.toLocaleString()}</div><div class="stat-lbl">제거된 NaN 행</div></div>`
+    }
+  `;
+
+  // Preview table
+  const ths = ['#', ...newHeaders].map((h, i) => {
+    const isDiff = i > 0 && diffColIdxSet.has(i - 1);
+    return `<th style="${isDiff ? 'color:var(--orange)' : ''}">${h}</th>`;
+  }).join('');
+  const tbody = newRows.map((row, ri) =>
+    `<tr><td>${ri + 1}</td>${row.map((v, ci) =>
+      `<td class="${diffColIdxSet.has(ci) ? 'interp-val' : ''}">${v}</td>`
+    ).join('')}</tr>`
+  ).join('');
+  document.getElementById('diff-table').innerHTML =
+    `<thead><tr>${ths}</tr></thead><tbody>${tbody}</tbody>`;
+
+  document.getElementById('diff-dl-info').textContent =
+    `${newRows.length.toLocaleString()}행 · ${newHeaders.length}컬럼`;
+  document.getElementById('diff-result').style.display = '';
+}
+
+function downloadDiff(fmt) {
+  if (!_diffResult) return;
+  const { finalHeaders, finalRows } = _diffResult;
+  if (fmt === 'xlsx') {
+    const wsData = [finalHeaders, ...finalRows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'diff');
+    XLSX.writeFile(wb, `diff_${today()}.xlsx`);
+  } else {
+    const csv = '\uFEFF' + [
+      finalHeaders.join(','),
+      ...finalRows.map(row => row.map(v => escapeCSV(v ?? '')).join(','))
+    ].join('\n');
+    triggerDownload(csv, `diff_${today()}.csv`);
+  }
+}
+
+
+// ════════════════════════════════════════════════════
+// DEDUP — 중복 제거 (파일 내 / 두 파일 공통)
+// ════════════════════════════════════════════════════
+let _ddFiles = [];    // [{ name, headers, rows }]
+let _ddResults = [];  // [{ name, headers, original, duplicates, cleaned, dupCount }]
+let _ddOp = 'within'; // 'within' | 'cross'
+
+function ddEsc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function ddReadFile(file, cb) {
+  const isX = /\.xlsx?$/i.test(file.name);
+  const reader = new FileReader();
+  if (isX) {
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
+        if (data.length < 2) { cb(null); return; }
+        const headers = data[0].map(h => String(h ?? '').trim());
+        const rows = data.slice(1).map(r => headers.map((_, j) => String(r[j] ?? '').trim()));
+        cb({headers, rows});
+      } catch (err) { cb(null); }
+    };
+  } else {
+    reader.onload = e => {
+      const text = decodeFile(e.target.result);
+      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+      if (lines.length < 2) { cb(null); return; }
+      const sep = lines[0].includes('\t') ? '\t' : ',';
+      const headers = splitLine(lines[0], sep);
+      const rows = lines.slice(1).map(l => splitLine(l, sep));
+      cb({headers, rows});
+    };
+  }
+  reader.readAsArrayBuffer(file);
+}
+
+function ddAddFiles(files) {
+  const valid = Array.from(files).filter(f => /\.(csv|tsv|txt|xlsx|xls)$/i.test(f.name));
+  if (!valid.length) return;
+  valid.forEach(file => {
+    if (_ddFiles.find(f => f.name === file.name)) return;
+    ddReadFile(file, parsed => {
+      if (!parsed) { alert(file.name + ' — 파일을 읽지 못했습니다. (헤더+데이터 2행 이상 필요)'); return; }
+      _ddFiles.push({ name: file.name, headers: parsed.headers, rows: parsed.rows });
+      ddRenderFileList(); ddRefreshColTags(); ddUpdateRunBtn();
+    });
+  });
+}
+
+function ddRemoveFile(idx) {
+  _ddFiles.splice(idx, 1);
+  ddRenderFileList(); ddRefreshColTags(); ddUpdateRunBtn();
+  document.getElementById('dd-results').classList.remove('show');
+}
+
+function ddRenderFileList() {
+  document.getElementById('dd-file-list').innerHTML = _ddFiles.map((f, i) => `
+    <div class="dd-file-item">
+      <span>📄</span>
+      <span class="dd-file-name" title="${ddEsc(f.name)}">${ddEsc(f.name)}</span>
+      <span class="dd-file-meta">${f.rows.length.toLocaleString()}행 · ${f.headers.length}열</span>
+      <button class="dd-file-remove" onclick="ddRemoveFile(${i})" title="목록에서 제거">✕</button>
+    </div>`).join('');
+}
+
+function ddUpdateRunBtn() {
+  document.getElementById('dd-run-btn').disabled = _ddFiles.length === 0;
+}
+
+function ddRefreshColTags() {
+  const seen = new Set(), cols = [];
+  _ddFiles.forEach(f => f.headers.forEach(h => { if (!seen.has(h)) { seen.add(h); cols.push(h); } }));
+  const box = document.getElementById('dd-col-tags');
+  if (!cols.length) { box.innerHTML = '<span class="dd-col-empty">파일이 없거나 컬럼을 감지할 수 없습니다.</span>'; return; }
+  box.innerHTML = cols.map((col, i) => `
+    <label class="dd-col-tag checked" id="dd-coltag-${i}">
+      <input type="checkbox" data-col="${ddEsc(col)}" checked onchange="ddToggleColTag(this,${i})"> ${ddEsc(col)}
+    </label>`).join('');
+}
+
+function ddToggleColTag(inp, i) {
+  document.getElementById('dd-coltag-' + i).classList.toggle('checked', inp.checked);
+}
+function ddColSelectAll() {
+  document.querySelectorAll('#dd-col-tags input').forEach(inp => { inp.checked = true; inp.closest('label').classList.add('checked'); });
+}
+function ddColSelectNone() {
+  document.querySelectorAll('#dd-col-tags input').forEach(inp => { inp.checked = false; inp.closest('label').classList.remove('checked'); });
+}
+function ddGetSelectedCols() {
+  return Array.from(document.querySelectorAll('#dd-col-tags input:checked')).map(inp => inp.getAttribute('data-col'));
+}
+
+function ddOnOpChange() {
+  _ddOp = document.querySelector('input[name=ddOp]:checked').value;
+  document.getElementById('dd-op-within-lbl').classList.toggle('selected', _ddOp === 'within');
+  document.getElementById('dd-op-cross-lbl').classList.toggle('selected', _ddOp === 'cross');
+  document.getElementById('dd-keep-group').style.display = _ddOp === 'within' ? '' : 'none';
+}
+function ddOnModeChange() {
+  const mode = document.querySelector('input[name=ddMode]:checked').value;
+  document.getElementById('dd-col-selector').classList.toggle('show', mode === 'select');
+  document.getElementById('dd-mode-all-lbl').classList.toggle('selected', mode === 'all');
+  document.getElementById('dd-mode-sel-lbl').classList.toggle('selected', mode === 'select');
+}
+function ddOnKeepChange() {
+  const v = document.querySelector('input[name=ddKeep]:checked').value;
+  document.getElementById('dd-keep-first-lbl').classList.toggle('selected', v === 'first');
+  document.getElementById('dd-keep-last-lbl').classList.toggle('selected', v === 'last');
+}
+
+// 파일별 키 함수 — 선택 컬럼이 그 파일에 없으면 전체 컬럼 기준
+function ddKeyFn(f, keyCols) {
+  let idxs;
+  if (keyCols && keyCols.length) {
+    idxs = keyCols.map(c => f.headers.indexOf(c)).filter(i => i !== -1);
+    if (!idxs.length) idxs = f.headers.map((_, i) => i);
+  } else {
+    idxs = f.headers.map((_, i) => i);
+  }
+  return row => idxs.map(ci => row[ci] ?? '').join('\x00');
+}
+
+function ddDedupRows(f, keyCols, keepLast) {
+  const key = ddKeyFn(f, keyCols);
+  const keyMap = new Map();
+  f.rows.forEach((row, i) => {
+    const k = key(row);
+    if (!keyMap.has(k)) keyMap.set(k, []);
+    keyMap.get(k).push(i);
+  });
+  const removeSet = new Set();
+  keyMap.forEach(indices => {
+    if (indices.length < 2) return;
+    const keep = keepLast ? indices[indices.length - 1] : indices[0];
+    indices.forEach(i => { if (i !== keep) removeSet.add(i); });
+  });
+  return {
+    cleaned: f.rows.filter((_, i) => !removeSet.has(i)),
+    duplicates: f.rows.filter((_, i) => removeSet.has(i)),
+    dupCount: removeSet.size,
+  };
+}
+
+function ddRun() {
+  if (!_ddFiles.length) return;
+  const mode = document.querySelector('input[name=ddMode]:checked').value;
+  const keyCols = mode === 'select' ? ddGetSelectedCols() : null;
+  if (mode === 'select' && !keyCols.length) { alert('선택 컬럼 모드에서 최소 1개 이상의 컬럼을 선택하세요.'); return; }
+  if (_ddOp === 'cross' && _ddFiles.length !== 2) {
+    alert('두 파일 공통 제거는 정확히 2개의 파일이 필요합니다. (현재 ' + _ddFiles.length + '개)'); return;
+  }
+  const keepLast = document.querySelector('input[name=ddKeep]:checked').value === 'last';
+  const btn = document.getElementById('dd-run-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="dd-spin"></div> 처리 중...';
+
+  setTimeout(() => {
+    try {
+      if (_ddOp === 'within') {
+        _ddResults = _ddFiles.map(f => {
+          const r = ddDedupRows(f, keyCols, keepLast);
+          return { name: f.name, headers: f.headers, original: f.rows, ...r };
+        });
+      } else {
+        // 두 파일 공통 제거: 상대 파일에도 존재하는 행을 각 파일에서 제외
+        const [A, B] = _ddFiles;
+        const kA = ddKeyFn(A, keyCols), kB = ddKeyFn(B, keyCols);
+        const setA = new Set(A.rows.map(kA)), setB = new Set(B.rows.map(kB));
+        const mk = (f, keyF, otherSet) => {
+          const cleaned = f.rows.filter(r => !otherSet.has(keyF(r)));
+          const duplicates = f.rows.filter(r => otherSet.has(keyF(r)));
+          return { name: f.name, headers: f.headers, original: f.rows, cleaned, duplicates, dupCount: duplicates.length };
+        };
+        _ddResults = [mk(A, kA, setB), mk(B, kB, setA)];
+      }
+      ddRenderResults();
+    } catch (e) {
+      document.getElementById('dd-global-status').innerHTML =
+        '<div class="dd-status err">❌ 처리 중 오류: ' + ddEsc(e.message) + '</div>';
+      document.getElementById('dd-results').classList.add('show');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '🧬 실행';
+  }, 30);
+}
+
+function ddSuffix() { return _ddOp === 'cross' ? '_unique' : '_deduped'; }
+function ddLabel()  { return _ddOp === 'cross' ? '공통' : '중복'; }
+
+function ddRenderResults() {
+  const totalDups = _ddResults.reduce((s, r) => s + r.dupCount, 0);
+  const totalRows = _ddResults.reduce((s, r) => s + r.original.length, 0);
+  document.getElementById('dd-global-status').innerHTML =
+    '<div class="dd-status ok">✅ ' + _ddResults.length + '개 파일 처리 완료 — 전체 ' + totalRows.toLocaleString() +
+    '행 중 ' + ddLabel() + ' ' + totalDups.toLocaleString() + '행 제거됨' +
+    (_ddOp === 'cross' ? ' · 각 파일에 남은(고유) 행만 다운로드됩니다' : '') + '</div>';
+
+  document.getElementById('dd-result-cards').innerHTML = _ddResults.map((r, idx) => {
+    const rate = r.original.length ? r.dupCount / r.original.length : 0;
+    const badgeCls = r.dupCount === 0 ? 'none' : (rate > 0.05 ? 'warn' : 'ok');
+    const badgeTxt = r.dupCount === 0 ? (ddLabel() + ' 없음') : (ddLabel() + ' ' + r.dupCount.toLocaleString() + '행 제거');
+    const sample = r.duplicates.slice(0, 10);
+    const prev = sample.length ? `
+      <button class="dd-prev-toggle" onclick="ddTogglePrev(${idx})">제거된 행 미리보기 (${r.duplicates.length.toLocaleString()}행${r.duplicates.length > 10 ? ', 최대 10행 표시' : ''})</button>
+      <div class="dd-prev-wrap" id="dd-prev-${idx}">
+        <table class="dd-prev-table">
+          <thead><tr>${r.headers.map(h => '<th>' + ddEsc(h) + '</th>').join('')}</tr></thead>
+          <tbody>${sample.map(row => '<tr>' + r.headers.map((_, ci) => '<td>' + ddEsc(row[ci] ?? '') + '</td>').join('') + '</tr>').join('')}</tbody>
+        </table>
+      </div>` : '';
+    return `
+      <div class="dd-rcard">
+        <div class="dd-rhead" onclick="ddToggleCard(${idx})">
+          <span>📄</span>
+          <span class="dd-rname" title="${ddEsc(r.name)}">${ddEsc(r.name)}</span>
+          <span class="dd-rbadge ${badgeCls}">${badgeTxt}</span>
+          <span class="dd-chev open" id="dd-chev-${idx}">▼</span>
+        </div>
+        <div class="dd-rbody" id="dd-rbody-${idx}">
+          <div class="dd-stat-row">
+            <div class="dd-stat total"><div class="l">원본 행 수</div><div class="v">${r.original.length.toLocaleString()}</div><div class="s">업로드된 전체 행</div></div>
+            <div class="dd-stat dups"><div class="l">제거된 ${ddLabel()}</div><div class="v">${r.dupCount.toLocaleString()}</div><div class="s">${(rate * 100).toFixed(1)}%</div></div>
+            <div class="dd-stat clean"><div class="l">남은 행 수</div><div class="v">${r.cleaned.length.toLocaleString()}</div><div class="s">다운로드 파일 기준</div></div>
+          </div>
+          ${prev}
+          <button class="dd-dl-one" onclick="ddDownloadOne(${idx})">⬇ ${ddEsc(r.name.replace(/(\.[^.]+)$/, ddSuffix() + '$1'))}</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('dd-results').classList.add('show');
+  document.getElementById('dd-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function ddToggleCard(idx) {
+  const body = document.getElementById('dd-rbody-' + idx);
+  const chev = document.getElementById('dd-chev-' + idx);
+  const open = chev.classList.contains('open');
+  body.style.display = open ? 'none' : '';
+  chev.classList.toggle('open', !open);
+}
+function ddTogglePrev(idx) {
+  document.getElementById('dd-prev-' + idx).classList.toggle('show');
+}
+
+function ddQuoteCell(v) {
+  const s = v == null ? '' : String(v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function ddRowsToCSV(header, rows) {
+  const hLine = header.map(ddQuoteCell).join(',');
+  const dLines = rows.map(r => header.map((_, i) => ddQuoteCell(r[i] ?? '')).join(','));
+  return '\uFEFF' + [hLine, ...dLines].join('\r\n');
+}
+function ddOutName(r) {
+  const base = /\.(csv|tsv|txt|xlsx|xls)$/i.test(r.name) ? r.name.replace(/\.[^.]+$/, '') : r.name;
+  return base + ddSuffix() + '.csv';
+}
+function ddDownloadOne(idx) {
+  const r = _ddResults[idx];
+  const blob = new Blob([ddRowsToCSV(r.headers, r.cleaned)], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = ddOutName(r);
+  a.click(); URL.revokeObjectURL(a.href);
+}
+async function ddDownloadAll() {
+  if (!_ddResults.length) return;
+  const btn = document.getElementById('dd-dl-all');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="dd-spin"></div> 압축 중...';
+  try {
+    const zip = new JSZip();
+    const folder = zip.folder(_ddOp === 'cross' ? 'unique' : 'deduped');
+    _ddResults.forEach(r => folder.file(ddOutName(r), ddRowsToCSV(r.headers, r.cleaned)));
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (_ddOp === 'cross' ? 'unique' : 'deduped') + '_files.zip';
+    a.click(); URL.revokeObjectURL(a.href);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇ 전체 파일 ZIP 다운로드';
+  }
+}
+
+// ════════════════════════════════════════════════════
+// DRAG EVENTS
+// ════════════════════════════════════════════════════
+[['dedup-upload-zone',  e => ddAddFiles(e.dataTransfer.files)],
+ ['blank-upload-zone',  e => handleBlankFile(e.dataTransfer.files[0])],
+ ['colsel-upload-zone', e => handleColselFile(e.dataTransfer.files[0])],
+ ['date-upload-zone',   e => handleDateFile(e.dataTransfer.files[0])],
+ ['diff-upload-zone',   e => handleDiffFile(e.dataTransfer.files[0])]
+].forEach(([id, dropFn]) => {
+  const el = document.getElementById(id); if (!el) return;
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag'); dropFn(e); });
+});
+
+// ════════════════════════════════════════════════════
+// INIT — 해시로 진입 시 해당 탭 활성화
+// ════════════════════════════════════════════════════
+if (TAB_IDS.includes(location.hash.slice(1))) switchTab(location.hash.slice(1));
+</script>
+<script>(function(){var k='tf_prep';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

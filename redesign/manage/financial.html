@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재무분석 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="재무분석 시뮬레이터 — DataForge">
+<meta property="og:description" content="재무상태표·손익계산서 항목 추가/삭제로 수익성·안정성·활동성 비율을 자동 계산하는 재무비율 분석 시뮬레이터">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Page ── */
+.page{padding:0 24px 80px;}
+
+/* ── Intro ── */
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.a-card-title span{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ── Section blocks ── */
+.sec-block{margin-bottom:16px;}
+.sec-block:last-of-type{margin-bottom:0;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.sec-name{font-size:12px;font-weight:700;color:var(--text);}
+
+/* ── Pill action buttons ── */
+.pill-action-btn{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.pill-action-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Item rows ── */
+.item-row{display:flex;gap:6px;align-items:center;margin-bottom:5px;}
+.item-name{width:180px;flex-shrink:0;}
+.item-amt{width:160px;flex-shrink:0;}
+.item-unit{font-size:11px;color:var(--dim);flex-shrink:0;}
+.item-del{width:26px;height:26px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;transition:all .2s;padding:0;}
+.item-del:hover{border-color:var(--red);color:var(--red);}
+.inv-label{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--dim);cursor:pointer;white-space:nowrap;flex-shrink:0;user-select:none;}
+.inv-label input{width:13px;height:13px;accent-color:var(--accent2);cursor:pointer;}
+
+/* ── Inputs ── */
+.inp{background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;transition:border-color .2s;font-family:inherit;}
+.inp:not(.item-name):not(.item-amt){width:100%;}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
+.inp-num{font-family:'Space Mono',monospace;text-align:right;}
+
+/* ── Section subtotals ── */
+.sec-total{text-align:right;font-size:11px;color:var(--dim);padding-top:6px;border-top:1px dashed var(--border);font-family:'Noto Sans KR', sans-serif;margin-top:4px;}
+.sec-total strong{color:var(--muted);}
+
+/* ── Summary rows ── */
+.summary-sep{height:1px;background:var(--border);margin:12px 0;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+.summary-label{font-size:12px;color:var(--muted);}
+.summary-val{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--text);}
+
+/* ── Tax field ── */
+.tax-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.tax-label{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;}
+.tax-inp{width:80px;flex-shrink:0;}
+.tax-hint{font-size:11px;color:var(--dim);}
+
+/* ── Result section ── */
+.result-section{margin-bottom:18px;}
+.result-section:last-child{margin-bottom:0;}
+.result-section-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.result-section-title::before{content:'';display:inline-block;width:3px;height:14px;border-radius:2px;background:currentColor;}
+
+/* ── Stat boxes ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.stat-val{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stat-lbl{font-size:11px;color:var(--dim);margin-top:3px;}
+.stat-sub{font-size:10px;margin-top:2px;}
+.stat-box.ok{border-color:var(--green);}  .stat-box.ok .stat-val{color:var(--green);}
+.stat-box.ng{border-color:var(--red);}    .stat-box.ng .stat-val{color:var(--red);}
+.stat-box.hi{border-color:var(--accent);} .stat-box.hi .stat-val{color:var(--accent);}
+
+/* ── Buttons ── */
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Tabs ── */
+.stat-tabs{display:flex;border-bottom:1px solid var(--border);margin-top:20px;}
+.stat-tab{padding:10px 20px;font-size:12px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;padding-top:20px;}
+.stat-panel.active{display:block;}
+
+/* ── Charts ── */
+.radar-wrap{display:flex;justify-content:center;}
+.radar-canvas{max-width:460px;width:100%;}
+.donut-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;justify-items:center;}
+.donut-box{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;}
+.donut-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.donut-wrap{position:relative;width:180px;height:180px;}
+.donut-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:5px 12px;font-size:11px;color:var(--muted);}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:middle;}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  .input-grid{grid-template-columns:1fr;}
+  .donut-row{grid-template-columns:1fr;}
+  .page{padding:0 14px 60px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .inp{font-size:16px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">재무비율 분석 시뮬레이터</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="save-btn" onclick="downloadHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="pr-open-btn" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:#0d9488;" onclick="exportMD()">⬇️ 마크다운</button>
+    <button class="pr-open-btn" onclick="openPrompt()">🤖 분석 프롬프트</button>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>재무상태표</strong>와 <strong>손익계산서</strong>의 항목을 자유롭게 추가·삭제하세요.
+    수익성·안정성·활동성 비율이 실시간으로 계산됩니다.<br>
+    유동자산 항목 중 <strong>재고 체크</strong>된 항목 합계가 당좌비율 계산에 반영됩니다.
+  </div>
+
+  <div class="input-grid" style="margin-top:20px;">
+
+    <!-- 재무상태표 -->
+    <div class="a-card">
+      <div class="a-card-title"><span style="background:var(--accent)"></span>재무상태표</div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">유동자산</span>
+          <button class="pill-action-btn" onclick="addItem('ca')">+ 항목 추가</button>
+        </div>
+        <div id="list-ca"></div>
+        <div class="sec-total">합계 : <strong id="sum-ca">—</strong></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">비유동자산</span>
+          <button class="pill-action-btn" onclick="addItem('nca')">+ 항목 추가</button>
+        </div>
+        <div id="list-nca"></div>
+        <div class="sec-total">합계 : <strong id="sum-nca">—</strong></div>
+      </div>
+
+      <div class="summary-sep"></div>
+      <div class="summary-row"><span class="summary-label">총 자산</span><span class="summary-val" id="disp-ta">—</span></div>
+
+      <div class="sec-block" style="margin-top:14px;">
+        <div class="sec-head">
+          <span class="sec-name">유동부채</span>
+          <button class="pill-action-btn" onclick="addItem('cl')">+ 항목 추가</button>
+        </div>
+        <div id="list-cl"></div>
+        <div class="sec-total">합계 : <strong id="sum-cl">—</strong></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">비유동부채</span>
+          <button class="pill-action-btn" onclick="addItem('ncl')">+ 항목 추가</button>
+        </div>
+        <div id="list-ncl"></div>
+        <div class="sec-total">합계 : <strong id="sum-ncl">—</strong></div>
+      </div>
+
+      <div class="summary-sep"></div>
+      <div class="summary-row"><span class="summary-label">총 부채</span><span class="summary-val" id="disp-tl">—</span></div>
+      <div class="summary-row"><span class="summary-label">자기자본</span><span class="summary-val" id="disp-eq">—</span></div>
+    </div>
+
+    <!-- 손익계산서 -->
+    <div class="a-card">
+      <div class="a-card-title"><span style="background:var(--accent2)"></span>손익계산서</div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">매출액</span>
+          <button class="pill-action-btn" onclick="addItem('rev')">+ 항목 추가</button>
+        </div>
+        <div id="list-rev"></div>
+        <div class="sec-total">합계 : <strong id="sum-rev">—</strong></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">매출원가</span>
+          <button class="pill-action-btn" onclick="addItem('cogs')">+ 항목 추가</button>
+        </div>
+        <div id="list-cogs"></div>
+        <div class="sec-total">합계 : <strong id="sum-cogs">—</strong></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">판매관리비</span>
+          <button class="pill-action-btn" onclick="addItem('sga')">+ 항목 추가</button>
+        </div>
+        <div id="list-sga"></div>
+        <div class="sec-total">합계 : <strong id="sum-sga">—</strong></div>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">이자비용</span>
+          <button class="pill-action-btn" onclick="addItem('int')">+ 항목 추가</button>
+        </div>
+        <div id="list-int"></div>
+        <div class="sec-total">합계 : <strong id="sum-int">—</strong></div>
+      </div>
+
+      <div class="tax-row">
+        <span class="tax-label">법인세율</span>
+        <input class="inp inp-num tax-inp" type="text" inputmode="numeric" id="f-tax" value="22"
+          oninput="s.tax=parseFloat(this.value)||0;partialRender()"
+          onblur="this.value=s.tax">
+        <span class="tax-hint">%</span>
+      </div>
+
+      <div class="summary-sep"></div>
+      <div class="summary-row"><span class="summary-label">매출총이익</span><span class="summary-val" id="disp-gp">—</span></div>
+      <div class="summary-row"><span class="summary-label">영업이익</span><span class="summary-val" id="disp-op">—</span></div>
+      <div class="summary-row"><span class="summary-label">순이익 (세후)</span><span class="summary-val" id="disp-ni">—</span></div>
+    </div>
+  </div>
+
+  <!-- 분석 결과 -->
+  <div class="a-card">
+    <div class="a-card-title"><span style="background:var(--orange)"></span>분석 결과</div>
+    <div id="result-area"></div>
+  </div>
+
+  <!-- 차트 -->
+  <div class="a-card">
+    <div class="a-card-title"><span style="background:var(--green)"></span>시각화</div>
+    <div class="stat-tabs">
+      <button class="stat-tab active" onclick="switchTab('radar',this)">재무비율 레이더</button>
+      <button class="stat-tab" onclick="switchTab('struct',this)">자산 · 자본 구조</button>
+    </div>
+    <div id="tab-radar" class="stat-panel active">
+      <div class="radar-wrap">
+        <canvas id="chart-radar" class="radar-canvas" height="340"></canvas>
+      </div>
+    </div>
+    <div id="tab-struct" class="stat-panel">
+      <div class="donut-row">
+        <div class="donut-box">
+          <div class="donut-title">자산 구조</div>
+          <div class="donut-wrap"><canvas id="chart-asset"></canvas></div>
+          <div class="donut-legend" id="legend-asset"></div>
+        </div>
+        <div class="donut-box">
+          <div class="donut-title">자본 구조</div>
+          <div class="donut-wrap"><canvas id="chart-capital"></canvas></div>
+          <div class="donut-legend" id="legend-capital"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+var s = {
+  assets: {
+    current: [
+      {name:'현금·예금', amt:100000000, isInv:false},
+      {name:'매출채권',   amt:120000000, isInv:false},
+      {name:'재고자산',   amt:80000000,  isInv:true}
+    ],
+    noncurrent: [
+      {name:'유형자산', amt:400000000},
+      {name:'무형자산', amt:100000000}
+    ]
+  },
+  liabilities: {
+    current:    [{name:'매입채무', amt:100000000}, {name:'단기차입금', amt:100000000}],
+    noncurrent: [{name:'장기차입금', amt:150000000}]
+  },
+  income: {
+    revenue:  [{name:'제품매출', amt:700000000}, {name:'서비스매출', amt:100000000}],
+    cogs:     [{name:'재료비',   amt:400000000}, {name:'노무비',      amt:150000000}],
+    sga:      [{name:'인건비',   amt:60000000},  {name:'임차료',      amt:20000000}, {name:'기타판관비', amt:20000000}],
+    interest: [{name:'이자비용', amt:15000000}]
+  },
+  tax: 22
+};
+
+var sections = {
+  ca:   {arr: s.assets.current,         hasInv: true},
+  nca:  {arr: s.assets.noncurrent,      hasInv: false},
+  cl:   {arr: s.liabilities.current,    hasInv: false},
+  ncl:  {arr: s.liabilities.noncurrent, hasInv: false},
+  rev:  {arr: s.income.revenue,         hasInv: false},
+  cogs: {arr: s.income.cogs,            hasInv: false},
+  sga:  {arr: s.income.sga,             hasInv: false},
+  int:  {arr: s.income.interest,        hasInv: false}
+};
+
+var charts = {};
+
+/* ── 유틸 ── */
+function parseNum(v) { var n=parseFloat(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,'')); return isNaN(n)?0:n; }
+function sumArr(arr) { return arr.reduce(function(t,i){return t+(+i.amt||0);},0); }
+function sumOf(key)  { return sumArr(sections[key].arr); }
+function fmt(n)  { return Math.round(n).toLocaleString('ko-KR'); }
+function pct(v)  { return isFinite(v) ? v.toFixed(1)+'%' : 'N/A'; }
+function x1(v)   { return isFinite(v) ? v.toFixed(2)+'x' : 'N/A'; }
+function escQ(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function ec(s)   { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── 항목 조작 ── */
+function addItem(key) {
+  var def = {name:'항목', amt:0};
+  if (sections[key].hasInv) def.isInv = false;
+  sections[key].arr.push(def);
+  fullRender();
+}
+function removeItem(key, i) { sections[key].arr.splice(i, 1); fullRender(); }
+function setName(key, i, v) { sections[key].arr[i].name = v; }
+function setAmt(key, i, v)  { sections[key].arr[i].amt = parseNum(v); partialRender(); }
+function setInv(key, i, v)  { sections[key].arr[i].isInv = v; partialRender(); }
+
+/* ── 계산 ── */
+function calc() {
+  var ca  = sumOf('ca'),  nca = sumOf('nca');
+  var cl  = sumOf('cl'),  ncl = sumOf('ncl');
+  var inv = s.assets.current.reduce(function(t,i){return t+(i.isInv?+i.amt:0);},0);
+  var ta  = ca + nca,  tl = cl + ncl,  eq = ta - tl;
+  var rev = sumOf('rev'), cogs = sumOf('cogs'), sga = sumOf('sga'), int_ = sumOf('int');
+  var gp  = rev - cogs,  op = gp - sga;
+  var ni  = (op - int_) * (1 - s.tax / 100);
+  return {
+    ca:ca, nca:nca, inv:inv, ta:ta, cl:cl, ncl:ncl, tl:tl, eq:eq,
+    rev:rev, cogs:cogs, sga:sga, int_:int_, gp:gp, op:op, ni:ni,
+    gpm:  rev>0   ? gp/rev*100  : NaN,
+    opm:  rev>0   ? op/rev*100  : NaN,
+    npm:  rev>0   ? ni/rev*100  : NaN,
+    roe:  eq>0    ? ni/eq*100   : NaN,
+    roa:  ta>0    ? ni/ta*100   : NaN,
+    dr:   eq>0    ? tl/eq*100   : NaN,
+    cr:   cl>0    ? ca/cl*100   : NaN,
+    qr:   cl>0    ? (ca-inv)/cl*100 : NaN,
+    icr:  int_>0  ? op/int_     : NaN,
+    ato:  ta>0    ? rev/ta      : NaN
+  };
+}
+
+/* ── 리스트 렌더 ── */
+function renderList(key, listId, sumId) {
+  var sec = sections[key];
+  var el  = document.getElementById(listId);
+  if (!el) return;
+  el.innerHTML = sec.arr.map(function(item, i) {
+    var invPart = sec.hasInv
+      ? '<label class="inv-label"><input type="checkbox"' + (item.isInv?' checked':'') +
+        ' onchange="setInv(\'' + key + '\',' + i + ',this.checked)"> 재고</label>'
+      : '';
+    return '<div class="item-row">' +
+      '<input class="inp item-name" type="text" value="' + escQ(item.name) + '" placeholder="항목명"' +
+        ' oninput="setName(\'' + key + '\',' + i + ',this.value)">' +
+      '<input class="inp inp-num item-amt" type="text" inputmode="numeric" value="' + fmt(+item.amt||0) + '"' +
+        ' oninput="setAmt(\'' + key + '\',' + i + ',this.value)"' +
+        ' onblur="this.value=fmt(sections[\'' + key + '\'].arr[' + i + '].amt)">' +
+      '<span class="item-unit">원</span>' +
+      invPart +
+      '<button class="item-del" onclick="removeItem(\'' + key + '\',' + i + ')">&times;</button>' +
+      '</div>';
+  }).join('');
+  var sumEl = document.getElementById(sumId);
+  if (sumEl) sumEl.textContent = fmt(sumArr(sec.arr));
+}
+
+/* ── 소계 갱신 ── */
+function updateSubtotals(r) {
+  ['ca','nca','cl','ncl','rev','cogs','sga','int'].forEach(function(k) {
+    var el = document.getElementById('sum-'+k);
+    if (el) el.textContent = fmt(sumOf(k));
+  });
+  setText('disp-ta', fmt(r.ta));
+  setText('disp-tl', fmt(r.tl));
+  setTextC('disp-eq', fmt(r.eq), r.eq>=0?'':'var(--red)');
+  setText('disp-gp',  fmt(r.gp));
+  setTextC('disp-op', fmt(r.op), r.op>=0?'':'var(--red)');
+  setTextC('disp-ni', fmt(r.ni), r.ni>=0?'':'var(--red)');
+}
+function setText(id, v)       { var e=document.getElementById(id); if(e) e.textContent=v; }
+function setTextC(id, v, col) { var e=document.getElementById(id); if(e){e.textContent=v;e.style.color=col;} }
+
+/* ── 결과 렌더 ── */
+function ratingMark(v, good, bad) {
+  if (!isFinite(v)) return '';
+  return '<div class="stat-sub" style="color:' + (v>=good?'var(--green)':v<=bad?'var(--red)':'var(--amber)') + '">' +
+         (v>=good?'▲ 양호':v<=bad?'▼ 주의':'— 보통') + '</div>';
+}
+function mCard(label, val, sub, cls) {
+  return '<div class="stat-box '+(cls||'')+'"><div class="stat-val">'+val+'</div>' +
+         '<div class="stat-lbl">'+label+'</div>'+(sub||'')+'</div>';
+}
+
+function renderResultArea(r) {
+  var el = document.getElementById('result-area');
+  if (!el) return;
+  el.innerHTML =
+    '<div class="result-section">' +
+      '<div class="result-section-title" style="color:var(--orange)">수익성</div>' +
+      '<div class="stat-grid">' +
+      mCard('매출총이익률', pct(r.gpm), ratingMark(r.gpm,30,15)) +
+      mCard('영업이익률',   pct(r.opm), ratingMark(r.opm,15,5)) +
+      mCard('순이익률',     pct(r.npm), ratingMark(r.npm,10,3)) +
+      mCard('ROE',          pct(r.roe), ratingMark(r.roe,15,5)) +
+      mCard('ROA',          pct(r.roa), ratingMark(r.roa,10,3)) +
+      '</div></div>' +
+    '<div class="result-section" style="margin-top:18px">' +
+      '<div class="result-section-title" style="color:var(--accent2)">안정성</div>' +
+      '<div class="stat-grid">' +
+      mCard('부채비율',     pct(r.dr),  ratingMark(r.dr, 0,200),   r.dr<100?'ok':r.dr>200?'ng':'') +
+      mCard('유동비율',     pct(r.cr),  ratingMark(r.cr, 200,100), r.cr>=200?'ok':r.cr<100?'ng':'') +
+      mCard('당좌비율',     pct(r.qr),  ratingMark(r.qr, 100,50),  r.qr>=100?'ok':r.qr<50?'ng':'') +
+      mCard('이자보상배율', x1(r.icr),  ratingMark(r.icr,3,1.5),   r.icr>=3?'ok':r.icr<1.5?'ng':'') +
+      '</div></div>' +
+    '<div class="result-section" style="margin-top:18px">' +
+      '<div class="result-section-title" style="color:var(--accent)">활동성 · 규모</div>' +
+      '<div class="stat-grid">' +
+      mCard('총자산회전율', x1(r.ato),     ratingMark(r.ato,1,0.5), r.ato>=1?'ok':r.ato<0.5?'ng':'') +
+      mCard('총 자산',      fmt(r.ta)+'원', '') +
+      mCard('자기자본',     fmt(r.eq)+'원', '', r.eq>=0?'':'ng') +
+      mCard('영업이익',     fmt(r.op)+'원', '', r.op>=0?'':'ng') +
+      mCard('순이익',       fmt(r.ni)+'원', '', r.ni>=0?'':'ng') +
+      '</div></div>';
+}
+
+/* ── 레이더 차트 ── */
+function renderRadar(r) {
+  var canvas = document.getElementById('chart-radar');
+  if (!canvas) return;
+  var drScore = isFinite(r.dr) ? Math.max(0,100-r.dr/2) : 0;
+  var scores = [
+    Math.min(100,Math.max(0,isFinite(r.opm)?r.opm/20*100:0)),
+    Math.min(100,Math.max(0,isFinite(r.npm)?r.npm/15*100:0)),
+    Math.min(100,Math.max(0,isFinite(r.roe)?r.roe/20*100:0)),
+    Math.min(100,Math.max(0,isFinite(r.cr) ?r.cr/200*100:0)),
+    Math.min(100,Math.max(0,isFinite(r.icr)?r.icr/5*100 :0)),
+    drScore
+  ];
+  var labels = ['영업이익률\n(기준 20%)','순이익률\n(기준 15%)','ROE\n(기준 20%)','유동비율\n(기준 200%)','이자보상배율\n(기준 5x)','부채안정성\n(부채율↓)'];
+  if (charts.radar) charts.radar.destroy();
+  charts.radar = new Chart(canvas, {
+    type:'radar',
+    data:{labels:labels, datasets:[{
+      label:'재무비율 점수 (100점 만점)',
+      data:scores,
+      backgroundColor:'rgba(37,99,235,0.1)',
+      borderColor:'rgba(37,99,235,0.8)',
+      borderWidth:2,
+      pointBackgroundColor:scores.map(function(v){return v>=70?'#059669':v>=40?'#d97706':'#dc2626';}),
+      pointRadius:5
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:10},backdropColor:'transparent'},
+        pointLabels:{font:{size:11},color:'#64748b'},
+        grid:{color:'rgba(0,0,0,.07)'},angleLines:{color:'rgba(0,0,0,.07)'}}},
+      plugins:{
+        legend:{labels:{font:{size:11}}},
+        tooltip:{callbacks:{label:function(c){
+          var names=['영업이익률','순이익률','ROE','유동비율','이자보상배율','부채안정성'];
+          var vals=[pct(r.opm),pct(r.npm),pct(r.roe),pct(r.cr),x1(r.icr),pct(isFinite(r.dr)?100-r.dr/2:NaN)];
+          return names[c.dataIndex]+' : '+vals[c.dataIndex]+'  (점수 '+Math.round(c.raw)+')';
+        }}}
+      }
+    }
+  });
+}
+
+/* ── 도넛 차트 ── */
+function renderDonuts(r) {
+  renderDonut('chart-asset','legend-asset',
+    ['유동자산','비유동자산'],[r.ca,r.nca],['#2563eb','#6366f1']);
+  renderDonut('chart-capital','legend-capital',
+    ['유동부채','비유동부채','자기자본'],[r.cl,r.ncl,Math.max(0,r.eq)],['#dc2626','#ea580c','#059669']);
+}
+function renderDonut(id, lgId, labels, data, colors) {
+  var canvas = document.getElementById(id);
+  if (!canvas) return;
+  var total = data.reduce(function(a,b){return a+b;},0);
+  var lg = document.getElementById(lgId);
+  if (lg) lg.innerHTML = labels.map(function(l,i){
+    var p = total>0?(data[i]/total*100).toFixed(1):'0.0';
+    return '<span><span class="legend-dot" style="background:'+colors[i]+'"></span>'+l+' '+p+'%</span>';
+  }).join('');
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(canvas,{type:'doughnut',
+    data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderColor:'#fff',borderWidth:3,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'62%',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){
+          var p=total>0?(c.parsed/total*100).toFixed(1):'0.0';
+          return c.label+': '+fmt(c.parsed)+'원 ('+p+'%)';
+        }}}
+      }
+    }
+  });
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.stat-tab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.stat-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='struct') renderDonuts(calc());
+}
+
+/* ── 렌더 진입점 ── */
+function partialRender() {
+  var r = calc();
+  updateSubtotals(r);
+  renderResultArea(r);
+  renderRadar(r);
+}
+
+function fullRender() {
+  renderList('ca',  'list-ca',  'sum-ca');
+  renderList('nca', 'list-nca', 'sum-nca');
+  renderList('cl',  'list-cl',  'sum-cl');
+  renderList('ncl', 'list-ncl', 'sum-ncl');
+  renderList('rev', 'list-rev', 'sum-rev');
+  renderList('cogs','list-cogs','sum-cogs');
+  renderList('sga', 'list-sga', 'sum-sga');
+  renderList('int', 'list-int', 'sum-int');
+  partialRender();
+}
+
+fullRender();
+
+/* ══════════════════════════════════════
+   HTML 내보내기 (html.md 기준)
+══════════════════════════════════════ */
+function downloadHTML() {
+  var r       = calc();
+  var dateStr = new Date().toLocaleDateString('ko-KR');
+
+  /* 레이더 차트 캡처 */
+  var radarImg = charts.radar ? charts.radar.canvas.toDataURL('image/png') : null;
+
+  /* 도넛 차트 — 오프스크린 렌더 */
+  var dpr    = window.devicePixelRatio || 1;
+  var refCv  = charts.radar ? charts.radar.canvas : null;
+  var refW   = refCv ? Math.round(refCv.width / dpr) : 460;
+  var refH   = refCv ? Math.round(refCv.height / dpr) : 340;
+  var donutSize = Math.min(refH, 220);
+
+  function renderDonutOffscreen(labels, data, colors) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:'+donutSize+'px;height:'+donutSize+'px;';
+    var cv = document.createElement('canvas');
+    cv.style.width  = donutSize + 'px';
+    cv.style.height = donutSize + 'px';
+    wrap.appendChild(cv);
+    document.body.appendChild(wrap);
+    var total = data.reduce(function(a,b){return a+b;},0);
+    var tmp = new Chart(cv, {
+      type:'doughnut',
+      data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderColor:'#fff',borderWidth:3}]},
+      options:{responsive:false,maintainAspectRatio:true,cutout:'62%',animation:false,
+        plugins:{legend:{display:false},tooltip:{enabled:false}}}
+    });
+    var img = cv.toDataURL('image/png');
+    tmp.destroy();
+    document.body.removeChild(wrap);
+    return img;
+  }
+
+  var assetImg   = renderDonutOffscreen(['유동자산','비유동자산'],[r.ca,r.nca],['#2563eb','#6366f1']);
+  var capitalImg = renderDonutOffscreen(['유동부채','비유동부채','자기자본'],[r.cl,r.ncl,Math.max(0,r.eq)],['#dc2626','#ea580c','#059669']);
+
+  /* sum-row 5개 핵심 지표 */
+  var sumCards = [
+    {icon:'🏦', v:fmt(r.ta)+'원',           l:'총 자산',     bc:'var(--border)',               bg:'',                        vc:'var(--text)'},
+    {icon:'💎', v:fmt(r.eq)+'원',           l:'자기자본',    bc:r.eq>=0?'rgba(5,150,105,.3)':'rgba(220,38,38,.3)',   bg:r.eq>=0?'rgba(5,150,105,.04)':'rgba(220,38,38,.04)', vc:r.eq>=0?'var(--green)':'var(--red)'},
+    {icon:'📈', v:fmt(r.rev)+'원',          l:'매출액',      bc:'rgba(37,99,235,.3)',           bg:'rgba(37,99,235,.04)',      vc:'var(--accent)'},
+    {icon:'⚙️', v:fmt(r.op)+'원',           l:'영업이익',    bc:r.op>=0?'rgba(5,150,105,.3)':'rgba(220,38,38,.3)',   bg:r.op>=0?'rgba(5,150,105,.04)':'rgba(220,38,38,.04)', vc:r.op>=0?'var(--green)':'var(--red)'},
+    {icon:'💰', v:fmt(r.ni)+'원',           l:'순이익 (세후)', bc:r.ni>=0?'rgba(5,150,105,.3)':'rgba(220,38,38,.3)', bg:r.ni>=0?'rgba(5,150,105,.04)':'rgba(220,38,38,.04)', vc:r.ni>=0?'var(--green)':'var(--red)'}
+  ];
+  var sumRowHtml = '<div class="sum-row">\n' +
+    sumCards.map(function(c){
+      return '<div class="sum-c" style="border-color:'+c.bc+';'+(c.bg?'background:'+c.bg+';':'')+'">' +
+        '<div class="sum-icon">'+c.icon+'</div>' +
+        '<div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:'+c.vc+';">'+ec(c.v)+'</div>' +
+        '<div class="sum-l" style="color:'+c.vc+';">'+ec(c.l)+'</div></div></div>';
+    }).join('\n') + '\n</div>\n';
+
+  /* 재무비율 HTML — 섹션별 */
+  function ratioSection(title, color, rows) {
+    var cards = rows.map(function(m){
+      return '<div style="background:var(--card);border:1px solid '+m.bc+';border-radius:8px;padding:14px 16px;">' +
+        '<div style="font-family:\'Noto Sans KR\',sans-serif;font-size:16px;font-weight:700;color:'+m.vc+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ec(m.v)+'</div>' +
+        '<div style="font-size:11px;color:var(--dim);margin-top:4px;">'+ec(m.l)+'</div>' +
+        (m.sub?'<div style="font-size:10px;color:'+m.sc+';margin-top:2px;">'+ec(m.sub)+'</div>':'') +
+        '</div>';
+    }).join('');
+    return '<div style="margin-bottom:18px;">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:'+color+';margin-bottom:10px;display:flex;align-items:center;gap:6px;">' +
+      '<span style="display:inline-block;width:3px;height:14px;border-radius:2px;background:'+color+';"></span>'+title+'</div>' +
+      '<div style="display:grid;grid-template-columns:repeat('+rows.length+',1fr);gap:10px;">'+cards+'</div></div>';
+  }
+
+  function rBc(v,good,bad){ return !isFinite(v)?'var(--border)':v>=good?'rgba(5,150,105,.35)':v<=bad?'rgba(220,38,38,.35)':'rgba(217,119,6,.3)'; }
+  function rVc(v,good,bad){ return !isFinite(v)?'var(--text)':v>=good?'var(--green)':v<=bad?'var(--red)':'var(--amber)'; }
+  function rSub(v,good,bad){ return !isFinite(v)?'':v>=good?'▲ 양호':v<=bad?'▼ 주의':'— 보통'; }
+  function rSc(v,good,bad){ return !isFinite(v)?'var(--dim)':v>=good?'var(--green)':v<=bad?'var(--red)':'var(--amber)'; }
+
+  var profitRows = [
+    {v:pct(r.gpm), l:'매출총이익률', bc:rBc(r.gpm,30,15), vc:rVc(r.gpm,30,15), sub:rSub(r.gpm,30,15), sc:rSc(r.gpm,30,15)},
+    {v:pct(r.opm), l:'영업이익률',   bc:rBc(r.opm,15,5),  vc:rVc(r.opm,15,5),  sub:rSub(r.opm,15,5),  sc:rSc(r.opm,15,5)},
+    {v:pct(r.npm), l:'순이익률',     bc:rBc(r.npm,10,3),  vc:rVc(r.npm,10,3),  sub:rSub(r.npm,10,3),  sc:rSc(r.npm,10,3)},
+    {v:pct(r.roe), l:'ROE',          bc:rBc(r.roe,15,5),  vc:rVc(r.roe,15,5),  sub:rSub(r.roe,15,5),  sc:rSc(r.roe,15,5)},
+    {v:pct(r.roa), l:'ROA',          bc:rBc(r.roa,10,3),  vc:rVc(r.roa,10,3),  sub:rSub(r.roa,10,3),  sc:rSc(r.roa,10,3)}
+  ];
+  var stabilRows = [
+    {v:pct(r.dr),  l:'부채비율',     bc:rBc(r.dr,0,200),   vc:r.dr<100?'var(--green)':r.dr>200?'var(--red)':'var(--amber)',  sub:r.dr<100?'▲ 양호':r.dr>200?'▼ 주의':'— 보통', sc:r.dr<100?'var(--green)':r.dr>200?'var(--red)':'var(--amber)'},
+    {v:pct(r.cr),  l:'유동비율',     bc:rBc(r.cr,200,100), vc:rVc(r.cr,200,100), sub:rSub(r.cr,200,100), sc:rSc(r.cr,200,100)},
+    {v:pct(r.qr),  l:'당좌비율',     bc:rBc(r.qr,100,50),  vc:rVc(r.qr,100,50),  sub:rSub(r.qr,100,50),  sc:rSc(r.qr,100,50)},
+    {v:x1(r.icr),  l:'이자보상배율', bc:rBc(r.icr,3,1.5),  vc:rVc(r.icr,3,1.5),  sub:rSub(r.icr,3,1.5),  sc:rSc(r.icr,3,1.5)}
+  ];
+  var activityRows = [
+    {v:x1(r.ato),      l:'총자산회전율', bc:rBc(r.ato,1,0.5), vc:rVc(r.ato,1,0.5), sub:rSub(r.ato,1,0.5), sc:rSc(r.ato,1,0.5)},
+    {v:fmt(r.ta)+'원', l:'총 자산',      bc:'var(--border)',   vc:'var(--text)',     sub:'',                sc:'var(--dim)'},
+    {v:fmt(r.eq)+'원', l:'자기자본',     bc:r.eq>=0?'rgba(5,150,105,.35)':'rgba(220,38,38,.35)', vc:r.eq>=0?'var(--green)':'var(--red)', sub:'', sc:'var(--dim)'},
+    {v:fmt(r.op)+'원', l:'영업이익',     bc:r.op>=0?'rgba(5,150,105,.35)':'rgba(220,38,38,.35)', vc:r.op>=0?'var(--green)':'var(--red)', sub:'', sc:'var(--dim)'},
+    {v:fmt(r.ni)+'원', l:'순이익',       bc:r.ni>=0?'rgba(5,150,105,.35)':'rgba(220,38,38,.35)', vc:r.ni>=0?'var(--green)':'var(--red)', sub:'', sc:'var(--dim)'}
+  ];
+
+  var ratioHtml = ratioSection('수익성', '#ea580c', profitRows) +
+                  ratioSection('안정성', '#6366f1', stabilRows) +
+                  ratioSection('활동성 · 규모', '#2563eb', activityRows);
+
+  /* 도넛 범례 */
+  function donutLegend(labels, data, colors) {
+    var total = data.reduce(function(a,b){return a+b;},0);
+    return labels.map(function(l,i){
+      var p = total>0?(data[i]/total*100).toFixed(1):'0.0';
+      return '<span style="font-size:11px;color:var(--muted);margin:0 6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+colors[i]+';margin-right:3px;vertical-align:middle;"></span>'+l+' '+p+'%</span>';
+    }).join('');
+  }
+
+  /* CSS */
+  var css = [
+    ':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;}',
+    '*{margin:0;padding:0;box-sizing:border-box;}',
+    "body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}",
+    '.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}',
+    '.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}',
+    '.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}',
+    '.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}',
+    '.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;min-width:0;}',
+    '.sum-icon{font-size:22px;opacity:.85;flex-shrink:0;}',
+    ".sum-v{font-family:'Noto Sans KR',sans-serif;font-size:16px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+    '.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}',
+    '.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}',
+    '.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}',
+    '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}',
+    'table{width:100%;border-collapse:collapse;font-size:12px;}',
+    'th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--card2);border-bottom:1px solid var(--border);}',
+    'td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.06);}',
+    'tr:last-child td{border-bottom:none;}',
+    ".cost-total{text-align:right;font-size:12px;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);font-family:'Noto Sans KR', sans-serif;}",
+    '.cost-total strong{color:var(--text);}',
+    '.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;text-align:center;}',
+    '.chart-img{width:100%;border-radius:8px;margin-top:4px;}',
+    '.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}',
+    '@media(max-width:640px){.sum-row{grid-template-columns:repeat(2,1fr);}.grid2{grid-template-columns:1fr;}}'
+  ].join('\n');
+
+  /* 재무상태표 테이블 행 */
+  function fsRows(arr) {
+    return arr.map(function(i){
+      return '<tr><td>'+ec(i.name)+(i.isInv?' <span style="font-size:10px;color:var(--accent2);">[재고]</span>':'')+'</td>' +
+        '<td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;">'+fmt(+i.amt||0)+'</td></tr>';
+    }).join('');
+  }
+
+  var html = [
+    '<!DOCTYPE html>',
+    '<html lang="ko">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1.0">',
+    '<title>재무비율 분석 결과 — '+ec(dateStr)+'</title>',
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">',
+    '<style>'+css+'</style>',
+    '</head>',
+    '<body>',
+    '<div class="wrap">',
+    '',
+    '<div class="page-title">📊 재무비율 분석 결과</div>',
+    '<div class="meta"><b style="color:var(--muted)">재무분석 시뮬레이터</b> &nbsp;·&nbsp; '+ec(dateStr)+' 기준 &nbsp;·&nbsp; DataForge</div>',
+    '',
+    sumRowHtml,
+    '<div class="section-card">',
+    '<div class="section-title">재무상태표 요약</div>',
+    '<div class="grid2">',
+    '<div>',
+    '<table><thead><tr><th>자산</th><th style="text-align:right;">금액 (원)</th></tr></thead><tbody>',
+    '<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--accent);padding:8px 10px 4px;background:var(--card2);">유동자산</td></tr>',
+    fsRows(s.assets.current),
+    '<tr><td style="font-size:11px;color:var(--muted);">소계</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:var(--accent);">'+fmt(r.ca)+'</td></tr>',
+    '<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--accent2);padding:8px 10px 4px;background:var(--card2);">비유동자산</td></tr>',
+    fsRows(s.assets.noncurrent),
+    '<tr><td style="font-size:11px;color:var(--muted);">소계</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:var(--accent2);">'+fmt(r.nca)+'</td></tr>',
+    '</tbody></table>',
+    '<div class="cost-total">총 자산 : <strong>'+fmt(r.ta)+'</strong> 원</div>',
+    '</div>',
+    '<div>',
+    '<table><thead><tr><th>부채 · 자본</th><th style="text-align:right;">금액 (원)</th></tr></thead><tbody>',
+    '<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--red);padding:8px 10px 4px;background:var(--card2);">유동부채</td></tr>',
+    fsRows(s.liabilities.current),
+    '<tr><td style="font-size:11px;color:var(--muted);">소계</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:var(--red);">'+fmt(r.cl)+'</td></tr>',
+    '<tr><td colspan="2" style="font-size:10px;font-weight:700;color:var(--orange);padding:8px 10px 4px;background:var(--card2);">비유동부채</td></tr>',
+    fsRows(s.liabilities.noncurrent),
+    '<tr><td style="font-size:11px;color:var(--muted);">소계</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:var(--orange);">'+fmt(r.ncl)+'</td></tr>',
+    '</tbody></table>',
+    '<div class="cost-total">총 부채 : <strong>'+fmt(r.tl)+'</strong> 원 &nbsp;|&nbsp; 자기자본 : <strong>'+fmt(r.eq)+'</strong> 원</div>',
+    '</div>',
+    '</div>',
+    '</div>',
+    '',
+    '<div class="section-card">',
+    '<div class="section-title">손익계산서 요약</div>',
+    '<table><thead><tr><th>항목</th><th style="text-align:right;">금액 (원)</th></tr></thead><tbody>',
+    '<tr><td style="font-weight:700;color:var(--text);">매출액</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;">'+fmt(r.rev)+'</td></tr>',
+    '<tr><td style="color:var(--muted);">(-) 매출원가</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;color:var(--muted);">'+fmt(r.cogs)+'</td></tr>',
+    '<tr><td style="font-weight:700;color:var(--text);">매출총이익</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:'+(r.gp>=0?'var(--green)':'var(--red)')+';">'+fmt(r.gp)+'</td></tr>',
+    '<tr><td style="color:var(--muted);">(-) 판매관리비</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;color:var(--muted);">'+fmt(r.sga)+'</td></tr>',
+    '<tr><td style="font-weight:700;color:var(--text);">영업이익</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:'+(r.op>=0?'var(--green)':'var(--red)')+';">'+fmt(r.op)+'</td></tr>',
+    '<tr><td style="color:var(--muted);">(-) 이자비용</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;color:var(--muted);">'+fmt(r.int_)+'</td></tr>',
+    '<tr><td style="color:var(--muted);">(-) 법인세 ('+s.tax+'%)</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;color:var(--muted);">'+fmt((r.op-r.int_)*s.tax/100)+'</td></tr>',
+    '<tr><td style="font-weight:700;color:var(--text);">순이익 (세후)</td><td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;color:'+(r.ni>=0?'var(--green)':'var(--red)')+';">'+fmt(r.ni)+'</td></tr>',
+    '</tbody></table>',
+    '</div>',
+    '',
+    '<div class="section-card">',
+    '<div class="section-title">재무비율 분석</div>',
+    ratioHtml,
+    '</div>',
+    ''
+  ].join('\n');
+
+  /* 시각화 섹션 */
+  html += '<div class="section-card">\n<div class="section-title">시각화</div>\n';
+  if (radarImg) html += '<div class="chart-title">재무비율 레이더</div>\n<div style="text-align:center;"><img src="'+radarImg+'" style="width:'+refW+'px;height:'+refH+'px;max-width:100%;border-radius:8px;margin-top:4px;"></div>\n';
+  if (assetImg || capitalImg) {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;text-align:center;">\n';
+    if (assetImg) {
+      html += '<div><div class="chart-title">자산 구조</div>' +
+        '<img src="'+assetImg+'" style="width:'+donutSize+'px;height:'+donutSize+'px;border-radius:8px;">\n' +
+        '<div style="margin-top:8px;">'+donutLegend(['유동자산','비유동자산'],[r.ca,r.nca],['#2563eb','#6366f1'])+'</div></div>\n';
+    }
+    if (capitalImg) {
+      html += '<div><div class="chart-title">자본 구조</div>' +
+        '<img src="'+capitalImg+'" style="width:'+donutSize+'px;height:'+donutSize+'px;border-radius:8px;">\n' +
+        '<div style="margin-top:8px;">'+donutLegend(['유동부채','비유동부채','자기자본'],[r.cl,r.ncl,Math.max(0,r.eq)],['#dc2626','#ea580c','#059669'])+'</div></div>\n';
+    }
+    html += '</div>\n';
+  }
+  html += '</div>\n';
+
+  html += [
+    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(dateStr)+'</div>',
+    '</div>',
+    '</body>',
+    '</html>'
+  ].join('\n');
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'financial-analysis-'+new Date().toISOString().slice(0,10)+'.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+<script>(function(){var k='tf_manage_financial';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+
+<!-- ── AI 분석 프롬프트 팝업 (자동 삽입) ── -->
+<style>
+.pr-open-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:8px;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.pr-open-btn:hover{background:rgba(124,58,237,.18);}
+.pr-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.pr-bg.open{display:flex;}
+.pr-modal{background:var(--card,#fff);border:1px solid var(--border,rgba(0,0,0,.1));border-radius:14px;max-width:720px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.pr-head{padding:16px 20px 12px;border-bottom:1px solid var(--border,rgba(0,0,0,.1));}
+.pr-head h3{font-size:15px;font-weight:800;color:var(--text,#1e293b);}
+.pr-head p{font-size:11.5px;color:var(--muted,#64748b);margin-top:4px;line-height:1.6;}
+.pr-tabs{display:flex;gap:6px;margin-top:10px;}
+.pr-tab{font-size:11px;font-weight:700;padding:5px 12px;border-radius:14px;border:1px solid var(--border2,rgba(0,0,0,.15));background:transparent;color:var(--muted,#64748b);cursor:pointer;font-family:inherit;transition:all .15s;}
+.pr-tab.active{background:#2563eb;border-color:#2563eb;color:#fff;}
+.pr-body{padding:14px 20px;overflow-y:auto;flex:1;}
+.pf-guide{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.pf-step{font-size:11.5px;color:var(--muted,#64748b);line-height:1.6;}
+.pf-step b{color:var(--text,#1e293b);}
+.pf-no{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#2563eb;color:#fff;font-size:10px;font-weight:800;margin-right:6px;}
+.pr-out{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;font-family:inherit;font-size:12px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word;}
+.pf-fill{color:#fbbf24;}
+.pf-sect{color:#67e8f9;font-weight:700;}
+.pf-note{font-size:11px;color:var(--muted,#64748b);margin-top:8px;line-height:1.6;}
+.pr-foot{padding:12px 20px 16px;border-top:1px solid var(--border,rgba(0,0,0,.1));display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.pr-copy{font-size:12px;font-weight:700;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;transition:opacity .15s;}
+.pr-copy:hover{opacity:.88;}
+.pr-copy.ok{background:#059669;}
+.pr-ai-link{font-size:11px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;border:1px solid;transition:all .2s;font-family:inherit;}
+.pr-ai-link:hover{opacity:.8;}
+.pr-close{margin-left:auto;font-size:12px;font-weight:600;padding:8px 14px;background:transparent;border:1px solid var(--border2,rgba(0,0,0,.15));color:var(--muted,#64748b);border-radius:7px;cursor:pointer;font-family:inherit;}
+.pr-close:hover{color:var(--text,#1e293b);}
+</style>
+<div class="pr-bg" id="pr-bg" onclick="if(event.target===this)closePrompt()">
+  <div class="pr-modal">
+    <div class="pr-head">
+      <h3>🤖 재무비율 분석 프롬프트</h3>
+      <p id="pr-desc"></p>
+      <div class="pr-tabs">
+        <button class="pr-tab" id="pr-tab-tpl" onclick="showPrMode('tpl')">📝 입력값 준비</button>
+        <button class="pr-tab" id="pr-tab-rev" onclick="showPrMode('rev')">🔍 결과 해석</button>
+      </div>
+    </div>
+    <div class="pr-body">
+      <div class="pf-guide" id="pf-guide">
+        <div class="pf-step"><span class="pf-no">1</span><b>역할 지정</b> — AI가 어떤 관점으로 답할지 정합니다</div>
+        <div class="pf-step"><span class="pf-no">2</span><b>배경·숫자</b> — AI는 내 사업의 숫자를 모릅니다. 아는 값은 주고, 모르는 값은 질문하게 하세요</div>
+        <div class="pf-step"><span class="pf-no">3</span><b>작업 요청</b> — 무엇을 만들지(입력값 정리) 또는 무엇을 해석할지 지정합니다</div>
+        <div class="pf-step"><span class="pf-no">4</span><b>조건</b> — 추정 금지 · 모르면 질문 · 확인 방법 요구 같은 안전장치를 겁니다</div>
+      </div>
+      <div class="pr-out" id="pr-out"></div>
+      <div class="pf-note">💡 <span style="color:#b45309;font-weight:700">(예: …)</span> 부분을 내 숫자·상황으로 바꿔서 사용하세요.</div>
+    </div>
+    <div class="pr-foot">
+      <button class="pr-copy" id="pr-copy" onclick="copyPrompt()">📋 프롬프트 복사</button>
+      <a href="https://chatgpt.com" target="_blank" class="pr-ai-link" style="background:rgba(16,163,127,.12);border-color:rgba(16,163,127,.3);color:#0d9668;" onclick="copyPrompt()">ChatGPT</a>
+      <a href="https://claude.ai" target="_blank" class="pr-ai-link" style="background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.3);color:#ea580c;" onclick="copyPrompt()">Claude</a>
+      <a href="https://gemini.google.com" target="_blank" class="pr-ai-link" style="background:rgba(79,142,247,.12);border-color:rgba(79,142,247,.3);color:#2563eb;" onclick="copyPrompt()">Gemini</a>
+      <button class="pr-close" onclick="closePrompt()">닫기</button>
+    </div>
+  </div>
+</div>
+<script>
+var PR_TPL = "당신은 재무 분석 전문가입니다.\n\n[회사 개요]\n- 업종·규모: (예: 제조업, 연매출 30억 원)\n- 분석 목적: (예: 대출 심사 대비, 연간 경영 점검)\n\n[요청]\n재무비율 분석에 필요한 항목을 재무제표에서 찾는 것을 도와주세요.\n1) 재무상태표에서: 유동자산·유동부채·총자산·총부채·자기자본이 어느 계정인지 알려주세요.\n2) 손익계산서에서: 매출액·영업이익·당기순이익·이자비용을 찾는 법을 알려주세요.\n3) 항목을 하나씩 물어보면서 값을 정리해 주세요.\n\n[조건]\n- 계정과목 이름이 달라 헷갈리는 항목은 예시를 들어 설명해 주세요.\n- 내가 모르는 값은 추정하지 말고 어디서 확인할지 알려주세요.";
+var PR_REV = "당신은 재무 분석 전문가입니다.\n아래는 재무비율 분석 시뮬레이터로 계산한 결과입니다.\n\n[분석 결과]\n- 수익성: ROE (예: 8.2%), 영업이익률 (예: 6.5%)\n- 안정성: 부채비율 (예: 180%), 유동비율 (예: 95%), 이자보상배율 (예: 2.1배)\n- 활동성: 총자산회전율 (예: 1.2회)\n\n[요청]\n1. 각 비율이 업종 평균 대비 좋은지 나쁜지 해석해 주세요. 업종 평균을 모르면 확인할 출처를 알려주세요.\n2. 가장 위험한 신호부터 순서대로 짚고 개선 우선순위를 제안해 주세요.\n3. 은행·투자자가 이 숫자를 보면 어떤 질문을 할지 예상 질문 3개를 만들어 주세요.\n4. 확실하지 않은 부분은 추정하지 말고 나에게 질문해 주세요.";
+function renderPrompt(text){
+  var esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  esc = esc.replace(/\(예:[^)]*\)/g, function(m){ return '<span class="pf-fill">'+m+'</span>'; });
+  esc = esc.replace(/^\[[^\]]+\]$/gm, function(m){ return '<span class="pf-sect">'+m+'</span>'; });
+  document.getElementById('pr-out').innerHTML = esc;
+}
+function showPrMode(m){
+  renderPrompt(m==='tpl' ? PR_TPL : PR_REV);
+  document.getElementById('pr-tab-tpl').classList.toggle('active', m==='tpl');
+  document.getElementById('pr-tab-rev').classList.toggle('active', m==='rev');
+  document.getElementById('pf-guide').style.display = m==='tpl' ? '' : 'none';
+  document.getElementById('pr-desc').textContent = m==='tpl'
+    ? '분석에 넣을 입력값을 AI와 함께 준비하는 프롬프트입니다. 노란 부분만 내 상황으로 바꾸면 완성됩니다.'
+    : '시뮬레이터 결과를 붙여넣고 AI에게 해석·개선 방향을 묻는 프롬프트입니다. 노란 부분을 내 결과 숫자로 바꾸세요.';
+}
+function openPrompt(){ showPrMode('tpl'); document.getElementById('pr-bg').classList.add('open'); }
+function closePrompt(){ document.getElementById('pr-bg').classList.remove('open'); }
+function copyPrompt(){
+  var text = document.getElementById('pr-out').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    var b = document.getElementById('pr-copy');
+    b.textContent = '✅ 복사됨'; b.classList.add('ok');
+    setTimeout(function(){ b.textContent = '📋 프롬프트 복사'; b.classList.remove('ok'); }, 1800);
+  });
+}
+</script>
+<script>
+/* ── 마크다운 내보내기 (자동 삽입) ── */
+function dlMD(md, prefix){
+  var today = new Date().toISOString().slice(0,10);
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download = prefix+'-'+today+'.md';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+function safeName(n){ return String(n).replace(/[\\/:*?"<>|#]/g,'').replace(/\s+/g,'-').slice(0,40)||'analysis'; }
+
+function exportMD(){
+  var today = new Date().toISOString().slice(0,10);
+  var r = calc();
+  var md = '# 🏦 재무비율 분석 결과\n\n' + today + ' · DataForge\n\n';
+  md += '## 재무상태표 요약\n\n| 항목 | 금액 |\n|---|---:|\n';
+  md += '| 유동자산 | ' + fmt(r.ca) + '원 |\n| └ 재고자산 | ' + fmt(r.inv) + '원 |\n| 비유동자산 | ' + fmt(r.nca) + '원 |\n| **총자산** | **' + fmt(r.ta) + '원** |\n';
+  md += '| 유동부채 | ' + fmt(r.cl) + '원 |\n| 비유동부채 | ' + fmt(r.ncl) + '원 |\n| **총부채** | **' + fmt(r.tl) + '원** |\n| **자기자본** | **' + fmt(r.eq) + '원** |\n\n';
+  md += '## 손익계산서 요약\n\n| 항목 | 금액 |\n|---|---:|\n';
+  md += '| 매출액 | ' + fmt(r.rev) + '원 |\n| 매출원가 | ' + fmt(r.cogs) + '원 |\n| 매출총이익 | ' + fmt(r.gp) + '원 |\n| 판매관리비 | ' + fmt(r.sga) + '원 |\n| **영업이익** | **' + fmt(r.op) + '원** |\n| 이자비용 | ' + fmt(r.int_) + '원 |\n| 당기순이익 (세율 ' + s.tax + '%) | ' + fmt(r.ni) + '원 |\n\n';
+  md += '## 재무비율\n\n| 구분 | 지표 | 값 |\n|---|---|---:|\n';
+  md += '| 수익성 | 매출총이익률 | ' + pct(r.gpm) + ' |\n| 수익성 | 영업이익률 | ' + pct(r.opm) + ' |\n| 수익성 | 순이익률 | ' + pct(r.npm) + ' |\n| 수익성 | ROE | ' + pct(r.roe) + ' |\n| 수익성 | ROA | ' + pct(r.roa) + ' |\n';
+  md += '| 안정성 | 부채비율 | ' + pct(r.dr) + ' |\n| 안정성 | 유동비율 | ' + pct(r.cr) + ' |\n| 안정성 | 당좌비율 | ' + pct(r.qr) + ' |\n| 안정성 | 이자보상배율 | ' + x1(r.icr) + ' |\n';
+  md += '| 활동성 | 총자산회전율 | ' + x1(r.ato) + ' |\n';
+  dlMD(md, 'financial');
+}
+</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

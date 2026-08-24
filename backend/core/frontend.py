@@ -1,8 +1,9 @@
-"""회수한 정적 프론트(site/)를 원본과 같은 '깔끔한 URL'로 서빙.
+"""프론트 서빙 — 재디자인(redesign/) 우선, 없으면 원본(site/).
 
 원본 nginx는 /sim/ml 같은 확장자 없는 주소를 썼다. 긁을 때는 /sim/ml.html 로 저장했으므로
 파일이 없으면 .html 을 붙여 찾는다. /api/, /mfg/api/ 등 백엔드 경로는 urls.py가 먼저
-가로채므로 여기까지 오지 않는다(여기 오면 정적 파일이 없다는 뜻 → 404).
+가로챈다. 재디자인은 redesign/에 점진 반영 — 재구성한 페이지는 즉시 라이브, 나머지는 원본으로
+그대로 동작(롤아웃 중 아무것도 안 깨짐).
 """
 import os
 import posixpath
@@ -11,24 +12,32 @@ from django.http import FileResponse, HttpResponseNotFound
 from django.views.static import serve as static_serve
 
 SITE = settings.SITE_DIR
+REDESIGN = getattr(settings, "REDESIGN_DIR", None)
+# 우선순위: redesign/ 먼저, 그다음 site/
+ROOTS = [r for r in (REDESIGN, SITE) if r and os.path.isdir(r)]
+
+
+def _resolve(path):
+    """path에 대응하는 실제 파일 경로를 ROOTS 우선순위로 찾는다. (root, relpath) 반환."""
+    for root in ROOTS:
+        full = os.path.join(root, path)
+        if path == "" or os.path.isdir(full):
+            idx = os.path.join(full, "index.html")
+            if os.path.exists(idx):
+                return root, os.path.relpath(idx, root)
+        if os.path.isfile(full):
+            return root, os.path.relpath(full, root)
+        if os.path.exists(full + ".html"):  # 깔끔한 URL → .html
+            return root, os.path.relpath(full + ".html", root)
+    return None, None
 
 
 def serve_site(request, path=""):
     path = posixpath.normpath(path).lstrip("/")
-    full = os.path.join(SITE, path)
-
-    if path == "" or os.path.isdir(full):
-        idx = os.path.join(full, "index.html")
-        if os.path.exists(idx):
-            return FileResponse(open(idx, "rb"), content_type="text/html")
-
-    if os.path.exists(full) and os.path.isfile(full):
-        # 정적 파일: django.views.static이 mime·range·조건부 GET을 처리
-        rel = os.path.relpath(full, SITE)
-        return static_serve(request, rel, document_root=SITE)
-
-    # 확장자 없는 깔끔한 URL → .html
-    if os.path.exists(full + ".html"):
-        return FileResponse(open(full + ".html", "rb"), content_type="text/html")
-
-    return HttpResponseNotFound("Not Found")
+    root, rel = _resolve(path)
+    if root is None:
+        return HttpResponseNotFound("Not Found")
+    if rel.endswith(".html"):
+        return FileResponse(open(os.path.join(root, rel), "rb"),
+                            content_type="text/html; charset=utf-8")
+    return static_serve(request, rel, document_root=root)

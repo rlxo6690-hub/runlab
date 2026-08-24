@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맞춤형 시각화 빌더 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="맞춤형 시각화 빌더 — DataForge">
+<meta property="og:description" content="CSV/Excel 파일을 업로드하고 차트를 커스터마이징한 뒤 HTML로 저장하세요">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;--bg2:#ffffff;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --teal:#0d9488;--amber:#d97706;--green:#059669;--red:#dc2626;--purple:#7c3aed;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;display:flex;flex-direction:column;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;width:100%;margin:0 auto;display:flex;flex-direction:column;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;flex-shrink:0;}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);}
+
+/* Layout — 페이지 전체가 하나의 스크롤로 동작 */
+.builder-wrap{display:flex;}
+
+/* Top upload bar (design.md §8, §11 기준) */
+.upload-bar{flex-shrink:0;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg);}
+.a-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* Control panel — 업로드 바 아래·미리보기 위, 전체 너비로 배치 */
+.ctrl-panel{width:100%;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;}
+/* 전체 너비를 활용해 다단(3열)으로 배치 — 세로 스크롤 없이 한 화면에 표시 */
+.ctrl-scroll{padding:16px;column-count:3;column-gap:20px;}
+
+.section{margin-bottom:20px;break-inside:avoid;}
+.section-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Upload zone (design.md §11 기준) */
+.upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:10px;padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.03);}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input{display:none;}
+.upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);}
+.file-info{display:none;background:rgba(5,150,105,0.07);border:1px solid rgba(5,150,105,0.25);border-radius:8px;padding:10px 12px;font-size:12px;margin-top:12px;}
+.file-info .file-name{font-weight:600;color:var(--green);}
+.file-info .file-meta{color:var(--muted);margin-top:2px;}
+.file-info .reset-btn{margin-top:6px;font-size:11px;color:var(--red);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:inherit;padding:0;}
+
+/* Column selectors */
+.col-selectors{display:none;}
+.form-row{margin-bottom:10px;}
+.form-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;}
+.form-select,.form-input{width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:inherit;color:var(--text);background:#fff;outline:none;transition:border .2s;}
+.form-select:focus,.form-input:focus{border-color:var(--accent);}
+.form-input[type=number]{-moz-appearance:textfield;}
+.form-input[type=number]::-webkit-inner-spin-button{opacity:.5;}
+
+/* Y columns */
+.y-cols-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.y-col-row{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 8px;}
+.y-col-row select{flex:1;padding:4px 6px;border:1px solid var(--border2);border-radius:6px;font-size:11px;font-family:inherit;color:var(--text);background:#fff;outline:none;}
+.y-col-row input[type=color]{width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;padding:2px;background:#fff;}
+.y-col-row .y-remove{width:22px;height:22px;border:none;background:none;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:.15s;}
+.y-col-row .y-remove:hover{background:rgba(220,38,38,0.1);color:var(--red);}
+.add-y-btn{font-size:11px;font-weight:600;color:var(--accent);background:rgba(37,99,235,0.07);border:1px dashed rgba(37,99,235,0.3);border-radius:7px;padding:5px 12px;cursor:pointer;width:100%;font-family:inherit;transition:.2s;}
+.add-y-btn:hover{background:rgba(37,99,235,0.12);}
+
+/* Chart type grid */
+.chart-type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.chart-type-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1px solid var(--border2);border-radius:8px;background:#fff;cursor:pointer;transition:all .2s;font-family:inherit;}
+.chart-type-btn:hover{border-color:rgba(37,99,235,0.4);background:rgba(37,99,235,0.04);}
+.chart-type-btn.active{border-color:var(--accent);background:rgba(37,99,235,0.08);color:var(--accent);}
+.chart-type-btn .ct-icon{font-size:20px;line-height:1;}
+.chart-type-btn .ct-label{font-size:10px;font-weight:600;color:inherit;white-space:nowrap;}
+.chart-type-btn:not(.active) .ct-label{color:var(--muted);}
+
+/* Toggle row */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;}
+.toggle-label{font-size:12px;color:var(--text);}
+.toggle{position:relative;width:34px;height:19px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:19px;cursor:pointer;transition:.2s;}
+.toggle-slider::before{content:'';position:absolute;width:15px;height:15px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked + .toggle-slider{background:var(--accent);}
+.toggle input:checked + .toggle-slider::before{transform:translateX(15px);}
+
+/* Range */
+.range-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.range-row label{font-size:11px;color:var(--muted);min-width:80px;}
+.range-row input[type=range]{flex:1;}
+.range-val{font-size:11px;font-weight:700;color:var(--accent);min-width:28px;text-align:right;}
+
+/* Grid of 2 inputs */
+.input-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.input-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.input-group label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px;}
+.input-group input{width:100%;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;font-size:12px;font-family:inherit;outline:none;transition:border .2s;}
+.input-group input:focus{border-color:var(--accent);}
+
+/* Download panel */
+.dl-row{display:flex;gap:8px;margin-bottom:10px;}
+.dl-row input{flex:1;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;font-size:12px;font-family:inherit;outline:none;transition:border .2s;}
+.dl-row input:focus{border-color:var(--accent);}
+.dl-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dl-btn{padding:10px;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.dl-btn:disabled{background:var(--dim)!important;cursor:default;}
+.dl-btn-png{background:#059669;}.dl-btn-png:not(:disabled):hover{background:#047857;}
+.dl-btn-jpg{background:#d97706;}.dl-btn-jpg:not(:disabled):hover{background:#b45309;}
+
+/* Right: preview */
+.preview-panel{flex:1;display:flex;flex-direction:column;background:var(--bg);min-height:720px;}
+.preview-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:#fff;}
+.preview-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+.preview-size{font-size:11px;color:var(--dim);}
+.preview-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden;}
+.chart-container{background:#fff;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.07);padding:24px;display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:1300px;max-height:100%;}
+.chart-container canvas{max-height:640px;}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dim);text-align:center;flex:1;padding:40px;}
+.empty-state-icon{font-size:48px;opacity:.5;}
+.empty-state p{font-size:13px;}
+
+/* Data preview table */
+.data-preview{margin-top:10px;overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{background:var(--card2);padding:5px 8px;text-align:left;font-weight:700;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+.data-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--bg);}
+
+/* Misc */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.04em;}
+.badge-blue{background:rgba(37,99,235,0.1);color:var(--accent);}
+.info-note{font-size:11px;color:var(--muted);background:rgba(100,116,139,0.07);border-radius:6px;padding:7px 10px;margin-top:6px;}
+
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Scatter/pie disable note */
+.col-note{font-size:11px;color:var(--amber);background:rgba(217,119,6,0.08);border-radius:6px;padding:6px 10px;margin-top:6px;display:none;}
+
+/* Aggregation */
+.agg-box{margin-top:10px;padding:10px 12px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.15);border-radius:9px;display:none;}
+.agg-box.visible{display:block;}
+.agg-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.agg-row:last-child{margin-bottom:0;}
+.agg-label{font-size:11px;color:var(--muted);min-width:52px;}
+.agg-count{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* Scrollbar global */
+*::-webkit-scrollbar{width:5px;height:5px;}
+*::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:4px;}
+
+/* Responsive */
+@media(max-width:900px){
+  .ctrl-scroll{column-count:2;}
+  .chart-type-grid{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:640px){
+  .ctrl-scroll{column-count:1;}
+  .preview-canvas-wrap{padding:12px;min-height:300px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- Header -->
+<header class="site-header">
+  <div class="logo">
+    <a class="logo-brand" href="https://dataforge.ai.kr">Data<em>Forge</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">맞춤형 시각화 빌더</div>
+  </div>
+  <a class="header-back" href="https://dataforge.ai.kr/">← DataForge 홈</a>
+</header>
+
+<!-- ========== TOP UPLOAD BAR (design.md §11 기준) ========== -->
+<div class="upload-bar">
+  <div class="a-card">
+    <div class="a-card-title">① 파일 업로드</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".csv,.tsv,.xlsx,.xls">
+      <div class="upload-icon">📂</div>
+      <div class="upload-main">클릭하거나 파일을 드래그</div>
+      <div class="upload-sub">CSV · TSV · Excel(.xlsx, .xls)</div>
+    </div>
+    <div class="file-info" id="fileInfo">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-meta" id="fileMeta"></div>
+      <button class="reset-btn" id="resetBtn">다른 파일 선택</button>
+    </div>
+    <div class="data-preview" id="dataPreview" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ========== CONTROL PANEL: 업로드 바 아래·미리보기 위, 전체 너비 ========== -->
+<div class="ctrl-panel">
+  <div class="ctrl-scroll">
+
+      <!-- 2. Column Selection -->
+      <div class="section col-selectors" id="colSelectors">
+        <div class="section-title">컬럼 설정</div>
+        <div class="form-row">
+          <label class="form-label">X 축 컬럼 (레이블)</label>
+          <select class="form-select" id="xColSelect"></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Y 축 컬럼 (값) <span class="badge badge-blue" id="yBadge">0개</span></label>
+          <div class="y-cols-list" id="yColsList"></div>
+          <button class="add-y-btn" id="addYBtn">+ Y 컬럼 추가</button>
+          <div class="col-note" id="pieNote">파이/도넛 차트는 Y 컬럼 1개만 사용됩니다.</div>
+        </div>
+
+        <!-- X축 숫자 정렬 -->
+        <div class="toggle-row" style="margin-top:8px;">
+          <span class="toggle-label" style="font-size:12px;font-weight:600;">X축 숫자 오름차순 정렬</span>
+          <label class="toggle"><input type="checkbox" id="sortNumX"><span class="toggle-slider"></span></label>
+        </div>
+
+        <!-- 집계 -->
+        <div class="toggle-row" style="margin-top:8px;">
+          <span class="toggle-label" style="font-size:12px;font-weight:600;">데이터 집계 (그룹별 계산)</span>
+          <label class="toggle"><input type="checkbox" id="aggToggle"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="agg-box" id="aggBox">
+          <div class="agg-row">
+            <span class="agg-label">집계 방식</span>
+            <select class="form-select" id="aggMethod" style="flex:1;font-size:12px;padding:5px 8px;">
+              <option value="sum">합계 (Sum)</option>
+              <option value="avg">평균 (Average)</option>
+              <option value="count">개수 (Count)</option>
+              <option value="min">최솟값 (Min)</option>
+              <option value="max">최댓값 (Max)</option>
+            </select>
+          </div>
+          <div class="agg-count" id="aggCount"></div>
+        </div>
+      </div>
+
+      <!-- 3. Chart Type -->
+      <div class="section col-selectors" id="chartTypeSection">
+        <div class="section-title">차트 유형</div>
+        <div class="chart-type-grid">
+          <button class="chart-type-btn active" data-type="bar">
+            <span class="ct-icon">📊</span>
+            <span class="ct-label">세로 막대</span>
+          </button>
+          <button class="chart-type-btn" data-type="bar-h">
+            <span class="ct-icon">📉</span>
+            <span class="ct-label">가로 막대</span>
+          </button>
+          <button class="chart-type-btn" data-type="line">
+            <span class="ct-icon">📈</span>
+            <span class="ct-label">선 차트</span>
+          </button>
+          <button class="chart-type-btn" data-type="area">
+            <span class="ct-icon">🏔️</span>
+            <span class="ct-label">영역 차트</span>
+          </button>
+          <button class="chart-type-btn" data-type="pie">
+            <span class="ct-icon">🥧</span>
+            <span class="ct-label">파이</span>
+          </button>
+          <button class="chart-type-btn" data-type="doughnut">
+            <span class="ct-icon">🍩</span>
+            <span class="ct-label">도넛</span>
+          </button>
+          <button class="chart-type-btn" data-type="scatter">
+            <span class="ct-icon">✦</span>
+            <span class="ct-label">산점도</span>
+          </button>
+          <button class="chart-type-btn" data-type="radar">
+            <span class="ct-icon">🕸️</span>
+            <span class="ct-label">레이더</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Basic Options -->
+      <div class="section col-selectors" id="basicOptsSection">
+        <div class="section-title">기본 설정</div>
+        <div class="form-row">
+          <label class="form-label">차트 제목</label>
+          <input class="form-input" id="chartTitle" type="text" placeholder="제목 없음">
+        </div>
+        <div class="input-grid2">
+          <div class="input-group">
+            <label>X축 레이블</label>
+            <input type="text" id="xAxisLabel" placeholder="X축">
+          </div>
+          <div class="input-group">
+            <label>Y축 레이블</label>
+            <input type="text" id="yAxisLabel" placeholder="Y축">
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Y Axis Range -->
+      <div class="section col-selectors" id="yRangeSection">
+        <div class="section-title">Y축 범위 / 간격</div>
+        <div class="input-grid3">
+          <div class="input-group">
+            <label>최솟값</label>
+            <input type="number" id="yMin" class="form-input" placeholder="자동">
+          </div>
+          <div class="input-group">
+            <label>최댓값</label>
+            <input type="number" id="yMax" class="form-input" placeholder="자동">
+          </div>
+          <div class="input-group">
+            <label>간격</label>
+            <input type="number" id="yStep" class="form-input" placeholder="자동">
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Style Options -->
+      <div class="section col-selectors" id="styleSection">
+        <div class="section-title">스타일</div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">범례 표시</span>
+          <label class="toggle"><input type="checkbox" id="showLegend" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">그리드 선</span>
+          <label class="toggle"><input type="checkbox" id="showGrid" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">데이터 레이블</span>
+          <label class="toggle"><input type="checkbox" id="showDataLabels"><span class="toggle-slider"></span></label>
+        </div>
+
+        <div style="margin-top:10px;"></div>
+
+        <div class="range-row">
+          <label>글자 크기</label>
+          <input type="range" id="fontSize" min="9" max="18" value="12">
+          <span class="range-val" id="fontSizeVal">12</span>
+        </div>
+        <div class="range-row" id="borderRadiusRow">
+          <label>막대 모서리</label>
+          <input type="range" id="borderRadius" min="0" max="20" value="4">
+          <span class="range-val" id="borderRadiusVal">4</span>
+        </div>
+        <div class="range-row" id="pointSizeRow">
+          <label>포인트 크기</label>
+          <input type="range" id="pointSize" min="0" max="12" value="4">
+          <span class="range-val" id="pointSizeVal">4</span>
+        </div>
+        <div class="range-row" id="lineTensionRow">
+          <label>선 곡률</label>
+          <input type="range" id="lineTension" min="0" max="10" value="4">
+          <span class="range-val" id="lineTensionVal">0.4</span>
+        </div>
+        <div class="range-row" id="fillOpacityRow">
+          <label>채우기 투명도</label>
+          <input type="range" id="fillOpacity" min="0" max="10" value="3">
+          <span class="range-val" id="fillOpacityVal">0.3</span>
+        </div>
+
+        <div style="margin-top:8px;">
+          <label class="form-label">배경색</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="color" id="bgColor" value="#ffffff" style="width:36px;height:32px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;padding:2px;background:#fff;">
+            <span style="font-size:11px;color:var(--muted);">캔버스 배경</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Download -->
+      <div class="section col-selectors dl-panel">
+        <div class="section-title">다운로드</div>
+        <div class="dl-row">
+          <input type="text" id="dlFilename" placeholder="my_chart" value="my_chart">
+        </div>
+        <div class="dl-btns">
+          <button class="dl-btn dl-btn-png" id="dlPng" disabled>🖼 PNG</button>
+          <button class="dl-btn dl-btn-jpg" id="dlJpg" disabled>📷 JPG</button>
+        </div>
+      </div>
+
+  </div><!-- /ctrl-scroll -->
+</div><!-- /ctrl-panel -->
+
+<div class="builder-wrap">
+
+  <!-- ========== PREVIEW PANEL ========== -->
+  <div class="preview-panel">
+    <div class="preview-toolbar">
+      <span class="preview-label">실시간 미리보기</span>
+      <span class="preview-size" id="previewSize"></span>
+    </div>
+    <div class="preview-canvas-wrap">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon">📊</div>
+        <p>파일을 업로드하고 컬럼을 선택하면<br>여기에 차트가 나타납니다</p>
+      </div>
+      <div class="chart-container" id="chartContainer" style="display:none;">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /builder-wrap -->
+</div><!-- /page-wrap -->
+
+<script>
+// ═══════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════
+const state = {
+  headers: [],
+  rows: [],      // array of arrays
+  yColumns: [],  // [{colIndex, color}]
+  chartType: 'bar',
+};
+
+let chartInstance = null;
+
+const PALETTE = [
+  '#2563eb','#dc2626','#059669','#d97706','#7c3aed',
+  '#0891b2','#db2777','#65a30d','#ea580c','#6366f1',
+  '#0f766e','#9333ea','#b45309','#0369a1','#4f46e5',
+];
+
+// ═══════════════════════════════════════════
+//  File Upload
+// ═══════════════════════════════════════════
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+document.getElementById('resetBtn').addEventListener('click', resetFile);
+
+function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['csv','tsv'].includes(ext)) {
+    const sep = ext === 'tsv' ? '\t' : ',';
+    const rawReader = new FileReader();
+    rawReader.onload = e => {
+      const arr = new Uint8Array(e.target.result);
+      // UTF-8 BOM(EF BB BF) 여부 확인
+      const hasBOM = arr[0] === 0xEF && arr[1] === 0xBB && arr[2] === 0xBF;
+      let text = new TextDecoder('utf-8', {fatal: false}).decode(e.target.result);
+      // 대체 문자(U+FFFD)가 있으면 EUC-KR로 재디코딩
+      if (!hasBOM && text.includes('�')) {
+        text = new TextDecoder('euc-kr', {fatal: false}).decode(e.target.result);
+      }
+      Papa.parse(text, {
+        delimiter: sep,
+        skipEmptyLines: true,
+        complete: r => loadData(r.data, file),
+      });
+    };
+    rawReader.readAsArrayBuffer(file);
+  } else if (['xlsx','xls'].includes(ext)) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      loadData(data, file);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    alert('지원하지 않는 파일 형식입니다. CSV, TSV, XLSX, XLS 파일을 사용하세요.');
+  }
+}
+
+function loadData(data, file) {
+  if (!data || data.length < 2) { alert('데이터가 부족합니다 (헤더 포함 2행 이상 필요).'); return; }
+  state.headers = data[0].map(String);
+  state.rows = data.slice(1).filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+
+  // Show file info (업로드 존은 계속 표시하여 재업로드 가능하게 유지)
+  const fi = document.getElementById('fileInfo');
+  fi.style.display = 'block';
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileMeta').textContent = `${state.rows.length.toLocaleString()}행 × ${state.headers.length}열`;
+
+  // Show data preview (first 5 rows)
+  renderDataPreview();
+
+  // Show column selectors
+  document.querySelectorAll('.col-selectors').forEach(el => el.style.display = 'block');
+  updateStyleVisibility();
+  populateXSelect();
+  initYColumns();
+  document.getElementById('dlPng').disabled = false;
+  document.getElementById('dlJpg').disabled = false;
+  renderChart();
+}
+
+function renderDataPreview() {
+  const preview = document.getElementById('dataPreview');
+  const rows = state.rows.slice(0, 5);
+  let html = '<table class="data-table"><thead><tr>';
+  state.headers.forEach(h => { html += `<th>${esc(h)}</th>`; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>';
+    state.headers.forEach((_, i) => { html += `<td>${esc(r[i] ?? '')}</td>`; });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  preview.innerHTML = html;
+  preview.style.display = 'block';
+}
+
+function resetFile() {
+  state.headers = []; state.rows = []; state.yColumns = [];
+  uploadZone.style.display = 'block';
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('dataPreview').style.display = 'none';
+  fileInput.value = '';
+  document.querySelectorAll('.col-selectors').forEach(el => el.style.display = 'none');
+  document.getElementById('dlPng').disabled = true;
+  document.getElementById('dlJpg').disabled = true;
+  destroyChart();
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('chartContainer').style.display = 'none';
+  document.getElementById('previewSize').textContent = '';
+}
+
+// ═══════════════════════════════════════════
+//  Column selectors
+// ═══════════════════════════════════════════
+function populateXSelect() {
+  const sel = document.getElementById('xColSelect');
+  sel.innerHTML = state.headers.map((h,i) => `<option value="${i}">${esc(h)}</option>`).join('');
+  sel.addEventListener('change', renderChart);
+}
+
+function initYColumns() {
+  state.yColumns = [];
+  // default: pick first numeric-looking column that isn't X
+  const xIdx = parseInt(document.getElementById('xColSelect').value || '0');
+  let firstNumeric = -1;
+  for (let i = 0; i < state.headers.length; i++) {
+    if (i === xIdx) continue;
+    const vals = state.rows.map(r => parseFloat(r[i])).filter(v => !isNaN(v));
+    if (vals.length > 0) { firstNumeric = i; break; }
+  }
+  if (firstNumeric >= 0) addYColumn(firstNumeric);
+  else if (state.headers.length > 1) addYColumn(xIdx === 0 ? 1 : 0);
+  renderYList();
+}
+
+function addYColumn(colIdx) {
+  const color = PALETTE[state.yColumns.length % PALETTE.length];
+  const idx = colIdx !== undefined ? colIdx : (parseInt(document.getElementById('xColSelect').value || '0') + state.yColumns.length + 1) % state.headers.length;
+  state.yColumns.push({ colIndex: idx, color });
+  renderYList();
+  renderChart();
+}
+
+function renderYList() {
+  const list = document.getElementById('yColsList');
+  list.innerHTML = '';
+  state.yColumns.forEach((ycol, i) => {
+    const row = document.createElement('div');
+    row.className = 'y-col-row';
+
+    const sel = document.createElement('select');
+    state.headers.forEach((h, hi) => {
+      const opt = document.createElement('option');
+      opt.value = hi; opt.textContent = h;
+      if (hi === ycol.colIndex) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => { state.yColumns[i].colIndex = parseInt(sel.value); renderChart(); });
+
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = ycol.color;
+    colorInput.addEventListener('input', () => { state.yColumns[i].color = colorInput.value; renderChart(); });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'y-remove';
+    removeBtn.innerHTML = '×';
+    removeBtn.title = '제거';
+    removeBtn.addEventListener('click', () => {
+      if (state.yColumns.length <= 1) return;
+      state.yColumns.splice(i, 1);
+      renderYList(); renderChart();
+    });
+
+    row.appendChild(sel); row.appendChild(colorInput); row.appendChild(removeBtn);
+    list.appendChild(row);
+  });
+
+  document.getElementById('yBadge').textContent = `${state.yColumns.length}개`;
+
+  const isPieLike = ['pie','doughnut'].includes(state.chartType);
+  document.getElementById('pieNote').style.display = isPieLike ? 'block' : 'none';
+}
+
+document.getElementById('addYBtn').addEventListener('click', () => {
+  if (state.yColumns.length >= 10) return;
+  addYColumn();
+});
+
+// ═══════════════════════════════════════════
+//  Chart Type
+// ═══════════════════════════════════════════
+document.querySelectorAll('.chart-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.chartType = btn.dataset.type;
+    updateStyleVisibility();
+    renderYList();
+    renderChart();
+  });
+});
+
+function updateStyleVisibility() {
+  const t = state.chartType;
+  const isBar  = t === 'bar' || t === 'bar-h';
+  const isLine = t === 'line' || t === 'area';
+  const isArea = t === 'area';
+  const isScatterLike = t === 'scatter';
+
+  document.getElementById('borderRadiusRow').style.display = isBar ? 'flex' : 'none';
+  document.getElementById('pointSizeRow').style.display = (isLine || isScatterLike) ? 'flex' : 'none';
+  document.getElementById('lineTensionRow').style.display = isLine ? 'flex' : 'none';
+  document.getElementById('fillOpacityRow').style.display = isArea ? 'flex' : 'none';
+  document.getElementById('yRangeSection').style.display = (['pie','doughnut','radar'].includes(t)) ? 'none' : 'block';
+}
+
+// ═══════════════════════════════════════════
+//  Chart Rendering
+// ═══════════════════════════════════════════
+function getOpts() {
+  return {
+    title:        document.getElementById('chartTitle').value.trim(),
+    xLabel:       document.getElementById('xAxisLabel').value.trim(),
+    yLabel:       document.getElementById('yAxisLabel').value.trim(),
+    showLegend:   document.getElementById('showLegend').checked,
+    showGrid:     document.getElementById('showGrid').checked,
+    showLabels:   document.getElementById('showDataLabels').checked,
+    fontSize:     parseInt(document.getElementById('fontSize').value),
+    borderRadius: parseInt(document.getElementById('borderRadius').value),
+    pointSize:    parseInt(document.getElementById('pointSize').value),
+    tension:      parseInt(document.getElementById('lineTension').value) / 10,
+    fillOpacity:  parseInt(document.getElementById('fillOpacity').value) / 10,
+    bgColor:      document.getElementById('bgColor').value,
+    yMin:         document.getElementById('yMin').value,
+    yMax:         document.getElementById('yMax').value,
+    yStep:        document.getElementById('yStep').value,
+    sortNumX:     document.getElementById('sortNumX').checked,
+    aggregate:    document.getElementById('aggToggle').checked,
+    aggMethod:    document.getElementById('aggMethod').value,
+  };
+}
+
+function aggregateRows(rows, xIdx, yIndices, method) {
+  const order = [];
+  const groups = new Map();
+  rows.forEach(r => {
+    const key = String(r[xIdx] ?? '');
+    if (!groups.has(key)) { groups.set(key, {}); order.push(key); yIndices.forEach(yi => { groups.get(key)[yi] = []; }); }
+    yIndices.forEach(yi => { const v = parseFloat(r[yi]); if (!isNaN(v)) groups.get(key)[yi].push(v); });
+  });
+  const aggLabels = order;
+  const aggData = {};
+  yIndices.forEach(yi => {
+    aggData[yi] = order.map(key => {
+      const vals = groups.get(key)[yi];
+      if (!vals.length) return 0;
+      switch(method) {
+        case 'sum':   return vals.reduce((a,b) => a+b, 0);
+        case 'avg':   return parseFloat((vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(4));
+        case 'count': return vals.length;
+        case 'min':   return Math.min(...vals);
+        case 'max':   return Math.max(...vals);
+        default:      return vals.reduce((a,b) => a+b, 0);
+      }
+    });
+  });
+  return { aggLabels, aggData };
+}
+
+function buildChartConfig(opts) {
+  const t = state.chartType;
+  const xIdx = parseInt(document.getElementById('xColSelect').value || '0');
+
+  // 집계 전처리
+  const isScatter = t === 'scatter';
+  let workRows = state.rows;
+
+  // X축 숫자 오름차순 정렬
+  if (opts.sortNumX) {
+    const allNum = workRows.every(r => r[xIdx] !== '' && r[xIdx] !== null && !isNaN(parseFloat(r[xIdx])));
+    if (allNum) {
+      workRows = [...workRows].sort((a, b) => parseFloat(a[xIdx]) - parseFloat(b[xIdx]));
+    }
+  }
+
+  let labels = workRows.map(r => String(r[xIdx] ?? ''));
+  let aggDataMap = null;
+
+  if (opts.aggregate && !isScatter) {
+    const yIndices = state.yColumns.map(yc => yc.colIndex);
+    const { aggLabels, aggData } = aggregateRows(workRows, xIdx, yIndices, opts.aggMethod);
+    labels = aggLabels;
+    aggDataMap = aggData;
+    // aggCount 업데이트
+    const el = document.getElementById('aggCount');
+    if (el) el.textContent = `${state.rows.length.toLocaleString()}행 → ${aggLabels.length.toLocaleString()}개 그룹`;
+  } else {
+    const el = document.getElementById('aggCount');
+    if (el) el.textContent = '';
+  }
+
+  const isPieLike   = ['pie','doughnut'].includes(t);
+  const isRadar     = t === 'radar';
+  const isAreaChart = t === 'area';
+  const isBarH      = t === 'bar-h';
+
+  let datasets = [];
+
+  if (isScatter) {
+    state.yColumns.forEach(ycol => {
+      const xVals = state.rows.map(r => parseFloat(r[xIdx]));
+      const yVals = state.rows.map(r => parseFloat(r[ycol.colIndex]));
+      const points = xVals.map((x, i) => ({x, y: yVals[i]})).filter(p => !isNaN(p.x) && !isNaN(p.y));
+      datasets.push({
+        label: state.headers[ycol.colIndex],
+        data: points,
+        backgroundColor: hexToRgba(ycol.color, 0.7),
+        borderColor: ycol.color,
+        pointRadius: opts.pointSize,
+        pointHoverRadius: opts.pointSize + 2,
+      });
+    });
+  } else if (isPieLike) {
+    const ycol = state.yColumns[0];
+    const vals = aggDataMap ? aggDataMap[ycol.colIndex] : state.rows.map(r => parseFloat(r[ycol.colIndex]) || 0);
+    const bgColors = labels.map((_,i) => hexToRgba(PALETTE[i % PALETTE.length], 0.85));
+    datasets.push({
+      label: state.headers[ycol.colIndex],
+      data: vals,
+      backgroundColor: bgColors,
+      borderColor: bgColors.map(c => c.replace(/[\d.]+\)$/, '1)')),
+      borderWidth: 1,
+    });
+  } else {
+    state.yColumns.forEach(ycol => {
+      const vals = aggDataMap ? aggDataMap[ycol.colIndex] : state.rows.map(r => parseFloat(r[ycol.colIndex]) || 0);
+      const ds = {
+        label: state.headers[ycol.colIndex],
+        data: vals,
+        backgroundColor: isAreaChart ? hexToRgba(ycol.color, opts.fillOpacity) : hexToRgba(ycol.color, 0.85),
+        borderColor: ycol.color,
+        borderWidth: (t === 'bar' || isBarH) ? 0 : 2,
+        fill: isAreaChart,
+        tension: (t === 'line' || isAreaChart) ? opts.tension : 0,
+        pointRadius: (t === 'line' || isAreaChart) ? opts.pointSize : 0,
+        pointHoverRadius: (t === 'line' || isAreaChart) ? opts.pointSize + 2 : 0,
+        borderRadius: (t === 'bar' || isBarH) ? opts.borderRadius : 0,
+      };
+      datasets.push(ds);
+    });
+  }
+
+  // Scales
+  // bar-h: indexAxis='y' → X축=값, Y축=카테고리 (라벨/min/max 축 교체)
+  const catGridOpts  = { display: opts.showGrid, color: 'rgba(0,0,0,0.06)' };
+  const valGridOpts  = { display: opts.showGrid, color: 'rgba(0,0,0,0.06)' };
+  const catTickOpts  = { font: { size: opts.fontSize } };
+  const valTickOpts  = { font: { size: opts.fontSize } };
+  if (opts.yStep !== '') valTickOpts.stepSize = parseFloat(opts.yStep);
+
+  const catScale = { grid: catGridOpts, ticks: catTickOpts,
+    title: (isBarH ? opts.yLabel : opts.xLabel) ? { display: true, text: isBarH ? opts.yLabel : opts.xLabel, font: { size: opts.fontSize } } : { display: false } };
+  const valScale = { grid: valGridOpts, ticks: valTickOpts,
+    title: (isBarH ? opts.xLabel : opts.yLabel) ? { display: true, text: isBarH ? opts.xLabel : opts.yLabel, font: { size: opts.fontSize } } : { display: false } };
+  if (opts.yMin !== '') valScale.min = parseFloat(opts.yMin);
+  if (opts.yMax !== '') valScale.max = parseFloat(opts.yMax);
+
+  // bar-h: x=값축, y=카테고리축 / 나머지: x=카테고리축, y=값축
+  const scalesCfg = isBarH
+    ? { x: valScale, y: catScale }
+    : { x: catScale, y: valScale };
+
+  const chartJsType = (['bar','bar-h'].includes(t)) ? 'bar'
+    : (t === 'area') ? 'line'
+    : t;
+
+  const plugins = {
+    legend: {
+      display: (isPieLike || state.yColumns.length > 1 || opts.showLegend),
+      position: isPieLike ? 'right' : 'top',
+      labels: { font: { size: opts.fontSize }, padding: 12, usePointStyle: true },
+    },
+    title: opts.title ? {
+      display: true,
+      text: opts.title,
+      font: { size: opts.fontSize + 4, weight: 'bold' },
+      padding: { bottom: 12 },
+    } : { display: false },
+    tooltip: {
+      mode: isScatter ? 'point' : 'index',
+      intersect: isScatter,
+    },
+  };
+
+  // Data labels plugin (simple custom)
+  if (opts.showLabels && !isScatter && !isRadar) {
+    plugins.datalabels = true; // handled separately in custom draw
+  }
+
+  const cfg = {
+    type: chartJsType,
+    data: { labels: isScatter ? undefined : labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      indexAxis: isBarH ? 'y' : 'x',
+      plugins,
+      scales: (isPieLike || isRadar) ? {} : scalesCfg,
+    },
+  };
+
+  if (isRadar) {
+    cfg.options.scales = {
+      r: {
+        grid: { display: opts.showGrid },
+        ticks: { font: { size: opts.fontSize - 1 } },
+      }
+    };
+  }
+
+  return cfg;
+}
+
+function renderChart() {
+  if (!state.rows.length || !state.yColumns.length) return;
+  const opts = getOpts();
+  const cfg  = buildChartConfig(opts);
+
+  const container  = document.getElementById('chartContainer');
+  const emptyState = document.getElementById('emptyState');
+
+  container.style.display = 'flex';
+  container.style.background = opts.bgColor;
+  emptyState.style.display = 'none';
+
+  const canvas = document.getElementById('mainChart');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  chartInstance = new Chart(canvas, cfg);
+
+  // Show data label overlay manually if requested
+  if (opts.showLabels) renderDataLabels(canvas, chartInstance, opts);
+
+  const aggOn = document.getElementById('aggToggle').checked;
+  const groupCount = aggOn ? document.getElementById('aggCount').textContent : '';
+  document.getElementById('previewSize').textContent =
+    aggOn ? groupCount : `${state.rows.length.toLocaleString()}행 · ${state.yColumns.length}개 시리즈`;
+}
+
+function renderDataLabels(canvas, chart, opts) {
+  // We hook into the afterDraw event for a lightweight label overlay
+  const originalDraw = chart.draw.bind(chart);
+  chart.draw = function() {
+    originalDraw();
+    // only for bar / line type
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((ds, dsIdx) => {
+      const meta = chart.getDatasetMeta(dsIdx);
+      if (!meta.hidden) {
+        meta.data.forEach((el, idx) => {
+          const val = ds.data[idx];
+          if (val === null || val === undefined || isNaN(val)) return;
+          const { x, y } = el.tooltipPosition ? el.tooltipPosition() : el;
+          ctx.save();
+          ctx.font = `bold ${opts.fontSize}px Segoe UI, system-ui, sans-serif`;
+          ctx.fillStyle = ds.borderColor || '#333';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(typeof val === 'object' ? val.y : val, x, y - 4);
+          ctx.restore();
+        });
+      }
+    });
+  };
+}
+
+function destroyChart() {
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+}
+
+// ═══════════════════════════════════════════
+//  Live update listeners
+// ═══════════════════════════════════════════
+['chartTitle','xAxisLabel','yAxisLabel','yMin','yMax','yStep','bgColor'].forEach(id => {
+  document.getElementById(id).addEventListener('input', debounce(renderChart, 200));
+});
+['showLegend','showGrid','showDataLabels'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderChart);
+});
+
+// X축 정렬
+document.getElementById('sortNumX').addEventListener('change', renderChart);
+
+// 집계 토글/방식
+document.getElementById('aggToggle').addEventListener('change', function() {
+  document.getElementById('aggBox').classList.toggle('visible', this.checked);
+  renderChart();
+});
+document.getElementById('aggMethod').addEventListener('change', renderChart);
+
+function rangeSync(rangeId, valId, transform) {
+  const r = document.getElementById(rangeId);
+  const v = document.getElementById(valId);
+  r.addEventListener('input', () => {
+    v.textContent = transform ? transform(r.value) : r.value;
+    debounce(renderChart, 100)();
+  });
+}
+rangeSync('fontSize',      'fontSizeVal');
+rangeSync('borderRadius',  'borderRadiusVal');
+rangeSync('pointSize',     'pointSizeVal');
+rangeSync('lineTension',   'lineTensionVal',  v => (parseInt(v)/10).toFixed(1));
+rangeSync('fillOpacity',   'fillOpacityVal',  v => (parseInt(v)/10).toFixed(1));
+
+// ═══════════════════════════════════════════
+//  Image Download
+// ═══════════════════════════════════════════
+document.getElementById('dlPng').addEventListener('click', () => downloadImage('png'));
+document.getElementById('dlJpg').addEventListener('click', () => downloadImage('jpg'));
+
+function downloadImage(format) {
+  if (!chartInstance) return;
+  const src = document.getElementById('mainChart');
+  const opts = getOpts();
+  const fname = (document.getElementById('dlFilename').value.trim() || 'my_chart') + '.' + format;
+
+  const tmp = document.createElement('canvas');
+  tmp.width  = src.width;
+  tmp.height = src.height;
+  const ctx = tmp.getContext('2d');
+
+  // JPG는 투명 배경이 검정으로 나오므로 배경색 먼저 채움
+  ctx.fillStyle = opts.bgColor || '#ffffff';
+  ctx.fillRect(0, 0, tmp.width, tmp.height);
+  ctx.drawImage(src, 0, 0);
+
+  const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+  const quality  = format === 'jpg' ? 0.95 : undefined;
+  const dataURL  = tmp.toDataURL(mimeType, quality);
+
+  const a = document.createElement('a');
+  a.href = dataURL;
+  a.download = fname;
+  a.click();
+}
+
+// ═══════════════════════════════════════════
+//  Utilities
+// ═══════════════════════════════════════════
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

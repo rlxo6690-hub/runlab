@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>타입 변환 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="타입 변환 — DataForge">
+<meta property="og:description" content="로그 변환으로 우편향 분포를 대칭에 가깝게 만드는 교육용 전처리 시뮬레이터">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;--green:#059669;--orange:#ea580c;--red:#dc2626;--amber:#d97706;
+  --r:10px;
+  --c-orig:#2563eb;
+  --c-ln:#059669;
+  --c-log10:#ea580c;
+  --c-log1p:#6366f1;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.8;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+.intro-box code{font-family:'Noto Sans KR', sans-serif;font-size:11px;background:rgba(37,99,235,.08);padding:1px 5px;border-radius:3px;color:var(--accent);}
+
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* Page tabs */
+.page-tabs{display:flex;border-bottom:1px solid var(--border);background:rgba(248,250,252,.95);backdrop-filter:blur(12px);position:sticky;top:53px;z-index:99;}
+.p-tab{padding:12px 24px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.p-tab:hover{color:var(--text);}
+.p-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* Preset buttons */
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.preset-btn{font-size:11px;font-weight:600;padding:5px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.preset-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.preset-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);}
+
+.data-input-wrap{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;}
+.data-textarea{flex:1;font-family:'Space Mono',monospace;font-size:12px;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;background:var(--card2);color:var(--text);resize:vertical;min-height:52px;outline:none;line-height:1.8;}
+.data-textarea:focus{border-color:var(--accent);}
+
+.warn-box{display:none;padding:10px 14px;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.25);border-radius:8px;font-size:12px;color:var(--amber);line-height:1.6;margin-bottom:12px;}
+.warn-box.show{display:block;}
+
+.stat-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.stat-pill{font-family:'Noto Sans KR', sans-serif;font-size:11px;padding:4px 12px;border-radius:20px;background:var(--card2);border:1px solid var(--border2);color:var(--muted);}
+.stat-pill strong{color:var(--text);}
+.stat-pill.skew-high{border-color:rgba(234,88,12,.3);color:var(--orange);}
+.stat-pill.skew-ok{border-color:rgba(5,150,105,.3);color:var(--green);}
+
+/* 4-method grid */
+.method-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.method-panel{border:2px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--card);}
+.method-panel-head{padding:12px 14px;border-bottom:1px solid var(--border);}
+.method-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.method-badge{display:inline-block;font-family:'Noto Sans KR', sans-serif;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.5px;margin-bottom:6px;}
+.method-formula{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);background:var(--card2);padding:4px 8px;border-radius:5px;margin-top:4px;word-break:break-all;}
+.method-body{padding:12px 14px;}
+.chart-wrap{height:160px;position:relative;margin-bottom:10px;}
+.method-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.m-stat{background:var(--card2);border-radius:5px;padding:5px 8px;text-align:center;}
+.m-stat-val{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+.m-stat-lbl{font-size:9px;color:var(--muted);margin-top:1px;}
+.method-insight{margin-top:8px;font-size:11px;line-height:1.6;color:var(--muted);padding:7px 10px;border-radius:6px;}
+
+/* Skewness section */
+.skew-section{background:var(--card);border:1px solid rgba(99,102,241,.2);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.skew-section-title{font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.skew-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.skew-box{border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.skew-label{font-size:11px;font-weight:700;margin-bottom:6px;}
+.skew-val{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;}
+.skew-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.skew-bar-wrap{height:6px;background:rgba(0,0,0,.08);border-radius:3px;margin-top:8px;overflow:hidden;}
+.skew-bar{height:100%;border-radius:3px;transition:width .4s;}
+
+/* Value table */
+.table-wrap{overflow-x:auto;max-height:260px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{background:var(--card2);padding:6px 10px;text-align:right;font-family:'Space Mono',monospace;font-size:9px;border-bottom:1px solid var(--border);position:sticky;top:0;white-space:nowrap;}
+.data-table th:first-child{text-align:center;}
+.data-table td{padding:5px 10px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;text-align:right;color:var(--muted);}
+.data-table td:first-child{text-align:center;color:var(--dim);}
+.data-table tr:hover td{background:rgba(37,99,235,.04);color:var(--text);}
+.data-table td.orig{color:var(--c-orig);font-weight:700;}
+.data-table td.ln-col{color:var(--c-ln);}
+.data-table td.log10-col{color:var(--c-log10);}
+.data-table td.log1p-col{color:var(--c-log1p);}
+.data-table td.invalid{color:var(--red);font-style:italic;font-size:9px;}
+
+/* Guide cards */
+.guide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.guide-card{border-radius:var(--r);padding:16px 18px;border:1px solid var(--border);}
+.guide-title{font-size:13px;font-weight:700;margin-bottom:6px;}
+.guide-formula{font-family:'Space Mono',monospace;font-size:11px;padding:7px 10px;border-radius:6px;margin-bottom:10px;line-height:1.8;}
+.guide-row{display:flex;gap:6px;margin-bottom:4px;font-size:12px;color:var(--muted);}
+.guide-row-icon{flex-shrink:0;}
+.guide-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.gtag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;}
+
+/* Buttons */
+.btn{display:inline-block;padding:8px 18px;font-size:12px;font-weight:700;font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#047857;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+.section-sep{display:flex;align-items:center;gap:12px;margin:20px 0 16px;}
+.section-sep-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;}
+.section-sep-line{flex:1;height:1px;background:var(--border);}
+
+/* CSV */
+.csv-drop-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--card2);position:relative;margin-bottom:16px;}
+.csv-drop-zone.drag-over{border-color:var(--accent);background:rgba(37,99,235,.05);}
+.csv-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.csv-drop-icon{font-size:30px;margin-bottom:8px;}
+.csv-drop-label{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:4px;}
+.csv-drop-sub{font-size:11px;color:var(--dim);}
+.col-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.col-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;transition:all .2s;background:var(--card2);color:var(--muted);user-select:none;}
+.col-chip:hover{border-color:var(--accent);color:var(--accent);}
+.col-chip.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.col-chip.non-numeric{opacity:.4;cursor:not-allowed;pointer-events:none;}
+.method-radio-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.method-radio{display:flex;align-items:center;gap:7px;padding:8px 16px;border:1px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .2s;font-size:12px;font-weight:600;color:var(--muted);background:var(--card2);}
+.method-radio:hover{color:var(--text);border-color:rgba(0,0,0,.25);}
+.method-radio input{display:none;}
+.method-radio.sel-ln{border-color:rgba(5,150,105,.4);background:rgba(5,150,105,.08);color:var(--green);}
+.method-radio.sel-log10{border-color:rgba(234,88,12,.4);background:rgba(234,88,12,.08);color:var(--orange);}
+.method-radio.sel-log1p{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.08);color:var(--accent2);}
+.csv-info-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.12);border-radius:8px;font-size:12px;color:var(--muted);}
+.csv-info-bar strong{color:var(--text);}
+.csv-table-wrap{overflow-x:auto;max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+.csv-table{width:100%;border-collapse:collapse;font-size:11px;}
+.csv-table th{background:var(--card2);padding:6px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:9px;border-bottom:1px solid var(--border);position:sticky;top:0;white-space:nowrap;}
+.csv-table td{padding:5px 12px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;color:var(--muted);white-space:nowrap;}
+.csv-table tr:hover td{background:rgba(37,99,235,.03);}
+.csv-table th.t-col,.csv-table td.t-col{background:rgba(37,99,235,.05);color:var(--accent);font-weight:700;}
+
+@media(max-width:900px){
+  .method-grid-4{grid-template-columns:repeat(2,1fr);}
+  .skew-grid{grid-template-columns:repeat(2,1fr);}
+  .guide-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .method-grid-4{grid-template-columns:1fr;}
+  .skew-grid{grid-template-columns:repeat(2,1fr);}
+  .guide-grid{grid-template-columns:1fr;}
+  .site-header{padding:12px 14px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">타입 변환 — 로그 변환</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page-tabs">
+  <button class="p-tab active" data-tab="sim" onclick="switchTab('sim',this)">📊 시뮬레이터</button>
+  <button class="p-tab" data-tab="csv" onclick="switchTab('csv',this)">📂 CSV 변환 · 저장</button>
+</div>
+
+<div class="page">
+<div id="tab-sim" class="tab-panel active">
+
+  <div class="intro-box">
+    <strong>로그 변환(Log Transformation)</strong>은 <strong>우편향(오른쪽 꼬리) 분포</strong>를 대칭 분포에 가깝게 만드는 대표적 타입 변환 기법입니다.
+    소득·인구·주가처럼 <strong>몇 배씩 차이 나는 데이터</strong>에 적용하면 스케일을 압축하고 선형 모델·통계 검정의 가정을 충족시킵니다.
+    프리셋을 선택하거나 직접 입력해 <code>ln(x)</code>, <code>log₁₀(x)</code>, <code>log(1+x)</code> 세 방법을 비교하세요.
+  </div>
+
+  <!-- 데이터 입력 -->
+  <div class="a-card" style="margin-top:20px">
+    <div class="a-card-title">데이터 입력</div>
+    <div class="preset-row">
+      <button class="preset-btn active" data-key="income"  onclick="loadPreset(this)">💰 소득 분포</button>
+      <button class="preset-btn" data-key="exp"     onclick="loadPreset(this)">📈 지수 성장</button>
+      <button class="preset-btn" data-key="traffic" onclick="loadPreset(this)">🌐 웹 트래픽</button>
+      <button class="preset-btn" data-key="sensor"  onclick="loadPreset(this)">🏭 센서 로그</button>
+      <button class="preset-btn" data-key="drug"    onclick="loadPreset(this)">💊 약물 농도</button>
+    </div>
+    <div class="data-input-wrap">
+      <textarea class="data-textarea" id="data-input" rows="2"
+        placeholder="쉼표로 구분된 양수 입력 (예: 1, 10, 100, 500, 5000)"
+        oninput="onInputChange()"></textarea>
+      <button class="btn btn-primary" onclick="update()">변환 ▶</button>
+    </div>
+    <div class="warn-box" id="warn-box"></div>
+    <div class="stat-pills" id="orig-stats"></div>
+  </div>
+
+  <!-- 4방법 비교 -->
+  <div class="section-sep">
+    <div class="section-sep-label">변환 결과 비교</div>
+    <div class="section-sep-line"></div>
+    <span style="font-size:11px;color:var(--dim)">막대 높이 = 변환된 값</span>
+  </div>
+
+  <div class="method-grid-4">
+
+    <div class="method-panel" style="border-color:rgba(37,99,235,.3)">
+      <div class="method-panel-head" style="background:rgba(37,99,235,.04)">
+        <span class="method-badge" style="background:rgba(37,99,235,.1);color:var(--c-orig);border:1px solid rgba(37,99,235,.2)">원본 데이터</span>
+        <div class="method-name" style="color:var(--c-orig)">Original</div>
+        <div class="method-formula" style="background:rgba(37,99,235,.06)">변환 없음 — 있는 그대로</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-orig"></canvas></div>
+        <div class="method-stats-grid" id="mstats-orig"></div>
+        <div class="method-insight" style="background:rgba(37,99,235,.05);color:var(--accent)">
+          값 그대로. 우편향이 클수록 큰 값이 분포를 압도해 패턴이 묻힙니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="method-panel" style="border-color:rgba(5,150,105,.3)">
+      <div class="method-panel-head" style="background:rgba(5,150,105,.04)">
+        <span class="method-badge" style="background:rgba(5,150,105,.1);color:var(--c-ln);border:1px solid rgba(5,150,105,.2)">자연 로그</span>
+        <div class="method-name" style="color:var(--c-ln)">ln(x)</div>
+        <div class="method-formula" style="background:rgba(5,150,105,.06);color:var(--c-ln)">x' = ln(x) &nbsp;·&nbsp; x &gt; 0 필수</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-ln"></canvas></div>
+        <div class="method-stats-grid" id="mstats-ln"></div>
+        <div class="method-insight" style="background:rgba(5,150,105,.05);color:var(--green)">
+          밑이 <strong>e</strong>인 로그. 통계·ML에서 가장 널리 사용. 1→0, 100→4.6
+        </div>
+      </div>
+    </div>
+
+    <div class="method-panel" style="border-color:rgba(234,88,12,.3)">
+      <div class="method-panel-head" style="background:rgba(234,88,12,.04)">
+        <span class="method-badge" style="background:rgba(234,88,12,.1);color:var(--c-log10);border:1px solid rgba(234,88,12,.2)">상용 로그</span>
+        <div class="method-name" style="color:var(--c-log10)">log₁₀(x)</div>
+        <div class="method-formula" style="background:rgba(234,88,12,.06);color:var(--c-log10)">x' = log₁₀(x) &nbsp;·&nbsp; x &gt; 0 필수</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-log10"></canvas></div>
+        <div class="method-stats-grid" id="mstats-log10"></div>
+        <div class="method-insight" style="background:rgba(234,88,12,.05);color:var(--orange)">
+          밑이 <strong>10</strong>인 로그. 값이 자릿수로 해석됨. 10→1, 1000→3
+        </div>
+      </div>
+    </div>
+
+    <div class="method-panel" style="border-color:rgba(99,102,241,.3)">
+      <div class="method-panel-head" style="background:rgba(99,102,241,.04)">
+        <span class="method-badge" style="background:rgba(99,102,241,.1);color:var(--c-log1p);border:1px solid rgba(99,102,241,.2)">로그1p</span>
+        <div class="method-name" style="color:var(--c-log1p)">log(1+x)</div>
+        <div class="method-formula" style="background:rgba(99,102,241,.06);color:var(--c-log1p)">x' = ln(1+x) &nbsp;·&nbsp; x ≥ 0 허용</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-log1p"></canvas></div>
+        <div class="method-stats-grid" id="mstats-log1p"></div>
+        <div class="method-insight" style="background:rgba(99,102,241,.05);color:var(--accent2)">
+          <strong>0 포함 데이터</strong>에 안전. 0→0 매핑. 카운트·조회수에 최적
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 왜도 비교 -->
+  <div class="skew-section">
+    <div class="skew-section-title">📐 왜도(Skewness) 변화 — 변환이 분포를 얼마나 대칭으로 만드나</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+      왜도는 분포의 치우침 정도입니다. <strong>|왜도| &lt; 0.5면 대칭</strong>, 1 이상이면 뚜렷하게 치우친 분포입니다.
+      로그 변환이 왜도를 0에 가깝게 줄일수록 선형 모델의 가정을 더 잘 충족합니다.
+    </p>
+    <div class="skew-grid" id="skew-grid"></div>
+  </div>
+
+  <!-- 변환값 테이블 -->
+  <div class="section-sep">
+    <div class="section-sep-label">변환값 상세 비교</div>
+    <div class="section-sep-line"></div>
+    <span style="font-size:11px;color:var(--dim)">음수·0값은 ln/log₁₀에서 NaN 처리</span>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title">데이터 포인트별 변환 결과</div>
+    <div class="table-wrap">
+      <table class="data-table" id="val-table"></table>
+    </div>
+  </div>
+
+  <!-- 가이드 -->
+  <div class="section-sep">
+    <div class="section-sep-label">언제 어떤 로그 변환을 쓸까?</div>
+    <div class="section-sep-line"></div>
+  </div>
+  <div class="guide-grid">
+
+    <div class="guide-card" style="border-color:rgba(5,150,105,.25);background:rgba(5,150,105,.03)">
+      <div class="method-badge" style="background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);margin-bottom:8px">ln(x)</div>
+      <div class="guide-title" style="color:var(--green)">자연 로그 — 통계·ML 표준</div>
+      <div class="guide-formula" style="background:rgba(5,150,105,.06);color:var(--green)">x' = ln(x) = log_e(x)</div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>선형회귀·GLM의 종속변수 변환</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>소득·GDP·부동산 가격 데이터</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>성장률·수익률 등 곱으로 표현되는 데이터</span></div>
+      <div class="guide-row"><span class="guide-row-icon">⚠️</span><span>x ≤ 0이면 undefined — 음수/0 주의</span></div>
+      <div class="guide-tags">
+        <span class="gtag" style="background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2)">선형회귀</span>
+        <span class="gtag" style="background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2)">경제데이터</span>
+        <span class="gtag" style="background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2)">GLM</span>
+      </div>
+    </div>
+
+    <div class="guide-card" style="border-color:rgba(234,88,12,.25);background:rgba(234,88,12,.03)">
+      <div class="method-badge" style="background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2);margin-bottom:8px">log₁₀(x)</div>
+      <div class="guide-title" style="color:var(--orange)">상용 로그 — 자릿수 해석</div>
+      <div class="guide-formula" style="background:rgba(234,88,12,.06);color:var(--orange)">x' = log₁₀(x)</div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>지진 규모(리히터), 소음(dB)</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>pH, 별의 밝기(등급) 데이터</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>시각화 축에서 자릿수 단위 표현</span></div>
+      <div class="guide-row"><span class="guide-row-icon">⚠️</span><span>값이 10의 배수가 아닐 때 해석 주의</span></div>
+      <div class="guide-tags">
+        <span class="gtag" style="background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2)">지구과학</span>
+        <span class="gtag" style="background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2)">물리학</span>
+        <span class="gtag" style="background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2)">시각화</span>
+      </div>
+    </div>
+
+    <div class="guide-card" style="border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.03)">
+      <div class="method-badge" style="background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2);margin-bottom:8px">log(1+x)</div>
+      <div class="guide-title" style="color:var(--accent2)">로그1p — 0 포함 데이터</div>
+      <div class="guide-formula" style="background:rgba(99,102,241,.06);color:var(--accent2)">x' = ln(1 + x)</div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>조회수·구매 횟수·리뷰 수 (0 포함)</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>자연어 처리에서 TF 변환</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>희소 카운트 데이터 전처리</span></div>
+      <div class="guide-row"><span class="guide-row-icon">⚠️</span><span>x &lt; −1이면 undefined</span></div>
+      <div class="guide-tags">
+        <span class="gtag" style="background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2)">NLP</span>
+        <span class="gtag" style="background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2)">추천시스템</span>
+        <span class="gtag" style="background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2)">카운트데이터</span>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- #tab-sim -->
+
+<!-- CSV 변환 탭 -->
+<div id="tab-csv" class="tab-panel">
+
+  <div class="intro-box" style="margin-top:20px">
+    CSV 또는 XLSX 파일을 업로드하고, 변환할 <strong>숫자형 열</strong>을 선택한 뒤 로그 변환 방법을 고르면
+    결과를 미리보고 <strong>CSV 또는 XLSX로 저장</strong>할 수 있습니다.
+    0 이하 값이 포함된 열에는 <code>log(1+x)</code>를 사용하세요.
+  </div>
+
+  <div class="a-card" style="margin-top:20px">
+    <div class="a-card-title">① CSV · XLSX 파일 업로드</div>
+    <div class="csv-drop-zone" id="csv-drop">
+      <input type="file" id="csv-file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      <div class="csv-drop-icon">📂</div>
+      <div class="csv-drop-label">CSV 또는 XLSX 파일을 드래그하거나 클릭해서 선택</div>
+      <div class="csv-drop-sub">CSV: UTF-8 / EUC-KR 인코딩 지원 · XLSX: Excel 파일 지원 · 최대 10MB</div>
+    </div>
+    <div class="csv-info-bar" id="csv-info" style="display:none"></div>
+  </div>
+
+  <div class="a-card" id="csv-settings" style="display:none">
+    <div class="a-card-title">② 변환할 열 선택 &amp; 방법 선택</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">숫자형 열만 선택 가능합니다.</div>
+    <div class="col-grid" id="col-grid"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 10px">변환 방법</div>
+    <div class="method-radio-row">
+      <label class="method-radio sel-ln" id="mr-ln">
+        <input type="radio" name="csv-method" value="ln" checked onchange="onMethodChange()">
+        ln(x) — 자연 로그
+      </label>
+      <label class="method-radio" id="mr-log10">
+        <input type="radio" name="csv-method" value="log10" onchange="onMethodChange()">
+        log₁₀(x) — 상용 로그
+      </label>
+      <label class="method-radio" id="mr-log1p">
+        <input type="radio" name="csv-method" value="log1p" onchange="onMethodChange()">
+        log(1+x) — 0 포함 안전
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="applyTransform()">변환 적용 ▶</button>
+      <button class="btn btn-ghost" onclick="resetCsv()">초기화</button>
+    </div>
+  </div>
+
+  <div id="csv-result-wrap" style="display:none">
+    <div class="section-sep">
+      <div class="section-sep-label">변환 결과 미리보기</div>
+      <div class="section-sep-line"></div>
+      <span style="font-size:11px;color:var(--dim)" id="preview-note"></span>
+    </div>
+    <div class="a-card">
+      <div class="a-card-title">
+        <span id="result-col-info"></span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="downloadCsv()">CSV 저장 ↓</button>
+          <button class="btn btn-green" onclick="downloadXlsx()" style="background:#0e7490;" onmouseover="this.style.background='#0c6680'" onmouseout="this.style.background='#0e7490'">XLSX 저장 ↓</button>
+        </div>
+      </div>
+      <div class="csv-table-wrap">
+        <table class="csv-table" id="csv-preview-table"></table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #tab-csv -->
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+const PRESETS = {
+  income:  [15000, 28000, 42000, 65000, 110000, 230000, 580000, 1500000, 4800000, 18000000],
+  exp:     [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024],
+  traffic: [1, 3, 7, 18, 52, 148, 420, 1200, 3500, 10000],
+  sensor:  [5, 12, 28, 65, 150, 340, 790, 1850, 4300, 10000],
+  drug:    [0.1, 0.5, 1.2, 3.8, 10, 27, 75, 200, 540, 1500]
+};
+
+let _data = [...PRESETS.income];
+let _charts = {};
+
+const COLORS = {
+  orig:  { border:'#2563eb', bg:'rgba(37,99,235,.7)' },
+  ln:    { border:'#059669', bg:'rgba(5,150,105,.7)' },
+  log10: { border:'#ea580c', bg:'rgba(234,88,12,.7)' },
+  log1p: { border:'#6366f1', bg:'rgba(99,102,241,.7)' }
+};
+
+function calcStats(arr) {
+  const v = arr.filter(x => x !== null && !isNaN(x));
+  if (!v.length) return { n:0, min:NaN, max:NaN, mean:NaN, std:NaN, median:NaN, skew:NaN };
+  const n = v.length;
+  const min = Math.min(...v), max = Math.max(...v);
+  const mean = v.reduce((s,x)=>s+x,0)/n;
+  const std  = Math.sqrt(v.reduce((s,x)=>s+(x-mean)**2,0)/n);
+  const sorted = [...v].sort((a,b)=>a-b);
+  const median = n%2===0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+  const skew = std > 0 ? (3*(mean-median))/std : 0;
+  return { n, min, max, mean, std, median, skew };
+}
+
+function applyLn(arr)    { return arr.map(v => v > 0 ? Math.log(v) : null); }
+function applyLog10(arr) { return arr.map(v => v > 0 ? Math.log10(v) : null); }
+function applyLog1p(arr) { return arr.map(v => v > -1 ? Math.log1p(v) : null); }
+
+function makeChart(id, labels, data, key) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+  const c = COLORS[key];
+  _charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: data.map(v => v === null ? 0 : v),
+        backgroundColor: data.map(v => v === null ? 'rgba(220,38,38,.25)' : c.bg),
+        borderColor: data.map(v => v === null ? '#dc2626' : c.border),
+        borderWidth: 1.5, borderRadius: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => data[ctx.dataIndex] === null ? ' NaN (변환 불가)' : ` ${fmt(data[ctx.dataIndex])}` } }
+      },
+      scales: {
+        x: { ticks:{color:'#94a3b8',font:{size:9}}, grid:{display:false} },
+        y: { ticks:{color:'#94a3b8',font:{size:9}}, grid:{color:'rgba(0,0,0,.05)'} }
+      }
+    }
+  });
+}
+
+function renderMethodStats(elId, arr, color) {
+  const st = calcStats(arr.filter(v=>v!==null));
+  document.getElementById(elId).innerHTML = `
+    <div class="m-stat"><div class="m-stat-val" style="color:${color}">${fmt(st.min)}</div><div class="m-stat-lbl">최솟값</div></div>
+    <div class="m-stat"><div class="m-stat-val" style="color:${color}">${fmt(st.max)}</div><div class="m-stat-lbl">최댓값</div></div>
+    <div class="m-stat"><div class="m-stat-val" style="color:${color}">${fmt(st.mean)}</div><div class="m-stat-lbl">평균</div></div>
+    <div class="m-stat"><div class="m-stat-val" style="color:${color}">${fmt(st.skew)}</div><div class="m-stat-lbl">왜도</div></div>`;
+}
+
+function renderSkewGrid(results) {
+  const methods = [
+    { label:'원본',      color:COLORS.orig.border,  data:results.orig },
+    { label:'ln(x)',    color:COLORS.ln.border,    data:results.ln },
+    { label:'log₁₀(x)', color:COLORS.log10.border, data:results.log10 },
+    { label:'log(1+x)', color:COLORS.log1p.border, data:results.log1p }
+  ];
+  document.getElementById('skew-grid').innerHTML = methods.map(m => {
+    const st = calcStats(m.data.filter(v=>v!==null));
+    const abs = Math.abs(st.skew);
+    const pct = Math.min(abs/3,1)*100;
+    const col = abs < 0.5 ? '#059669' : abs < 1 ? '#d97706' : '#dc2626';
+    const lbl = abs < 0.5 ? '대칭' : abs < 1 ? '약간 치우침' : '뚜렷이 치우침';
+    return `<div class="skew-box">
+      <div class="skew-label" style="color:${m.color}">${m.label}</div>
+      <div class="skew-val" style="color:${col}">${isNaN(st.skew)?'—':st.skew.toFixed(3)}</div>
+      <div class="skew-sub">${lbl}</div>
+      <div class="skew-bar-wrap"><div class="skew-bar" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function update() {
+  const input = document.getElementById('data-input').value;
+  const parsed = input.split(/[,\s]+/).map(v=>v.trim()).filter(v=>v!=='').map(Number).filter(v=>!isNaN(v));
+  if (parsed.length < 2) { alert('숫자를 2개 이상 입력해주세요.'); return; }
+  _data = parsed;
+
+  const labels = _data.map((_,i) => `#${i+1}`);
+  const ln    = applyLn(_data);
+  const log10 = applyLog10(_data);
+  const log1p = applyLog1p(_data);
+
+  const warnBox = document.getElementById('warn-box');
+  const zeroOrNeg = _data.filter(v=>v<=0).length;
+  const negOne    = _data.filter(v=>v<=-1).length;
+  if (zeroOrNeg > 0) {
+    warnBox.classList.add('show');
+    warnBox.innerHTML = `⚠ <strong>0 이하 값 ${zeroOrNeg}개</strong> 감지 — ln(x)와 log₁₀(x)는 해당 값을 <em>NaN</em>으로 처리합니다.`
+      + (negOne > 0 ? ` <strong>−1 이하 값 ${negOne}개</strong>는 log(1+x)도 불가합니다.` : '');
+  } else {
+    warnBox.classList.remove('show');
+  }
+
+  const st = calcStats(_data);
+  const skewClass = Math.abs(st.skew) < 0.5 ? 'skew-ok' : 'skew-high';
+  document.getElementById('orig-stats').innerHTML = `
+    <span class="stat-pill"><strong>n</strong> = ${st.n}</span>
+    <span class="stat-pill">최솟값 <strong>${fmt(st.min)}</strong></span>
+    <span class="stat-pill">최댓값 <strong>${fmt(st.max)}</strong></span>
+    <span class="stat-pill">평균 <strong>${fmt(st.mean)}</strong></span>
+    <span class="stat-pill">중앙값 <strong>${fmt(st.median)}</strong></span>
+    <span class="stat-pill ${skewClass}">왜도 <strong>${fmt(st.skew)}</strong></span>`;
+
+  makeChart('chart-orig',  labels, _data, 'orig');
+  makeChart('chart-ln',    labels, ln,    'ln');
+  makeChart('chart-log10', labels, log10, 'log10');
+  makeChart('chart-log1p', labels, log1p, 'log1p');
+
+  renderMethodStats('mstats-orig',  _data, 'var(--c-orig)');
+  renderMethodStats('mstats-ln',    ln,    'var(--c-ln)');
+  renderMethodStats('mstats-log10', log10, 'var(--c-log10)');
+  renderMethodStats('mstats-log1p', log1p, 'var(--c-log1p)');
+
+  renderSkewGrid({ orig:_data, ln, log10, log1p });
+
+  const maxRows = Math.min(_data.length, 30);
+  const thead = `<thead><tr>
+    <th style="text-align:center">#</th>
+    <th style="color:var(--c-orig)">원본</th>
+    <th style="color:var(--c-ln)">ln(x)</th>
+    <th style="color:var(--c-log10)">log₁₀(x)</th>
+    <th style="color:var(--c-log1p)">log(1+x)</th>
+  </tr></thead>`;
+  const tbody = '<tbody>' + Array.from({length:maxRows},(_,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td class="orig">${fmt(_data[i])}</td>
+      <td class="${ln[i]===null?'invalid':'ln-col'}">${ln[i]===null?'NaN':fmt(ln[i])}</td>
+      <td class="${log10[i]===null?'invalid':'log10-col'}">${log10[i]===null?'NaN':fmt(log10[i])}</td>
+      <td class="${log1p[i]===null?'invalid':'log1p-col'}">${log1p[i]===null?'NaN':fmt(log1p[i])}</td>
+    </tr>`).join('') + '</tbody>';
+  document.getElementById('val-table').innerHTML = thead + tbody;
+}
+
+function loadPreset(btn) {
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _data = [...PRESETS[btn.dataset.key]];
+  document.getElementById('data-input').value = _data.join(', ');
+  update();
+}
+
+function onInputChange() { document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active')); }
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.p-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if (history.replaceState) history.replaceState(null, '', '#' + tab);  // 해시 딥링크 동기화
+}
+
+// 해시 딥링크 진입: /prep/…#csv → CSV 변환 탭 직접 열기
+(function(){
+  const h = location.hash.slice(1);
+  const b = document.querySelector('.p-tab[data-tab="' + h + '"]');
+  if (b) switchTab(h, b);
+})();
+
+
+function fmt(v) {
+  if (v===null||v===undefined||isNaN(v)) return '—';
+  if (!Number.isFinite(v)) return String(v);
+  if (Math.abs(v)>=1000000) return (v/1000000).toFixed(1)+'M';
+  if (Math.abs(v)>=1000)   return v.toFixed(0);
+  if (Math.abs(v)>=10)     return v.toFixed(2);
+  return v.toFixed(4);
+}
+
+document.getElementById('data-input').value = PRESETS.income.join(', ');
+update();
+
+// CSV
+let _csvHeaders=[], _csvRows=[], _csvNumericCols=new Set(), _csvSelectedCols=new Set(), _csvTransformed=null;
+
+(function(){
+  const fi=document.getElementById('csv-file'), dz=document.getElementById('csv-drop');
+  fi.addEventListener('change',()=>{if(fi.files[0])handleFile(fi.files[0]);});
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+})();
+
+function handleFile(file) {
+  if(file.size>10*1024*1024){alert('파일 크기가 10MB를 초과합니다.');return;}
+  const isXlsx=/\.xlsx$/i.test(file.name);
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const buf=e.target.result;
+    if(isXlsx){parseXlsx(buf,file.name);}
+    else{
+      const bytes=new Uint8Array(buf.slice(0,3));
+      const hasBom=bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF;
+      let text=new TextDecoder('utf-8').decode(buf);
+      if(!hasBom&&(text.match(/�/g)||[]).length>2){try{text=new TextDecoder('euc-kr').decode(buf);}catch(e){}}
+      parseCsv(text,file.name);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseXlsx(buf,filename){
+  try{
+    const wb=XLSX.read(new Uint8Array(buf),{type:'array',codepage:65001});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+    if(data.length<2){alert('데이터가 부족합니다.');return;}
+    _csvHeaders=data[0].map(v=>String(v));
+    _csvRows=data.slice(1).map(r=>Array.from({length:_csvHeaders.length},(_,i)=>r[i]!==undefined?String(r[i]):''));
+    finishParse(filename);
+  }catch(err){alert('XLSX 읽기 오류: '+err.message);}
+}
+
+function parseCsv(text,filename){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim()!=='');
+  if(lines.length<2){alert('데이터가 부족합니다.');return;}
+  const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':',';
+  function pl(line){const r=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){q=!q;continue;}if(ch===delim&&!q){r.push(c.trim());c='';continue;}c+=ch;}r.push(c.trim());return r;}
+  _csvHeaders=pl(lines[0]);
+  _csvRows=lines.slice(1).map(l=>pl(l));
+  finishParse(filename);
+}
+
+function finishParse(filename){
+  _csvNumericCols=new Set();
+  _csvHeaders.forEach((_,ci)=>{
+    const vals=_csvRows.map(r=>r[ci]).filter(v=>v!==''&&v!=null);
+    const nc=vals.filter(v=>!isNaN(parseFloat(v))&&isFinite(v)).length;
+    if(vals.length>0&&nc/vals.length>=0.9)_csvNumericCols.add(ci);
+  });
+  _csvSelectedCols=new Set([..._csvNumericCols]);_csvTransformed=null;
+  const ib=document.getElementById('csv-info');
+  ib.style.display='flex';
+  ib.innerHTML=`<span>📄 <strong>${escHtml(filename)}</strong></span><span>행: <strong>${_csvRows.length.toLocaleString()}</strong></span><span>열: <strong>${_csvHeaders.length}</strong></span><span>숫자형 열: <strong>${_csvNumericCols.size}</strong>개</span>`;
+  document.querySelector('.csv-drop-label').textContent=`✅ ${filename} 로드됨`;
+  renderColGrid();
+  document.getElementById('csv-settings').style.display='block';
+  document.getElementById('csv-result-wrap').style.display='none';
+}
+
+function renderColGrid(){
+  document.getElementById('col-grid').innerHTML=_csvHeaders.map((h,i)=>{
+    const isNum=_csvNumericCols.has(i),isSel=_csvSelectedCols.has(i);
+    return`<div class="col-chip${isNum?(isSel?' selected':''):' non-numeric'}"${isNum?` onclick="toggleCol(${i},this)"`:` title="문자형 열"`}>${isNum?(isSel?'✓':'+'):'—'} ${escHtml(h)}</div>`;
+  }).join('');
+}
+
+function toggleCol(ci,el){
+  if(_csvSelectedCols.has(ci)){_csvSelectedCols.delete(ci);el.classList.remove('selected');el.textContent='+ '+_csvHeaders[ci];}
+  else{_csvSelectedCols.add(ci);el.classList.add('selected');el.textContent='✓ '+_csvHeaders[ci];}
+}
+
+function onMethodChange(){
+  const val=document.querySelector('input[name="csv-method"]:checked').value;
+  document.getElementById('mr-ln').className='method-radio'+(val==='ln'?' sel-ln':'');
+  document.getElementById('mr-log10').className='method-radio'+(val==='log10'?' sel-log10':'');
+  document.getElementById('mr-log1p').className='method-radio'+(val==='log1p'?' sel-log1p':'');
+}
+
+function applyTransform(){
+  if(_csvSelectedCols.size===0){alert('변환할 열을 하나 이상 선택하세요.');return;}
+  const method=document.querySelector('input[name="csv-method"]:checked').value;
+  _csvTransformed=_csvRows.map(r=>[...r]);
+  _csvSelectedCols.forEach(ci=>{
+    _csvRows.forEach((r,ri)=>{
+      const v=parseFloat(r[ci]);
+      if(isNaN(v))return;
+      let res;
+      if(method==='ln')     res=v>0?Math.log(v):null;
+      else if(method==='log10')res=v>0?Math.log10(v):null;
+      else                  res=v>-1?Math.log1p(v):null;
+      _csvTransformed[ri][ci]=res===null?r[ci]:parseFloat(res.toFixed(8)).toString();
+    });
+  });
+  renderCsvPreview(method);
+  document.getElementById('csv-result-wrap').style.display='block';
+  setTimeout(()=>document.getElementById('csv-result-wrap').scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+
+function renderCsvPreview(method){
+  const names={ln:'ln(x) 자연 로그',log10:'log₁₀(x) 상용 로그',log1p:'log(1+x) 로그1p'};
+  const pn=Math.min(_csvTransformed.length,20);
+  document.getElementById('preview-note').textContent=`상위 ${pn}행 / 전체 ${_csvTransformed.length.toLocaleString()}행`;
+  document.getElementById('result-col-info').textContent=`${names[method]} 적용 — 변환 열: ${_csvSelectedCols.size}개`;
+  const thead='<thead><tr>'+_csvHeaders.map((h,i)=>`<th class="${_csvSelectedCols.has(i)?'t-col':''}">${escHtml(h)}${_csvSelectedCols.has(i)?' *':''}</th>`).join('')+'</tr></thead>';
+  const tbody='<tbody>'+Array.from({length:pn},(_,ri)=>'<tr>'+_csvTransformed[ri].map((v,ci)=>`<td class="${_csvSelectedCols.has(ci)?'t-col':''}">${escHtml(v)}</td>`).join('')+'</tr>').join('')+'</tbody>';
+  document.getElementById('csv-preview-table').innerHTML=thead+tbody;
+}
+
+function downloadCsv(){
+  if(!_csvTransformed)return;
+  const lines=[_csvHeaders.map(cc).join(','),..._csvTransformed.map(r=>r.map(cc).join(','))];
+  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=Object.assign(document.createElement('a'),{href:url,download:'log_transformed.csv'});
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function downloadXlsx(){
+  if(!_csvTransformed)return;
+  const toVal=v=>{if(v===''||v==null)return'';const n=Number(v);return isFinite(n)?n:v;};
+  const ws=XLSX.utils.aoa_to_sheet([_csvHeaders,..._csvTransformed.map(r=>r.map(toVal))]);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'log_transformed');
+  XLSX.writeFile(wb,'log_transformed.xlsx');
+}
+
+function cc(v){if(v==null)return'';const s=String(v);return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;}
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function resetCsv(){
+  _csvHeaders=[];_csvRows=[];_csvNumericCols=new Set();_csvSelectedCols=new Set();_csvTransformed=null;
+  document.getElementById('csv-info').style.display='none';
+  document.getElementById('csv-settings').style.display='none';
+  document.getElementById('csv-result-wrap').style.display='none';
+  document.querySelector('.csv-drop-label').textContent='CSV 또는 XLSX 파일을 드래그하거나 클릭해서 선택';
+  document.getElementById('csv-file').value='';
+}
+</script>
+<script>(function(){var k='tf_prep_typeconv';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

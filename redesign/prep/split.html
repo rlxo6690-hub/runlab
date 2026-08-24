@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>데이터 분할 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="데이터 분할 — DataForge">
+<meta property="og:description" content="CSV 파일을 Train / Validation / Test 세트로 분할하고 저장합니다">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;
+  --accent:#2563eb;--accent2:#6366f1;
+  --green:#059669;--amber:#d97706;--red:#dc2626;
+  --train:#2563eb;--val:#6366f1;--test:#059669;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+.page{padding:0 24px 80px;}
+
+/* Cards */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* Upload */
+.upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:12px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.02);position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:36px;margin-bottom:10px;}
+.upload-main{font-size:14px;font-weight:700;margin-bottom:5px;}
+.upload-sub{font-size:12px;color:var(--muted);}
+.file-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.2);border-radius:8px;font-size:12px;color:#1e3a8a;margin-top:12px;display:none;}
+.file-badge.show{display:inline-flex;}
+
+/* Split ratio */
+.ratio-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+.ratio-item{display:flex;flex-direction:column;gap:6px;}
+.ratio-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.ratio-label.train{color:var(--train);}
+.ratio-label.val{color:var(--val);}
+.ratio-label.test{color:var(--test);}
+.ratio-input-wrap{position:relative;}
+.ratio-input{width:100%;padding:9px 32px 9px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;color:var(--text);outline:none;transition:border-color .15s;}
+.ratio-input:focus{border-color:var(--accent);}
+.ratio-pct{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none;}
+.ratio-bar{height:6px;border-radius:3px;transition:width .2s;}
+.ratio-bar.train{background:var(--train);}
+.ratio-bar.val{background:var(--val);}
+.ratio-bar.test{background:var(--test);}
+.ratio-total{font-size:11px;font-weight:700;margin-top:4px;}
+.ratio-total.ok{color:var(--green);}
+.ratio-total.err{color:var(--red);}
+
+/* Progress bar visual */
+.split-bar-wrap{height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:6px;border:1px solid var(--border);}
+.split-bar-seg{height:100%;transition:flex .3s;}
+
+/* Options */
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.opt-item{display:flex;flex-direction:column;gap:5px;}
+.opt-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.opt-input{background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:8px 11px;outline:none;font-family:inherit;transition:border-color .15s;width:100%;}
+.opt-input:focus{border-color:var(--accent);}
+select.opt-input{cursor:pointer;}
+.check-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;}
+.check-row input{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);}
+
+/* Run button */
+.run-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.run-btn:hover{opacity:.88;}
+.run-btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* Results */
+.results{display:none;}
+.results.show{display:block;}
+
+/* Split summary */
+.split-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+.split-box{border-radius:10px;padding:16px 14px;text-align:center;}
+.split-box.train{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.2);}
+.split-box.val{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);}
+.split-box.test{background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.2);}
+.split-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:6px;}
+.split-box.train .split-box-label{color:var(--train);}
+.split-box.val .split-box-label{color:var(--val);}
+.split-box.test .split-box-label{color:var(--test);}
+.split-box-rows{font-size:26px;font-weight:800;font-family:'Space Mono',monospace;}
+.split-box.train .split-box-rows{color:var(--train);}
+.split-box.val .split-box-rows{color:var(--val);}
+.split-box.test .split-box-rows{color:var(--test);}
+.split-box-pct{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* Distribution table */
+.dist-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:16px;}
+.dist-table{width:100%;border-collapse:collapse;font-size:12px;}
+.dist-table th{padding:8px 12px;background:var(--card2);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.dist-table td{padding:7px 12px;border-bottom:1px solid rgba(0,0,0,.04);vertical-align:middle;}
+.dist-table tr:last-child td{border-bottom:none;}
+.dist-mini-bar{display:flex;gap:2px;height:6px;border-radius:3px;overflow:hidden;min-width:80px;}
+.dist-mini-seg{height:100%;border-radius:1px;}
+
+/* Download buttons */
+.dl-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.dl-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s;}
+.dl-btn:hover{opacity:.85;}
+.dl-btn:disabled{opacity:.4;cursor:not-allowed;}
+.dl-btn.train{background:var(--train);color:#fff;}
+.dl-btn.val{background:var(--val);color:#fff;}
+.dl-btn.test{background:var(--test);color:#fff;}
+.dl-btn.all{background:var(--text);color:#fff;grid-column:1/-1;}
+
+/* Status */
+.status-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;}
+.status-ok{background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.2);color:#065f46;}
+.status-err{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);color:#7f1d1d;}
+
+/* Preview */
+.preview-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;max-height:260px;overflow-y:auto;}
+.preview-table{width:100%;border-collapse:collapse;font-size:11px;}
+.preview-table th{position:sticky;top:0;padding:7px 10px;background:var(--card2);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;z-index:1;}
+.preview-table td{padding:5px 10px;border-bottom:1px solid rgba(0,0,0,.04);white-space:nowrap;}
+.preview-table tr:last-child td{border-bottom:none;}
+.row-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px;}
+.row-badge.train{background:rgba(37,99,235,.12);color:var(--train);}
+.row-badge.val{background:rgba(99,102,241,.12);color:var(--val);}
+.row-badge.test{background:rgba(5,150,105,.12);color:var(--test);}
+
+/* Spinner */
+.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  .ratio-grid,.split-summary,.dl-grid,.opt-grid{grid-template-columns:1fr;}
+  .dl-btn.all{grid-column:auto;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">데이터 분할</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+
+  <!-- 업로드 -->
+  <div class="a-card">
+    <div class="a-card-title">📂 CSV 파일 업로드</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".csv,.tsv">
+      <div class="upload-icon">📂</div>
+      <div class="upload-main">CSV 파일을 드래그하거나 클릭하여 선택</div>
+      <div class="upload-sub">헤더 포함 · UTF-8 / EUC-KR 자동 감지</div>
+    </div>
+    <div class="file-badge" id="fileBadge">📄 <span id="fileName"></span> — <span id="fileRows"></span>행 · <span id="fileCols"></span>열</div>
+  </div>
+
+  <!-- 분할 설정 -->
+  <div class="a-card">
+    <div class="a-card-title">⚙️ 분할 설정</div>
+
+    <!-- 비율 슬라이더 -->
+    <div class="ratio-grid">
+      <div class="ratio-item">
+        <span class="ratio-label train">Train</span>
+        <div class="ratio-input-wrap">
+          <input class="ratio-input" type="number" id="trainPct" value="70" min="1" max="98" step="1" oninput="syncRatio('train')">
+          <span class="ratio-pct">%</span>
+        </div>
+        <div class="ratio-bar train" id="bar-train" style="width:70%"></div>
+      </div>
+      <div class="ratio-item">
+        <span class="ratio-label val">Validation <span style="font-weight:400;opacity:.7;">(선택)</span></span>
+        <div class="ratio-input-wrap">
+          <input class="ratio-input" type="number" id="valPct" value="15" min="0" max="49" step="1" oninput="syncRatio('val')">
+          <span class="ratio-pct">%</span>
+        </div>
+        <div class="ratio-bar val" id="bar-val" style="width:15%"></div>
+      </div>
+      <div class="ratio-item">
+        <span class="ratio-label test">Test</span>
+        <div class="ratio-input-wrap">
+          <input class="ratio-input" type="number" id="testPct" value="15" min="1" max="49" step="1" oninput="syncRatio('test')">
+          <span class="ratio-pct">%</span>
+        </div>
+        <div class="ratio-bar test" id="bar-test" style="width:15%"></div>
+      </div>
+    </div>
+
+    <!-- 합계 표시 + 미니 바 -->
+    <div class="split-bar-wrap" id="splitBarWrap">
+      <div class="split-bar-seg" id="seg-train" style="flex:70;background:var(--train);"></div>
+      <div class="split-bar-seg" id="seg-val" style="flex:15;background:var(--val);"></div>
+      <div class="split-bar-seg" id="seg-test" style="flex:15;background:var(--test);"></div>
+    </div>
+    <div class="ratio-total ok" id="ratioTotal">합계: 100% ✓</div>
+
+    <div style="height:16px;"></div>
+
+    <!-- 옵션 -->
+    <div class="opt-grid">
+      <div class="opt-item">
+        <span class="opt-label">랜덤 시드 (Seed)</span>
+        <input class="opt-input" type="number" id="seed" value="42" min="0">
+      </div>
+      <div class="opt-item">
+        <span class="opt-label">층화 추출 기준 컬럼 (선택)</span>
+        <select class="opt-input" id="stratifyCol">
+          <option value="">— 사용 안 함 (무작위) —</option>
+        </select>
+      </div>
+    </div>
+    <label class="check-row" style="margin-bottom:16px;">
+      <input type="checkbox" id="shuffleCheck" checked>
+      셔플 (행 순서 무작위 섞기)
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="keepIndexCheck">
+      원본 인덱스 열 추가 (_original_index)
+    </label>
+
+    <div style="height:16px;"></div>
+    <button class="run-btn" id="runBtn" onclick="doSplit()" disabled>✂️ 분할 실행</button>
+  </div>
+
+  <!-- 결과 -->
+  <div class="results" id="results">
+
+    <div class="a-card">
+      <div class="a-card-title">📊 분할 결과</div>
+      <div id="statusBar"></div>
+      <div class="split-summary" id="splitSummary"></div>
+
+      <!-- 분포 비교 -->
+      <div id="distSection" style="display:none;">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">컬럼별 Train / Val / Test 분포 비교</div>
+        <div class="dist-wrap" id="distWrap"></div>
+      </div>
+    </div>
+
+    <!-- 미리보기 -->
+    <div class="a-card">
+      <div class="a-card-title">👁 데이터 미리보기 <span style="font-weight:400;opacity:.6;">(각 세트 상위 5행)</span></div>
+      <div class="preview-wrap" id="previewWrap"></div>
+    </div>
+
+    <!-- 다운로드 -->
+    <div class="a-card">
+      <div class="a-card-title">⬇ 다운로드</div>
+      <div class="dl-grid">
+        <button class="dl-btn train" id="dlTrain" onclick="downloadSplit('train')" disabled>⬇ Train CSV</button>
+        <button class="dl-btn val"   id="dlVal"   onclick="downloadSplit('val')"   disabled>⬇ Val CSV</button>
+        <button class="dl-btn test"  id="dlTest"  onclick="downloadSplit('test')"  disabled>⬇ Test CSV</button>
+        <button class="dl-btn all"   id="dlAll"   onclick="downloadAll()"          disabled>⬇ 전체 ZIP 다운로드 (train + val + test)</button>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ── 전역 상태 ─────────────────────────────────────────
+let _rows = [];        // parsed CSV rows (arrays)
+let _headers = [];     // header row
+let _splits = {};      // { train:[], val:[], test:[] }
+let _fileName = '';
+
+// ── CSV 파싱 ──────────────────────────────────────────
+function decodeBuffer(buf) {
+  const b = new Uint8Array(buf);
+  if (b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF) return new TextDecoder('utf-8').decode(buf);
+  try { return new TextDecoder('utf-8',{fatal:true}).decode(buf); }
+  catch(_) { return new TextDecoder('euc-kr').decode(buf); }
+}
+
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+  const header = splitLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = splitLine(lines[i]);
+    if (cells.length > 0) rows.push(cells);
+  }
+  return { header, rows };
+}
+
+function splitLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function rowsToCSV(header, rows, includeIndex) {
+  const bom = '﻿';
+  const allRows = [header, ...rows];
+  if (includeIndex) {
+    const hdr = ['_original_index', ...header];
+    const body = rows.map((r, i) => [String(r._origIdx ?? i), ...header.map((_,ci) => r[ci] ?? '')]);
+    return bom + [hdr, ...body].map(r => r.map(quoteCell).join(',')).join('\r\n');
+  }
+  return bom + allRows.map(r => (Array.isArray(r) ? r : header.map((_,i) => r[i] ?? '')).map(quoteCell).join(',')).join('\r\n');
+}
+
+function quoteCell(v) {
+  const s = v == null ? '' : String(v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+
+// ── 파일 업로드 ──────────────────────────────────────
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+function loadFile(file) {
+  _fileName = file.name.replace(/\.[^.]+$/, '');
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeBuffer(e.target.result);
+    const parsed = parseCSV(text);
+    _headers = parsed.header;
+    _rows = parsed.rows.map((r, i) => { r._origIdx = i; return r; });
+
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileRows').textContent = _rows.length.toLocaleString();
+    document.getElementById('fileCols').textContent = _headers.length;
+    document.getElementById('fileBadge').classList.add('show');
+
+    // 층화 추출 컬럼 선택지 갱신
+    const sel = document.getElementById('stratifyCol');
+    sel.innerHTML = '<option value="">— 사용 안 함 (무작위) —</option>';
+    _headers.forEach(h => { const o = document.createElement('option'); o.value = h; o.textContent = h; sel.appendChild(o); });
+
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('results').classList.remove('show');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── 비율 동기화 ───────────────────────────────────────
+function syncRatio(changed) {
+  const t = parseInt(document.getElementById('trainPct').value) || 0;
+  const v = parseInt(document.getElementById('valPct').value) || 0;
+  const ts = parseInt(document.getElementById('testPct').value) || 0;
+  const sum = t + v + ts;
+  const totalEl = document.getElementById('ratioTotal');
+  totalEl.textContent = `합계: ${sum}%${sum === 100 ? ' ✓' : ' ← 100이 되어야 합니다'}`;
+  totalEl.className = 'ratio-total ' + (sum === 100 ? 'ok' : 'err');
+
+  document.getElementById('seg-train').style.flex = t;
+  document.getElementById('seg-val').style.flex = v;
+  document.getElementById('seg-test').style.flex = ts;
+  document.getElementById('seg-val').style.display = v === 0 ? 'none' : '';
+
+  document.getElementById('bar-train').style.width = Math.min(t, 100) + '%';
+  document.getElementById('bar-val').style.width = Math.min(v, 100) + '%';
+  document.getElementById('bar-test').style.width = Math.min(ts, 100) + '%';
+}
+
+// ── 시드 기반 셔플 ────────────────────────────────────
+function seededShuffle(arr, seed) {
+  let s = seed >>> 0;
+  const rng = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ── 분할 실행 ─────────────────────────────────────────
+function doSplit() {
+  if (_rows.length === 0) { alert('CSV 파일을 먼저 업로드하세요.'); return; }
+
+  const trainPct = parseInt(document.getElementById('trainPct').value) || 0;
+  const valPct   = parseInt(document.getElementById('valPct').value) || 0;
+  const testPct  = parseInt(document.getElementById('testPct').value) || 0;
+  if (trainPct + valPct + testPct !== 100) { alert('비율 합계가 100%가 되어야 합니다.'); return; }
+  if (trainPct < 1 || testPct < 1) { alert('Train과 Test는 최소 1% 이상이어야 합니다.'); return; }
+
+  const seed      = parseInt(document.getElementById('seed').value) || 0;
+  const doShuffle = document.getElementById('shuffleCheck').checked;
+  const stratCol  = document.getElementById('stratifyCol').value;
+  const keepIdx   = document.getElementById('keepIndexCheck').checked;
+  const hasVal    = valPct > 0;
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> 분할 중...';
+
+  setTimeout(() => {
+    try {
+      let trainRows = [], valRows = [], testRows = [];
+
+      if (stratCol && _headers.includes(stratCol)) {
+        const colIdx = _headers.indexOf(stratCol);
+        const groups = {};
+        _rows.forEach(r => {
+          const key = r[colIdx] ?? '';
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(r);
+        });
+
+        Object.values(groups).forEach(grp => {
+          let g = [...grp];
+          if (doShuffle) seededShuffle(g, seed);
+          const n = g.length;
+          const nTrain = Math.max(1, Math.round(n * trainPct / 100));
+          const nVal   = hasVal ? Math.max(0, Math.round(n * valPct / 100)) : 0;
+          const nTest  = n - nTrain - nVal;
+          trainRows.push(...g.slice(0, nTrain));
+          if (hasVal) valRows.push(...g.slice(nTrain, nTrain + nVal));
+          testRows.push(...g.slice(nTrain + nVal, nTrain + nVal + Math.max(0, nTest)));
+        });
+      } else {
+        let rows = [..._rows];
+        if (doShuffle) seededShuffle(rows, seed);
+        const n = rows.length;
+        const nTrain = Math.max(1, Math.round(n * trainPct / 100));
+        const nVal   = hasVal ? Math.max(0, Math.round(n * valPct / 100)) : 0;
+        const nTest  = n - nTrain - nVal;
+        trainRows = rows.slice(0, nTrain);
+        if (hasVal) valRows = rows.slice(nTrain, nTrain + nVal);
+        testRows = rows.slice(nTrain + nVal, nTrain + nVal + Math.max(0, nTest));
+      }
+
+      _splits = { train: trainRows, val: hasVal ? valRows : null, test: testRows };
+
+      renderResults(hasVal, keepIdx);
+    } catch(e) {
+      document.getElementById('statusBar').innerHTML = `<div class="status-bar status-err">❌ 오류: ${e.message}</div>`;
+      document.getElementById('results').classList.add('show');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '✂️ 분할 실행';
+  }, 30);
+}
+
+// ── 결과 렌더링 ───────────────────────────────────────
+function renderResults(hasVal, keepIdx) {
+  const { train, val, test } = _splits;
+  const total = train.length + (val?.length || 0) + test.length;
+
+  document.getElementById('statusBar').innerHTML =
+    `<div class="status-bar status-ok">✅ 분할 완료 — 전체 ${total.toLocaleString()}행 → Train ${train.length.toLocaleString()}행 / ${hasVal ? `Val ${val.length.toLocaleString()}행 / ` : ''}Test ${test.length.toLocaleString()}행</div>`;
+
+  // Summary boxes
+  const valBox = hasVal
+    ? `<div class="split-box val"><div class="split-box-label">Validation</div><div class="split-box-rows">${val.length.toLocaleString()}</div><div class="split-box-pct">${(val.length/total*100).toFixed(1)}% of total</div></div>`
+    : `<div class="split-box val" style="opacity:.35;"><div class="split-box-label">Validation</div><div class="split-box-rows">—</div><div class="split-box-pct">미사용</div></div>`;
+
+  document.getElementById('splitSummary').innerHTML = `
+    <div class="split-box train"><div class="split-box-label">Train</div><div class="split-box-rows">${train.length.toLocaleString()}</div><div class="split-box-pct">${(train.length/total*100).toFixed(1)}% of total</div></div>
+    ${valBox}
+    <div class="split-box test"><div class="split-box-label">Test</div><div class="split-box-rows">${test.length.toLocaleString()}</div><div class="split-box-pct">${(test.length/total*100).toFixed(1)}% of total</div></div>`;
+
+  // 분포 비교
+  renderDistribution(hasVal);
+
+  // 미리보기
+  renderPreview(hasVal);
+
+  // 다운로드 버튼 활성화
+  document.getElementById('dlTrain').disabled = false;
+  document.getElementById('dlTest').disabled = false;
+  document.getElementById('dlAll').disabled = false;
+  const dlVal = document.getElementById('dlVal');
+  dlVal.disabled = !hasVal;
+  dlVal.style.opacity = hasVal ? '1' : '0.35';
+
+  document.getElementById('results').classList.add('show');
+}
+
+function renderDistribution(hasVal) {
+  const { train, val, test } = _splits;
+  const sec = document.getElementById('distSection');
+  const wrap = document.getElementById('distWrap');
+
+  // 수치형 컬럼 분포
+  const numCols = _headers.filter((h, ci) => {
+    const sample = train.slice(0, 30).map(r => parseFloat(r[ci]));
+    return sample.filter(v => !isNaN(v)).length > sample.length * 0.7;
+  }).slice(0, 8);
+
+  if (numCols.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  const stat = (rows, ci) => {
+    const vals = rows.map(r => parseFloat(r[ci])).filter(v => !isNaN(v));
+    if (!vals.length) return {mean:'—',std:'—'};
+    const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const std = Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length);
+    return {mean:mean.toFixed(3), std:std.toFixed(3)};
+  };
+
+  let html = `<table class="dist-table"><thead><tr>
+    <th>컬럼</th>
+    <th>TRAIN 평균(σ)</th>
+    ${hasVal ? '<th>VAL 평균(σ)</th>' : ''}
+    <th>TEST 평균(σ)</th>
+    <th>분포</th>
+  </tr></thead><tbody>`;
+
+  numCols.forEach(h => {
+    const ci = _headers.indexOf(h);
+    const tr = stat(train, ci);
+    const vr = hasVal ? stat(val, ci) : null;
+    const ts = stat(test, ci);
+    const trainF = parseFloat(tr.mean), valF = vr ? parseFloat(vr.mean) : null, testF = parseFloat(ts.mean);
+    const allMeans = [trainF, hasVal ? valF : null, testF].filter(v => v !== null);
+    const minM = Math.min(...allMeans), maxM = Math.max(...allMeans), rng = maxM - minM || 1;
+    const pct = v => Math.max(5, Math.round(((v-minM)/rng)*80 + 10));
+
+    html += `<tr>
+      <td style="font-weight:600;">${h}</td>
+      <td style="color:var(--train);font-family:'Space Mono',monospace;font-size:11px;">${tr.mean} (${tr.std})</td>
+      ${hasVal ? `<td style="color:var(--val);font-family:'Space Mono',monospace;font-size:11px;">${vr.mean} (${vr.std})</td>` : ''}
+      <td style="color:var(--test);font-family:'Space Mono',monospace;font-size:11px;">${ts.mean} (${ts.std})</td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:100px;">
+          <div style="height:5px;width:${pct(trainF)}%;background:var(--train);border-radius:2px;"></div>
+          ${hasVal ? `<div style="height:5px;width:${pct(valF)}%;background:var(--val);border-radius:2px;"></div>` : ''}
+          <div style="height:5px;width:${pct(testF)}%;background:var(--test);border-radius:2px;"></div>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function renderPreview(hasVal) {
+  const { train, val, test } = _splits;
+  const sets = [
+    { rows: train.slice(0,5), type:'train', label:'TRAIN' },
+    ...(hasVal ? [{ rows: val.slice(0,5), type:'val', label:'VAL' }] : []),
+    { rows: test.slice(0,5), type:'test', label:'TEST' },
+  ];
+
+  let html = `<table class="preview-table"><thead><tr><th>세트</th>${_headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+  sets.forEach(({rows, type, label}) => {
+    rows.forEach(r => {
+      html += `<tr><td><span class="row-badge ${type}">${label}</span></td>${_headers.map((_,ci)=>`<td>${r[ci]??''}</td>`).join('')}</tr>`;
+    });
+  });
+  html += '</tbody></table>';
+  document.getElementById('previewWrap').innerHTML = html;
+}
+
+// ── 다운로드 ─────────────────────────────────────────
+function makeCSV(rows) {
+  const keepIdx = document.getElementById('keepIndexCheck').checked;
+  const bom = '﻿';
+  const headerLine = _headers.map(quoteCell).join(',');
+  const dataLines = rows.map(r => {
+    const cells = _headers.map((_,ci) => quoteCell(r[ci] ?? ''));
+    return keepIdx ? [r._origIdx, ...cells].map(String).map(quoteCell).join(',') : cells.join(',');
+  });
+  const finalHeader = keepIdx ? ['_original_index', ..._headers].map(quoteCell).join(',') : headerLine;
+  return bom + [finalHeader, ...dataLines].join('\r\n');
+}
+
+function downloadSplit(type) {
+  const rows = _splits[type];
+  if (!rows || rows.length === 0) return;
+  const csv = makeCSV(rows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${_fileName}_${type}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function downloadAll() {
+  const btn = document.getElementById('dlAll');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-top-color:rgba(255,255,255,.7);"></div> 압축 중...';
+
+  try {
+    const zip = new JSZip();
+    const folder = zip.folder(_fileName + '_split');
+    folder.file(`${_fileName}_train.csv`, makeCSV(_splits.train));
+    if (_splits.val && _splits.val.length > 0) folder.file(`${_fileName}_val.csv`, makeCSV(_splits.val));
+    folder.file(`${_fileName}_test.csv`, makeCSV(_splits.test));
+
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${_fileName}_split.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇ 전체 ZIP 다운로드 (train + val + test)';
+  }
+}
+
+// 초기 비율 바 렌더링
+syncRatio('');
+</script>
+<script>(function(){var k='tf_prep_split';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

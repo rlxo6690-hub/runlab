@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV 편집 도구 사용법 — 빈 행 삭제·값 필터·날짜 분리·데이터 차분 | DataForge 가이드</title>
+  <meta name="description" content="빈 행 삭제, 값 필터, 날짜 분리, 데이터 차분, 중복 제거 — 분석 전에 늘 필요한 CSV 정리 작업 5가지를 브라우저에서 처리하는 편집 도구 사용법을 탭별로 안내합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/prep_edit">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="CSV 편집 도구 사용법 | DataForge 가이드">
+  <meta property="og:description" content="빈 행 삭제·값 필터·날짜 분리·데이터 차분·중복 제거를 브라우저에서 처리하는 CSV 편집 도구 사용법 안내.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/prep_edit">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">dataforge.ai.kr/prep/edit</div>
+      <h1>CSV 편집 도구 사용법 — 빈 행 삭제·값 필터·날짜 분리·데이터 차분</h1>
+      <p class="lead">분석에 들어가기 전 늘 필요한 CSV 정리 작업 5가지를 탭 하나씩으로 모아둔 편집 멀티툴입니다.</p>
+      <div class="tabs-line">탭: 🗑️ 빈 행 삭제 · 🔍 값 필터 · 📅 날짜 분리 · 📉 데이터 차분 · 🧬 중복 제거</div>
+
+      <h2>어떤 상황에서 쓰는 도구인가요</h2>
+      <p>본격적인 분석 전에는 늘 자잘한 정리가 필요합니다 — 빈 행을 지우고, 원하는 값의 행만 남기고,
+      '2026-07-26' 같은 날짜를 연·월·일로 쪼개고, 중복된 행을 걷어내는 일. 하나하나는 사소하지만
+      엑셀에서 필터를 걸고 수식을 끌어 붙이다 보면 시간이 훌쩍 갑니다. 파일이 수만 행쯤 되면
+      엑셀이 버벅이기 시작하고, 실수로 원본을 덮어쓰는 사고도 생깁니다.</p>
+      <p>이 도구는 그 정리 작업 다섯 가지를 각각 독립된 탭으로 제공합니다. 원하는 탭 하나만 열어서
+      파일 올리고 → 설정하고 → 실행하고 → 결과 CSV를 내려받으면 끝입니다.
+      <b>모든 처리는 브라우저 안에서</b> 이뤄져 파일이 서버로 전송되지 않으므로,
+      민감한 데이터도 안심하고 다룰 수 있습니다.</p>
+
+      <h2>이 도구는 무엇을 하나요</h2>
+      <p>각 탭이 독립 도구입니다. 어느 탭이든 CSV/XLSX를 드래그하거나 클릭해 올리면
+      UTF-8·EUC-KR 인코딩을 자동 감지하고, 실행 결과는 미리보기 표로 먼저 확인한 뒤
+      CSV로 다운로드합니다. 원본 파일은 건드리지 않으니 여러 번 실험해도 안전합니다.</p>
+
+      <h2>단계별 사용법 — 탭별 안내</h2>
+      <ol class="steps">
+        <li><b>🗑️ 빈 행 삭제</b> — 삭제 기준을 셋 중에서 고릅니다 —
+        <b>모든 셀이 빈 행만 삭제</b>(완전히 비어 있는 행만) · <b>하나라도 빈 셀이 있는 행 삭제</b> ·
+        <b>특정 컬럼이 빈 행 삭제</b>(기준 컬럼을 직접 선택). 실행하면 미리보기에서 삭제된 행이
+        빨간색으로 표시되어 지워지는 내용을 확인한 뒤 <b>⬇ 정리된 CSV 다운로드</b>로 내려받습니다.</li>
+        <li><b>🔍 값 필터</b> — <b>필터 기준 컬럼</b>을 하나 고르면 그 컬럼의 고유값 목록이 나타납니다.
+        <b>유지할 값</b>을 체크하고(전체 선택·전체 해제 버튼 지원) <b>필터 실행 ▶</b>을 누르면
+        조건에 맞는 행만 남습니다. '서울 지점 데이터만', '불량품 행만' 같은 추출에 씁니다.</li>
+        <li><b>📅 날짜 분리</b> — 날짜 형식 컬럼을 <b>자동 감지</b>해 파란색으로 표시해 줍니다.
+        생성할 컬럼을 체크로 고르는데, <b>년·월·일</b>이 기본이고 시각이 포함된 데이터라면
+        <b>시·분·초</b>도 추가할 수 있습니다. 분리 후 원본 날짜 컬럼을 <b>유지</b>할지 <b>삭제</b>할지도
+        선택합니다. 월별·요일별 집계 전에 거치는 단골 단계입니다.</li>
+        <li><b>📉 데이터 차분</b> — 숫자 컬럼을 자동 탐지하고, 선택한 컬럼에서 이전 값과의 차이를
+        계산해 추세를 제거합니다. <b>1차/2차 차분</b>, <b>계절 차분 주기</b>(4=분기 · 7=요일 ·
+        12=월별 · 24=시간 · 52=주별)를 고를 수 있고, ID별로 묶인 패널 데이터라면
+        <b>ID별로 각각 차분</b> 옵션으로 그룹 경계마다 차분을 초기화합니다.
+        원본 컬럼 유지, 차분으로 생긴 NaN 행 제거 여부도 체크박스로 정합니다.</li>
+        <li><b>🧬 중복 제거 — 파일 내</b> — 파일을 여러 개 동시에 올릴 수 있습니다.
+        처리 방식에서 <b>파일 내 중복 제거</b>를 고르면 각 파일 안의 중복 행을 지웁니다.
+        판정 기준은 <b>전체 컬럼 일치</b>(완전히 동일한 행) 또는 <b>선택 컬럼 기준</b>(고객ID 같은
+        키 컬럼 지정) 중 선택하고, 중복 발견 시 <b>첫 번째 행</b>과 <b>마지막 행</b> 중 무엇을 남길지
+        정합니다. 여러 파일을 한 번에 처리했다면 <b>⬇ 전체 파일 ZIP 다운로드</b>로 받습니다.</li>
+        <li><b>🧬 중복 제거 — 두 파일 공통 제거</b> — 파일을 <b>정확히 2개</b> 올리고 이 방식을 고르면,
+        양쪽에 모두 있는 행을 제외한 나머지(각 파일의 고유한 행)만 파일별로 받습니다.
+        지난달 명단과 이번 달 명단을 넣어 '새로 추가된 사람만' 뽑는 식의 비교 작업에 유용합니다.</li>
+      </ol>
+      <div class="tip">💡 주소 뒤에 탭 이름을 붙이면 해당 탭이 바로 열립니다 —
+      <b>#blank</b>(빈 행 삭제) · <b>#colsel</b>(값 필터) · <b>#date</b>(날짜 분리) ·
+      <b>#diff</b>(데이터 차분) · <b>#dedup</b>(중복 제거).</div>
+
+      <h2>도구별 팁</h2>
+      <p>빈 행 삭제에서 '하나라도 빈 셀이 있는 행 삭제'는 시원하지만 위험한 선택입니다.
+      결측이 여러 컬럼에 흩어져 있으면 데이터의 절반이 사라질 수도 있습니다.
+      실행 후 통계 타일에서 <b>몇 행이 삭제됐는지</b> 반드시 확인하고, 너무 많이 지워진다면
+      행을 버리는 대신 보간으로 채우는 쪽을 검토하세요.</p>
+      <p>데이터 차분은 시계열 분석의 준비 단계입니다. 매출처럼 꾸준히 우상향하는 데이터는
+      원본 그대로 보면 '어제와 얼마나 달라졌는지'가 추세에 묻혀 안 보이는데,
+      차분을 하면 변화량만 남아 급등·급락 시점이 또렷해집니다. 중복 제거에서는
+      키 컬럼을 무엇으로 잡느냐에 따라 결과가 크게 달라지므로, 미리보기에서
+      어떤 행이 중복으로 판정됐는지 펼쳐 확인한 뒤 다운로드하는 습관을 권합니다.</p>
+
+      <div class="think">🤔 <b>생각해볼 점</b> — 두 파일 공통 제거에서 '전체 컬럼 일치' 대신
+      키 컬럼(예: 고객ID)만으로 비교하면 결과가 어떻게 달라질까요? 같은 사람인데
+      전화번호만 바뀐 행은 어느 기준에서 '공통'으로 잡힐까요?</div>
+
+      <a class="cta" href="/prep/edit" target="_blank" rel="noopener">🧰 CSV 편집 도구 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/prep_interpolate">CSV 보간·병합 사용법 — 결측을 실제로 채우고 파일을 합치기</a>
+        <a href="/guide/prep_missing">결측치·이상치 시뮬레이터 사용법 — 빠진 값과 튀는 값, 적을 먼저 알기</a>
+        <a href="/guide/data_gen">데이터 생성기 사용법 — 연습용 CSV 데이터 만들기</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

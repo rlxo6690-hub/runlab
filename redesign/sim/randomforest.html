@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤포레스트 알고리즘 인터랙티브 가이드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { indigo:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},blue:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},sky:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},cyan:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},violet:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},purple:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},fuchsia:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'} },
+  fontFamily: { sans: ['Noto Sans KR','Pretendard','system-ui','sans-serif'],
+               mono: ['Space Mono','monospace'] }
+} } };
+</script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .tree-node {
+            transition: all 0.3s ease;
+        }
+        .tree-node:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .step-active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>:root{--bg:#f8fafc;--card:#fff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--color-indigo-50:#eff6ff!important;--color-indigo-100:#dbeafe!important;--color-indigo-200:#bfdbfe!important;--color-indigo-300:#93c5fd!important;--color-indigo-400:#60a5fa!important;--color-indigo-500:#3b82f6!important;--color-indigo-600:#2563eb!important;--color-indigo-700:#1d4ed8!important;--color-indigo-800:#1e40af!important;--color-indigo-900:#1e3a8a!important;--color-indigo-950:#172554!important;--color-blue-50:#eff6ff!important;--color-blue-100:#dbeafe!important;--color-blue-200:#bfdbfe!important;--color-blue-300:#93c5fd!important;--color-blue-400:#60a5fa!important;--color-blue-500:#3b82f6!important;--color-blue-600:#2563eb!important;--color-blue-700:#1d4ed8!important;--color-blue-800:#1e40af!important;--color-blue-900:#1e3a8a!important;--color-blue-950:#172554!important;--color-sky-50:#eff6ff!important;--color-sky-100:#dbeafe!important;--color-sky-200:#bfdbfe!important;--color-sky-300:#93c5fd!important;--color-sky-400:#60a5fa!important;--color-sky-500:#3b82f6!important;--color-sky-600:#2563eb!important;--color-sky-700:#1d4ed8!important;--color-sky-800:#1e40af!important;--color-sky-900:#1e3a8a!important;--color-sky-950:#172554!important;--color-cyan-50:#eff6ff!important;--color-cyan-100:#dbeafe!important;--color-cyan-200:#bfdbfe!important;--color-cyan-300:#93c5fd!important;--color-cyan-400:#60a5fa!important;--color-cyan-500:#3b82f6!important;--color-cyan-600:#2563eb!important;--color-cyan-700:#1d4ed8!important;--color-cyan-800:#1e40af!important;--color-cyan-900:#1e3a8a!important;--color-cyan-950:#172554!important;--color-violet-50:#eef2ff!important;--color-violet-100:#e0e7ff!important;--color-violet-200:#c7d2fe!important;--color-violet-300:#a5b4fc!important;--color-violet-400:#818cf8!important;--color-violet-500:#6366f1!important;--color-violet-600:#4f46e5!important;--color-violet-700:#4338ca!important;--color-violet-800:#3730a3!important;--color-violet-900:#312e81!important;--color-violet-950:#1e1b4b!important;--color-purple-50:#eef2ff!important;--color-purple-100:#e0e7ff!important;--color-purple-200:#c7d2fe!important;--color-purple-300:#a5b4fc!important;--color-purple-400:#818cf8!important;--color-purple-500:#6366f1!important;--color-purple-600:#4f46e5!important;--color-purple-700:#4338ca!important;--color-purple-800:#3730a3!important;--color-purple-900:#312e81!important;--color-purple-950:#1e1b4b!important;--color-fuchsia-50:#eef2ff!important;--color-fuchsia-100:#e0e7ff!important;--color-fuchsia-200:#c7d2fe!important;--color-fuchsia-300:#a5b4fc!important;--color-fuchsia-400:#818cf8!important;--color-fuchsia-500:#6366f1!important;--color-fuchsia-600:#4f46e5!important;--color-fuchsia-700:#4338ca!important;--color-fuchsia-800:#3730a3!important;--color-fuchsia-900:#312e81!important;--color-fuchsia-950:#1e1b4b!important;}body{background-color:#f8fafc!important;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px)!important;background-size:40px 40px!important;background-attachment:fixed!important;}.df-header{position:sticky;top:0;z-index:100;max-width:1400px;margin:0 auto;width:100%;border-bottom:1px solid rgba(0,0,0,.1);background:rgba(248,250,252,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}.df-header-in{max-width:1400px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;}.df-logo{display:flex;align-items:center;gap:12px;}.df-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none;}.df-brand em{color:#ea580c;font-style:normal;}.df-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0;}.df-title{font-size:13px;color:#64748b;}.df-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}.df-back:hover{color:#1e293b;border-color:rgba(0,0,0,.3);}.df-header.dark{background:rgba(2,6,23,.85);border-bottom:1px solid rgba(255,255,255,.1);}.df-header.dark .df-sep{background:rgba(255,255,255,.18);}.df-header.dark .df-title{color:#94a3b8;}.df-header.dark .df-back{color:#94a3b8;border-color:rgba(255,255,255,.18);}.df-header.dark .df-back:hover{color:#f1f5f9;border-color:rgba(255,255,255,.4);}body,button,input,select,textarea,h1,h2,h3,h4,h5,p,span,div,label,li,a,td,th{font-family:'Noto Sans KR','Pretendard',system-ui,-apple-system,sans-serif;}.df-brand,code,pre,.font-mono{font-family:'Space Mono',monospace;}.df-header,.df-header *{line-height:1.3;}.df-subhead{max-width:1400px;margin:0 auto;width:100%;padding:22px 24px 4px;}.df-subhead-in{display:flex;align-items:center;gap:14px;}.df-subhead-ic{font-size:24px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px;flex-shrink:0;}.df-subhead-t{font-size:20px;font-weight:800;color:#1e293b;letter-spacing:-.01em;line-height:1.2;}.df-subhead-s{font-size:13px;color:#64748b;margin-top:3px;line-height:1.4;}.df-tabbar{max-width:1400px;margin:0 auto;width:100%;padding:12px 24px 0;}.df-tabbar-in{display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:4px;overflow-x:auto;width:fit-content;max-width:100%;}@media(max-width:640px){.df-header-in{padding:12px 14px;}.df-title{display:none;}.df-subhead{padding:16px 14px 4px;}.df-subhead-t{font-size:17px;}.df-subhead-ic{width:40px;height:40px;font-size:20px;}.df-tabbar{padding:10px 14px 0;}}</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+<header class="df-header"><div class="df-header-in"><div class="df-logo"><a href="https://dataforge.ai.kr" class="df-brand">DATA<em>FORGE</em></a><div class="df-sep"></div><div class="df-title">랜덤포레스트</div></div><a href="https://dataforge.ai.kr" class="df-back">← DataForge 홈</a></div></header><div class="df-subhead"><div class="df-subhead-in"><div class="df-subhead-ic">🌲</div><div><h1 class="df-subhead-t">랜덤포레스트</h1><p class="df-subhead-s">여러 결정트리의 집단지성으로 예측하는 앙상블을 탐험합니다</p></div></div></div>
+
+    <!-- Header -->
+    
+
+    <!-- Main Content Grid -->
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- Intro & Concept Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                        랜덤포레스트를 관통하는 3가지 핵심 원리
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-amber-50/50 border border-amber-100">
+                            <span class="text-2xl mb-2 block">🎒</span>
+                            <h3 class="font-bold text-amber-900 text-sm mb-1">1. 부트스트랩 (배깅)</h3>
+                            <p class="text-xs text-amber-800 leading-relaxed">
+                                전체 학생 데이터 중 <strong>복원 추출(중복 허용)</strong>로 무작위 샘플을 뽑아 각 나무들에게 나누어 줍니다. 나무마다 공부하는 교과서가 약간씩 달라지는 셈입니다.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-teal-50/50 border border-teal-100">
+                            <span class="text-2xl mb-2 block">🎲</span>
+                            <h3 class="font-bold text-teal-900 text-sm mb-1">2. 무작위 피처 선택</h3>
+                            <p class="text-xs text-teal-800 leading-relaxed">
+                                나무를 자를 때 모든 질문(피처)을 쓰지 않고, <strong>랜덤하게 일부 질문들</strong>만 후보로 올려 최적의 질문을 고릅니다. 나무의 다양성이 극대화됩니다.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
+                            <span class="text-2xl mb-2 block">🗳️</span>
+                            <h3 class="font-bold text-indigo-900 text-sm mb-1">3. 집단지성 (다수결)</h3>
+                            <p class="text-xs text-indigo-800 leading-relaxed">
+                                새로운 학생이 왔을 때, 수많은 나무들이 각자 예측한 결과들을 모아 <strong>가장 많은 표를 얻은 예측값</strong>을 최종 결론으로 도출합니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-2">
+                    <span class="bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded">시나리오</span>
+                    <span>우리는 <strong>[공부시간, 수면시간, 출석률]</strong> 데이터를 기반으로 이 학생이 시험에 <strong>[합격(Pass)할지 불합격(Fail)할지]</strong> 예측하는 숲을 만듭니다.</span>
+                </div>
+            </div>
+
+            <!-- Configuration / Control Panel -->
+            <div class="bg-slate-900 text-slate-100 rounded-2xl p-6 shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-emerald-400">
+                        <i class="fa-solid fa-sliders text-emerald-400"></i>
+                        하이퍼파라미터 설정 (숲 디자인)
+                    </h2>
+                    
+                    <!-- Tree Count -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">생성할 나무 개수 (Forest Size)</label>
+                            <span id="tree-count-val" class="text-sm font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">4개</span>
+                        </div>
+                        <input type="range" id="tree-count" min="2" max="6" value="4" step="1" 
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                        <p class="text-[10px] text-slate-400 mt-1">나무가 많을수록 예측이 안정적이고 과적합이 줄어듭니다.</p>
+                    </div>
+
+                    <!-- Max Depth -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">나무의 최대 깊이 (Max Depth)</label>
+                            <span id="max-depth-val" class="text-sm font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">3단계</span>
+                        </div>
+                        <input type="range" id="max-depth" min="1" max="4" value="3" step="1" 
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                        <p class="text-[10px] text-slate-400 mt-1">깊이가 너무 깊으면 훈련 데이터에만 과하게 집착(과적합)할 수 있습니다.</p>
+                    </div>
+
+                    <!-- Min Samples Split -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">최소 분할 샘플 수 (Min Samples Split)</label>
+                            <span id="min-samples-split-val" class="text-sm font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">2개</span>
+                        </div>
+                        <input type="range" id="min-samples-split" min="2" max="10" value="2" step="1" 
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                        <p class="text-[10px] text-slate-400 mt-1">이 값을 낮추어야 자잘하게 분할되어 3단계 깊이까지 내려갑니다.</p>
+                    </div>
+
+                    <!-- Feature Select Count -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">노드당 무작위 선택할 변수 개수</label>
+                            <span id="feature-count-val" class="text-sm font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">2개</span>
+                        </div>
+                        <input type="range" id="feature-count" min="1" max="3" value="2" step="1" 
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                        <p class="text-[10px] text-slate-400 mt-1">전체 피처(공부, 수면, 출석) 중 몇 개를 랜덤 후보로 뽑아 분할 기준으로 쓸지 정합니다.</p>
+                    </div>
+                </div>
+
+                <button id="btn-retrain" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] transition-transform text-slate-950 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    학습 데이터 기준 숲 새로고침
+                </button>
+            </div>
+        </div>
+
+        <!-- Middle Part 1: Dataset Manager (Full-Width Block) -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-database text-blue-500"></i>
+                    학습 데이터셋 (10명의 학생)
+                </h2>
+                <span class="text-xs text-slate-500 font-mono" id="data-count">N=10</span>
+            </div>
+            
+            <p class="text-xs text-slate-600 mb-4">합격 여부 경계가 모호하고 약간 섞여 있는 상태(노이즈 데이터)일 때 나무가 더 깊게 성장합니다.</p>
+
+            <!-- Data Table container (Optimized for full width) -->
+            <div class="overflow-x-auto max-h-[350px] overflow-y-auto border border-slate-100 rounded-xl">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+                            <th class="p-3 font-bold text-slate-600 text-center">ID</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">📚 공부 시간 (h)</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">💤 수면 시간 (h)</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">🎯 출석률 (%)</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">예측 목표결과 (Label)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataset-tbody">
+                        <!-- JS Dynamically Populates here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Reset Data Button -->
+            <button id="btn-reset-data" class="w-full mt-4 border border-dashed border-slate-200 text-slate-600 hover:bg-slate-50 text-xs py-2.5 rounded-lg font-medium flex items-center justify-center gap-1">
+                <i class="fa-solid fa-rotate"></i> 초기 샘플 데이터로 복원하기
+            </button>
+        </div>
+
+        <!-- Middle Part 2: Visualizing the Forest Building Process (Full-Width Block with Grid) -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8 flex flex-col">
+            <div class="mb-6 pb-4 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-indigo-500"></i>
+                    생성된 숲속의 나무들 (전체 포레스트 시각화)
+                </h2>
+                <p class="text-xs text-slate-500 mt-1">
+                    무작위 데이터 복사본(부트스트랩)과 랜덤 질문 후보로 학습된 전체 숲의 독립된 나무들입니다. 
+                    <strong>나무를 클릭하면 하단 상세 분석 영역에서 자세한 질문 규칙과 수식을 검사할 수 있습니다.</strong>
+                </p>
+            </div>
+
+            <!-- Forest Grid: Shows all generated trees simultaneously -->
+            <div id="forest-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+                <!-- Dynamically populated with interactive miniature tree cards -->
+            </div>
+
+            <!-- Detailed Inspector for Selected Tree -->
+            <div class="bg-slate-50/50 rounded-2xl p-4 md:p-6 border border-slate-200/60 mt-2">
+                <h3 class="text-sm font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i>
+                    선택된 나무 <span id="current-tree-label" class="text-indigo-600 font-black">#1</span> 상세 분석 및 규칙 검사
+                </h3>
+
+                <!-- Tree and Sample Details Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Bootstrapped Dataset Info -->
+                    <div class="bg-white rounded-xl p-4 border border-slate-200/80 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                사용된 부트스트랩 샘플
+                            </h4>
+                            <p class="text-[11px] text-slate-500 leading-relaxed mb-3">
+                                전체 10명 중에서 중복 선택을 허용하여 해당 나무에만 배정된 데이터 교과서입니다. (노란색: 중복)
+                            </p>
+                            
+                            <div class="overflow-y-auto max-h-[220px] border border-slate-150 rounded-lg">
+                                <table class="w-full text-[10px] text-center border-collapse">
+                                    <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+                                        <tr>
+                                            <th class="p-1.5">ID</th>
+                                            <th class="p-1.5">공부</th>
+                                            <th class="p-1.5">수면</th>
+                                            <th class="p-1.5">출석</th>
+                                            <th class="p-1.5">결과</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bootstrap-table-body">
+                                        <!-- Loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Stats or metadata -->
+                        <div class="mt-4 pt-3 border-t border-slate-200/60 text-[10px] text-slate-500 space-y-1">
+                            <div class="flex justify-between">
+                                <span>고유 샘플 수:</span>
+                                <span class="font-bold text-slate-700" id="unique-sample-count">0 / 10</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>중복 복제된 수:</span>
+                                <span class="font-bold text-slate-700" id="duplicate-sample-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tree SVG Container (Detailed) -->
+                    <div class="lg:col-span-2 bg-slate-900 rounded-xl p-4 flex flex-col justify-between min-h-[380px] relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-code-fork"></i>
+                                나무 내부 의사결정 규칙 (Decision Boundary Flow)
+                            </span>
+                            <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded" id="tree-depth-info">
+                                깊이: 3
+                            </span>
+                        </div>
+
+                        <!-- SVG Drawing Area -->
+                        <div class="flex-grow flex items-center justify-center bg-slate-950 rounded-lg border border-slate-800 p-2 overflow-auto" id="tree-svg-wrapper">
+                            <!-- SVG generated dynamically -->
+                            <svg id="tree-svg" class="w-full h-full min-h-[280px]" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet"></svg>
+                        </div>
+
+                        <div class="mt-2 flex justify-between items-center text-[10px] text-slate-400">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-emerald-500 inline-block"></span> Pass</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-rose-500 inline-block"></span> Fail</span>
+                            <span>💡 화살표는 위에서 아래로 흐릅니다. (초록선: 조건 부합 / 빨간선: 조건 미부합)</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Real-time Voting & Inference Simulator -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-square-poll-vertical text-rose-500"></i>
+                실시간 다수결(Voting) 시뮬레이터
+            </h2>
+            <p class="text-xs text-slate-500 mb-6">수정하는 즉시 현재 구성된 숲의 나무들이 실시간으로 투표를 진행하여 최종 예측을 내립니다.</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Target Student Sliders -->
+                <div class="lg:col-span-4 bg-slate-50 p-5 rounded-xl border border-slate-200/60">
+                    <h3 class="text-xs font-bold text-slate-800 mb-4 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-user-gear text-slate-600"></i> 가상의 테스트 학생 정보
+                    </h3>
+                    
+                    <!-- 공부시간 -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+                                <span>📚</span> 공부 시간
+                            </label>
+                            <span id="sim-study-val" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">5.5시간</span>
+                        </div>
+                        <input type="range" id="sim-study" min="0" max="10" value="5.5" step="0.5" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <!-- 수면시간 -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+                                <span>💤</span> 수면 시간
+                            </label>
+                            <span id="sim-sleep-val" class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">6.5시간</span>
+                        </div>
+                        <input type="range" id="sim-sleep" min="3" max="10" value="6.5" step="0.5" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                    </div>
+
+                    <!-- 출석률 -->
+                    <div class="mb-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+                                <span>🎯</span> 출석률
+                            </label>
+                            <span id="sim-attendance-val" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">85%</span>
+                        </div>
+                        <input type="range" id="sim-attendance" min="30" max="100" value="85" step="5" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+                </div>
+
+                <!-- Voting Progress Dashboard -->
+                <div class="lg:col-span-8 flex flex-col md:flex-row justify-around items-center gap-6 p-4">
+                    
+                    <!-- Left: Voting breakdown -->
+                    <div class="w-full md:w-1/2 space-y-4">
+                        <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-list-check"></i> 각 나무들의 개별 판정
+                        </h4>
+                        
+                        <div id="individual-votes-container" class="space-y-2">
+                            <!-- JS Inject individual tree vote results -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Big Dial / Visual Result Card -->
+                    <div class="w-full md:w-5/12 bg-slate-900 text-white rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg border border-slate-800 min-h-[220px]">
+                        <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mb-1">집단지성 최종 판정</span>
+                        
+                        <!-- Main prediction badge -->
+                        <div id="final-verdict-badge" class="px-6 py-2.5 rounded-full text-lg font-black tracking-wide mb-4 flex items-center gap-2 shadow-inner">
+                            <!-- PASS or FAIL Dynamic -->
+                        </div>
+
+                        <!-- Progress / Ratio Bar -->
+                        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden mb-3 border border-slate-700">
+                            <div id="vote-ratio-bar" class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full transition-all duration-500" style="width: 75%"></div>
+                        </div>
+
+                        <div class="flex justify-between w-full text-xs text-slate-400 px-1">
+                            <span>합격 투표율: <strong id="pass-percentage" class="text-emerald-400 font-bold">75%</strong></span>
+                            <span>불합격 투표율: <strong id="fail-percentage" class="text-rose-400 font-bold">25%</strong></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Detailed Explanation Section -->
+    <section class="bg-slate-100 py-10 mt-12 border-t border-slate-200">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center">💡 쉽게 이해하는 랜덤포레스트 동작 원리 요약</h2>
+            
+            <div class="space-y-6 text-sm text-slate-700 leading-relaxed">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-base text-slate-900 mb-2 flex items-center gap-2">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded">Q</span>
+                        데이터가 무작위로 복사된다는 게 무슨 뜻인가요? (부트스트랩)
+                    </h3>
+                    <p class="text-slate-600">
+                        랜덤포레스트는 같은 교실에 숲 전체가 존재하는 구조입니다. 만약 모든 나무가 완전히 똑같은 데이터로만 공부하면, 모든 나무의 모양과 생각(규칙)이 똑같아질 것입니다. <br>
+                        이를 막기 위해 각 나무에 학습용 데이터를 줄 때, 전체 10개 행 중 무작위로 10번을 복제 추출(한 행이 여러 번 뽑히거나, 아예 안 뽑힐 수도 있음)하여 나누어 줍니다. 이를 통해 <strong>나무마다 각기 다른 시각에서 데이터를 학습</strong>하게 됩니다.
+                    </p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-base text-slate-900 mb-2 flex items-center gap-2">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded">Q</span>
+                        트리가 분기점을 가를 때 불순도(Impurity)는 어떻게 사용되나요?
+                    </h3>
+                    <p class="text-slate-600">
+                        의사결정나무는 <strong>"한 번의 질문으로 합격자와 불합격자를 가장 깨끗하게 편가르기할 수 있는 질문"</strong>을 찾아 하위 노드를 만듭니다. 이때 편가르기가 잘 되지 않고 섞여 있는 정도를 <strong>지니 불순도(Gini Impurity)</strong>라고 부릅니다. <br>
+                        모두가 합격이거나 불합격이면 불순도는 <code>0</code>(가장 순수함)이 되며, 질문 전후의 불순도 감소 폭을 계산하여 가장 효과적으로 클래스를 분리하는 분기점을 알고리즘이 자동으로 계산해 냅니다.
+                    </p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-base text-slate-900 mb-2 flex items-center gap-2">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded">Q</span>
+                        왜 그냥 큰 의사결정나무 하나만 쓰는 것보다 나은가요?
+                    </h3>
+                    <p class="text-slate-600">
+                        하나의 깊고 복잡한 나무는 학습용 데이터에만 너무 빠져들어 "과적합(Overfitting)"되기 쉽습니다. 실전에서 낯선 데이터를 만났을 때 융통성을 잃고 엉터리 답을 낼 확률이 높습니다. <br>
+                        반면, 여러 개의 <strong>개성 넘치고 약간은 부족한 나무들이 각자 독립적으로 예측하고 다수결 투표를 통해 의견을 취합</strong>하면, 개별 나무의 오차가 서로 상쇄되어 훨씬 부드럽고 정확한 일반화 성능을 보여주게 됩니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs">
+        <p>© 2026 Random Forest Interactive Visualizer. 이 프로젝트는 브라우저 내부 자바스크립트 엔진으로 실시간 기계학습 모델을 학습시킵니다.</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- CONSTANTS & MOCK DATA ---
+        // 3단계 이상의 깊이를 시각적으로 유도하기 위해 데이터를 더 복잡한 노이즈 분포로 재조정했습니다.
+        const DEFAULT_DATASET = [
+            { id: 1, study: 8.5, sleep: 7.0, attendance: 95, pass: 'Pass' },
+            { id: 2, study: 3.5, sleep: 5.5, attendance: 70, pass: 'Fail' },
+            { id: 3, study: 6.0, sleep: 8.0, attendance: 85, pass: 'Pass' },
+            { id: 4, study: 2.0, sleep: 6.0, attendance: 40, pass: 'Fail' },
+            { id: 5, study: 7.0, sleep: 6.5, attendance: 50, pass: 'Fail' }, // 노이즈 추가: 공부는 7h이나 출석이 50%라 탈락
+            { id: 6, study: 4.5, sleep: 7.5, attendance: 90, pass: 'Pass' }, // 노이즈 추가: 공부는 4.5h이나 출석이 90%라 합격
+            { id: 7, study: 9.0, sleep: 4.0, attendance: 100, pass: 'Pass' },
+            { id: 8, study: 5.0, sleep: 5.0, attendance: 75, pass: 'Fail' },
+            { id: 9, study: 1.5, sleep: 8.0, attendance: 80, pass: 'Fail' },
+            { id: 10, study: 7.5, sleep: 5.0, attendance: 90, pass: 'Pass' }
+        ];
+
+        let currentDataset = JSON.parse(JSON.stringify(DEFAULT_DATASET));
+        let forest = [];
+        let activeTreeIndex = 0;
+
+        // Features metadata
+        const FEATURES = ['study', 'sleep', 'attendance'];
+        const FEATURE_LABELS = {
+            study: '📚 공부',
+            sleep: '💤 수면',
+            attendance: '🎯 출석'
+        };
+
+        // --- FOREST & DECISION TREE ALGORITHM ENGINE (JAVASCRIPT) ---
+        
+        // Compute Gini Impurity for a list of items
+        function calculateGini(items) {
+            if (items.length === 0) return 0;
+            const total = items.length;
+            const passCount = items.filter(x => x.pass === 'Pass').length;
+            const failCount = total - passCount;
+            
+            const pPass = passCount / total;
+            const pFail = failCount / total;
+            
+            return 1 - (pPass * pPass + pFail * pFail);
+        }
+
+        // Bootstrap sample (with replacement)
+        function bootstrapSample(data) {
+            const sample = [];
+            const n = data.length;
+            for (let i = 0; i < n; i++) {
+                const randomIndex = Math.floor(Math.random() * n);
+                sample.push({ ...data[randomIndex] });
+            }
+            return sample;
+        }
+
+        // CART algorithm implementation
+        function buildTree(data, currentDepth, maxDepth, mtry, minSamplesSplit) {
+            const totalCount = data.length;
+            if (totalCount === 0) {
+                return { isLeaf: true, prediction: 'Fail', count: 0, gini: 0 };
+            }
+
+            const passCount = data.filter(x => x.pass === 'Pass').length;
+            const failCount = totalCount - passCount;
+            const currentGini = calculateGini(data);
+
+            // Determine Leaf Node: Checked minSamplesSplit here
+            if (currentDepth >= maxDepth || currentGini === 0 || totalCount < minSamplesSplit) {
+                return {
+                    isLeaf: true,
+                    prediction: passCount >= failCount ? 'Pass' : 'Fail',
+                    count: totalCount,
+                    passCount,
+                    failCount,
+                    gini: Math.round(currentGini * 1000) / 1000
+                };
+            }
+
+            // Randomly select features (mtry)
+            const shuffledFeatures = [...FEATURES].sort(() => 0.5 - Math.random());
+            const selectedFeatures = shuffledFeatures.slice(0, mtry);
+
+            let bestGiniGain = -1;
+            let bestSplit = null;
+
+            // Search best split point
+            selectedFeatures.forEach(feature => {
+                const values = data.map(x => x[feature]);
+                const uniqueValues = [...new Set(values)].sort((a,b) => a - b);
+
+                for (let i = 0; i < uniqueValues.length - 1; i++) {
+                    const threshold = (uniqueValues[i] + uniqueValues[i+1]) / 2;
+
+                    const leftData = data.filter(x => x[feature] <= threshold);
+                    const rightData = data.filter(x => x[feature] > threshold);
+
+                    if (leftData.length === 0 || rightData.length === 0) continue;
+
+                    const leftGini = calculateGini(leftData);
+                    const rightGini = calculateGini(rightData);
+
+                    const splitGini = (leftData.length / totalCount) * leftGini + (rightData.length / totalCount) * rightGini;
+                    const giniGain = currentGini - splitGini;
+
+                    if (giniGain > bestGiniGain) {
+                        bestGiniGain = giniGain;
+                        bestSplit = {
+                            feature,
+                            threshold: Math.round(threshold * 100) / 100,
+                            leftData,
+                            rightData
+                        };
+                    }
+                }
+            });
+
+            // If no valid split found, turn into leaf
+            if (!bestSplit || bestGiniGain <= 0) {
+                return {
+                    isLeaf: true,
+                    prediction: passCount >= failCount ? 'Pass' : 'Fail',
+                    count: totalCount,
+                    passCount,
+                    failCount,
+                    gini: Math.round(currentGini * 1000) / 1000
+                };
+            }
+
+            // Recursively build children
+            return {
+                isLeaf: false,
+                feature: bestSplit.feature,
+                threshold: bestSplit.threshold,
+                gini: Math.round(currentGini * 1000) / 1000,
+                count: totalCount,
+                passCount,
+                failCount,
+                left: buildTree(bestSplit.leftData, currentDepth + 1, maxDepth, mtry, minSamplesSplit),
+                right: buildTree(bestSplit.rightData, currentDepth + 1, maxDepth, mtry, minSamplesSplit)
+            };
+        }
+
+        // Helper to find the maximum depth of a tree structure
+        function getTreeDepth(node) {
+            if (!node || node.isLeaf) return 1;
+            return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
+        }
+
+        // Predict single item using a Tree
+        function predictTree(node, item) {
+            if (node.isLeaf) {
+                return node.prediction;
+            }
+            const val = item[node.feature];
+            if (val <= node.threshold) {
+                return predictTree(node.left, item);
+            } else {
+                return predictTree(node.right, item);
+            }
+        }
+
+        // Train Entire Random Forest
+        function trainForest() {
+            const treeCount = parseInt(document.getElementById('tree-count').value);
+            const maxDepth = parseInt(document.getElementById('max-depth').value);
+            const mtry = parseInt(document.getElementById('feature-count').value);
+            const minSamplesSplit = parseInt(document.getElementById('min-samples-split').value);
+
+            forest = [];
+            for (let i = 0; i < treeCount; i++) {
+                const bootstrapped = bootstrapSample(currentDataset);
+                const treeRoot = buildTree(bootstrapped, 0, maxDepth, mtry, minSamplesSplit);
+                forest.push({
+                    id: i,
+                    root: treeRoot,
+                    bootstrapData: bootstrapped
+                });
+            }
+
+            if (activeTreeIndex >= treeCount) {
+                activeTreeIndex = 0;
+            }
+
+            renderForestGrid();
+            renderBootstrapInfo();
+            renderTreeSVG();
+            runInference();
+        }
+
+        // --- VIEW / RENDERING ENGINE ---
+
+        // Render input dataset table
+        function renderDatasetTable() {
+            const tbody = document.getElementById('dataset-tbody');
+            tbody.innerHTML = '';
+
+            currentDataset.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50/50 transition-colors text-center";
+                
+                const passSelected = row.pass === 'Pass';
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-slate-400 font-bold">${row.id}</td>
+                    <td class="p-3 font-semibold">
+                        <input type="number" step="0.5" min="0" max="12" value="${row.study}" 
+                               class="w-20 text-center border rounded-lg bg-white py-1 px-2 focus:ring-2 focus:ring-indigo-200 outline-none" 
+                               onchange="updateDataValue(${row.id}, 'study', this.value)">
+                    </td>
+                    <td class="p-3">
+                        <input type="number" step="0.5" min="0" max="12" value="${row.sleep}" 
+                               class="w-20 text-center border rounded-lg bg-white py-1 px-2 focus:ring-2 focus:ring-indigo-200 outline-none" 
+                               onchange="updateDataValue(${row.id}, 'sleep', this.value)">
+                    </td>
+                    <td class="p-3">
+                        <input type="number" step="5" min="0" max="100" value="${row.attendance}" 
+                               class="w-20 text-center border rounded-lg bg-white py-1 px-2 focus:ring-2 focus:ring-indigo-200 outline-none" 
+                               onchange="updateDataValue(${row.id}, 'attendance', this.value)">
+                    </td>
+                    <td class="p-3">
+                        <select onchange="updateDataValue(${row.id}, 'pass', this.value)" 
+                                class="border rounded-lg px-3 py-1 font-bold ${passSelected ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}">
+                            <option value="Pass" ${passSelected ? 'selected' : ''}>Pass (합격)</option>
+                            <option value="Fail" ${!passSelected ? 'selected' : ''}>Fail (불합격)</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('data-count').innerText = `N = ${currentDataset.length}명`;
+        }
+
+        // Handle value change in dataset table
+        window.updateDataValue = function(id, field, value) {
+            const target = currentDataset.find(x => x.id === id);
+            if (target) {
+                if (field === 'pass') {
+                    target[field] = value;
+                } else {
+                    target[field] = parseFloat(value);
+                }
+                renderDatasetTable();
+                trainForest();
+            }
+        };
+
+        // Render Forest Grid (Displaying all trees side-by-side)
+        function renderForestGrid() {
+            const grid = document.getElementById('forest-grid');
+            grid.innerHTML = '';
+
+            forest.forEach((tree, idx) => {
+                const card = document.createElement('div');
+                const isActive = idx === activeTreeIndex;
+                card.className = `cursor-pointer rounded-2xl p-4 border transition-all duration-300 flex flex-col justify-between h-[190px] relative ${
+                    isActive 
+                        ? 'bg-indigo-50/50 border-indigo-500 ring-2 ring-indigo-200/80 shadow-md' 
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/30 hover:shadow'
+                }`;
+                
+                card.onclick = () => {
+                    activeTreeIndex = idx;
+                    renderForestGrid();
+                    renderBootstrapInfo();
+                    renderTreeSVG();
+                };
+
+                const selectedBadge = isActive 
+                    ? `<span class="absolute -top-2.5 -right-2.5 bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow border-2 border-white"><i class="fa-solid fa-magnifying-glass"></i> 상세 검사중</span>`
+                    : '';
+
+                const header = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                            <i class="fa-solid fa-tree text-emerald-500"></i> 나무 #${idx + 1}
+                        </span>
+                        <span class="text-[9px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-mono">Max Depth ${getTreeDepth(tree.root)}</span>
+                    </div>
+                `;
+                
+                const svgContainerId = `mini-svg-${idx}`;
+                const body = `
+                    <div class="flex-grow flex items-center justify-center bg-slate-50 border border-slate-100 rounded-lg overflow-hidden p-1">
+                        <svg id="${svgContainerId}" class="w-full h-[110px]" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet"></svg>
+                    </div>
+                `;
+
+                card.innerHTML = selectedBadge + header + body;
+                grid.appendChild(card);
+
+                drawMiniTree(tree.root, svgContainerId);
+            });
+        }
+
+        // Helper: Draw miniature representation of tree
+        function drawMiniTree(root, svgId) {
+            const svg = document.getElementById(svgId);
+            if (!svg) return;
+            
+            const nodes = [];
+            const links = [];
+
+            function traverseMini(node, depth, x, xSpan) {
+                const info = {
+                    node,
+                    depth,
+                    x,
+                    y: 12 + depth * 24
+                };
+                nodes.push(info);
+
+                if (!node.isLeaf && depth < 3) {
+                    const leftX = x - xSpan;
+                    const rightX = x + xSpan;
+                    const nextSpan = xSpan * 0.5;
+
+                    links.push({ x1: x, y1: info.y, x2: leftX, y2: 12 + (depth + 1) * 24 });
+                    links.push({ x1: x, y1: info.y, x2: rightX, y2: 12 + (depth + 1) * 24 });
+
+                    traverseMini(node.left, depth + 1, leftX, nextSpan);
+                    traverseMini(node.right, depth + 1, rightX, nextSpan);
+                }
+            }
+
+            traverseMini(root, 0, 100, 45);
+
+            links.forEach(l => {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", l.x1);
+                line.setAttribute("y1", l.y1);
+                line.setAttribute("x2", l.x2);
+                line.setAttribute("y2", l.y2);
+                line.setAttribute("stroke", "#cbd5e1");
+                line.setAttribute("stroke-width", "1.5");
+                svg.appendChild(line);
+            });
+
+            nodes.forEach(n => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", n.x);
+                circle.setAttribute("cy", n.y);
+                circle.setAttribute("r", n.node.isLeaf ? "3" : "4.5");
+
+                if (n.node.isLeaf) {
+                    circle.setAttribute("fill", n.node.prediction === 'Pass' ? '#10b981' : '#f43f5e');
+                } else {
+                    circle.setAttribute("fill", "#6366f1");
+                }
+                svg.appendChild(circle);
+            });
+        }
+
+        // Render Boostrap Sampling Data Table for Active Tree
+        function renderBootstrapInfo() {
+            const currentTree = forest[activeTreeIndex];
+            if (!currentTree) return;
+
+            document.getElementById('current-tree-label').innerText = `#${currentTree.id + 1}`;
+
+            const tbody = document.getElementById('bootstrap-table-body');
+            tbody.innerHTML = '';
+
+            const sampleData = currentTree.bootstrapData;
+            
+            const originalIdsInSample = sampleData.map(x => x.id);
+            const frequencyMap = {};
+            originalIdsInSample.forEach(id => {
+                frequencyMap[id] = (frequencyMap[id] || 0) + 1;
+            });
+
+            let duplicates = 0;
+            let uniqueCount = 0;
+            Object.keys(frequencyMap).forEach(key => {
+                uniqueCount++;
+                if (frequencyMap[key] > 1) {
+                    duplicates += (frequencyMap[key] - 1);
+                }
+            });
+
+            document.getElementById('unique-sample-count').innerText = `${uniqueCount} / 10`;
+            document.getElementById('duplicate-sample-count').innerText = `${duplicates}개`;
+
+            sampleData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                const countOfThisId = frequencyMap[row.id] || 0;
+                
+                if (countOfThisId > 1) {
+                    tr.className = "bg-amber-50 border-b border-amber-200/50 hover:bg-amber-100 transition-colors";
+                } else {
+                    tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
+                }
+
+                tr.innerHTML = `
+                    <td class="p-1.5 font-bold font-mono text-slate-500">${row.id}</td>
+                    <td class="p-1.5">${row.study}h</td>
+                    <td class="p-1.5">${row.sleep}h</td>
+                    <td class="p-1.5">${row.attendance}%</td>
+                    <td class="p-1.5 font-bold ${row.pass === 'Pass' ? 'text-emerald-600' : 'text-rose-600'}">${row.pass}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Drawing Detailed Decision Tree on SVG (Branching downwards with clear flow)
+        function renderTreeSVG() {
+            const currentTree = forest[activeTreeIndex];
+            if (!currentTree) return;
+
+            const svg = document.getElementById('tree-svg');
+            svg.innerHTML = ''; // Clear prior elements
+
+            svg.innerHTML = `
+                <defs>
+                    <marker id="arrow-yes" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981" />
+                    </marker>
+                    <marker id="arrow-no" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+                    </marker>
+                </defs>
+            `;
+
+            const root = currentTree.root;
+            const nodes = [];
+            const links = [];
+
+            function traverse(node, depth, x, xSpan) {
+                const info = {
+                    node,
+                    depth,
+                    x,
+                    y: 35 + depth * 75
+                };
+                nodes.push(info);
+
+                if (!node.isLeaf) {
+                    const leftX = x - xSpan;
+                    const rightX = x + xSpan;
+                    const nextSpan = xSpan * 0.45;
+
+                    links.push({
+                        x1: x,
+                        y1: info.y,
+                        x2: leftX,
+                        y2: 35 + (depth + 1) * 75,
+                        label: 'Yes (≤)',
+                        isYes: true
+                    });
+
+                    links.push({
+                        x1: x,
+                        y1: info.y,
+                        x2: rightX,
+                        y2: 35 + (depth + 1) * 75,
+                        label: 'No (>)',
+                        isYes: false
+                    });
+
+                    traverse(node.left, depth + 1, leftX, nextSpan);
+                    traverse(node.right, depth + 1, rightX, nextSpan);
+                }
+            }
+
+            traverse(root, 0, 250, 115);
+
+            links.forEach(l => {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", l.x1);
+                line.setAttribute("y1", l.y1);
+                line.setAttribute("x2", l.x2);
+                line.setAttribute("y2", l.y2);
+                line.setAttribute("stroke", l.isYes ? "#10b981" : "#ef4444");
+                line.setAttribute("stroke-width", "2.5");
+                line.setAttribute("marker-end", l.isYes ? "url(#arrow-yes)" : "url(#arrow-no)");
+                svg.appendChild(line);
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", (l.x1 + l.x2) / 2);
+                text.setAttribute("y", (l.y1 + l.y2) / 2 - 5);
+                text.setAttribute("fill", l.isYes ? "#6ee7b7" : "#fca5a5");
+                text.setAttribute("font-size", "8.5");
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = l.label;
+                svg.appendChild(text);
+            });
+
+            nodes.forEach(n => {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "tree-node cursor-pointer");
+
+                const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                title.textContent = `샘플 수: ${n.node.count}개\n합격: ${n.node.passCount || 0} / 불합격: ${n.node.failCount || 0}\n지니 불순도: ${n.node.gini}`;
+                g.appendChild(title);
+
+                const width = n.node.isLeaf ? 65 : 95;
+                const height = 36;
+                const rx = 6;
+
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", n.x - width/2);
+                rect.setAttribute("y", n.y - height/2);
+                rect.setAttribute("width", width);
+                rect.setAttribute("height", height);
+                rect.setAttribute("rx", rx);
+
+                if (n.node.isLeaf) {
+                    const color = n.node.prediction === 'Pass' ? '#10b981' : '#f43f5e';
+                    rect.setAttribute("fill", color);
+                    rect.setAttribute("stroke", "none");
+                } else {
+                    rect.setAttribute("fill", "#1e293b");
+                    rect.setAttribute("stroke", "#6366f1");
+                    rect.setAttribute("stroke-width", "1.5");
+                }
+                g.appendChild(rect);
+
+                const text1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text1.setAttribute("x", n.x);
+                text1.setAttribute("y", n.y - 3);
+                text1.setAttribute("text-anchor", "middle");
+                text1.setAttribute("fill", "#ffffff");
+                text1.setAttribute("font-size", "9");
+                text1.setAttribute("font-weight", "bold");
+
+                if (n.node.isLeaf) {
+                    text1.textContent = `🎯 ${n.node.prediction}`;
+                } else {
+                    text1.textContent = `${FEATURE_LABELS[n.node.feature]}`;
+                }
+                g.appendChild(text1);
+
+                const text2 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text2.setAttribute("x", n.x);
+                text2.setAttribute("y", n.y + 10);
+                text2.setAttribute("text-anchor", "middle");
+                text2.setAttribute("fill", n.node.isLeaf ? "#e2e8f0" : "#a5b4fc");
+                text2.setAttribute("font-size", "8");
+
+                if (n.node.isLeaf) {
+                    text2.textContent = `N=${n.node.count} (G:${n.node.gini})`;
+                } else {
+                    text2.textContent = `≤ ${n.node.threshold}`;
+                }
+                g.appendChild(text2);
+
+                svg.appendChild(g);
+            });
+
+            document.getElementById('tree-depth-info').innerText = `최대 깊이: ${getTreeDepth(root)}단계`;
+        }
+
+        // --- INFERENCE & VOTING SIMULATION ---
+        function runInference() {
+            const study = parseFloat(document.getElementById('sim-study').value);
+            const sleep = parseFloat(document.getElementById('sim-sleep').value);
+            const attendance = parseFloat(document.getElementById('sim-attendance').value);
+
+            const testStudent = { study, sleep, attendance };
+
+            let passVotes = 0;
+            let failVotes = 0;
+
+            const listContainer = document.getElementById('individual-votes-container');
+            listContainer.innerHTML = '';
+
+            forest.forEach((tree, idx) => {
+                const prediction = predictTree(tree.root, testStudent);
+                if (prediction === 'Pass') {
+                    passVotes++;
+                } else {
+                    failVotes++;
+                }
+
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-slate-50 border border-slate-200/85 p-2.5 rounded-xl text-xs";
+                
+                const badgeColor = prediction === 'Pass' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                
+                item.innerHTML = `
+                    <span class="font-bold text-slate-700"><i class="fa-solid fa-tree text-emerald-500 mr-1"></i> 나무 #${idx + 1}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400">결정:</span>
+                        <span class="px-2.5 py-0.5 rounded-full font-bold ${badgeColor}">${prediction}</span>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            const totalVotes = forest.length;
+            const passPct = Math.round((passVotes / totalVotes) * 100);
+            const failPct = 100 - passPct;
+
+            const verdictBadge = document.getElementById('final-verdict-badge');
+            const ratioBar = document.getElementById('vote-ratio-bar');
+
+            if (passVotes >= failVotes) {
+                verdictBadge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> 합격 예측 (Pass)`;
+                verdictBadge.className = "px-6 py-2.5 rounded-full text-lg font-black tracking-wide mb-4 flex items-center gap-2 bg-emerald-950/50 text-emerald-300 border border-emerald-800/60";
+                ratioBar.className = "bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500";
+            } else {
+                verdictBadge.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i> 불합격 예측 (Fail)`;
+                verdictBadge.className = "px-6 py-2.5 rounded-full text-lg font-black tracking-wide mb-4 flex items-center gap-2 bg-rose-950/50 text-rose-300 border border-rose-800/60";
+                ratioBar.className = "bg-gradient-to-r from-rose-500 to-orange-400 h-full transition-all duration-500";
+            }
+
+            ratioBar.style.width = `${passPct}%`;
+            document.getElementById('pass-percentage').innerText = `${passPct}% (${passVotes}표)`;
+            document.getElementById('fail-percentage').innerText = `${failPct}% (${failVotes}표)`;
+        }
+
+        // --- UI INTERACTION HANDLERS ---
+        function initSliders() {
+            const sliders = [
+                { id: 'tree-count', valId: 'tree-count-val', suffix: '개' },
+                { id: 'max-depth', valId: 'max-depth-val', suffix: '단계' },
+                { id: 'min-samples-split', valId: 'min-samples-split-val', suffix: '개' },
+                { id: 'feature-count', valId: 'feature-count-val', suffix: '개' },
+                { id: 'sim-study', valId: 'sim-study-val', suffix: '시간' },
+                { id: 'sim-sleep', valId: 'sim-sleep-val', suffix: '시간' },
+                { id: 'sim-attendance', valId: 'sim-attendance-val', suffix: '%' }
+            ];
+
+            sliders.forEach(slider => {
+                const el = document.getElementById(slider.id);
+                const valEl = document.getElementById(slider.valId);
+                
+                el.addEventListener('input', (e) => {
+                    valEl.innerText = `${e.target.value}${slider.suffix}`;
+                    if (slider.id.startsWith('sim-')) {
+                        runInference();
+                    } else {
+                        trainForest();
+                    }
+                });
+            });
+
+            document.getElementById('btn-retrain').addEventListener('click', () => {
+                trainForest();
+            });
+
+            document.getElementById('btn-reset-data').addEventListener('click', () => {
+                currentDataset = JSON.parse(JSON.stringify(DEFAULT_DATASET));
+                renderDatasetTable();
+                trainForest();
+            });
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            initSliders();
+            renderDatasetTable();
+            trainForest();
+        };
+
+    </script>
+</body>
+</html>

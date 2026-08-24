@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>딥러닝 시뮬레이션 사용법 — 뉴런부터 과적합까지 눈으로 보는 신경망 | DataForge 가이드</title>
+  <meta name="description" content="퍼셉트론의 가중치·편향 조절부터 신경망 구조 조립, 경사하강 학습, 하이퍼파라미터 실험, 과적합 진단까지 — 코드 없이 슬라이더로 신경망의 학습 원리를 체험하는 딥러닝 시뮬레이터 사용법을 안내합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/sim_deep">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="딥러닝 시뮬레이션 사용법 | DataForge 가이드">
+  <meta property="og:description" content="뉴런부터 과적합까지, 코드 없이 슬라이더로 신경망의 학습 원리를 체험하는 딥러닝 시뮬레이터 사용법 안내.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/sim_deep">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">dataforge.ai.kr/sim/deep</div>
+      <h1>딥러닝 시뮬레이션 사용법 — 뉴런부터 과적합까지 눈으로 보는 신경망</h1>
+      <p class="lead">뉴런 하나에서 시작해 신경망 구조, 학습, 하이퍼파라미터, 과적합까지 — 다섯 단계로 신경망의 원리를 체험하는 도구입니다.</p>
+      <div class="tabs-line">탭: 🔵 1. 뉴런과 퍼셉트론 · 🧠 2. 신경망 구조 · 📉 3. 학습의 원리 · 🎛️ 4. 하이퍼파라미터 · 🎯 5. 과적합과 일반화</div>
+
+      <h2>어떤 상황에서 쓰는 도구인가요</h2>
+      <p>딥러닝 입문서의 첫 장에는 어김없이 수식이 등장합니다. 가중치, 편향, 활성화 함수,
+      역전파 — 용어는 외웠는데 머릿속에 그림이 안 그려지는 상태로 코드부터 돌리게 되는 경우가
+      많습니다. 모델이 '학습한다'는 말이 실제로 무엇을 뜻하는지 감각이 없으면, 학습률을 왜
+      낮춰야 하는지, 과적합이 왜 생기는지도 외운 답변 이상이 되기 어렵습니다.</p>
+      <p>이 시뮬레이터는 그 수식들을 전부 움직이는 그림으로 바꿔 놓았습니다. 뉴런 하나의 판단부터
+      신경망 전체의 학습까지, 다섯 개 탭이 교과서 한 챕터의 순서대로 이어집니다. 코드는 한 줄도
+      나오지 않으므로, 프로그래밍 경험이 없어도 처음부터 끝까지 따라갈 수 있습니다.</p>
+
+      <h2>이 도구는 무엇을 하나요</h2>
+      <p>다섯 개 탭이 번호 순서대로 하나의 커리큘럼을 이룹니다. 각 탭에서 슬라이더와 버튼으로
+      값을 조절하면 시각화가 실시간으로 갱신되고, 탭 하단의 '다음 단계' 버튼으로 순서대로 넘어갈 수
+      있습니다. 아래 순서대로 각 탭에서 무엇을 조절하고 무엇을 관찰하는지 정리했습니다.</p>
+
+      <h2>탭별 안내 — 무엇을 조절하고 무엇을 보나요</h2>
+      <ol class="steps">
+        <li><b>🔵 뉴런과 퍼셉트론</b> — 신경망의 최소 단위를 뜯어봅니다. 뉴런 구조 비교 ·
+        퍼셉트론 시뮬레이터 · 활성화 함수 · 논리 게이트 실습의 네 화면으로 나뉘며,
+        퍼셉트론 시뮬레이터에서 입력(x₁·x₂)·가중치(w₁·w₂)·편향(b) 슬라이더를 움직이면
+        출력이 0에서 1로 바뀌는 경계를 직접 찾을 수 있습니다. 활성화 함수 화면에서는
+        계단·시그모이드·ReLU·tanh 곡선을 비교하고, 논리 게이트 실습에서는 AND·OR·NAND는 되는데
+        <b>XOR만 단일 퍼셉트론으로 안 되는 이유</b>를 은닉층을 추가해 가며 확인합니다.</li>
+        <li><b>🧠 신경망 구조</b> — 입력 특성·은닉층 수·은닉 노드·출력 클래스 슬라이더로
+        네트워크를 직접 조립합니다. 값을 바꾸면 왼쪽 신경망 그림이 즉시 다시 그려지는데,
+        층과 노드가 늘수록 연결(가중치) 수가 급격히 불어나는 것이 관찰 포인트입니다.
+        순전파·역전파·경사하강법 개념 카드가 함께 있어 구조와 학습을 잇는 다리가 됩니다.</li>
+        <li><b>📉 학습의 원리</b> — 경사하강을 공 굴리기로 체험합니다. 지형(손실 함수)을
+        볼록 · 비볼록(로컬 미니멈) · 굴곡 지형 중에서 고르고 학습률(η) 슬라이더를 정한 뒤
+        <b>▶ 한 스텝</b>씩 내려가며 현재 위치 w · 손실 L(w) · 기울기 dL/dw가 변하는 것을 봅니다.
+        학습률을 크게 올리면 골짜기를 건너뛰며 발산하는 모습도 볼 수 있습니다. 아래의
+        훈련 시뮬레이터에서는 에포크·배치 크기·학습률·옵티마이저(SGD·Momentum·RMSprop·Adam)·드롭아웃·은닉층 수를
+        설정하고 <b>▶ 훈련 시작</b>을 눌러 손실 곡선이 그려지는 과정을 지켜봅니다.</li>
+        <li><b>🎛️ 하이퍼파라미터</b> — 학습률(0.0001~1.0) · 배치 크기(8/32/128) · 에포크 ·
+        옵티마이저(SGD/Momentum/Adam) 조합을 바꿔가며 <b>▶ 학습 실행</b>으로 학습 곡선을
+        비교합니다. 같은 데이터, 같은 모델인데 설정만으로 수렴이 얼마나 달라지는지 —
+        특히 학습률이 가장 민감한 손잡이라는 것을 몸으로 익히는 탭입니다.</li>
+        <li><b>🎯 과적합과 일반화</b> — 다항식 차수(모델 복잡도) 슬라이더를 1에서 10까지
+        올려 보며 과소적합 → 적합 → 과적합으로 넘어가는 경계를 확인합니다. 노이즈 수준과
+        훈련 데이터 크기도 함께 조절할 수 있어, 데이터가 적고 노이즈가 클수록 과적합이
+        쉽게 온다는 것을 실험으로 확인합니다. 🔄 데이터 재생성 버튼으로 새 데이터를 뽑아
+        같은 설정을 다시 시험해 볼 수도 있습니다.</li>
+      </ol>
+
+      <h2>추천 진행 순서</h2>
+      <p>탭 번호가 곧 학습 순서입니다. 뉴런 하나(1)를 이해해야 그것을 쌓은 구조(2)가 보이고,
+      구조가 있어야 학습(3)이 의미를 갖고, 학습을 해봐야 설정(4)과 실패(5)가 와닿습니다.
+      한 탭에서 10분씩, 슬라이더를 극단까지 밀어보며 '언제 무너지는가'를 확인하는 방식을
+      권합니다. 특히 3번 탭에서 학습률을 아주 작게 / 아주 크게 두 번 실행해 비교해 보면
+      이후 4번 탭의 실험이 훨씬 빠르게 읽힙니다.</p>
+
+      <div class="tip">💡 주소 뒤에 <b>#neuron</b>처럼 탭 이름을 붙이면 해당 탭이 바로 열립니다 —
+      <b>#neuron #arch #learn #hp #overfit</b>. 수업 중 특정 단계로 바로 안내하거나
+      교육 자료에 링크를 넣을 때 유용합니다.</div>
+
+      <div class="think">🤔 <b>생각해볼 점</b> — 5번 탭에서 다항식 차수를 10까지 올리면 훈련 점들은 거의 다
+      지나가는 곡선이 나옵니다. 훈련 데이터를 완벽히 맞히는 이 모델이 왜 나쁜 모델일까요?
+      훈련 데이터 크기를 8에서 40으로 늘리면 같은 차수에서도 곡선이 달라지는 이유는 무엇일까요?</div>
+
+      <a class="cta" href="/sim/deep" target="_blank" rel="noopener">🧠 시뮬레이터 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/sim_ml">머신러닝 시뮬레이션 사용법 — K-Means부터 XGBoost까지 코드 없이 원리 관찰</a>
+        <a href="/guide/accuracy_trap">정확도의 함정 — 높은 Accuracy가 좋은 모델을 뜻하지 않는 이유</a>
+        <a href="/guide/data_gen">데이터 생성기 사용법 — 실습용 제조·경영·광고 데이터 만들기</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

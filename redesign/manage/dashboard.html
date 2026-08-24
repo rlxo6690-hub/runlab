@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>대시보드 빌더 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="대시보드 빌더 — DataForge">
+<meta property="og:description" content="CSV 데이터를 업로드하고 차트 위젯을 자유롭게 배치해 대시보드를 빌드하세요.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f8fafc; --card:#fff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626; --orange:#ea580c;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* 업로드 바 (design.md §8·§11 기준) */
+.upload-bar{padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:relative;z-index:1;}
+.a-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:16px 18px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── 헤더 ── */
+.site-header{
+  padding:14px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+
+/* ── 설정 패널: 업로드 바 아래·캔버스 위, 전체 너비로 다단 배치 (세로 스크롤 없이 한 화면에 표시) ── */
+.settings-panel{width:100%;background:var(--card);border-bottom:1px solid var(--border);}
+.settings-scroll{padding:16px;column-count:3;column-gap:20px;}
+.panel-sec{margin-bottom:20px;break-inside:avoid;}
+.panel-sec h3{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.add-form-body{margin-bottom:20px;break-inside:avoid;}
+
+/* upload zone (design.md §11 기준) */
+.upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:10px;padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(37,99,235,.03);}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);}
+.file-info{display:none;margin-top:12px;padding:5px 10px;background:var(--card2);border-radius:6px;font-size:.73rem;color:var(--muted);}
+.file-info.show{display:block;}
+
+/* column list */
+.col-list{display:flex;flex-direction:column;gap:2px;max-height:110px;overflow-y:auto;}
+.col-item{display:flex;align-items:center;gap:7px;padding:3px 6px;border-radius:5px;font-size:.77rem;}
+.col-type{font-size:.62rem;padding:1px 5px;border-radius:3px;font-weight:700;}
+.col-type.num{background:#dbeafe;color:#1d4ed8;}
+.col-type.cat{background:#ede9fe;color:#6d28d9;}
+
+/* form controls */
+.form-row{margin-bottom:10px;}
+.form-row label{display:block;font-size:.74rem;color:var(--muted);margin-bottom:4px;}
+.form-input,.form-select{width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:6px 9px;font-size:.8rem;outline:none;font-family:inherit;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
+
+/* chart type pills */
+.ct-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
+.ct-btn{padding:6px 2px;background:var(--card2);border:1px solid var(--border2);border-radius:6px;cursor:pointer;text-align:center;font-size:1rem;transition:all .15s;}
+.ct-btn:hover,.ct-btn.active{border-color:var(--accent);background:rgba(37,99,235,.08);}
+
+/* y column checkboxes */
+.y-col-list{max-height:85px;overflow-y:auto;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:4px;}
+.y-col-item{display:flex;align-items:center;gap:6px;padding:3px 5px;font-size:.76rem;cursor:pointer;border-radius:3px;}
+.y-col-item:hover{background:var(--card);}
+.y-col-item input[type=checkbox]{accent-color:var(--accent);}
+
+/* range slider */
+.range-inp{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:rgba(37,99,235,.15);outline:none;cursor:pointer;margin-top:4px;}
+.range-inp::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.range-info{font-size:.71rem;color:var(--accent);font-weight:700;margin-top:6px;text-align:center;font-family:'Noto Sans KR', sans-serif;}
+.reset-range-btn{font-size:.7rem;padding:2px 7px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;}
+.reset-range-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* size buttons */
+.size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.size-btn{padding:6px 4px;background:var(--card2);border:1px solid var(--border2);border-radius:6px;cursor:pointer;text-align:center;font-size:.74rem;transition:all .15s;}
+.size-btn:hover,.size-btn.active{border-color:var(--accent);background:rgba(37,99,235,.08);}
+
+.add-widget-btn{width:100%;margin-top:6px;padding:8px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.add-widget-btn:hover{opacity:.88;}
+.sample-btn{width:100%;margin-bottom:8px;padding:7px;background:transparent;border:1px solid var(--border2);border-radius:7px;color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;}
+.sample-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── canvas area ── */
+.canvas-area{padding:20px 24px 40px;background:var(--bg);min-height:420px;}
+.canvas-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;color:var(--dim);text-align:center;gap:10px;}
+.canvas-empty .ce-icon{font-size:2.8rem;}
+.canvas-empty p{font-size:.85rem;color:var(--muted);}
+
+/* ── widget grid ── */
+.widget-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
+.widget{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:visible;transition:box-shadow .2s;position:relative;}
+.widget:hover{box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.widget.span-1{grid-column:span 1;}
+.widget.span-2{grid-column:span 2;}
+.widget.span-4{grid-column:span 4;}
+.widget-header{display:flex;align-items:center;padding:10px 12px;gap:8px;border-bottom:1px solid var(--border);background:var(--card2);border-radius:var(--r) var(--r) 0 0;}
+.widget-title{flex:1;font-size:.82rem;font-weight:700;color:var(--text);}
+.widget-controls{display:flex;gap:3px;}
+.wc-btn{background:none;border:1px solid var(--border2);cursor:pointer;color:var(--muted);font-size:.72rem;padding:2px 6px;border-radius:5px;transition:all .15s;font-family:inherit;}
+.wc-btn:hover{background:var(--card2);color:var(--text);}
+.wc-btn.del:hover{border-color:var(--red);color:var(--red);}
+.wc-btn.sort-active{border-color:var(--accent);color:var(--accent);background:rgba(37,99,235,.1);}
+.widget-body{padding:12px;}
+.chart-wrap{position:relative;}
+
+/* ── drag resize handle ── */
+.resize-handle{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:se-resize;z-index:10;}
+.resize-handle::after{content:'';position:absolute;right:4px;bottom:4px;width:10px;height:10px;background:
+  repeating-linear-gradient(-45deg,var(--dim) 0,var(--dim) 1px,transparent 1px,transparent 3px);
+  border-radius:1px;opacity:.5;transition:opacity .2s;}
+.resize-handle:hover::after{opacity:1;}
+.widget.resizing{box-shadow:0 0 0 2px var(--accent);user-select:none;}
+
+/* ── drag-move ── */
+.drag-handle{cursor:grab;color:var(--dim);font-size:.85rem;padding:0 5px 0 0;flex-shrink:0;user-select:none;line-height:1;}
+.drag-handle:active{cursor:grabbing;}
+.widget.dragging{opacity:.35;box-shadow:0 0 0 2px var(--accent);}
+.widget.drop-before{box-shadow:-4px 0 0 0 var(--accent),0 2px 12px rgba(0,0,0,.08);}
+.widget.drop-after{box-shadow:4px 0 0 0 var(--accent),0 2px 12px rgba(0,0,0,.08);}
+
+/* divider label */
+.dash-divider{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.dash-divider-line{flex:1;height:1px;background:var(--border);}
+.dash-divider-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--card2);}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+
+@media(max-width:900px){
+  .settings-scroll{column-count:2;}
+  .widget-grid{grid-template-columns:repeat(2,1fr);}
+  .widget.span-4{grid-column:span 2;}
+}
+@media(max-width:640px){
+  .settings-scroll{column-count:1;}
+  .canvas-area{padding:14px 14px 40px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .save-btn{font-size:12px;padding:6px 10px;}
+  .save-btn svg{display:none;}
+  .widget-grid{grid-template-columns:1fr!important;}
+  .widget.span-1,.widget.span-2,.widget.span-4{grid-column:span 1;}
+  .ct-grid{grid-template-columns:repeat(5,1fr);}
+  .form-input,.form-select{font-size:16px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title">대시보드 빌더</div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="exportHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<!-- ========== 상단 업로드 바 (design.md §11 기준) ========== -->
+<div class="upload-bar">
+  <div class="a-card">
+    <div class="a-card-title">① 데이터 업로드</div>
+    <button class="sample-btn" onclick="loadSample()">샘플 데이터 불러오기</button>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" accept=".csv,.tsv" onchange="handleFile(this.files[0])">
+      <div class="upload-icon">📂</div>
+      <div class="upload-main">CSV 선택</div>
+      <div class="upload-sub">또는 드래그</div>
+    </div>
+    <div class="file-info" id="fileInfo"></div>
+  </div>
+</div>
+
+<!-- ========== 설정 패널: 업로드 바 아래·캔버스 위, 전체 너비 다단 배치 ========== -->
+<div class="settings-panel">
+  <div class="settings-scroll">
+
+    <div class="panel-sec" id="colSection" style="display:none">
+      <h3>컬럼 <span id="colCount" style="font-weight:400;color:var(--dim);text-transform:none;letter-spacing:0;"></span></h3>
+      <div class="col-list" id="colList"></div>
+    </div>
+
+    <!-- 데이터 범위 -->
+    <div class="panel-sec" id="rangeSection" style="display:none">
+      <h3 style="display:flex;align-items:center;justify-content:space-between;">
+        데이터 범위
+        <button class="reset-range-btn" onclick="resetRange()">전체</button>
+      </h3>
+      <div class="form-row" style="margin-bottom:6px;">
+        <label style="display:flex;justify-content:space-between;">
+          <span>시작 행</span>
+          <span id="rangeStartVal" style="font-family:'Space Mono',monospace;color:var(--accent);">1</span>
+        </label>
+        <input type="range" class="range-inp" id="rangeStart" min="1" max="1000" value="1" oninput="updateRange('start')">
+      </div>
+      <div class="form-row" style="margin-bottom:4px;">
+        <label style="display:flex;justify-content:space-between;">
+          <span>끝 행</span>
+          <span id="rangeEndVal" style="font-family:'Space Mono',monospace;color:var(--accent);">1000</span>
+        </label>
+        <input type="range" class="range-inp" id="rangeEnd" min="1" max="1000" value="1000" oninput="updateRange('end')">
+      </div>
+      <div class="range-info" id="rangeInfo">전체</div>
+    </div>
+
+    <div class="add-form-body" id="addForm" style="display:none">
+      <div class="dash-divider">
+        <div class="dash-divider-line"></div>
+        <span class="dash-divider-label">위젯 추가</span>
+        <div class="dash-divider-line"></div>
+      </div>
+
+      <div class="form-row">
+        <label>차트 유형</label>
+        <div class="ct-grid" id="ctGrid">
+          <div class="ct-btn active" data-ct="bar" title="막대">📊</div>
+          <div class="ct-btn" data-ct="line" title="선">📈</div>
+          <div class="ct-btn" data-ct="area" title="영역">🌊</div>
+          <div class="ct-btn" data-ct="pie" title="파이">🥧</div>
+          <div class="ct-btn" data-ct="scatter" title="산점도">✦</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>위젯 제목</label>
+        <input class="form-input" id="wTitle" placeholder="예: 월별 매출">
+      </div>
+
+      <div class="form-row" id="xRow">
+        <label>X축 / 카테고리</label>
+        <select class="form-select" id="xCol"></select>
+      </div>
+
+      <div class="form-row">
+        <label>Y축 / 값 컬럼 <span style="color:var(--dim);font-size:.68rem;">(복수 선택)</span></label>
+        <div class="y-col-list" id="yColList"></div>
+      </div>
+
+      <div class="form-row" id="aggRow">
+        <label>집계 방식</label>
+        <select class="form-select" id="aggMethod">
+          <option value="sum">합계 (sum)</option>
+          <option value="avg">평균 (avg)</option>
+          <option value="count">개수 (count)</option>
+          <option value="max">최대값 (max)</option>
+          <option value="min">최소값 (min)</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>초기 크기</label>
+        <div class="size-grid" id="sizeGrid">
+          <div class="size-btn active" data-sz="1">소<br><span style="font-size:.65rem;color:var(--dim)">1칸</span></div>
+          <div class="size-btn" data-sz="2">중<br><span style="font-size:.65rem;color:var(--dim)">2칸</span></div>
+          <div class="size-btn" data-sz="4">대<br><span style="font-size:.65rem;color:var(--dim)">전체</span></div>
+        </div>
+      </div>
+
+      <button class="add-widget-btn" onclick="addWidget()">+ 위젯 추가</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== 캔버스 영역 ========== -->
+<div class="canvas-area" id="canvasArea">
+  <div class="canvas-empty" id="emptyState">
+    <div class="ce-icon">🗂️</div>
+    <p>CSV를 업로드하거나 샘플 데이터를 불러온 뒤<br>위젯을 추가하세요</p>
+  </div>
+  <div class="widget-grid" id="widgetGrid" style="display:none"></div>
+</div>
+
+</div><!-- .page-wrap -->
+
+<script>
+/* ── STATE ── */
+let csvData = [], columns = [], widgets = [], nextWid = 1;
+let selCt = 'bar', selSz = 1;
+let chartInstances = {};
+
+const PALETTE = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+
+/* ── DRAG/DROP ── */
+const uz = document.getElementById('uploadZone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
+uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+/* ── CSV PARSE ── */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return null;
+  const headers = splitLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = splitLine(lines[i]);
+    const row = {};
+    headers.forEach((h, j) => { row[h] = vals[j] !== undefined ? vals[j].trim() : ''; });
+    rows.push(row);
+  }
+  return { headers, rows };
+}
+
+function splitLine(line) {
+  const result = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if ((c === ',' || c === '\t') && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function detectType(rows, col) {
+  const sample = rows.slice(0, 30).map(r => r[col]).filter(v => v !== '');
+  const numCount = sample.filter(v => !isNaN(parseFloat(v.replace(/,/g,''))) && isFinite(v.replace(/,/g,''))).length;
+  return numCount / (sample.length || 1) > 0.7 ? 'num' : 'cat';
+}
+
+/* ── FILE HANDLER ── */
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const parsed = parseCSV(e.target.result);
+    if (!parsed || !parsed.rows.length) { alert('파일을 파싱할 수 없습니다.'); return; }
+    csvData = parsed.rows;
+    columns = parsed.headers.map(h => ({ name: h, type: detectType(parsed.rows, h) }));
+    showFileInfo(`${file.name} · ${csvData.length.toLocaleString()}행 · ${columns.length}열`);
+    initUI();
+  };
+  reader.readAsText(file);
+}
+
+/* ── SAMPLE DATA ── */
+function loadSample() {
+  const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const products = ['제품A','제품B','제품C'];
+  const rows = [];
+  months.forEach(m => {
+    products.forEach(p => {
+      rows.push({
+        월: m, 제품: p,
+        매출: Math.round((Math.random()*4000+1000)*10),
+        비용: Math.round((Math.random()*2000+500)*10),
+        수량: Math.round(Math.random()*900+100),
+        만족도: +(Math.random()*2+3).toFixed(1)
+      });
+    });
+  });
+  csvData = rows;
+  columns = [
+    {name:'월',type:'cat'},{name:'제품',type:'cat'},
+    {name:'매출',type:'num'},{name:'비용',type:'num'},
+    {name:'수량',type:'num'},{name:'만족도',type:'num'}
+  ];
+  showFileInfo(`sample.csv · ${rows.length}행 · ${columns.length}열`);
+  initUI();
+}
+
+function showFileInfo(text) {
+  const fi = document.getElementById('fileInfo');
+  fi.textContent = text;
+  fi.classList.add('show');
+}
+
+/* ── INIT UI ── */
+function initUI() {
+  const cl = document.getElementById('colList');
+  cl.innerHTML = columns.map(c =>
+    `<div class="col-item">
+      <span class="col-type ${c.type}">${c.type==='num'?'N':'C'}</span>
+      <span style="color:var(--text)">${esc(c.name)}</span>
+    </div>`).join('');
+  document.getElementById('colCount').textContent = `(${columns.length})`;
+  document.getElementById('colSection').style.display = '';
+  document.getElementById('addForm').style.display = '';
+
+  /* 범위 슬라이더 초기화 */
+  const n = csvData.length;
+  ['rangeStart','rangeEnd'].forEach(id => {
+    document.getElementById(id).max = n;
+    document.getElementById(id).min = 1;
+  });
+  document.getElementById('rangeStart').value = 1;
+  document.getElementById('rangeEnd').value   = n;
+  document.getElementById('rangeStartVal').textContent = 1;
+  document.getElementById('rangeEndVal').textContent   = n;
+  document.getElementById('rangeInfo').textContent = `전체 ${n.toLocaleString()}행`;
+  document.getElementById('rangeSection').style.display = '';
+
+  const xSel = document.getElementById('xCol');
+  xSel.innerHTML = columns.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  const firstCat = columns.find(c => c.type === 'cat');
+  if (firstCat) xSel.value = firstCat.name;
+  renderYCols();
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('widgetGrid').style.display = '';
+}
+
+function renderYCols() {
+  const numCols = columns.filter(c => c.type === 'num');
+  document.getElementById('yColList').innerHTML = numCols.map((c, i) =>
+    `<label class="y-col-item">
+      <input type="checkbox" value="${esc(c.name)}" ${i===0?'checked':''}>
+      <span>${esc(c.name)}</span>
+    </label>`).join('');
+}
+
+/* ── CHART TYPE / SIZE TOGGLE ── */
+document.getElementById('ctGrid').addEventListener('click', e => {
+  const btn = e.target.closest('[data-ct]');
+  if (!btn) return;
+  document.querySelectorAll('#ctGrid .ct-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selCt = btn.dataset.ct;
+  document.getElementById('aggRow').style.display = selCt === 'scatter' ? 'none' : '';
+});
+
+document.getElementById('sizeGrid').addEventListener('click', e => {
+  const btn = e.target.closest('[data-sz]');
+  if (!btn) return;
+  document.querySelectorAll('#sizeGrid .size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selSz = parseInt(btn.dataset.sz);
+});
+
+/* ── AGGREGATE ── */
+function aggregate(rows, xCol, yCols, method) {
+  const groups = {}, order = [];
+  rows.forEach(r => {
+    const k = String(r[xCol] ?? '');
+    if (!groups[k]) { groups[k] = {}; order.push(k); }
+    yCols.forEach(y => {
+      if (!groups[k][y]) groups[k][y] = [];
+      const raw = String(r[y] ?? '').replace(/,/g,'');
+      const v = parseFloat(raw);
+      if (!isNaN(v)) groups[k][y].push(v);
+    });
+  });
+  const labels = order;
+  const datasets = yCols.map((y, i) => ({
+    label: y,
+    data: labels.map(l => {
+      const arr = groups[l][y] || [];
+      if (!arr.length) return 0;
+      if (method === 'sum')   return arr.reduce((a,b)=>a+b,0);
+      if (method === 'avg')   return +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2);
+      if (method === 'count') return arr.length;
+      if (method === 'max')   return Math.max(...arr);
+      if (method === 'min')   return Math.min(...arr);
+      return 0;
+    }),
+    backgroundColor: PALETTE[i%PALETTE.length]+'bb',
+    borderColor: PALETTE[i%PALETTE.length],
+    borderWidth: 2, fill: false, tension: 0.35, pointRadius: 3
+  }));
+  return { labels, datasets };
+}
+
+/* ── ADD WIDGET ── */
+function addWidget() {
+  if (!csvData.length) return;
+  const title = document.getElementById('wTitle').value.trim() || '위젯';
+  const xCol  = document.getElementById('xCol').value;
+  const yCols = [...document.querySelectorAll('#yColList input:checked')].map(cb => cb.value);
+  const agg   = document.getElementById('aggMethod').value;
+  if (!yCols.length) { alert('Y축 컬럼을 하나 이상 선택하세요.'); return; }
+  const w = { id: nextWid++, ct: selCt, title, xCol, yCols, agg, span: selSz, sort: 'none', height: 260 };
+  widgets.push(w);
+  renderWidget(w);
+  document.getElementById('wTitle').value = '';
+}
+
+/* ── RENDER WIDGET ── */
+function renderWidget(w) {
+  const grid = document.getElementById('widgetGrid');
+  const div  = document.createElement('div');
+  div.className = `widget span-${w.span}`;
+  div.id = `widget-${w.id}`;
+  div.innerHTML = `
+    <div class="widget-header">
+      <span class="drag-handle" title="드래그로 이동">⠿</span>
+      <span class="widget-title">${esc(w.title)}</span>
+      <div class="widget-controls">
+        <button class="wc-btn" id="sort-btn-${w.id}" onclick="cycleSort(${w.id})" title="정렬: 원본순서 → 값내림차순 → 값오름차순">↕</button>
+        <button class="wc-btn del" onclick="removeWidget(${w.id})" title="삭제">✕</button>
+      </div>
+    </div>
+    <div class="widget-body"><div class="chart-wrap" style="height:${w.height||260}px"><canvas id="chart-${w.id}"></canvas></div></div>
+    <div class="resize-handle" data-wid="${w.id}" title="드래그로 크기 조절"></div>`;
+  grid.appendChild(div);
+  drawChart(w);
+  bindResize(div, w);
+  bindDrag(div, w);
+}
+
+/* ── DRAW CHART ── */
+function drawChart(w) {
+  const ctx = document.getElementById(`chart-${w.id}`);
+  if (!ctx) return;
+  if (chartInstances[w.id]) { chartInstances[w.id].destroy(); delete chartInstances[w.id]; }
+  const isMix = ['pie','doughnut'].includes(w.ct);
+  const type  = w.ct === 'area' ? 'line' : w.ct;
+  let { labels, datasets } = aggregate(getViewData(), w.xCol, w.yCols, w.agg);
+  if (w.sort && w.sort !== 'none') {
+    const totals = labels.map((_, i) => datasets.reduce((s, d) => s + (d.data[i] || 0), 0));
+    const idx = totals.map((_, i) => i).sort((a, b) =>
+      w.sort === 'desc' ? totals[b] - totals[a] : totals[a] - totals[b]);
+    labels   = idx.map(i => labels[i]);
+    datasets = datasets.map(d => ({ ...d, data: idx.map(i => d.data[i]) }));
+  }
+  let ds = datasets;
+  if (w.ct === 'area') ds = datasets.map(d => ({ ...d, fill: true, backgroundColor: d.borderColor + '33' }));
+  if (isMix) ds = [{ data: datasets[0].data, backgroundColor: PALETTE.map(c=>c+'bb'), borderColor: PALETTE, borderWidth: 2 }];
+  chartInstances[w.id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#64748b', font: { size: 11 } }, position: isMix ? 'right' : 'top' } },
+      scales: isMix ? {} : {
+        x: { ticks: { color:'#94a3b8', font:{size:10} }, grid: { color:'rgba(0,0,0,0.05)' } },
+        y: { ticks: { color:'#94a3b8', font:{size:10} }, grid: { color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+/* ── CYCLE SORT ── */
+const SORT_CYCLE = { none:'desc', desc:'asc', asc:'none' };
+const SORT_LABEL = { none:'↕', desc:'↓값', asc:'↑값' };
+const SORT_TITLE = { none:'정렬: 원본순서', desc:'정렬: 값 내림차순', asc:'정렬: 값 오름차순' };
+
+function cycleSort(id) {
+  const w = widgets.find(x => x.id === id);
+  if (!w) return;
+  w.sort = SORT_CYCLE[w.sort || 'none'];
+  const btn = document.getElementById(`sort-btn-${id}`);
+  if (btn) {
+    btn.textContent = SORT_LABEL[w.sort];
+    btn.title       = SORT_TITLE[w.sort];
+    btn.classList.toggle('sort-active', w.sort !== 'none');
+  }
+  drawChart(w);
+}
+
+/* ── REMOVE WIDGET ── */
+function removeWidget(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+  widgets = widgets.filter(w => w.id !== id);
+  const el = document.getElementById(`widget-${id}`);
+  if (el) el.remove();
+  if (!widgets.length) {
+    document.getElementById('emptyState').style.display = '';
+    document.getElementById('widgetGrid').style.display = 'none';
+  }
+}
+
+/* ── RESIZE BY MOUSE DRAG ── */
+function bindResize(el, w) {
+  const handle = el.querySelector('.resize-handle');
+  handle.addEventListener('mousedown', startResize);
+  function startResize(e) {
+    e.preventDefault();
+    const grid   = document.getElementById('widgetGrid');
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = el.getBoundingClientRect().width;
+    const startH = w.height || 260;
+    el.classList.add('resizing');
+
+    function onMove(e) {
+      /* 가로: span 변경 */
+      const dx    = e.clientX - startX;
+      const newW  = startW + dx;
+      const gridW = grid.getBoundingClientRect().width;
+      const ratio = newW / gridW;
+      const bestSpan = ratio > 0.7 ? 4 : ratio > 0.35 ? 2 : 1;
+      if (bestSpan !== w.span) {
+        w.span = bestSpan;
+        el.className = `widget span-${w.span} resizing`;
+      }
+
+      /* 세로: 높이 변경 (최소 120px) */
+      const dy   = e.clientY - startY;
+      const newH = Math.max(120, Math.round(startH + dy));
+      if (newH !== w.height) {
+        w.height = newH;
+        const wrap = el.querySelector('.chart-wrap');
+        if (wrap) wrap.style.height = newH + 'px';
+      }
+
+      /* 차트 즉시 리사이즈 (재생성 없이) */
+      if (chartInstances[w.id]) chartInstances[w.id].resize();
+    }
+
+    function onUp() {
+      el.classList.remove('resizing');
+      drawChart(w); /* 최종 정리 렌더 */
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+}
+
+/* ── DRAG MOVE ── */
+let draggedId = null;
+function bindDrag(el, w) {
+  const handle = el.querySelector('.drag-handle');
+  handle.addEventListener('mousedown', () => { el.draggable = true; });
+  el.addEventListener('dragend', () => { el.draggable = false; });
+  el.addEventListener('dragstart', e => {
+    draggedId = w.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(w.id));
+    requestAnimationFrame(() => el.classList.add('dragging'));
+  });
+  el.addEventListener('dragend', () => { el.classList.remove('dragging'); clearDropIndicators(); draggedId = null; });
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (draggedId === w.id) return;
+    e.dataTransfer.dropEffect = 'move';
+    const { left, width } = el.getBoundingClientRect();
+    const before = e.clientX < left + width / 2;
+    el.classList.toggle('drop-before', before);
+    el.classList.toggle('drop-after', !before);
+  });
+  el.addEventListener('dragleave', e => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove('drop-before', 'drop-after');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    if (draggedId === null || draggedId === w.id) return;
+    const srcEl = document.getElementById(`widget-${draggedId}`);
+    const grid  = document.getElementById('widgetGrid');
+    const { left, width } = el.getBoundingClientRect();
+    const before = e.clientX < left + width / 2;
+    if (before) grid.insertBefore(srcEl, el);
+    else        grid.insertBefore(srcEl, el.nextSibling);
+    const domOrder = [...grid.children].map(c => parseInt(c.id.replace('widget-',''))).filter(id => !isNaN(id));
+    widgets.sort((a, b) => domOrder.indexOf(a.id) - domOrder.indexOf(b.id));
+    clearDropIndicators();
+  });
+}
+
+function clearDropIndicators() {
+  document.querySelectorAll('.drop-before,.drop-after').forEach(el => el.classList.remove('drop-before','drop-after'));
+}
+
+/* ── DATA RANGE ── */
+function getViewData() {
+  const s = parseInt(document.getElementById('rangeStart')?.value || 1) - 1;
+  const e = parseInt(document.getElementById('rangeEnd')?.value   || csvData.length);
+  if (s <= 0 && e >= csvData.length) return csvData;
+  return csvData.slice(s, e);
+}
+
+function updateRange(moved) {
+  const startEl = document.getElementById('rangeStart');
+  const endEl   = document.getElementById('rangeEnd');
+  let s = parseInt(startEl.value);
+  let e = parseInt(endEl.value);
+  if (s > e) {
+    if (moved === 'start') { startEl.value = e; s = e; }
+    else                   { endEl.value   = s; e = s; }
+  }
+  document.getElementById('rangeStartVal').textContent = s;
+  document.getElementById('rangeEndVal').textContent   = e;
+  const count = e - s + 1;
+  document.getElementById('rangeInfo').textContent =
+    s === 1 && e === csvData.length
+      ? `전체 ${csvData.length.toLocaleString()}행`
+      : `${s} ~ ${e}행 (${count.toLocaleString()}개 / 전체 ${csvData.length.toLocaleString()}행)`;
+  widgets.forEach(w => drawChart(w));
+}
+
+function resetRange() {
+  const n = csvData.length;
+  document.getElementById('rangeStart').value = 1;
+  document.getElementById('rangeEnd').value   = n;
+  updateRange();
+}
+
+/* ── ESCAPE HTML ── */
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── HTML EXPORT (html.md 적용) ── */
+function exportHTML() {
+  if (!widgets.length) { alert('내보낼 위젯이 없습니다.'); return; }
+
+  const widgetData = widgets.map(w => {
+    let { labels, datasets } = aggregate(getViewData(), w.xCol, w.yCols, w.agg);
+    if (w.sort && w.sort !== 'none') {
+      const totals = labels.map((_, i) => datasets.reduce((s, d) => s + (d.data[i] || 0), 0));
+      const idx = totals.map((_, i) => i).sort((a, b) =>
+        w.sort === 'desc' ? totals[b] - totals[a] : totals[a] - totals[b]);
+      labels   = idx.map(i => labels[i]);
+      datasets = datasets.map(d => ({ ...d, data: idx.map(i => d.data[i]) }));
+    }
+    return { ...w, labels, datasets };
+  });
+
+  const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+  const todayIso = new Date().toISOString().slice(0,10);
+
+  /* 차트 유형 통계 */
+  const ctMap = { bar:'막대', line:'선', area:'영역', pie:'파이', scatter:'산점도' };
+  const ctCounts = {};
+  widgets.forEach(w => { ctCounts[w.ct] = (ctCounts[w.ct] || 0) + 1; });
+  const ctSummary = Object.entries(ctCounts).map(([k,v]) => `${ctMap[k]||k} ${v}`).join(' · ');
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>대시보드 — DataForge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}
+.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}
+.sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}
+.sum-icon{font-size:22px;opacity:.85;}
+.sum-v{font-family:'Noto Sans KR',sans-serif;font-size:22px;font-weight:700;line-height:1;}
+.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
+.widget{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.widget.span-1{grid-column:span 1;}.widget.span-2{grid-column:span 2;}.widget.span-4{grid-column:span 4;}
+.wh{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);font-size:.82rem;font-weight:700;color:var(--text);}
+.wb{padding:12px;}.wb canvas{max-height:260px;}
+.widget.span-4 .wb canvas{max-height:210px;}
+.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}
+@media(max-width:768px){.sum-row{grid-template-columns:repeat(2,1fr);}.grid{grid-template-columns:repeat(2,1fr);}.widget.span-4{grid-column:span 2;}}
+@media(max-width:480px){.sum-row{grid-template-columns:1fr;}.grid{grid-template-columns:1fr;}.widget[class*=span]{grid-column:span 1;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="page-title">📊 대시보드</div>
+<div class="meta"><b style="color:var(--muted)">DataForge 대시보드 빌더</b> &nbsp;·&nbsp; ${today} 생성 &nbsp;·&nbsp; DataForge</div>
+
+<div class="sum-row">
+  <div class="sum-c" style="border-color:rgba(37,99,235,.3);background:rgba(37,99,235,.04);">
+    <div class="sum-icon">📊</div>
+    <div>
+      <div class="sum-v" style="color:var(--accent);">${widgets.length}</div>
+      <div class="sum-l" style="color:var(--accent);">위젯 수</div>
+    </div>
+  </div>
+  <div class="sum-c" style="border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.04);">
+    <div class="sum-icon">📋</div>
+    <div>
+      <div class="sum-v" style="color:var(--green);">${csvData.length.toLocaleString()}</div>
+      <div class="sum-l" style="color:var(--green);">데이터 행</div>
+    </div>
+  </div>
+  <div class="sum-c" style="border-color:rgba(0,0,0,.1);">
+    <div class="sum-icon">🗂️</div>
+    <div>
+      <div class="sum-v" style="color:var(--muted);font-size:14px;line-height:1.4;margin-top:4px;">${ctSummary}</div>
+      <div class="sum-l" style="color:var(--dim);">차트 유형</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-card">
+  <div class="section-title">차트 대시보드</div>
+  <div class="grid" id="g"></div>
+</div>
+
+<div class="footer">DataForge · dataforge.ai.kr · ${today}</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
+<script>
+const P=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+const W=${JSON.stringify(widgetData)};
+W.forEach(w=>{
+  const d=document.createElement('div');
+  d.className='widget span-'+w.span;
+  d.innerHTML='<div class="wh">'+w.title+'</div><div class="wb"><div style="position:relative;height:'+(w.height||260)+'px"><canvas id="c'+w.id+'"></canvas></div></div>';
+  document.getElementById('g').appendChild(d);
+  const isMix=['pie','doughnut'].includes(w.ct);
+  const type=w.ct==='area'?'line':w.ct;
+  const ds=isMix
+    ?[{data:w.datasets[0].data,backgroundColor:P.map(c=>c+'bb'),borderColor:P,borderWidth:2}]
+    :w.datasets.map((s,i)=>({...s,backgroundColor:P[i%P.length]+(w.ct==='area'?'33':'bb'),borderColor:P[i%P.length],borderWidth:2,fill:w.ct==='area',tension:.35,pointRadius:3}));
+  new Chart(document.getElementById('c'+w.id),{
+    type,
+    data:{labels:w.labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#64748b',font:{size:11}},position:isMix?'right':'top'}},
+      scales:isMix?{}:{
+        x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}}
+      }}
+  });
+});
+<\/script>
+</body>
+</html>`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  a.download = `dashboard-${todayIso}.html`;
+  a.click();
+}
+</script>
+
+<script>(function(){
+  var k='tf_manage_dashboard';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=manage&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

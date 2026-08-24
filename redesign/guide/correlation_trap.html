@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>상관계수가 같아도 데이터는 다르다 — 앤스콤 4중주와 심슨의 역설 | DataForge 가이드</title>
+  <meta name="description" content="평균·분산·상관계수가 소수 둘째 자리까지 같은 네 데이터가 완전히 다른 그림을 그리는 앤스콤 4중주. 이상치 4개가 만든 가짜 상관(피어슨 vs 스피어만), 허위상관과 심슨의 역설까지 — 상관계수를 보고서에 올리기 전에 확인할 것들을 실제 숫자로 설명합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/correlation_trap">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="상관계수가 같아도 데이터는 다르다 — 앤스콤 4중주와 심슨의 역설 | DataForge 가이드">
+  <meta property="og:description" content="r = 0.816이 네 번 나왔지만 네 데이터는 완전히 달랐습니다. 이상치·허위상관·심슨의 역설 — 상관계수를 믿기 전에 봐야 할 것들.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/correlation_trap">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">개념 아티클 · 상관관계</div>
+      <h1>상관계수가 같아도 데이터는 다르다 — 앤스콤 4중주와 심슨의 역설</h1>
+      <p class="lead">"r = 0.816, 강한 양의 상관." 네 개의 데이터가 똑같은 성적표를 받았습니다. 그림을 그려보기 전까지는, 넷이 완전히 다른 세상이라는 것을 아무도 모릅니다.</p>
+      <div class="tabs-line">키워드: 앤스콤 4중주 · 피어슨 · 스피어만 · 이상치 · 허위상관 · 심슨의 역설</div>
+
+      <h2>소수 둘째 자리까지 같은 네 개의 데이터</h2>
+      <p>1973년 통계학자 프랜시스 앤스콤이 네 개의 데이터를 만들어 세상에 내놓았습니다.
+      <b>앤스콤 4중주(Anscombe's Quartet)</b>라 불리는 이 네 데이터는 요약 통계가 전부 같습니다 —
+      x 평균 9.0, y 평균 7.50, <b>상관계수 r ≈ 0.816</b>(넷 중 IV만 0.817), 회귀직선까지
+      <b>y = 3.00 + 0.500x</b>로 동일합니다. 숫자만 보면 구별이 불가능합니다.</p>
+      <p>그런데 그림을 그리는 순간, 네 개의 완전히 다른 세상이 나타납니다.</p>
+      <ul>
+        <li><b>I</b> — 예쁜 선형 관계. 상관계수가 정직하게 요약하고 있는 유일한 경우입니다.</li>
+        <li><b>II</b> — 완벽한 <b>곡선</b>(포물선). 직선이 아니므로 r은 이 관계를 전혀 담지 못합니다.</li>
+        <li><b>III</b> — 완벽한 직선 + <b>이상치 하나</b>. 그 한 점이 회귀선을 통째로 비틀어 놓았습니다.</li>
+        <li><b>IV</b> — x가 모두 8인데 <b>점 하나만 19</b>. 그 한 점이 상관계수를 혼자 만들어냅니다. 나머지 점들 사이엔 아무 관계도 없습니다.</li>
+      </ul>
+      <p>네 경우 모두 "r = 0.816, 강한 양의 상관"이라고 보고됩니다. 하지만 II를 직선으로 예측하면
+      체계적으로 틀리고, III·IV는 점 하나가 결과를 좌우합니다. <b>요약 통계는 정보를 압축하고,
+      압축은 곧 손실입니다.</b> 그리고 잃어버린 정보가 때로는 전부입니다.</p>
+      <p>이 함정은 교과서 속 이야기가 아닙니다. 이커머스 판매 데이터에서 할인율과 이익률의 상관을 재면
+      <b>r = -0.253</b>, "약한 음의 관계"로 보입니다. 그런데 할인율을 구간으로 나눠 평균 이익률을 그려보면
+      명백한 <b>역U자</b>가 나타납니다 — 할인율 0~10% 구간의 이익률은 <b>6.38%</b>, 20~30% 구간에서
+      <b>15.75%</b>로 정점을 찍고, 50~60% 구간에서는 <b>2.86%</b>까지 떨어집니다. 관계가 약한 게 아니라
+      <b>직선이 아닐 뿐</b>입니다. 왼쪽의 상승과 오른쪽의 하락이 서로 상쇄되어 피어슨 r에는 작은 값만 남은 것이죠.
+      이 -0.25만 보고 "할인을 줄이자"고 결정하면, 최적 구간(20~30%)에서 멀어지며 이익률이 폭락합니다.</p>
+      <div class="tip">💡 <b>r ≈ 0은 '관계가 없다'가 아니라 '직선 관계가 없다'입니다.</b> 두 문장은 완전히
+      다른 말입니다. 상관계수가 작게 나온 변수를 버리기 전에 산점도를 그리거나 구간별 평균(binning)을
+      내보세요. 역U자 관계는 상관계수에 원리적으로 잡히지 않습니다.</div>
+
+      <h2>이상치 4개가 만든 '통계적으로 유의한' 상관</h2>
+      <p>이번엔 반대 방향의 함정입니다. 상품 600개 데이터에서 무게와 평점의 상관을 재니
+      <b>피어슨 r = +0.126, p = 0.002</b>가 나옵니다. 통계적으로 유의합니다! "무거운 상품일수록
+      평점이 높다"는 발견일까요?</p>
+      <p>같은 데이터로 <b>스피어만 순위상관</b>을 재면 <b>ρ = +0.026 (p = 0.52)</b> — 유의하지 않습니다.
+      두 값이 크게 갈립니다. 산점도를 그려보면 이유가 드러납니다. 대부분의 점은 무게 0~20kg에 모여
+      아무 패턴 없는 구름을 이루는데, 오른쪽 멀리 <b>초대형 가전 4개</b>(무게 60~95kg, 평점 4.8~5.0)가
+      외따로 떨어져 있습니다. 이 4개를 빼고 다시 계산하면 <b>r = -0.001 (p = 0.981)</b> —
+      600개 중 단 4개를 뺐더니 상관이 통째로 증발하고, p값은 0.002에서 0.981로 뒤집힙니다.</p>
+      <p>피어슨은 <b>값 자체</b>를 쓰기 때문에 이상치에 매우 취약합니다. 무게 95kg짜리 상품의 큰 편차가
+      공분산에 엄청난 기여를 하면서, 점 하나가 599개의 목소리를 압도합니다. 반면 스피어만은 값을 순위로
+      바꿔 계산하므로, 95kg이든 950kg이든 똑같이 "1등"일 뿐입니다. 이상치가 아무리 극단적이어도
+      순위 한 칸의 무게밖에 갖지 못합니다. 그래서 스피어만은 처음부터 ρ = 0.026, 사실상 0이라고
+      정직하게 말하고 있었던 것입니다.</p>
+      <p>이 사례가 보여주는 것이 하나 더 있습니다 — <b>p &lt; 0.05가 "진짜"를 보장하지 않는다</b>는 것.
+      이상치 4개도 얼마든지 "유의한" 결과를 만들어냅니다.</p>
+      <div class="tip">💡 상관계수를 하나만 계산하지 말고 <b>피어슨과 스피어만을 둘 다</b> 계산해 비교하는
+      습관을 들이세요. 30초면 끝납니다. 두 값이 크게 다르면 이상치가 있거나 관계가 비선형이라는 뜻이고,
+      그 자체가 "산점도를 그려보라"는 경보입니다.</div>
+
+      <h2>리뷰를 두 배로 늘리면 판매도 늘까 — 허위상관</h2>
+      <p>회의 시간, 히트맵을 본 마케팅팀장이 눈을 반짝입니다. "리뷰수와 월판매량의 상관이
+      <b>+0.803</b>이네요! 리뷰 작성 이벤트로 리뷰 수를 두 배로 늘리면 판매량도 오르겠군요."
+      논리적으로 들립니다. 그런데 이 데이터에는 광고노출이라는 변수가 하나 더 있고,
+      광고노출-리뷰수 상관이 <b>+0.951</b>, 광고노출-월판매량 상관이 <b>+0.850</b>입니다.
+      하나의 변수가 두 축 모두와 강하게 붙어 있습니다 — <b>숨은 공통 원인의 전형적인 신호</b>입니다.</p>
+      <p>광고노출의 영향을 걷어내고 다시 재는 도구가 <b>부분상관(partial correlation)</b>입니다.
+      리뷰수와 판매량을 각각 광고노출로 회귀시켜 잔차를 구하고, 그 잔차끼리 상관을 냅니다. 결과는
+      <b>r = -0.035 (p = 0.398)</b>. 단순 상관 +0.803이 완전히 증발했습니다. 리뷰수와 판매량 사이에는
+      직접적인 관계가 <b>처음부터 없었습니다.</b> 광고를 많이 한 상품이 사람들 눈에 많이 띄어 리뷰도
+      많이 달리고 동시에 많이 팔렸을 뿐, 리뷰와 판매는 같은 원인의 두 결과입니다.</p>
+      <p>이것이 <b>허위상관(spurious correlation)</b>입니다. 아이스크림 판매와 익사 사고의 상관이
+      높은 것과 같은 구조죠 — 여름이라는 공통 원인이 둘 다를 끌어올린 것이지, 아이스크림 판매를
+      금지한다고 익사 사고가 줄지 않습니다. 마찬가지로 리뷰 이벤트를 강행하면 <b>리뷰 수만 두 배가
+      됩니다.</b> 판매량은 거의 그대로일 것입니다. 예산을 쓰고 지표만 예뻐지는 결과입니다.
+      상관관계가 알려주는 것은 '무엇을 볼 것인가'이지 '무엇을 누를 것인가'가 아닙니다 —
+      누를 버튼을 찾으려면 A/B 테스트 같은 실험이 필요합니다.</p>
+
+      <h2>부호가 뒤집히다 — 심슨의 역설</h2>
+      <p>마지막 함정은 가장 극적입니다. 같은 판매 데이터에서 가격과 월판매량의 상관은
+      <b>+0.765</b>입니다. 비쌀수록 잘 팔린다는 뜻이니, 수요 법칙과 정면으로 충돌합니다.
+      기획팀장이 말합니다. "그럼 가격을 올립시다. 데이터가 그렇다잖아요."</p>
+      <p>그런데 카테고리별로 나눠 다시 계산하면 이렇게 됩니다.</p>
+      <ul>
+        <li><b>식품</b> 내부: r = <b>-0.772</b> (가격 평균 2.5만원, 판매량 평균 72개)</li>
+        <li><b>의류</b> 내부: r = <b>-0.665</b> (가격 평균 8.3만원, 판매량 평균 136개)</li>
+        <li><b>가전</b> 내부: r = <b>-0.630</b> (가격 평균 45.8만원, 판매량 평균 256개)</li>
+      </ul>
+      <p><b>세 카테고리 모두 음의 상관입니다.</b> 전체(+0.765)와 부호가 정반대죠. 이것이
+      <b>심슨의 역설(Simpson's Paradox)</b> — 전체에서 나타나는 추세가, 그룹으로 나누면 모든 그룹에서
+      정반대로 뒤집히는 현상입니다. 계산 실수가 아닙니다. 두 계산 모두 수학적으로 옳고, 서로 다른
+      질문에 답하고 있을 뿐입니다.</p>
+      <p>원인은 카테고리가 가격과 판매량 <b>둘 다를 동시에 밀어 올린다</b>는 것입니다. 가전은 원래
+      비싸고 광고를 많이 해서 많이 팔리고, 식품은 원래 싸고 판매량도 낮습니다. 카테고리를 무시하고
+      전부 뭉치면 "비싼 상품(가전)이 잘 팔린다"는 착시가 생기지만, 같은 가전끼리 비교하면 비쌀수록
+      덜 팔립니다. 수요 법칙은 멀쩡히 작동하고 있었습니다. 유명한 실제 사례로 1973년 UC 버클리
+      대학원 입학 통계가 있습니다 — 전체 합격률은 남성 44%, 여성 35%로 차별 논란이 일었지만,
+      학과별로 나눠 보니 주요 학과 다수에서 여성 합격률이 오히려 높았습니다. 여성이 경쟁이 치열한
+      학과에 많이 지원했던 것이 전체 통계를 뒤집어 놓은 것이죠.</p>
+      <p>어느 쪽이 맞는 답일까요? <b>질문에 따라 다릅니다.</b> "우리 가전 제품 가격을 올리면 판매량이
+      어떻게 될까?"라는 의사결정 질문에는 그룹별 상관(음수)이 답합니다 — 가격을 바꿔도 카테고리는
+      함께 바뀌지 않으니까요. 의사결정을 위한 분석이라면 거의 언제나 그룹별로 봐야 합니다.
+      데이터에 그룹 변수(카테고리·지역·연도·성별)가 있다면 반드시 그룹별로 쪼개서 상관을 다시
+      계산해 보세요. 30초면 되고, 부호가 바뀐다면 방금 큰 사고를 하나 막은 것입니다.</p>
+      <div class="think">🤔 <b>생각해볼 점</b> — "가격을 올리면 더 팔린다"(전체 r = +0.765)는 보고가
+      그대로 통과되어 전 상품 가격을 인상했다면 무슨 일이 벌어졌을까요? 데이터가 거짓말한 걸까요,
+      아니면 우리가 잘못 물은 걸까요? 그리고 여러분의 데이터에는 지금 어떤 그룹 변수가 숨어 있나요?</div>
+      <p>정리하면, 상관계수를 보고서에 올리기 전에 물어야 할 것은 다섯 가지입니다.
+      산점도를 그렸는가(앤스콤 4중주), 비선형은 아닌가(r ≈ 0의 함정), 이상치가 만든 상관은 아닌가
+      (피어슨 vs 스피어만), 숨은 공통 원인은 없는가(부분상관), 그룹으로 나누면 뒤집히지 않는가
+      (심슨의 역설). 다 통과한 상관계수만이 보고서에 오를 자격이 있습니다 —
+      <b>그리고 그것조차 인과관계는 아닙니다.</b></p>
+      <p>이 글은 DataForge 교육 과정 원고에서 발췌·각색했습니다. 아래 시뮬레이터에서 상관계수와
+      산점도를 직접 그려보면, 같은 r 값 뒤에 얼마나 다른 데이터가 숨을 수 있는지 눈으로 확인할 수 있습니다.</p>
+
+      <a class="cta" href="/sim/stat" target="_blank" rel="noopener">📊 통계 분석 시뮬레이터 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/accuracy_trap">정확도 98%의 함정 — 불량 121개 중 110개를 놓친 모델 이야기</a>
+        <a href="/guide/imbalance_smote">없는 불량 17,272개를 지어냈다 — SMOTE와 리샘플링의 대가</a>
+        <a href="/guide/data_leakage">AUC 0.987은 축하가 아니라 경고다 — 데이터 누수 이야기</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

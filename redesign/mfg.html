@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge — 실무 데이터 생성 · 분석 플랫폼</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="DataForge — 실무 데이터 생성 · 분석 플랫폼">
+<meta property="og:description" content="제조·경영·광고 데이터를 실시간으로 생성하고 분석하는 교육용 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:url" content="https://dataforge.ai.kr/">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="css/style.css?v=1784972629">
+<script>
+  window.MFG_DEMO_LIMIT = 100;
+  window.MFG_AUTHED     = false;
+</script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">MFG · 제조 데이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<!-- ── Demo Banner ─────────────────────────────────────────── -->
+<div id="demo-banner" class="demo-banner"></div>
+
+
+<!-- ── Tab Bar ─────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="sensor"     onclick="switchTab('sensor')">🌡️ <span class="tab-label">센서/공정 데이터</span></button>
+  <button class="tab-btn"        data-tab="quality"    onclick="switchTab('quality')">🔍 <span class="tab-label">품질 검사</span></button>
+  <button class="tab-btn"        data-tab="equipment"  onclick="switchTab('equipment')">⚙️ <span class="tab-label">설비 유지보수</span></button>
+  <button class="tab-btn"        data-tab="production" onclick="switchTab('production')">🏭 <span class="tab-label">생산 KPI</span></button>
+  <button class="tab-btn"        data-tab="stream"     onclick="switchTab('stream')">⚡ <span class="tab-label">스트리밍 시뮬</span></button>
+  <button class="tab-btn"        data-tab="schema"     onclick="switchTab('schema')">📋 <span class="tab-label">스키마 가이드</span></button>
+</div>
+<select class="tab-select-mobile" onchange="switchTab(this.value)">
+  <option value="sensor">🌡️ 센서/공정 데이터</option>
+  <option value="quality">🔍 품질 검사</option>
+  <option value="equipment">⚙️ 설비 유지보수</option>
+  <option value="production">🏭 생산 KPI</option>
+  <option value="stream">⚡ 스트리밍 시뮬</option>
+  <option value="schema">📋 스키마 가이드</option>
+</select>
+
+<!-- ── Main Content ────────────────────────────────────────── -->
+<div class="main-pad">
+
+<!-- ═══════════════════════════════════════════════════════════
+     SENSOR TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-sensor" class="tab-panel">
+  <div class="section-info">
+    🔧 <strong>활용 도구:</strong> Python Pandas · Power BI / Grafana · MLflow · Kafka · PostgreSQL / Data Lake<br>
+    ETL 실습, 시계열 분석, 이상치 탐지 ML 모델, 실시간 KPI 대시보드 구축에 바로 사용 가능한 공정 센서 데이터를 생성합니다.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">제조 공정 / 발전 유형</label>
+        <select id="sensor-process" class="input-field" onchange="changeSensorProcess(this.value)">
+          <option value="semiconductor">반도체 (온도·압력·가스 Flow)</option>
+          <option value="automotive" selected>자동차 부품 (용접·도장·조립)</option>
+          <option value="battery">배터리 (전압·전류·온도·SOC)</option>
+          <option value="steel">철강 (압연·도금·냉각)</option>
+          <option value="pcb">PCB (납땜·세정·검사)</option>
+          <optgroup label="☀️ 태양광">
+            <option value="solar_module">태양광 모듈 (효율·IV·라미네이션·EL)</option>
+            <option value="solar_inverter">인버터 (IGBT·변환효율·THD·절연)</option>
+          </optgroup>
+          <optgroup label="🍽️ 식품 공정">
+            <option value="food_beverage">음료 제조 (살균·충전·냉각)</option>
+            <option value="food_baking">제과/제빵 (반죽·오븐·냉각)</option>
+            <option value="food_dairy">유제품 (살균·발효·충전)</option>
+            <option value="food_meat">육가공 (절단·훈연·급속냉동)</option>
+            <option value="food_retort">레토르트/통조림 (가압살균·밀봉)</option>
+          </optgroup>
+          <optgroup label="⚡ 발전">
+            <option value="coal_thermal">석탄화력 (주증기·연소·환경설비·터빈)</option>
+            <option value="lng_combined">LNG 복합화력 (가스터빈·HRSG·열효율)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label" id="sensor-site-label">공장 / 라인 수</label>
+        <div class="inline-row">
+          <input type="number" id="sensor-factories" class="input-field" value="2" min="1" max="5">
+          <span id="sensor-site-unit1" style="color:var(--text-dim);font-size:12px;white-space:nowrap">개 공장</span>
+          <input type="number" id="sensor-lines" class="input-field" value="3" min="1" max="10">
+          <span id="sensor-site-unit2" style="color:var(--text-dim);font-size:12px;white-space:nowrap">개 라인</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="input-label">데이터 기간</label>
+        <select id="sensor-period" class="input-field" onchange="toggleCustomPeriod()">
+          <option value="1d">1일 (1분 간격, 1,440행)</option>
+          <option value="7d" selected>7일 (5분 간격, 2,016행)</option>
+          <option value="30d">30일 (10분 간격, 4,320행)</option>
+          <option value="90d">90일 (1시간 간격, 2,160행)</option>
+          <option value="custom">직접 입력</option>
+        </select>
+      </div>
+      <div id="sensor-custom-period" style="display:none" class="form-group">
+        <label class="input-label">직접 입력</label>
+        <div class="inline-row">
+          <input type="number" id="sensor-custom-interval" class="input-field" value="1" min="1">
+          <select id="sensor-custom-interval-unit" class="input-field" style="width:auto;padding-right:8px;flex-shrink:0">
+            <option value="s">초</option>
+            <option value="m" selected>분</option>
+            <option value="h">시간</option>
+          </select>
+          <span style="color:var(--text-dim);font-size:12px;white-space:nowrap">간격</span>
+          <input type="number" id="sensor-custom-rows" class="input-field" value="10000" min="100" max="500000">
+          <span style="color:var(--text-dim);font-size:12px;white-space:nowrap">행</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">센서 컬럼 선택</span>
+        <div style="display:flex;gap:6px">
+          <button onclick="selectAllSensorCols()" class="btn btn-outline" style="padding:3px 10px;font-size:11px">전체</button>
+          <button onclick="deselectAllSensorCols()" class="btn btn-outline" style="padding:3px 10px;font-size:11px;border-color:var(--border);color:var(--text-dim)">해제</button>
+        </div>
+      </div>
+      <div id="sensor-cols"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">분석 난이도 (ML Difficulty)</span></div>
+    <div id="sensor-diff"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">이상 데이터 설정 (Anomaly Injection)</span></div>
+    <div id="sensor-anomalies"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">상관 설정 (Correlation Groups)</span>
+      <button onclick="addCorrGroup()" class="btn btn-outline" style="padding:3px 10px;font-size:11px;border-color:var(--border);color:var(--text-dim)">+ 그룹 추가</button>
+    </div>
+    <div id="sensor-corr"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">불량 컬럼</span>
+      <span style="font-size:.78rem;color:var(--text-dim);font-family:monospace">defect_yn · defect_score</span>
+    </div>
+    <div id="sensor-defect"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="sensor-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateSensor()" class="btn btn-primary">🚀 데이터 생성</button>
+    <button onclick="downloadSensor()" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copySensor()" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="sensor-progress" class="progress-wrap" style="display:none"><div id="sensor-bar" class="progress-bar" style="width:0%"></div></div>
+  <div id="sensor-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="sensor-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="sensor-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="sensor-stat-avg">-</div><div class="stat-label">평균값</div></div>
+      <div class="stat-box"><div class="stat-value" id="sensor-stat-max" style="color:var(--danger)">-</div><div class="stat-label">최댓값</div></div>
+      <div class="stat-box"><div class="stat-value" id="sensor-stat-min" style="color:var(--accent3)">-</div><div class="stat-label">최솟값</div></div>
+      <div class="stat-box"><div class="stat-value" id="sensor-stat-null" style="color:var(--warning)">-</div><div class="stat-label">결측치</div></div>
+      <div class="stat-box" id="sensor-stat-defect-wrap" style="display:none"><div class="stat-value" id="sensor-stat-defect" style="color:var(--danger)">-</div><div class="stat-label">불량 건수</div></div>
+    </div>
+    <div id="sensor-causal-result" style="display:none"></div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span>
+        <button onclick="copySensor()" class="btn btn-outline" style="padding:3px 10px;font-size:10px;border-color:var(--border);color:var(--text-dim)">COPY ALL</button>
+      </div>
+      <div id="sensor-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     QUALITY TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-quality" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🔍 <strong>품질 검사 데이터:</strong> 측정값 4개 컬럼 + OK/NG 라벨 + 불량 유형/심각도로 구성됩니다.<br>
+    이진 분류 모델(OK/NG), 이상치 탐지, SPC(통계적 공정 관리) 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">제품 유형</label>
+        <select id="quality-product" class="input-field" onchange="changeQualityProduct(this.value)">
+          <option value="bolt">볼트/너트</option>
+          <option value="pcb" selected>PCB 기판</option>
+          <option value="casting">주조품</option>
+          <option value="battery_cell">배터리 셀</option>
+          <optgroup label="🍽️ 식품">
+            <option value="food_beverage_q">음료</option>
+            <option value="food_baking_q">제과/제빵</option>
+            <option value="food_dairy_q">유제품</option>
+            <option value="food_retort_q">레토르트</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">검사 수량</label>
+        <input type="number" id="quality-count" class="input-field" value="2000" min="100" max="100000">
+      </div>
+      <div class="form-group">
+        <label class="input-label">불량률 (%)</label>
+        <input type="number" id="quality-defect-rate" class="input-field" value="3.5" min="0.1" max="30" step="0.1">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">불량 유형</span></div>
+      <div id="quality-defect-types"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">측정값 설정 (mean ± std)</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px" id="quality-measures"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">분석 난이도</span></div>
+    <div id="quality-diff"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="quality-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateQuality()" class="btn btn-primary">🚀 데이터 생성</button>
+    <button onclick="downloadQuality()" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyQuality()" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="quality-progress" class="progress-wrap" style="display:none"><div id="quality-bar" class="progress-bar" style="width:0%"></div></div>
+  <div id="quality-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="quality-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="quality-stat-total">-</div><div class="stat-label">총 검사수</div></div>
+      <div class="stat-box"><div class="stat-value" id="quality-stat-ok" style="color:var(--accent3)">-</div><div class="stat-label">양품 (OK)</div></div>
+      <div class="stat-box"><div class="stat-value" id="quality-stat-defects" style="color:var(--danger)">-</div><div class="stat-label">불량 (NG)</div></div>
+      <div class="stat-box"><div class="stat-value" id="quality-stat-rate" style="color:var(--warning)">-</div><div class="stat-label">불량률</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span>
+        <button onclick="copyQuality()" class="btn btn-outline" style="padding:3px 10px;font-size:10px;border-color:var(--border);color:var(--text-dim)">COPY ALL</button>
+      </div>
+      <div id="quality-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EQUIPMENT TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-equipment" class="tab-panel" style="display:none">
+  <div class="section-info">
+    ⚙️ <strong>설비 유지보수 데이터:</strong> 런타임, 진동, 온도, 오일 레벨, RUL(잔여수명), 고장 라벨이 포함됩니다.<br>
+    예지보전(PHM) 모델 — 고장 분류, RUL 회귀, failure_within_24h 이진 분류 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">설비 유형</label>
+        <select id="equip-type" class="input-field">
+          <option value="PRESS">프레스</option>
+          <option value="ROBOT">로봇</option>
+          <option value="CNC">CNC 머시닝</option>
+          <option value="CONVEYOR">컨베이어</option>
+          <option value="PUMP">펌프</option>
+          <option value="MOTOR">모터</option>
+          <option value="INVERTER">인버터</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">설비 수</label>
+        <input type="number" id="equip-count" class="input-field" value="5" min="1" max="50">
+      </div>
+      <div class="form-group">
+        <label class="input-label">관측 기간 (일)</label>
+        <input type="number" id="equip-days" class="input-field" value="30" min="7" max="365">
+      </div>
+      <div class="form-group">
+        <label class="input-label">MTBF (평균 무고장 시간, 시간)</label>
+        <input type="number" id="equip-mtbf" class="input-field" value="720" min="100" max="10000">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">분석 난이도</span></div>
+      <div id="equip-diff"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="equip-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateEquip()" class="btn btn-primary">🚀 데이터 생성</button>
+    <button onclick="downloadEquip()" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyEquip()" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="equip-progress" class="progress-wrap" style="display:none"><div id="equip-bar" class="progress-bar" style="width:0%"></div></div>
+  <div id="equip-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="equip-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="equip-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="equip-stat-fail" style="color:var(--danger)">-</div><div class="stat-label">고장 이벤트</div></div>
+      <div class="stat-box"><div class="stat-value" id="equip-stat-flag1" style="color:var(--warning)">-</div><div class="stat-label">24h내 고장예정</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="equip-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PRODUCTION (KPI) TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-production" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🏭 <strong>생산 KPI 데이터:</strong> OEE, 가동률, 성능률, 품질률, UPH, 다운타임, 에너지 소비량이 포함됩니다.<br>
+    OEE 대시보드, KPI 트렌드 분석, 예측 모델 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">공장 / 라인 수</label>
+        <div class="inline-row">
+          <input type="number" id="kpi-factories" class="input-field" value="2" min="1" max="5">
+          <span style="color:var(--text-dim);font-size:12px">개 공장</span>
+          <input type="number" id="kpi-lines" class="input-field" value="3" min="1" max="10">
+          <span style="color:var(--text-dim);font-size:12px">개 라인</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="input-label">기간 (개월)</label>
+        <input type="number" id="kpi-months" class="input-field" value="3" min="1" max="36">
+      </div>
+      <div class="form-group">
+        <label class="input-label">집계 단위</label>
+        <select id="kpi-grain" class="input-field">
+          <option value="day" selected>일별</option>
+          <option value="shift">교대별 (주간/야간)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">시계열 특성</span></div>
+      <div class="form-group">
+        <label class="input-label">계절성</label>
+        <select id="kpi-seasonal" class="input-field">
+          <option value="none">없음</option>
+          <option value="mild" selected>약함 (±5%)</option>
+          <option value="strong">강함 (±15%)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">트렌드</label>
+        <select id="kpi-trend" class="input-field">
+          <option value="none" selected>없음</option>
+          <option value="improve">개선 (+5%)</option>
+          <option value="decline">악화 (-5%)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">분석 난이도</span></div>
+    <div id="kpi-diff"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="kpi-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateKpi()" class="btn btn-primary">🚀 데이터 생성</button>
+    <button onclick="downloadKpi()" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyKpi()" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="kpi-progress" class="progress-wrap" style="display:none"><div id="kpi-bar" class="progress-bar" style="width:0%"></div></div>
+  <div id="kpi-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="kpi-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="kpi-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="kpi-stat-oee" style="color:var(--accent3)">-</div><div class="stat-label">평균 OEE</div></div>
+      <div class="stat-box"><div class="stat-value" id="kpi-stat-actual">-</div><div class="stat-label">총 생산량</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="kpi-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STREAM TAB  (교육생 뷰어 전용)
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-stream" class="tab-panel" style="display:none">
+
+  <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.7;padding:10px 14px;background:rgba(0,212,255,0.04);border-left:2px solid var(--accent);border-radius:0 3px 3px 0">
+    관리자가 스트리밍을 시작하면 아래에 실시간 데이터가 표시됩니다. Google Sheets에 데이터를 실시간으로 받으려면 아래 안내를 따라 연결하세요.
+  </div>
+
+  <div class="two-col-grid" style="margin-bottom:16px">
+    <!-- 스트림 상태 -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">스트림 상태</span></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div id="stream-pulse" class="pulse off"></div>
+        <span id="stream-status-text" style="font-size:14px;font-weight:600;color:var(--text-dim)">STOPPED</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text-dim)">데이터 유형</span>
+        <span id="si-topic" style="color:var(--text)">-</span>
+      </div>
+      <div id="si-columns-row" style="display:none;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">컬럼 목록</div>
+        <div id="si-columns" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text-dim)">생성 속도</span>
+        <span id="si-rate" style="color:var(--text)">-</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text-dim)">총 메시지</span>
+        <span id="si-count" style="color:var(--text)">-</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px">
+        <span style="color:var(--text-dim)">MySQL 저장</span>
+        <span id="si-db" style="color:var(--text)">-</span>
+      </div>
+    </div>
+
+    <!-- Grafana 연결 정보 -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Grafana 연결 정보 (MySQL)</span></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">아래 정보로 Grafana → MySQL Data Source를 설정하세요</div>
+            <div style="margin-bottom:10px">
+        <label class="input-label">Data Source 유형</label>
+        <div onclick="navigator.clipboard?.writeText('MySQL')"
+             title="클릭하여 복사"
+             style="font-size:12px;color:var(--accent3);background:#05080f;padding:6px 10px;border-radius:3px;word-break:break-all;cursor:pointer;font-family:'Space Mono',monospace">
+          MySQL        </div>
+      </div>
+            <div style="margin-bottom:10px">
+        <label class="input-label">Host</label>
+        <div onclick="navigator.clipboard?.writeText('localhost:3306')"
+             title="클릭하여 복사"
+             style="font-size:12px;color:var(--accent3);background:#05080f;padding:6px 10px;border-radius:3px;word-break:break-all;cursor:pointer;font-family:'Space Mono',monospace">
+          localhost:3306        </div>
+      </div>
+            <div style="margin-bottom:10px">
+        <label class="input-label">Database</label>
+        <div onclick="navigator.clipboard?.writeText('teamchemy')"
+             title="클릭하여 복사"
+             style="font-size:12px;color:var(--accent3);background:#05080f;padding:6px 10px;border-radius:3px;word-break:break-all;cursor:pointer;font-family:'Space Mono',monospace">
+          teamchemy        </div>
+      </div>
+            <div style="margin-bottom:10px">
+        <label class="input-label">User</label>
+        <div onclick="navigator.clipboard?.writeText('teamchemy')"
+             title="클릭하여 복사"
+             style="font-size:12px;color:var(--accent3);background:#05080f;padding:6px 10px;border-radius:3px;word-break:break-all;cursor:pointer;font-family:'Space Mono',monospace">
+          teamchemy        </div>
+      </div>
+            <div style="margin-bottom:10px">
+        <label class="input-label">Password</label>
+        <div style="font-size:11px;color:var(--text-dim);background:#05080f;padding:6px 10px;border-radius:3px">강사에게 문의</div>
+      </div>
+      <div style="margin-top:4px">
+        <label class="input-label">Grafana 샘플 쿼리</label>
+        <div style="font-size:11px;background:#05080f;padding:6px 10px;border-radius:3px">
+          <a href="api/grafana_queries.php" target="_blank" style="color:var(--accent3)">샘플 SQL 쿼리 보기 →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 실시간 스트림 뷰어 -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title">실시간 스트림 뷰어</span>
+      <span id="stream-msg-count" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--accent3)">0 msg</span>
+    </div>
+    <div id="stream-log" style="background:#05080f;border:1px solid var(--border);border-radius:3px;padding:14px;font-family:'Space Mono',monospace;font-size:11px;height:300px;overflow-y:auto;color:var(--accent3);line-height:1.8">
+      <span style="color:var(--text-dim)">// 관리자가 스트리밍을 시작하면 여기에 표시됩니다...</span>
+    </div>
+  </div>
+
+  <!-- Google Sheets 실시간 연동 -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Google Sheets 실시간 연동</span></div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.7;padding:8px 12px;background:rgba(57,255,20,0.04);border-left:2px solid var(--accent3);border-radius:0 3px 3px 0">
+      서버가 스트리밍 중 <strong style="color:var(--text)">3초마다</strong> 내 Google Sheets로 데이터를 직접 전송합니다.<br>
+      아래 Apps Script를 <strong style="color:var(--text)">웹 앱</strong>으로 배포하고 생성된 URL을 등록하세요.
+    </div>
+
+    <!-- Apps Script 코드 -->
+    <div style="margin-bottom:16px">
+      <label class="input-label">① Apps Script 코드 (복사 후 붙여넣기)</label>
+      <div style="position:relative">
+        <textarea id="gs-script" readonly onclick="this.select()"
+          style="width:100%;background:#05080f;border:1px solid var(--border);color:var(--accent3);padding:12px 14px;font-size:11px;font-family:'Space Mono',monospace;border-radius:3px;line-height:1.7;resize:vertical;min-height:280px;outline:none;box-sizing:border-box"></textarea>
+        <button onclick="copyGsScript()" id="gs-copy-btn"
+          style="position:absolute;top:8px;right:8px;padding:4px 12px;font-size:11px;font-family:'Space Mono',monospace;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:2px;cursor:pointer;transition:all 0.2s">
+          COPY
+        </button>
+      </div>
+    </div>
+
+    <!-- 배포 순서 -->
+    <div style="margin-bottom:20px;display:grid;gap:8px">
+      <label class="input-label">② 웹 앱 배포 순서</label>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent3);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">1</span>
+        <span style="color:var(--text-dim);line-height:1.6">Google Sheets 열기 → 확장 프로그램 → Apps Script</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent3);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">2</span>
+        <span style="color:var(--text-dim);line-height:1.6">위 코드 전체 복사 → 편집기에 붙여넣기 → Ctrl+S 저장</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent3);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">3</span>
+        <span style="color:var(--text-dim);line-height:1.6">배포 → 새 배포 → 유형: 웹 앱 선택</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent3);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">4</span>
+        <span style="color:var(--text-dim);line-height:1.6">실행 계정: 나 / 액세스 권한: 모든 사용자 → 배포</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent3);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">5</span>
+        <span style="color:var(--text-dim);line-height:1.6">권한 요청 승인 → 웹 앱 URL 복사</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--accent3);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">6</span>
+        <span style="color:var(--text-dim);line-height:1.6">아래 입력란에 URL 붙여넣기 → 등록 버튼 클릭</span>
+      </div>
+          </div>
+
+    <!-- 웹 앱 URL 등록 -->
+    <div>
+      <label class="input-label">③ 내 웹 앱 URL 등록</label>
+      <div id="stream-webhook-reg-section" style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="url" id="stream-webhook-input"
+               placeholder="https://script.google.com/macros/s/.../exec"
+               class="input-field" style="flex:1;font-family:'Space Mono',monospace;font-size:12px">
+        <button onclick="registerWebhook()" class="btn" style="background:var(--accent3);color:#000;white-space:nowrap;padding:9px 20px">등록</button>
+      </div>
+      <div id="stream-webhook-active-section" style="display:none;padding:10px 14px;background:rgba(57,255,20,0.06);border:1px solid var(--accent3);border-radius:3px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="stream-webhook-active-url" style="font-size:11px;color:var(--accent3);flex:1;word-break:break-all;font-family:'Space Mono',monospace"></span>
+          <button onclick="unregisterWebhook()" class="btn btn-outline-red" style="padding:4px 12px;font-size:11px;flex-shrink:0">연결 해제</button>
+        </div>
+      </div>
+      <div id="stream-webhook-msg" style="font-size:12px;display:none"></div>
+    </div>
+  </div>
+
+  <!-- Power BI 실시간 연동 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Power BI 실시간 연동</span>
+      <span style="font-family:'Space Mono',monospace;font-size:10px;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);padding:3px 10px;border-radius:2px">Streaming Dataset</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.7;padding:8px 12px;background:rgba(245,158,11,.04);border-left:2px solid #f59e0b;border-radius:0 3px 3px 0">
+      Power BI <strong style="color:var(--text)">스트리밍 데이터 세트(API)</strong>의 Push URL을 등록하면,<br>
+      스트리밍 중 3초마다 Power BI로 데이터를 자동 전송합니다. 실시간 대시보드를 바로 만들어보세요.
+    </div>
+
+    <!-- 설정 순서 -->
+    <div style="margin-bottom:20px;display:grid;gap:8px">
+      <label class="input-label">① Power BI 스트리밍 데이터 세트 생성</label>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">1</span>
+        <span style="color:var(--text-dim);line-height:1.6">powerbi.com → 내 작업 영역 → 새로 만들기 → 스트리밍 데이터 세트</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">2</span>
+        <span style="color:var(--text-dim);line-height:1.6">API 선택 → 데이터 세트 이름 입력 (예: MFG_Stream)</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">3</span>
+        <span style="color:var(--text-dim);line-height:1.6">값의 스트림 항목 추가 — 아래 컬럼 스키마 참고</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">4</span>
+        <span style="color:var(--text-dim);line-height:1.6">기록 데이터 분석 ON (선택, 보고서 작성 시 필요)</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">5</span>
+        <span style="color:var(--text-dim);line-height:1.6">만들기 → Push URL 복사</span>
+      </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px">
+        <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Space Mono',monospace">6</span>
+        <span style="color:var(--text-dim);line-height:1.6">아래 입력란에 붙여넣기 → 등록</span>
+      </div>
+          </div>
+
+    <!-- 컬럼 스키마 참고 -->
+    <div style="margin-bottom:20px">
+      <label class="input-label">② 컬럼 스키마 (선택한 센서 유형 기준)</label>
+      <div id="pbi-schema-hint" style="background:#05080f;border:1px solid var(--border);border-radius:3px;padding:10px 14px;font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);line-height:1.9">
+        <span style="color:var(--text-dim)">// 스트리밍 시작 후 자동으로 컬럼 목록이 표시됩니다</span>
+      </div>
+    </div>
+
+    <!-- Push URL 등록 -->
+    <div>
+      <label class="input-label">③ Push URL 등록</label>
+      <div id="pbi-reg-section" style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="url" id="pbi-url-input"
+               placeholder="https://api.powerbi.com/beta/.../datasets/.../rows?key=..."
+               class="input-field" style="flex:1;font-family:'Space Mono',monospace;font-size:11px">
+        <button onclick="registerPowerBi()" class="btn" style="background:#f59e0b;color:#000;white-space:nowrap;padding:9px 20px;font-weight:700">등록</button>
+      </div>
+      <div id="pbi-active-section" style="display:none;padding:10px 14px;background:rgba(245,158,11,.06);border:1px solid #f59e0b;border-radius:3px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:'Space Mono',monospace;font-size:11px;color:#f59e0b">✓ Power BI 연결됨</span>
+          <span id="pbi-active-url" style="font-size:11px;color:var(--text-dim);flex:1;word-break:break-all;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Space Mono',monospace"></span>
+          <button onclick="unregisterPowerBi()" class="btn btn-outline-red" style="padding:4px 12px;font-size:11px;flex-shrink:0">연결 해제</button>
+        </div>
+      </div>
+      <div id="pbi-msg" style="font-size:12px;display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHEMA TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-schema" class="tab-panel" style="display:none">
+  <div class="section-info">
+    📋 <strong>데이터 스키마 가이드:</strong> 각 탭에서 생성되는 데이터의 컬럼 정의, 타입, 범위를 확인하세요.
+  </div>
+
+    <div class="card">
+    <div class="card-header"><span class="card-title">센서/공정 데이터 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">timestamp</td>
+            <td class="col-type">DATETIME</td>
+            <td>측정 시각 (UTC)</td>
+            <td style="color:var(--text-dim);font-size:11px">2024-01-01 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">factory_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>공장 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">F01~F05</td>
+          </tr>
+                    <tr>
+            <td class="col-name">line_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>생산라인 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">L01~L10</td>
+          </tr>
+                    <tr>
+            <td class="col-name">equipment_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>설비 고유 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">EQ-F01-L01-01</td>
+          </tr>
+                    <tr>
+            <td class="col-name">temperature_c</td>
+            <td class="col-type">FLOAT</td>
+            <td>공정 온도</td>
+            <td style="color:var(--text-dim);font-size:11px">180 ~ 250 ℃</td>
+          </tr>
+                    <tr>
+            <td class="col-name">pressure_bar</td>
+            <td class="col-type">FLOAT</td>
+            <td>공정 압력</td>
+            <td style="color:var(--text-dim);font-size:11px">2 ~ 8 bar</td>
+          </tr>
+                    <tr>
+            <td class="col-name">vibration_mm_s</td>
+            <td class="col-type">FLOAT</td>
+            <td>진동 (RMS)</td>
+            <td style="color:var(--text-dim);font-size:11px">0.1 ~ 3.0 mm/s</td>
+          </tr>
+                    <tr>
+            <td class="col-name">process_status</td>
+            <td class="col-type">ENUM</td>
+            <td>공정 상태</td>
+            <td style="color:var(--text-dim);font-size:11px">RUNNING/ALARM/WARNING/STOP</td>
+          </tr>
+                    <tr>
+            <td class="col-name">shift</td>
+            <td class="col-type">VARCHAR</td>
+            <td>교대 근무</td>
+            <td style="color:var(--text-dim);font-size:11px">주간1/주간2/야간</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">설비 유지보수 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">timestamp</td>
+            <td class="col-type">DATETIME</td>
+            <td>관측 시각</td>
+            <td style="color:var(--text-dim);font-size:11px">매 4시간</td>
+          </tr>
+                    <tr>
+            <td class="col-name">equipment_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>설비 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">PRESS-001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">runtime_hours</td>
+            <td class="col-type">INT</td>
+            <td>누적 가동 시간</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 10000</td>
+          </tr>
+                    <tr>
+            <td class="col-name">vibration_rms</td>
+            <td class="col-type">FLOAT</td>
+            <td>진동 RMS</td>
+            <td style="color:var(--text-dim);font-size:11px">0.5 ~ 5.0</td>
+          </tr>
+                    <tr>
+            <td class="col-name">rul_hours</td>
+            <td class="col-type">INT</td>
+            <td>잔여 수명 시간</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 720</td>
+          </tr>
+                    <tr>
+            <td class="col-name">maintenance_label</td>
+            <td class="col-type">ENUM</td>
+            <td>정비 라벨 (ML 타겟)</td>
+            <td style="color:var(--text-dim);font-size:11px">NORMAL/ALARM/PM/FAILURE</td>
+          </tr>
+                    <tr>
+            <td class="col-name">failure_within_24h</td>
+            <td class="col-type">INT</td>
+            <td>24h내 고장 여부</td>
+            <td style="color:var(--text-dim);font-size:11px">0 / 1</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">품질 검사 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">inspection_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>검사 일련번호</td>
+            <td style="color:var(--text-dim);font-size:11px">INS-000001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">lot_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>로트 ID (50개/로트)</td>
+            <td style="color:var(--text-dim);font-size:11px">LOT-0001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">m1_value ~ m4_value</td>
+            <td class="col-type">FLOAT</td>
+            <td>측정값 (정규분포)</td>
+            <td style="color:var(--text-dim);font-size:11px">설정값 기반</td>
+          </tr>
+                    <tr>
+            <td class="col-name">inspection_result</td>
+            <td class="col-type">ENUM</td>
+            <td>검사 결과 (ML 타겟)</td>
+            <td style="color:var(--text-dim);font-size:11px">OK / NG</td>
+          </tr>
+                    <tr>
+            <td class="col-name">defect_type</td>
+            <td class="col-type">VARCHAR</td>
+            <td>불량 유형</td>
+            <td style="color:var(--text-dim);font-size:11px">dimensional/surface/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">defect_severity</td>
+            <td class="col-type">ENUM</td>
+            <td>불량 심각도</td>
+            <td style="color:var(--text-dim);font-size:11px">MINOR/MAJOR/CRITICAL</td>
+          </tr>
+                    <tr>
+            <td class="col-name">rework_flag</td>
+            <td class="col-type">INT</td>
+            <td>재작업 여부</td>
+            <td style="color:var(--text-dim);font-size:11px">0 / 1</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">생산 KPI 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">date</td>
+            <td class="col-type">DATE</td>
+            <td>집계 날짜</td>
+            <td style="color:var(--text-dim);font-size:11px">일별/교대별</td>
+          </tr>
+                    <tr>
+            <td class="col-name">oee_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>OEE (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 100</td>
+          </tr>
+                    <tr>
+            <td class="col-name">availability_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>가동률 (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">60 ~ 99</td>
+          </tr>
+                    <tr>
+            <td class="col-name">performance_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>성능률 (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">60 ~ 99</td>
+          </tr>
+                    <tr>
+            <td class="col-name">quality_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>품질률 (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">85 ~ 99.9</td>
+          </tr>
+                    <tr>
+            <td class="col-name">uph</td>
+            <td class="col-type">INT</td>
+            <td>시간당 생산량</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">downtime_min</td>
+            <td class="col-type">INT</td>
+            <td>비가동 시간 (분)</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">event</td>
+            <td class="col-type">VARCHAR</td>
+            <td>이벤트</td>
+            <td style="color:var(--text-dim);font-size:11px">설비고장/PM/자재부족/...</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header"><span class="card-title">활용 도구 매핑</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>도구</th><th>추천 데이터</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td style="white-space:nowrap">🐍 Python / Pandas</td>
+            <td style="color:var(--text-dim)">센서·KPI CSV → ETL, 상관분석, 통계 실습</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">📊 Power BI / Grafana</td>
+            <td style="color:var(--text-dim)">KPI CSV → OEE 대시보드, 실시간 센서 대시보드</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🤖 MLflow / Scikit-learn</td>
+            <td style="color:var(--text-dim)">설비 CSV (failure_within_24h 타겟) → 예지보전 모델</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🔄 Apache Airflow</td>
+            <td style="color:var(--text-dim)">KPI/품질 CSV → 일배치 파이프라인, 스케줄링</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">⚡ Kafka / Flink</td>
+            <td style="color:var(--text-dim)">스트리밍 JSONL → 실시간 이상감지, CEP</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">📊 Google Sheets</td>
+            <td style="color:var(--text-dim)">스트리밍 → Apps Script 웹훅 → 실시간 대시보드</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🗄️ InfluxDB + Grafana</td>
+            <td style="color:var(--text-dim)">스트리밍 → PHP 프록시 → InfluxDB → Grafana</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.main-pad -->
+
+<!-- ── Login Modal ─────────────────────────────────────────── -->
+<div id="login-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">🎓 교육 코드 입력</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:20px">
+      강사에게 받은 교육 코드를 입력하면 데이터 생성 제한이 해제됩니다.
+    </p>
+    <div class="form-group">
+      <label class="input-label">교육 코드</label>
+      <input type="text" id="login-pw" class="input-field" placeholder="EDU-XXXX-XXXX"
+             style="text-transform:uppercase;letter-spacing:2px;font-family:'Space Mono',monospace"
+             oninput="this.value=this.value.toUpperCase()"
+             onkeydown="if(event.key==='Enter')submitLogin()">
+    </div>
+    <div id="login-err" style="color:var(--danger);font-size:12px;min-height:18px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="submitLogin()" class="btn btn-primary" style="flex:1">입력 확인</button>
+      <button onclick="document.getElementById('login-modal').classList.remove('show')" class="btn btn-outline">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/generators.js?v=1786256686"></script>
+<script src="js/formatters.js?v=1773892535"></script>
+<script src="js/app.js?v=1786256686"></script>
+<script>
+// PHP에서 전달된 auth 상태 동기화
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.MFG_AUTHED) setAuthed(true);
+  // 시나리오 기본값 적용
+  applyScenario('normal');
+});
+
+function copyAppsScript() {
+  const txt = document.getElementById('apps-script-code').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.getElementById('copy-script-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ COPIED';
+    btn.style.background = 'var(--accent3)';
+    btn.style.color = '#000';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
+  });
+}
+</script>
+<script>(function(){var k='tf_mfg';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=mfg&page='+encodeURIComponent(location.pathname)});})();</script>
+</div><!-- /.page-wrap -->
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

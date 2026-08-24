@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 분할 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="PDF 분할 — DataForge">
+  <meta property="og:description" content="서버 업로드 없이 브라우저에서 안전하고 빠르게 PDF 페이지를 분할합니다.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+
+    :root {
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);
+      --border2:rgba(0,0,0,.15);
+      --text:#1e293b;
+      --muted:#64748b;
+      --dim:#94a3b8;
+      --accent:#2563eb;
+      --accent2:#6366f1;
+      --amber:#d97706;
+      --green:#059669;
+      --red:#dc2626;
+      --orange:#ea580c;
+      --r:10px;
+    }
+
+    body {
+      font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; font-size:14px; line-height:1.6;
+    }
+
+    body::before {
+      content:'';
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    /* ── 헤더 ── */
+    .site-header {
+      padding:14px 24px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      background:rgba(248,250,252,.95);
+      backdrop-filter:blur(16px);
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { display:flex; align-items:center; gap:12px; }
+    .logo-brand { font-family:'Space Mono',monospace; font-size:18px; font-weight:700;
+                  color:var(--accent); letter-spacing:2px; text-decoration:none; }
+    .logo-brand em { color:#ea580c; font-style:normal; }
+    .logo-sep { width:1px; height:16px; background:var(--border2); flex-shrink:0; }
+    .logo-title { font-size:13px; color:var(--muted); }
+    .header-back { font-size:12px; color:var(--muted); text-decoration:none;
+                   border:1px solid var(--border2); padding:5px 14px; border-radius:8px; transition:.2s; }
+    .header-back:hover { color:var(--text); border-color:rgba(0,0,0,.3); }
+
+    /* ── 레이아웃 ── */
+    .page-wrap { max-width:1400px; margin:0 auto; position:relative; }
+    .page      { padding:0 24px 80px; }
+
+    .intro-box {
+      background:rgba(59,130,246,.06);
+      border:1px solid rgba(59,130,246,.15);
+      border-radius:10px;
+      padding:12px 16px;
+      font-size:13px; color:var(--muted); line-height:1.7;
+      margin-top:20px; margin-bottom:16px;
+    }
+    .intro-box strong { color:var(--text); }
+
+    .a-card {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      padding:16px 18px;
+      margin-bottom:16px;
+    }
+    .a-card:last-child { margin-bottom:0; }
+    .a-card-title {
+      font-size:10px; font-weight:700; color:var(--muted);
+      letter-spacing:.07em; text-transform:uppercase;
+      margin-bottom:14px;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+
+    /* ── 업로드 존 ── */
+    .upload-zone {
+      border:2px dashed rgba(37,99,235,.3);
+      border-radius:10px;
+      padding:48px 18px;
+      text-align:center; cursor:pointer; transition:all .2s;
+      background:rgba(37,99,235,.03); position:relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag { border-color:var(--accent); background:rgba(37,99,235,.07); }
+    .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-icon { font-size:40px; margin-bottom:12px; }
+    .upload-main { font-size:14px; font-weight:700; color:var(--text); margin-bottom:6px; }
+    .upload-sub  { font-size:12px; color:var(--muted); margin-bottom:18px; }
+    .upload-btn {
+      display:inline-block; background:var(--accent); color:#fff;
+      font-size:13px; font-weight:700; padding:9px 22px; border-radius:8px;
+      font-family:'Noto Sans KR', sans-serif; letter-spacing:.02em;
+    }
+
+    /* ── 에디터 레이아웃 ── */
+    .editor-layout {
+      display:grid;
+      grid-template-columns:300px 1fr;
+      gap:16px;
+      align-items:start;
+    }
+    .editor-left { position:sticky; top:80px; display:flex; flex-direction:column; gap:12px; }
+
+    /* ── 파일 정보 ── */
+    .file-info-row { display:flex; align-items:flex-start; gap:12px; }
+    .file-icon {
+      width:44px; height:44px; border-radius:8px;
+      background:rgba(220,38,38,.08); color:var(--red);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; flex-shrink:0;
+    }
+    .file-meta h4 { font-size:13px; font-weight:700; color:var(--text); word-break:break-all; margin-bottom:2px; }
+    .file-size { font-size:11px; color:var(--muted); }
+    .file-badge {
+      display:inline-block; margin-top:6px;
+      font-family:'Noto Sans KR', sans-serif; font-size:10px; font-weight:700;
+      padding:2px 8px; border-radius:4px;
+      background:rgba(37,99,235,.08); color:var(--accent); border:1px solid rgba(37,99,235,.2);
+    }
+
+    /* ── 분할 옵션 ── */
+    .opt-item {
+      border:1px solid var(--border2); border-radius:8px;
+      padding:12px; margin-bottom:8px; transition:.15s;
+    }
+    .opt-item:last-child { margin-bottom:0; }
+    .opt-item:hover { border-color:rgba(37,99,235,.35); }
+    .opt-label { display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+    .opt-label input[type=radio] { margin-top:3px; accent-color:var(--accent); flex-shrink:0; }
+    .opt-name { font-size:12px; font-weight:700; color:var(--text); }
+    .opt-desc { font-size:11px; color:var(--muted); margin-top:2px; line-height:1.5; }
+    .opt-sel-count { font-size:11px; font-weight:700; color:var(--accent); margin-top:4px; }
+
+    .opt-action { margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+    .opt-action.disabled { opacity:.45; pointer-events:none; }
+
+    /* ── 버튼 ── */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      padding:8px 16px; font-size:12px; font-weight:700;
+      border:none; border-radius:8px; cursor:pointer;
+      transition:all .2s; white-space:nowrap; font-family:inherit; width:100%;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { background:#1d4ed8; }
+    .btn-primary:disabled { background:var(--dim); cursor:not-allowed; }
+    .btn-accent2 { background:var(--accent2); color:#fff; }
+    .btn-accent2:hover { background:#4f46e5; }
+    .btn-green { background:var(--green); color:#fff; }
+    .btn-green:hover { background:#047857; }
+    .btn-outline { background:transparent; border:1px solid var(--border2); color:var(--muted); }
+    .btn-outline:hover { color:var(--text); border-color:rgba(0,0,0,.3); }
+    .btn-sm { padding:5px 12px; font-size:11px; width:auto; }
+
+    /* ── 범위 입력 ── */
+    .range-label { font-size:11px; color:var(--muted); margin-bottom:4px; display:block; }
+    .range-input {
+      width:100%; padding:7px 10px;
+      border:1px solid var(--border2); border-radius:8px;
+      font-size:12px; color:var(--text); background:var(--card2);
+      outline:none; font-family:inherit; margin-bottom:8px;
+    }
+    .range-input:focus { border-color:var(--accent); background:var(--card); }
+
+    /* ── 페이지 그리드 패널 ── */
+    .preview-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding-bottom:12px; margin-bottom:14px;
+      border-bottom:1px solid var(--border);
+      gap:12px; flex-wrap:wrap;
+    }
+    .preview-header h2 { font-size:13px; font-weight:700; color:var(--text); }
+    .preview-header p  { font-size:11px; color:var(--muted); margin-top:2px; }
+    .sel-tools { display:flex; gap:6px; flex-shrink:0; }
+
+    .pages-grid {
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:10px;
+      max-height:70vh; overflow-y:auto;
+      padding:8px;
+      background:var(--card2);
+      border-radius:8px;
+      border:1px solid var(--border);
+    }
+
+    /* ── 페이지 카드 ── */
+    .page-card {
+      background:var(--card);
+      border:2px solid var(--border2);
+      border-radius:8px;
+      padding:8px;
+      display:flex; flex-direction:column; align-items:center;
+      cursor:pointer; transition:all .15s;
+      position:relative; user-select:none;
+    }
+    .page-card:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(37,99,235,.12); }
+    .page-card.selected { border-color:var(--accent); background:rgba(37,99,235,.05); }
+    .page-card.selected .select-badge { display:flex; }
+    .select-badge {
+      position:absolute; top:6px; right:6px;
+      width:20px; height:20px;
+      background:var(--accent); color:#fff;
+      border-radius:50%;
+      display:none; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; z-index:2;
+    }
+    .page-card canvas {
+      width:100%; border-radius:4px;
+      border:1px solid var(--border);
+      margin-bottom:6px;
+    }
+    .page-num { font-size:10px; font-weight:700; color:var(--muted); }
+    .page-card:hover .page-num { color:var(--text); }
+
+    .grid-loading {
+      grid-column:1/-1; padding:40px; text-align:center; color:var(--dim);
+      font-size:13px;
+    }
+
+    /* ── 로딩 오버레이 ── */
+    .loading-overlay {
+      position:fixed; inset:0;
+      background:rgba(15,23,42,.65);
+      backdrop-filter:blur(4px);
+      z-index:200;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .loading-overlay.hidden { display:none; }
+    .loading-box {
+      background:var(--card);
+      border-radius:14px; padding:32px;
+      max-width:340px; width:100%; text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+    }
+    .loading-spinner {
+      width:48px; height:48px; margin:0 auto 16px;
+      border:4px solid var(--card2);
+      border-top-color:var(--accent);
+      border-radius:50%;
+      animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loading-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .loading-msg   { font-size:12px; color:var(--muted); margin-bottom:14px; }
+    .progress-bar-wrap { width:100%; height:6px; background:var(--card2); border-radius:3px; overflow:hidden; margin-bottom:6px; }
+    .progress-bar { height:100%; background:var(--accent); border-radius:3px; width:0; transition:width .15s; }
+    .progress-pct { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--accent); }
+
+    /* ── 커스텀 모달 ── */
+    .modal-overlay {
+      position:fixed; inset:0;
+      background:rgba(15,23,42,.55);
+      backdrop-filter:blur(4px);
+      z-index:300;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-overlay.show { opacity:1; pointer-events:auto; }
+    .modal-box {
+      background:var(--card); border-radius:14px;
+      max-width:400px; width:100%; margin:16px;
+      padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+      transform:scale(.95); transition:transform .2s;
+    }
+    .modal-overlay.show .modal-box { transform:scale(1); }
+    .modal-icon { font-size:24px; margin-bottom:10px; }
+    .modal-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; }
+    .modal-msg   { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:20px; }
+    .modal-actions { text-align:right; }
+    .btn-modal-close {
+      display:inline-flex; align-items:center;
+      padding:8px 20px; background:var(--text); color:#fff;
+      border:none; border-radius:8px; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:inherit; transition:.15s;
+    }
+    .btn-modal-close:hover { background:#0f172a; }
+
+    /* ── 보안 배지 ── */
+    .secure-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; color:var(--green);
+      background:rgba(5,150,105,.07); border:1px solid rgba(5,150,105,.2);
+      border-radius:20px; padding:4px 12px;
+    }
+
+    @media(max-width:900px) {
+      .editor-layout { grid-template-columns:1fr; }
+      .editor-left { position:static; }
+      .pages-grid { grid-template-columns:repeat(3,1fr); }
+    }
+    @media(max-width:640px) {
+      .page { padding:0 14px 60px; }
+      .site-header { padding:12px 14px; }
+      .pages-grid { grid-template-columns:repeat(2,1fr); }
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+
+<div class="page-wrap">
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">PDF 분할</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+    <div class="intro-box">
+      <strong>PDF 페이지 분할 도구</strong> — 서버 업로드 없이 브라우저에서 직접 처리하므로 파일이 외부로 전송되지 않습니다.
+      원하는 페이지를 클릭해 선택하거나, 범위를 직접 입력하거나, 전체를 한 장씩 분리해 ZIP으로 다운로드하세요.
+    </div>
+
+    <!-- 업로드 영역 -->
+    <div id="uploadContainer">
+      <div class="a-card">
+        <div id="dropzone" class="upload-zone">
+          <input type="file" id="fileInput" accept=".pdf">
+          <div class="upload-icon">📄</div>
+          <div class="upload-main">분할할 PDF 파일 업로드</div>
+          <div class="upload-sub">마우스로 파일을 끌어서 놓거나 클릭하여 선택하세요</div>
+          <span class="upload-btn">파일 찾아보기</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 에디터 영역 -->
+    <div id="editorContainer" class="hidden">
+      <div class="editor-layout">
+
+        <!-- 왼쪽: 컨트롤 패널 -->
+        <div class="editor-left">
+
+          <!-- 파일 정보 -->
+          <div class="a-card">
+            <div class="a-card-title">선택된 파일 정보</div>
+            <div class="file-info-row">
+              <div class="file-icon">📋</div>
+              <div class="file-meta">
+                <h4 id="fileName">document.pdf</h4>
+                <div class="file-size" id="fileSize">0 KB</div>
+                <span class="file-badge" id="pageCountBadge">총 0 페이지</span>
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <button id="btnReset" class="btn btn-outline btn-sm" style="width:100%;">↺ 다른 파일 선택</button>
+            </div>
+          </div>
+
+          <!-- 분할 옵션 -->
+          <div class="a-card">
+            <div class="a-card-title">분할 옵션</div>
+
+            <!-- 선택 페이지 추출 -->
+            <div class="opt-item">
+              <label class="opt-label">
+                <input type="radio" name="splitOption" value="selected" checked>
+                <div>
+                  <div class="opt-name">선택한 페이지만 추출</div>
+                  <div class="opt-desc">오른쪽 미리보기에서 분할할 페이지를 클릭하여 선택하세요.</div>
+                  <div class="opt-sel-count hidden" id="selectedCount">현재 <span id="selNum">0</span>개 선택됨</div>
+                </div>
+              </label>
+              <div class="opt-action" id="selectedActionArea">
+                <button id="btnSplitSelected" class="btn btn-primary" disabled>✂ 선택 페이지 분할 저장</button>
+              </div>
+            </div>
+
+            <!-- 범위 지정 -->
+            <div class="opt-item">
+              <label class="opt-label">
+                <input type="radio" name="splitOption" value="range">
+                <div>
+                  <div class="opt-name">사용자 지정 범위 분할</div>
+                  <div class="opt-desc">원하는 범위의 페이지를 하나의 PDF로 추출합니다.</div>
+                </div>
+              </label>
+              <div class="opt-action disabled" id="rangeInputArea">
+                <label class="range-label" for="rangeInput">범위 입력 예: 1-3, 5, 8-10</label>
+                <input type="text" id="rangeInput" class="range-input" placeholder="예: 1-2, 4-5">
+                <button id="btnSplitRange" class="btn btn-accent2">✦ 범위 추출 저장</button>
+              </div>
+            </div>
+
+            <!-- 전체 분할 -->
+            <div class="opt-item">
+              <label class="opt-label">
+                <input type="radio" name="splitOption" value="all">
+                <div>
+                  <div class="opt-name">모든 페이지 각각 분할</div>
+                  <div class="opt-desc">모든 페이지를 1장씩 쪼개어 ZIP 파일로 다운로드합니다.</div>
+                </div>
+              </label>
+              <div class="opt-action disabled" id="allActionArea">
+                <button id="btnSplitAll" class="btn btn-green">⬇ 전체 분할 ZIP 다운로드</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 오른쪽: 페이지 미리보기 -->
+        <div class="a-card">
+          <div class="preview-header">
+            <div>
+              <h2>페이지 미리보기</h2>
+              <p>각 페이지를 클릭하여 다중 선택할 수 있습니다.</p>
+            </div>
+            <div class="sel-tools">
+              <button id="btnSelectAll" class="btn btn-outline btn-sm">전체 선택</button>
+              <button id="btnClearSelection" class="btn btn-outline btn-sm">선택 해제</button>
+            </div>
+          </div>
+          <div id="pagesGrid" class="pages-grid">
+            <div class="grid-loading">PDF 페이지 렌더링 중...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div class="loading-title" id="loadingTitle">PDF 파일 처리 중</div>
+    <div class="loading-msg" id="loadingMessage">잠시만 기다려주세요...</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="loadingProgressBar"></div>
+    </div>
+    <div class="progress-pct" id="loadingPercent">0%</div>
+  </div>
+</div>
+
+<!-- 커스텀 모달 -->
+<div id="customModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon" id="modalIcon">⚠️</div>
+    <div class="modal-title" id="modalTitle">알림</div>
+    <div class="modal-msg" id="modalMessage">메시지 내용</div>
+    <div class="modal-actions">
+      <button id="btnModalClose" class="btn-modal-close">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+  let currentFileArrayBuffer = null;
+  let pdfDocumentInstance = null;
+  let totalPages = 0;
+  let selectedPages = new Set();
+  let fileNameWithoutExt = "document";
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const uploadContainer = document.getElementById('uploadContainer');
+  const editorContainer = document.getElementById('editorContainer');
+  const pagesGrid = document.getElementById('pagesGrid');
+  const fileNameEl = document.getElementById('fileName');
+  const fileSizeEl = document.getElementById('fileSize');
+  const pageCountBadge = document.getElementById('pageCountBadge');
+  const btnReset = document.getElementById('btnReset');
+  const btnSplitSelected = document.getElementById('btnSplitSelected');
+  const btnSplitRange = document.getElementById('btnSplitRange');
+  const btnSplitAll = document.getElementById('btnSplitAll');
+  const btnSelectAll = document.getElementById('btnSelectAll');
+  const btnClearSelection = document.getElementById('btnClearSelection');
+  const selectedCountArea = document.getElementById('selectedCount');
+  const selNumEl = document.getElementById('selNum');
+  const optionRadios = document.querySelectorAll('input[name="splitOption"]');
+  const selectedActionArea = document.getElementById('selectedActionArea');
+  const rangeInputArea = document.getElementById('rangeInputArea');
+  const rangeInput = document.getElementById('rangeInput');
+  const allActionArea = document.getElementById('allActionArea');
+  const customModal = document.getElementById('customModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalIcon = document.getElementById('modalIcon');
+  const btnModalClose = document.getElementById('btnModalClose');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingTitle = document.getElementById('loadingTitle');
+  const loadingMessage = document.getElementById('loadingMessage');
+  const loadingProgressBar = document.getElementById('loadingProgressBar');
+  const loadingPercent = document.getElementById('loadingPercent');
+
+  function showNotification(title, message, isError = false) {
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    modalIcon.textContent = isError ? '❌' : '⚠️';
+    customModal.classList.add('show');
+  }
+  btnModalClose.addEventListener('click', () => customModal.classList.remove('show'));
+  customModal.addEventListener('click', e => { if (e.target === customModal) customModal.classList.remove('show'); });
+
+  function showLoading(title, message = '잠시만 기다려주세요...') {
+    loadingTitle.textContent = title;
+    loadingMessage.textContent = message;
+    loadingProgressBar.style.width = '0%';
+    loadingPercent.textContent = '0%';
+    loadingOverlay.classList.remove('hidden');
+  }
+  function updateLoadingProgress(percent, customMsg = null) {
+    const pct = Math.min(Math.max(Math.round(percent), 0), 100);
+    loadingProgressBar.style.width = pct + '%';
+    loadingPercent.textContent = pct + '%';
+    if (customMsg) loadingMessage.textContent = customMsg;
+  }
+  function hideLoading() { loadingOverlay.classList.add('hidden'); }
+
+  function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+  }
+
+  /* ── 드래그 앤 드롭 ── */
+  ['dragenter', 'dragover'].forEach(ev => {
+    dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) handleFile(files[0]);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+  async function handleFile(file) {
+    if (file.type !== 'application/pdf') {
+      showNotification('허용되지 않는 형식', 'PDF 파일만 업로드할 수 있습니다.', true);
+      return;
+    }
+    fileNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+    showLoading('PDF 파일 분석 중', '문서 구조를 확인하고 있습니다...');
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      currentFileArrayBuffer = arrayBuffer.slice(0);
+      pdfDocumentInstance = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      totalPages = pdfDocumentInstance.numPages;
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = formatBytes(file.size);
+      pageCountBadge.textContent = '총 ' + totalPages + ' 페이지';
+      uploadContainer.classList.add('hidden');
+      editorContainer.classList.remove('hidden');
+      await renderPageThumbnails();
+    } catch (error) {
+      console.error(error);
+      showNotification('파일 파싱 실패', 'PDF 파일을 열 수 없습니다. 암호화되어 있거나 손상된 파일일 수 있습니다.', true);
+      resetAll();
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function renderPageThumbnails() {
+    pagesGrid.innerHTML = '';
+    selectedPages.clear();
+    updateSelectedUI();
+    showLoading('미리보기 생성 중', '페이지 1 / ' + totalPages + ' 렌더링 중...');
+
+    for (let i = 1; i <= totalPages; i++) {
+      updateLoadingProgress((i / totalPages) * 100, '페이지 ' + i + ' / ' + totalPages + ' 미리보기 생성 중...');
+      const page = await pdfDocumentInstance.getPage(i);
+      const viewport = page.getViewport({ scale: 0.4 });
+
+      const card = document.createElement('div');
+      card.className = 'page-card';
+      card.dataset.pageNumber = i;
+
+      const badge = document.createElement('div');
+      badge.className = 'select-badge';
+      badge.textContent = '✓';
+      card.appendChild(badge);
+
+      const canvas = document.createElement('canvas');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      card.appendChild(canvas);
+
+      const num = document.createElement('span');
+      num.className = 'page-num';
+      num.textContent = i + ' 페이지';
+      card.appendChild(num);
+
+      card.addEventListener('click', () => togglePageSelection(i, card));
+      pagesGrid.appendChild(card);
+    }
+  }
+
+  function resetAll() {
+    currentFileArrayBuffer = null;
+    pdfDocumentInstance = null;
+    totalPages = 0;
+    selectedPages.clear();
+    fileInput.value = '';
+    pagesGrid.innerHTML = '';
+    rangeInput.value = '';
+    document.querySelector('input[name="splitOption"][value="selected"]').checked = true;
+    handleOptionChange('selected');
+    editorContainer.classList.add('hidden');
+    uploadContainer.classList.remove('hidden');
+    updateSelectedUI();
+  }
+  btnReset.addEventListener('click', resetAll);
+
+  function togglePageSelection(pageNum, cardEl) {
+    const selectedRadio = document.querySelector('input[name="splitOption"][value="selected"]');
+    if (!selectedRadio.checked) { selectedRadio.checked = true; handleOptionChange('selected'); }
+    if (selectedPages.has(pageNum)) {
+      selectedPages.delete(pageNum);
+      cardEl.classList.remove('selected');
+    } else {
+      selectedPages.add(pageNum);
+      cardEl.classList.add('selected');
+    }
+    updateSelectedUI();
+  }
+
+  function updateSelectedUI() {
+    const count = selectedPages.size;
+    selNumEl.textContent = count;
+    if (count > 0) {
+      selectedCountArea.classList.remove('hidden');
+      btnSplitSelected.disabled = false;
+    } else {
+      selectedCountArea.classList.add('hidden');
+      btnSplitSelected.disabled = true;
+    }
+  }
+
+  btnSelectAll.addEventListener('click', () => {
+    pagesGrid.querySelectorAll('.page-card').forEach(card => {
+      selectedPages.add(parseInt(card.dataset.pageNumber));
+      card.classList.add('selected');
+    });
+    updateSelectedUI();
+    document.querySelector('input[name="splitOption"][value="selected"]').checked = true;
+    handleOptionChange('selected');
+  });
+
+  btnClearSelection.addEventListener('click', () => {
+    pagesGrid.querySelectorAll('.page-card').forEach(card => card.classList.remove('selected'));
+    selectedPages.clear();
+    updateSelectedUI();
+  });
+
+  optionRadios.forEach(radio => {
+    radio.addEventListener('change', e => handleOptionChange(e.target.value));
+  });
+
+  function handleOptionChange(option) {
+    selectedActionArea.classList.remove('disabled');
+    rangeInputArea.classList.add('disabled');
+    allActionArea.classList.add('disabled');
+    if (option === 'range') {
+      selectedActionArea.classList.add('disabled');
+      rangeInputArea.classList.remove('disabled');
+      rangeInput.focus();
+    } else if (option === 'all') {
+      selectedActionArea.classList.add('disabled');
+      allActionArea.classList.remove('disabled');
+    }
+  }
+  // 초기 상태 설정
+  handleOptionChange('selected');
+
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function processSplitSelected() {
+    if (selectedPages.size === 0) return;
+    showLoading('PDF 분할 진행 중', '선택하신 페이지를 추출하는 중입니다...');
+    try {
+      const srcDoc = await PDFLib.PDFDocument.load(currentFileArrayBuffer);
+      const newDoc = await PDFLib.PDFDocument.create();
+      const pagesToExtract = Array.from(selectedPages).sort((a, b) => a - b);
+      const zeroBasedIndices = pagesToExtract.map(idx => idx - 1);
+      updateLoadingProgress(30, '페이지 복사 중...');
+      const copiedPages = await newDoc.copyPages(srcDoc, zeroBasedIndices);
+      updateLoadingProgress(60, '새 PDF 작성 중...');
+      copiedPages.forEach(page => newDoc.addPage(page));
+      updateLoadingProgress(80, '파일 렌더링 중...');
+      const pdfBytes = await newDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      updateLoadingProgress(100, '다운로드 준비 완료!');
+      setTimeout(() => { triggerDownload(blob, fileNameWithoutExt + '_extracted.pdf'); hideLoading(); }, 500);
+    } catch (error) {
+      console.error(error);
+      hideLoading();
+      showNotification('분할 작업 실패', 'PDF 분할 처리 중 오류가 발생했습니다.', true);
+    }
+  }
+  btnSplitSelected.addEventListener('click', processSplitSelected);
+
+  function parseRangeString(rangeStr) {
+    const pages = new Set();
+    for (let part of rangeStr.split(',')) {
+      part = part.trim();
+      if (!part) continue;
+      if (part.includes('-')) {
+        const bounds = part.split('-');
+        if (bounds.length !== 2) return null;
+        const start = parseInt(bounds[0].trim());
+        const end = parseInt(bounds[1].trim());
+        if (isNaN(start) || isNaN(end) || start > end || start < 1 || end > totalPages) return null;
+        for (let i = start; i <= end; i++) pages.add(i);
+      } else {
+        const pageNum = parseInt(part);
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) return null;
+        pages.add(pageNum);
+      }
+    }
+    return Array.from(pages).sort((a, b) => a - b);
+  }
+
+  async function processSplitRange() {
+    const rawInput = rangeInput.value.trim();
+    if (!rawInput) { showNotification('입력 필요', '추출할 페이지 범위를 입력해 주세요.'); return; }
+    const parsedPages = parseRangeString(rawInput);
+    if (!parsedPages || parsedPages.length === 0) {
+      showNotification('올바르지 않은 범위', '범위 형식을 확인하거나 전체 범위(1 - ' + totalPages + ')를 초과하지 않게 입력하세요.', true);
+      return;
+    }
+    showLoading('페이지 범위 추출 중', parsedPages.length + '개의 페이지를 추출 중입니다...');
+    try {
+      const srcDoc = await PDFLib.PDFDocument.load(currentFileArrayBuffer);
+      const newDoc = await PDFLib.PDFDocument.create();
+      const zeroBasedIndices = parsedPages.map(idx => idx - 1);
+      updateLoadingProgress(40, '페이지 복제 중...');
+      const copiedPages = await newDoc.copyPages(srcDoc, zeroBasedIndices);
+      copiedPages.forEach(page => newDoc.addPage(page));
+      updateLoadingProgress(80, '문서 인코딩 중...');
+      const pdfBytes = await newDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      updateLoadingProgress(100, '다운로드 시작!');
+      setTimeout(() => { triggerDownload(blob, fileNameWithoutExt + '_range_split.pdf'); hideLoading(); }, 500);
+    } catch (error) {
+      console.error(error);
+      hideLoading();
+      showNotification('범위 분할 실패', '범위 기반 PDF 처리 중 오류가 발생했습니다.', true);
+    }
+  }
+  btnSplitRange.addEventListener('click', processSplitRange);
+
+  async function processSplitAll() {
+    showLoading('모든 페이지 개별 분할 시작', '전체 페이지를 1장짜리 PDF로 인코딩 중입니다...');
+    try {
+      const zip = new JSZip();
+      const srcDoc = await PDFLib.PDFDocument.load(currentFileArrayBuffer);
+      for (let i = 0; i < totalPages; i++) {
+        const pageNum = i + 1;
+        updateLoadingProgress((pageNum / totalPages) * 80, '페이지 분할 처리 중: (' + pageNum + ' / ' + totalPages + ')');
+        const singleDoc = await PDFLib.PDFDocument.create();
+        const [copiedPage] = await singleDoc.copyPages(srcDoc, [i]);
+        singleDoc.addPage(copiedPage);
+        const pdfBytes = await singleDoc.save();
+        zip.file(fileNameWithoutExt + '_page_' + String(pageNum).padStart(3, '0') + '.pdf', pdfBytes);
+      }
+      updateLoadingProgress(85, 'ZIP 압축 중...');
+      const zipContent = await zip.generateAsync({ type: 'blob' }, meta => {
+        updateLoadingProgress(85 + (meta.percent * 0.15), '압축 마무리 중...');
+      });
+      updateLoadingProgress(100, '다운로드 준비 완료!');
+      setTimeout(() => { triggerDownload(zipContent, fileNameWithoutExt + '_all_splitted.zip'); hideLoading(); }, 500);
+    } catch (error) {
+      console.error(error);
+      hideLoading();
+      showNotification('전체 분할 오류', '일괄 압축 분할 중 오류가 발생했습니다.', true);
+    }
+  }
+  btnSplitAll.addEventListener('click', processSplitAll);
+</script>
+
+<script>(function(){
+  var k='tf_work_pdf_splitter';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=work&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>비즈니스 모델 도식화 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta name="description" content="구조 템플릿을 고르고 이름과 화살표 문구만 채우면 비즈니스 모델 도식이 완성됩니다. SVG·PNG·HTML로 저장해 제안서에 바로 넣으세요.">
+<meta property="og:title" content="비즈니스 모델 도식화 — DataForge">
+<meta property="og:description" content="비즈니스 모델을 주체와 화살표로 도식화합니다. SVG·PNG 저장.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --purple:#7c3aed; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;min-width:0;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;white-space:nowrap;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.logo-title span{color:var(--orange);}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.save-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;min-height:40px;white-space:nowrap;}
+.save-btn:hover{opacity:.88;}
+/* 헤더 마크다운 저장 버튼 — bep.php와 동일 규격 */
+.md-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;min-height:40px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:8px;color:#0d9488;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.md-btn:hover{background:rgba(13,148,136,.18);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(234,88,12,.06);border:1px solid rgba(234,88,12,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin:20px 0 16px;}
+.intro-box strong{color:var(--text);}
+
+.layout{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;}
+
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* 템플릿 선택 */
+.tpl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.tpl-btn{padding:10px 8px;border:1.5px solid var(--border2);border-radius:10px;background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;min-height:44px;}
+.tpl-btn:hover{border-color:rgba(234,88,12,.4);}
+.tpl-btn.active{background:rgba(234,88,12,.08);border-color:var(--orange);}
+.tpl-btn.active .tpl-name{color:var(--orange);}
+.tpl-svg{display:block;margin:0 auto 6px;}
+.tpl-name{font-size:12px;font-weight:700;color:var(--text);}
+.tpl-sub{font-size:10px;color:var(--muted);line-height:1.4;margin-top:2px;}
+
+/* 폼 */
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;display:block;}
+.inp{width:100%;padding:9px 11px;font-size:16px;font-family:inherit;border:1px solid var(--border2);border-radius:8px;background:var(--card);color:var(--text);min-height:42px;}
+.inp:focus{outline:none;border-color:var(--orange);}
+select.inp{cursor:pointer;}
+
+.row-item{display:flex;gap:7px;align-items:center;margin-bottom:8px;}
+.row-item:last-child{margin-bottom:0;}
+.ico-inp{width:52px;flex-shrink:0;text-align:center;padding:9px 4px;}
+.row-item .inp{flex:1;min-width:0;}
+.sel-sm{width:78px;flex-shrink:0;padding:9px 4px;font-size:13px;text-align:center;}
+.edge-row{border:1px solid var(--border);border-radius:8px;padding:9px 10px;margin-bottom:8px;background:var(--card2);}
+.edge-row:last-child{margin-bottom:0;}
+.edge-path{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.edge-path b{color:var(--text);}
+.edge-inputs{display:flex;gap:7px;align-items:center;}
+
+/* 테마 */
+.theme-row{display:flex;gap:8px;flex-wrap:wrap;}
+.theme-dot{width:38px;height:38px;border-radius:9px;border:2px solid transparent;cursor:pointer;transition:.2s;padding:0;}
+.theme-dot.active{border-color:var(--text);}
+
+/* 미리보기 */
+.preview-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;overflow-x:auto;}
+.preview-wrap svg{display:block;max-width:100%;height:auto;margin:0 auto;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;font-size:12px;font-weight:700;min-height:44px;font-family:inherit;border:none;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-orange:hover{opacity:.88;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(234,88,12,.04);border-radius:8px;border:1px solid rgba(234,88,12,.1);}
+.info-block strong{color:var(--text);}
+.info-block + .info-block{margin-top:10px;}
+.info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.18);}
+.info-block.warn strong{color:var(--amber);}
+
+@media (min-width:1024px){
+  .layout{grid-template-columns:390px 1fr;}
+  .sticky-col{position:sticky;top:78px;}
+  .tpl-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:12px 14px;}
+  .logo-title{display:none;}
+  .btn-row .btn{flex:1;}
+  .save-btn{padding:9px 12px;}
+  .md-btn{padding:8px 10px;font-size:11px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>비즈니스 모델 도식화</span></div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="savePNG()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      PNG로 저장
+    </button>
+    <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    사업의 <strong>주체와 돈·가치의 흐름</strong>을 한 장으로 그립니다.
+    <strong>구조를 고르고 이름·화살표 문구만 채우면</strong> 끝 — 드래그할 필요가 없습니다.
+    제안서·사업계획서에 넣을 수 있게 <strong>PNG·SVG·HTML</strong>로 저장됩니다.
+  </div>
+
+  <div class="layout">
+
+    <!-- ══════ 왼쪽: 편집 ══════ -->
+    <div>
+      <div class="a-card">
+        <div class="a-card-title">🧱 구조 선택</div>
+        <div class="tpl-grid" id="tplGrid"></div>
+        <div class="info-block" id="tplDesc" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">✏️ 제목 · 색상</div>
+        <div class="field">
+          <label class="field-label">제목 (비워두면 표시하지 않음)</label>
+          <input class="inp" id="title" placeholder="예) My HUB 사업 구조" oninput="onEdit()">
+        </div>
+        <div class="field">
+          <label class="field-label">색상</label>
+          <div class="theme-row" id="themeRow"></div>
+        </div>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">🔤 주체 (노드)</div>
+        <div id="nodeList"></div>
+        <div class="info-block" style="margin-top:12px;">
+          앞칸은 <strong>아이콘</strong>(이모지 1~2자), 뒤칸은 <strong>이름</strong>입니다.
+          맨 뒤 선택지는 표시 방식 — <strong>강조</strong>(색 채운 상자) · <strong>연한</strong>(옅은 상자) · <strong>아이콘</strong>(상자 없이 아이콘만).
+        </div>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">➜ 화살표</div>
+        <div id="edgeList"></div>
+        <div class="info-block" style="margin-top:12px;">
+          화살표 문구가 이 도식의 <strong>핵심</strong>입니다.
+          "수수료 제공", "상품 공급"처럼 <strong>누가 누구에게 무엇을 주는지</strong> 적으세요. 방향은 <strong>→ ↔ 없음</strong> 중에 고릅니다.
+        </div>
+      </div>
+
+      <div class="a-card">
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="importBMC()">🧩 BMC에서 초안 불러오기</button>
+          <button class="btn btn-outline" onclick="resetTpl()">↺ 템플릿 기본값으로</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ 오른쪽: 미리보기 ══════ -->
+    <div class="sticky-col">
+      <div class="a-card">
+        <div class="a-card-title"><span>👁 미리보기</span><span id="sizeNote" style="letter-spacing:0;text-transform:none;font-family:'Space Mono',monospace;"></span></div>
+        <div class="preview-wrap" id="preview"></div>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">💾 저장</div>
+        <div class="btn-row">
+          <button class="btn btn-orange" onclick="savePNG()">🖼 PNG (2배 확대)</button>
+          <button class="btn btn-outline" onclick="saveSVG()">📐 SVG (벡터)</button>
+          <button class="btn btn-outline" onclick="saveHTML()">📄 HTML</button>
+          <button class="btn btn-outline" onclick="exportMD()">⬇️ 마크다운</button>
+        </div>
+        <div class="info-block warn" style="margin-top:12px;">
+          <strong>제안서·PPT에 넣을 때는 PNG</strong>를 권장합니다.
+          SVG는 크기를 키워도 안 깨지지만, 여는 프로그램에 <strong>Noto Sans KR 글꼴이 없으면</strong> 글자 모양이 달라질 수 있습니다.
+        </div>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">💡 이런 그림입니다</div>
+        <div class="info-block">
+          <strong>비즈니스 모델 캔버스와 다릅니다.</strong>
+          캔버스가 "무엇이 있는가"를 9칸에 나열한다면, 이 구조도는 <strong>"누가 누구에게 무엇을 주는가"</strong>를 화살표로 보여 줍니다. 둘은 짝으로 쓰면 좋습니다.
+        </div>
+        <div class="info-block">
+          <strong>🧩 BMC에서 초안 불러오기</strong>를 누르면
+          <a href="/manage/bmc" style="color:var(--orange);font-weight:700;">비즈니스 모델 캔버스</a>에 적어 둔 핵심 파트너·고객 세그먼트·채널·수익원을 이름과 화살표 문구 후보로 채웁니다. <strong>초안일 뿐이니 반드시 다듬으세요.</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   테마 · 템플릿
+   ══════════════════════════════════════════ */
+var THEMES = {
+  orange:{name:'주황', brand:'#EC661A', soft:'#FDECE2', line:'#EC661A', text:'#1E1E1E', dim:'#8A8A8A'},
+  blue:  {name:'파랑', brand:'#2563EB', soft:'#E6EEFD', line:'#2563EB', text:'#1E293B', dim:'#94A3B8'},
+  purple:{name:'보라', brand:'#7C3AED', soft:'#EFE8FD', line:'#7C3AED', text:'#1E293B', dim:'#94A3B8'},
+  green: {name:'초록', brand:'#059669', soft:'#E1F3ED', line:'#059669', text:'#1E293B', dim:'#94A3B8'},
+  slate: {name:'회색', brand:'#475569', soft:'#EEF1F5', line:'#64748B', text:'#1E293B', dim:'#94A3B8'}
+};
+
+/* role: BMC 초안 매핑용 (us=우리, partner=파트너, customer=고객, offer=가치제안, channel=채널) */
+var TEMPLATES = {
+  platform4:{
+    name:'플랫폼 + 파트너', sub:'4주체 · 중개 수수료형',
+    desc:'<strong>플랫폼이 위, 파트너가 가운데</strong>, 아래 좌우에 상품과 고객을 둡니다. 플랫폼이 파트너에게 수수료를 주는 <strong>중개·제휴 모델</strong>에 맞습니다.',
+    w:760, h:470,
+    nodes:[
+      {id:'top',  x:380, y:66,  bw:190, icon:'🏢', label:'플랫폼',        type:'brand', role:'us'},
+      {id:'mid',  x:380, y:296, bw:210, icon:'👤', label:'파트너·영업자',  type:'brand', role:'partner'},
+      {id:'left', x:118, y:378, bw:200, icon:'📦', label:'상품·서비스',    type:'soft',  role:'offer'},
+      {id:'right',x:648, y:372, bw:150, icon:'👥', label:'고객',          type:'plain', role:'customer'}
+    ],
+    edges:[
+      {from:'left', to:'top',   label:'영업 및 판매 제휴', dir:'both'},
+      {from:'top',  to:'mid',   label:'수수료 제공',      dir:'one',  bmc:'revenue'},
+      {from:'left', to:'right', label:'고객에게 소개·판매', dir:'both', bmc:'channels'}
+    ]
+  },
+  platform3:{
+    name:'중개 플랫폼', sub:'3주체 · 양면 시장형',
+    desc:'<strong>플랫폼이 공급자와 수요자를 연결</strong>하는 가장 흔한 구조입니다. 오픈마켓·매칭 서비스·중개 앱에 맞습니다.',
+    w:720, h:400,
+    nodes:[
+      {id:'top',  x:360, y:70,  bw:200, icon:'🏢', label:'플랫폼',   type:'brand', role:'us'},
+      {id:'left', x:120, y:300, bw:200, icon:'🏭', label:'공급자',   type:'soft',  role:'partner'},
+      {id:'right',x:600, y:300, bw:200, icon:'👥', label:'고객',     type:'soft',  role:'customer'}
+    ],
+    edges:[
+      {from:'left', to:'top',   label:'상품·서비스 공급', dir:'both'},
+      {from:'top',  to:'right', label:'제공·중개',       dir:'both', bmc:'channels'},
+      {from:'left', to:'right', label:'거래 · 정산',      dir:'both', bmc:'revenue'}
+    ]
+  },
+  chain:{
+    name:'가치사슬', sub:'4단계 · 선형 흐름',
+    desc:'공급부터 고객까지 <strong>왼쪽에서 오른쪽으로 흐르는</strong> 구조입니다. 제조·유통처럼 단계가 분명한 사업에 맞습니다.',
+    w:850, h:250,
+    nodes:[
+      {id:'n1', x:110, y:150, bw:160, icon:'🏭', label:'공급사',   type:'soft',  role:'partner'},
+      {id:'n2', x:320, y:150, bw:160, icon:'🏢', label:'우리 회사', type:'brand', role:'us'},
+      {id:'n3', x:530, y:150, bw:160, icon:'🚚', label:'유통·채널', type:'soft',  role:'channel'},
+      {id:'n4', x:740, y:150, bw:160, icon:'👥', label:'고객',     type:'soft',  role:'customer'}
+    ],
+    edges:[
+      {from:'n1', to:'n2', label:'원자재 공급', dir:'one', lp:'above'},
+      {from:'n2', to:'n3', label:'제품 공급',   dir:'one', lp:'above', bmc:'channels'},
+      {from:'n3', to:'n4', label:'판매',       dir:'one', lp:'above', bmc:'revenue'}
+    ]
+  },
+  hub:{
+    name:'허브앤스포크', sub:'중앙 + 4주체 · 방사형',
+    desc:'<strong>우리를 중심에 두고</strong> 이해관계자를 사방에 배치합니다. 관계가 여러 갈래로 뻗는 사업에 맞습니다.',
+    w:820, h:520,
+    nodes:[
+      {id:'c',  x:410, y:260, bw:200, icon:'🏢', label:'우리 회사',   type:'brand', role:'us'},
+      {id:'n',  x:410, y:64,  bw:180, icon:'🤝', label:'핵심 파트너', type:'soft',  role:'partner'},
+      {id:'e',  x:690, y:260, bw:180, icon:'👥', label:'고객',       type:'soft',  role:'customer'},
+      {id:'s',  x:410, y:456, bw:180, icon:'🚚', label:'채널',       type:'soft',  role:'channel'},
+      {id:'w',  x:130, y:260, bw:180, icon:'📦', label:'상품·서비스', type:'soft',  role:'offer'}
+    ],
+    edges:[
+      {from:'n', to:'c', label:'협력·공급',   dir:'both'},
+      {from:'c', to:'e', label:'가치 제공',   dir:'both', lp:'above', bmc:'revenue'},
+      {from:'c', to:'s', label:'전달',       dir:'one',  bmc:'channels'},
+      {from:'w', to:'c', label:'구성',       dir:'one',  lp:'above'}
+    ]
+  }
+};
+
+var LS_KEY='df_bizmodel_v1';
+var cur = {tpl:'platform4', theme:'orange', title:'', nodes:[], edges:[]};
+var saveTimer=null;
+
+/* ══════════════════════════════════════════
+   텍스트 측정 · 줄바꿈
+   ══════════════════════════════════════════ */
+var _mctx=null;
+function measure(t,size,weight){
+  if(!_mctx) _mctx=document.createElement('canvas').getContext('2d');
+  _mctx.font=(weight||400)+' '+size+'px "Noto Sans KR",sans-serif';
+  return _mctx.measureText(String(t)).width;
+}
+function wrap(text,maxW,size,weight){
+  var raw=String(text==null?'':text).trim();
+  if(!raw) return [''];
+  var parts=raw.split(/\s+/), lines=[], cur='';
+  parts.forEach(function(w){
+    var t=cur?cur+' '+w:w;
+    if(measure(t,size,weight)<=maxW||!cur) cur=t;
+    else { lines.push(cur); cur=w; }
+  });
+  if(cur) lines.push(cur);
+  var out=[];
+  lines.forEach(function(l){
+    if(measure(l,size,weight)<=maxW){ out.push(l); return; }
+    var b='';
+    for(var i=0;i<l.length;i++){
+      var ch=l[i];
+      if(b && measure(b+ch,size,weight)>maxW){ out.push(b); b=ch; }
+      else b+=ch;
+    }
+    if(b) out.push(b);
+  });
+  return out.length?out:[''];
+}
+
+/* ══════════════════════════════════════════
+   장면(Scene) 조립 — SVG·Canvas 공통 원본
+   ══════════════════════════════════════════ */
+var NODE_FS=15, EDGE_FS=12.5, TITLE_FS=17, PAD_X=14, PAD_Y=11;
+
+function buildScene(){
+  var T=TEMPLATES[cur.tpl], th=THEMES[cur.theme];
+  var offY = cur.title.trim() ? 44 : 0;
+  var items=[], boxes={};
+
+  /* 1) 노드 크기 계산 */
+  cur.nodes.forEach(function(n){
+    var b={cx:n.x, cy:n.y+offY, w:n.bw};
+    if(n.type==='plain'){
+      b.lines=wrap(n.label, n.bw, NODE_FS, 700);
+      b.h=38+6+b.lines.length*20;
+    }else{
+      var txt=(n.icon?n.icon+' ':'')+n.label;
+      b.lines=wrap(txt, n.bw-PAD_X*2, NODE_FS, 700);
+      b.h=Math.max(46, b.lines.length*21+PAD_Y*2);
+    }
+    boxes[n.id]=b;
+  });
+
+  /* 2) 화살표 (노드 뒤에 깔림) */
+  var labels=[];
+  cur.edges.forEach(function(e){
+    var a=boxes[e.from], b=boxes[e.to];
+    if(!a||!b) return;
+    var p1=boxExit(a,b.cx,b.cy), p2=boxExit(b,a.cx,a.cy);
+    var ang=Math.atan2(p2.y-p1.y, p2.x-p1.x);
+    var gap=7, head=9;
+    var x1=p1.x+Math.cos(ang)*gap, y1=p1.y+Math.sin(ang)*gap;
+    var x2=p2.x-Math.cos(ang)*gap, y2=p2.y-Math.sin(ang)*gap;
+    if(e.dir==='one'||e.dir==='both'){ x2-=Math.cos(ang)*head*0.8; y2-=Math.sin(ang)*head*0.8; }
+    if(e.dir==='both'){ x1+=Math.cos(ang)*head*0.8; y1+=Math.sin(ang)*head*0.8; }
+
+    items.push({t:'line', x1:x1, y1:y1, x2:x2, y2:y2, stroke:th.line, w:1.8});
+    if(e.dir==='one'||e.dir==='both')
+      items.push({t:'poly', pts:headPts(x2,y2,ang,head), fill:th.line});
+    if(e.dir==='both')
+      items.push({t:'poly', pts:headPts(x1,y1,ang+Math.PI,head), fill:th.line});
+
+    var lb=String(e.label||'').trim();
+    if(lb){
+      var ls=wrap(lb, 190, EDGE_FS, 400);
+      var lw=0; ls.forEach(function(s){ lw=Math.max(lw, measure(s,EDGE_FS,400)); });
+      var lh=ls.length*17;
+      var mx=(x1+x2)/2, my=(y1+y2)/2;
+      /* lp:'above' — 노드 간격이 좁은 선형 배치에서 문구를 선 위로 올린다 */
+      if(e.lp==='above') my = Math.min(y1,y2) - lh/2 - 26;
+      labels.push({t:'rect', x:mx-lw/2-7, y:my-lh/2-4, w:lw+14, h:lh+8, r:5, fill:'#ffffff', stroke:'none'});
+      ls.forEach(function(s,i){
+        labels.push({t:'text', x:mx, y:my-lh/2+17*i+12, s:s, size:EDGE_FS, weight:400, fill:th.text, anchor:'middle'});
+      });
+    }
+  });
+
+  /* 3) 노드 상자 */
+  cur.nodes.forEach(function(n){
+    var b=boxes[n.id];
+    if(n.type==='plain'){
+      items.push({t:'text', x:b.cx, y:b.cy-b.h/2+30, s:n.icon||'', size:32, weight:400, fill:th.text, anchor:'middle'});
+      b.lines.forEach(function(l,i){
+        items.push({t:'text', x:b.cx, y:b.cy-b.h/2+44+20*i+14, s:l, size:NODE_FS, weight:700, fill:th.text, anchor:'middle'});
+      });
+    }else{
+      var isBrand=n.type==='brand';
+      items.push({t:'rect', x:b.cx-b.w/2, y:b.cy-b.h/2, w:b.w, h:b.h, r:9,
+                  fill:isBrand?th.brand:th.soft, stroke:'none'});
+      b.lines.forEach(function(l,i){
+        items.push({t:'text', x:b.cx, y:b.cy-b.lines.length*21/2+21*i+15, s:l,
+                    size:NODE_FS, weight:700, fill:isBrand?'#ffffff':th.brand, anchor:'middle'});
+      });
+    }
+  });
+
+  items=items.concat(labels);
+
+  /* 4) 제목 */
+  if(cur.title.trim()){
+    items.unshift({t:'text', x:24, y:30, s:cur.title.trim(), size:TITLE_FS, weight:700, fill:th.text, anchor:'start'});
+  }
+
+  return {w:T.w, h:T.h+offY, bg:'#ffffff', items:items};
+}
+
+/* 상자 중심에서 (tx,ty) 방향으로 나가는 테두리 지점 */
+function boxExit(b,tx,ty){
+  var dx=tx-b.cx, dy=ty-b.cy;
+  if(!dx&&!dy) return {x:b.cx,y:b.cy};
+  var sx=dx?(b.w/2)/Math.abs(dx):Infinity;
+  var sy=dy?(b.h/2)/Math.abs(dy):Infinity;
+  var s=Math.min(sx,sy);
+  return {x:b.cx+dx*s, y:b.cy+dy*s};
+}
+function headPts(x,y,ang,size){
+  var a1=ang+Math.PI-0.42, a2=ang+Math.PI+0.42;
+  return [[x,y],[x+size*Math.cos(a1),y+size*Math.sin(a1)],[x+size*Math.cos(a2),y+size*Math.sin(a2)]];
+}
+
+/* ══════════════════════════════════════════
+   렌더러 1 — SVG
+   ══════════════════════════════════════════ */
+function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function nf(v){ return Math.round(v*100)/100; }
+
+function sceneToSVG(sc){
+  var o='<svg xmlns="http://www.w3.org/2000/svg" width="'+sc.w+'" height="'+sc.h+'" viewBox="0 0 '+sc.w+' '+sc.h+'">';
+  o+='<rect width="'+sc.w+'" height="'+sc.h+'" fill="'+sc.bg+'"/>';
+  sc.items.forEach(function(it){
+    if(it.t==='rect'){
+      o+='<rect x="'+nf(it.x)+'" y="'+nf(it.y)+'" width="'+nf(it.w)+'" height="'+nf(it.h)+'" rx="'+(it.r||0)+'" fill="'+it.fill+'"/>';
+    }else if(it.t==='line'){
+      o+='<line x1="'+nf(it.x1)+'" y1="'+nf(it.y1)+'" x2="'+nf(it.x2)+'" y2="'+nf(it.y2)+'" stroke="'+it.stroke+'" stroke-width="'+it.w+'" stroke-linecap="round"/>';
+    }else if(it.t==='poly'){
+      o+='<polygon points="'+it.pts.map(function(p){return nf(p[0])+','+nf(p[1]);}).join(' ')+'" fill="'+it.fill+'"/>';
+    }else if(it.t==='text'){
+      o+='<text x="'+nf(it.x)+'" y="'+nf(it.y)+'" font-family="Noto Sans KR, Malgun Gothic, sans-serif" font-size="'+it.size+'" font-weight="'+it.weight+'" fill="'+it.fill+'" text-anchor="'+it.anchor+'">'+xe(it.s)+'</text>';
+    }
+  });
+  return o+'</svg>';
+}
+
+/* ══════════════════════════════════════════
+   렌더러 2 — Canvas (PNG 저장용, 페이지 글꼴 사용)
+   ══════════════════════════════════════════ */
+function sceneToCanvas(sc,scale){
+  var c=document.createElement('canvas');
+  c.width=Math.round(sc.w*scale); c.height=Math.round(sc.h*scale);
+  var x=c.getContext('2d');
+  x.scale(scale,scale);
+  x.fillStyle=sc.bg; x.fillRect(0,0,sc.w,sc.h);
+  x.textBaseline='alphabetic';
+  sc.items.forEach(function(it){
+    if(it.t==='rect'){
+      x.fillStyle=it.fill; roundRect(x,it.x,it.y,it.w,it.h,it.r||0); x.fill();
+    }else if(it.t==='line'){
+      x.strokeStyle=it.stroke; x.lineWidth=it.w; x.lineCap='round';
+      x.beginPath(); x.moveTo(it.x1,it.y1); x.lineTo(it.x2,it.y2); x.stroke();
+    }else if(it.t==='poly'){
+      x.fillStyle=it.fill; x.beginPath();
+      it.pts.forEach(function(p,i){ i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]); });
+      x.closePath(); x.fill();
+    }else if(it.t==='text'){
+      x.fillStyle=it.fill;
+      x.font=it.weight+' '+it.size+'px "Noto Sans KR", sans-serif';
+      x.textAlign=it.anchor==='middle'?'center':'left';
+      x.fillText(it.s,it.x,it.y);
+    }
+  });
+  return c;
+}
+function roundRect(x,px,py,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  x.beginPath();
+  x.moveTo(px+r,py); x.lineTo(px+w-r,py); x.quadraticCurveTo(px+w,py,px+w,py+r);
+  x.lineTo(px+w,py+h-r); x.quadraticCurveTo(px+w,py+h,px+w-r,py+h);
+  x.lineTo(px+r,py+h); x.quadraticCurveTo(px,py+h,px,py+h-r);
+  x.lineTo(px,py+r); x.quadraticCurveTo(px,py,px+r,py); x.closePath();
+}
+
+/* ══════════════════════════════════════════
+   UI
+   ══════════════════════════════════════════ */
+function renderTplPicker(){
+  document.getElementById('tplGrid').innerHTML = Object.keys(TEMPLATES).map(function(k){
+    var t=TEMPLATES[k];
+    return '<button class="tpl-btn'+(k===cur.tpl?' active':'')+'" onclick="pickTpl(\''+k+'\')">'
+      + tplThumb(k)
+      + '<div class="tpl-name">'+t.name+'</div><div class="tpl-sub">'+t.sub+'</div></button>';
+  }).join('');
+  document.getElementById('tplDesc').innerHTML = TEMPLATES[cur.tpl].desc;
+}
+function tplThumb(k){
+  var c=THEMES[cur.theme].brand, g='#CBD5E1';
+  var m={
+    platform4:'<rect x="26" y="2" width="16" height="9" rx="2" fill="'+c+'"/><rect x="26" y="17" width="16" height="8" rx="2" fill="'+c+'"/><rect x="2" y="28" width="18" height="8" rx="2" fill="'+g+'"/><rect x="50" y="28" width="16" height="8" rx="2" fill="'+g+'"/><path d="M20 30 L28 12M34 12 L34 16M20 34 L50 34" stroke="'+c+'" stroke-width="1.4" fill="none"/>',
+    platform3:'<rect x="24" y="2" width="20" height="10" rx="2" fill="'+c+'"/><rect x="2" y="26" width="20" height="10" rx="2" fill="'+g+'"/><rect x="46" y="26" width="20" height="10" rx="2" fill="'+g+'"/><path d="M14 26 L28 13M40 13 L54 26M22 32 L46 32" stroke="'+c+'" stroke-width="1.4" fill="none"/>',
+    chain:'<rect x="1" y="13" width="14" height="11" rx="2" fill="'+g+'"/><rect x="19" y="13" width="14" height="11" rx="2" fill="'+c+'"/><rect x="37" y="13" width="14" height="11" rx="2" fill="'+g+'"/><rect x="55" y="13" width="12" height="11" rx="2" fill="'+g+'"/><path d="M15 18.5h4M33 18.5h4M51 18.5h4" stroke="'+c+'" stroke-width="1.4"/>',
+    hub:'<rect x="24" y="14" width="20" height="10" rx="2" fill="'+c+'"/><rect x="26" y="1" width="16" height="7" rx="2" fill="'+g+'"/><rect x="26" y="30" width="16" height="7" rx="2" fill="'+g+'"/><rect x="1" y="15" width="16" height="8" rx="2" fill="'+g+'"/><rect x="51" y="15" width="16" height="8" rx="2" fill="'+g+'"/><path d="M34 8v6M34 24v6M17 19h7M44 19h7" stroke="'+c+'" stroke-width="1.4"/>'
+  };
+  return '<svg class="tpl-svg" width="68" height="38" viewBox="0 0 68 38">'+m[k]+'</svg>';
+}
+
+function renderThemes(){
+  document.getElementById('themeRow').innerHTML = Object.keys(THEMES).map(function(k){
+    return '<button class="theme-dot'+(k===cur.theme?' active':'')+'" style="background:'+THEMES[k].brand+'" '
+      + 'title="'+THEMES[k].name+'" aria-label="'+THEMES[k].name+'" onclick="pickTheme(\''+k+'\')"></button>';
+  }).join('');
+}
+
+function renderNodeList(){
+  document.getElementById('nodeList').innerHTML = cur.nodes.map(function(n,i){
+    return '<div class="row-item">'
+      + '<input class="inp ico-inp" value="'+xe(n.icon)+'" maxlength="4" oninput="setNode('+i+',\'icon\',this.value)" aria-label="아이콘">'
+      + '<input class="inp" value="'+xe(n.label)+'" oninput="setNode('+i+',\'label\',this.value)" aria-label="이름">'
+      + '<select class="inp sel-sm" onchange="setNode('+i+',\'type\',this.value)" aria-label="표시 방식">'
+      +   '<option value="brand"'+(n.type==='brand'?' selected':'')+'>강조</option>'
+      +   '<option value="soft"'+(n.type==='soft'?' selected':'')+'>연한</option>'
+      +   '<option value="plain"'+(n.type==='plain'?' selected':'')+'>아이콘</option>'
+      + '</select></div>';
+  }).join('');
+}
+
+function renderEdgeList(){
+  var lbl={}; cur.nodes.forEach(function(n){ lbl[n.id]=n.label||n.id; });
+  document.getElementById('edgeList').innerHTML = cur.edges.map(function(e,i){
+    var arrow = e.dir==='both'?'↔':(e.dir==='one'?'→':'—');
+    return '<div class="edge-row">'
+      + '<div class="edge-path"><b>'+xe(lbl[e.from])+'</b> '+arrow+' <b>'+xe(lbl[e.to])+'</b></div>'
+      + '<div class="edge-inputs">'
+      +   '<input class="inp" value="'+xe(e.label)+'" placeholder="예) 수수료 제공" oninput="setEdge('+i+',\'label\',this.value)" aria-label="화살표 문구">'
+      +   '<select class="inp sel-sm" onchange="setEdge('+i+',\'dir\',this.value)" aria-label="방향">'
+      +     '<option value="one"'+(e.dir==='one'?' selected':'')+'>→</option>'
+      +     '<option value="both"'+(e.dir==='both'?' selected':'')+'>↔</option>'
+      +     '<option value="none"'+(e.dir==='none'?' selected':'')+'>없음</option>'
+      +   '</select>'
+      + '</div></div>';
+  }).join('');
+}
+
+function setNode(i,k,v){
+  cur.nodes[i][k]=v;
+  if(k==='label') renderEdgeList();
+  onEdit();
+}
+function setEdge(i,k,v){
+  cur.edges[i][k]=v;
+  if(k==='dir') renderEdgeList();
+  onEdit();
+}
+function pickTpl(k){ cur.tpl=k; loadTplDefaults(); renderTplPicker(); renderNodeList(); renderEdgeList(); onEdit(); }
+function pickTheme(k){ cur.theme=k; renderThemes(); renderTplPicker(); onEdit(); }
+function resetTpl(){ if(!confirm('현재 템플릿의 기본 이름·문구로 되돌립니다. 계속할까요?')) return; loadTplDefaults(); renderNodeList(); renderEdgeList(); onEdit(); }
+
+function loadTplDefaults(){
+  var T=TEMPLATES[cur.tpl];
+  cur.nodes=T.nodes.map(function(n){ return {id:n.id,x:n.x,y:n.y,bw:n.bw,icon:n.icon,label:n.label,type:n.type,role:n.role}; });
+  cur.edges=T.edges.map(function(e){ return {from:e.from,to:e.to,label:e.label,dir:e.dir,lp:e.lp||'mid',bmc:e.bmc||null}; });
+}
+
+function onEdit(){
+  cur.title=document.getElementById('title').value;
+  var sc=buildScene();
+  document.getElementById('preview').innerHTML=sceneToSVG(sc);
+  document.getElementById('sizeNote').textContent=sc.w+' × '+sc.h;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveLocal,500);
+}
+
+/* ── 저장/복원 ── */
+function saveLocal(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(cur)); }catch(e){}
+}
+function loadLocal(){
+  var raw; try{ raw=localStorage.getItem(LS_KEY); }catch(e){ return false; }
+  if(!raw) return false;
+  try{
+    var d=JSON.parse(raw);
+    if(!d||!TEMPLATES[d.tpl]||!Array.isArray(d.nodes)||!d.nodes.length) return false;
+    cur=d;
+    if(!THEMES[cur.theme]) cur.theme='orange';
+    cur.title=cur.title||'';
+    document.getElementById('title').value=cur.title;
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ── BMC 초안 ── */
+function firstLine(t){
+  if(!t) return '';
+  var a=String(t).split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  return a.length?a[0]:'';
+}
+function importBMC(){
+  var raw; try{ raw=localStorage.getItem('df_bmc_v1'); }catch(e){ raw=null; }
+  if(!raw){
+    alert('비즈니스 모델 캔버스에 저장된 내용이 없습니다.\n\n먼저 /manage/bmc 에서 캔버스를 작성해 주세요.\n(같은 브라우저에서 작성한 내용만 불러옵니다.)');
+    return;
+  }
+  var d; try{ d=JSON.parse(raw); }catch(e){ d=null; }
+  if(!d||!d.blocks){ alert('캔버스 내용을 읽지 못했습니다.'); return; }
+
+  if(!confirm('BMC 내용으로 이름과 화살표 문구를 채웁니다.\n지금 입력한 내용은 덮어써집니다. 계속할까요?')) return;
+
+  var pick={
+    us:       d.name || '우리 회사',
+    partner:  firstLine(d.blocks.partners),
+    customer: firstLine(d.blocks.segments),
+    offer:    firstLine(d.blocks.value),
+    channel:  firstLine(d.blocks.channels)
+  };
+  var n=0;
+  cur.nodes.forEach(function(nd){
+    var v=pick[nd.role];
+    if(v){ nd.label=v; n++; }
+  });
+  var eb={revenue:firstLine(d.blocks.revenue), channels:firstLine(d.blocks.channels)};
+  cur.edges.forEach(function(e){
+    if(e.bmc && eb[e.bmc]){ e.label=eb[e.bmc]; n++; }
+  });
+  if(d.name && !document.getElementById('title').value)
+    document.getElementById('title').value=d.name+' 사업 구조';
+
+  renderNodeList(); renderEdgeList(); onEdit();
+  alert(n+'곳을 캔버스 내용으로 채웠습니다.\n\n초안이니 문구를 다듬어 주세요. 특히 화살표는 "누가 누구에게 무엇을 주는지"로 고쳐 쓰면 좋습니다.');
+}
+
+/* ── 내보내기 ── */
+function fname(ext){
+  var t=(cur.title||TEMPLATES[cur.tpl].name).replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40);
+  return 'bizmodel-'+(t||'diagram')+'-'+new Date().toISOString().slice(0,10)+'.'+ext;
+}
+function dl(blob,name){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+function saveSVG(){
+  dl(new Blob([sceneToSVG(buildScene())],{type:'image/svg+xml;charset=utf-8'}), fname('svg'));
+}
+function savePNG(){
+  var c=sceneToCanvas(buildScene(),2);
+  c.toBlob(function(b){ if(b) dl(b,fname('png')); else alert('PNG 변환에 실패했습니다.'); },'image/png');
+}
+function saveHTML(){
+  var sc=buildScene(), today=new Date().toISOString().slice(0,10);
+  var title=cur.title.trim()||'비즈니스 모델 도식화';
+  var html='<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
+    +'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'
+    +'<title>'+xe(title)+' — 비즈니스 모델 도식화</title>\n'
+    +'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+    +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n'
+    +'<style>\n'
+    +':root{--bg:#f8fafc;--card:#fff;--border:rgba(0,0,0,.1);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--r:10px;}\n'
+    +'*{margin:0;padding:0;box-sizing:border-box;}\n'
+    +'body{font-family:"Noto Sans KR","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}\n'
+    +'.wrap{max-width:1000px;margin:0 auto;padding:36px 24px 60px;}\n'
+    +'.page-title{font-size:22px;font-weight:800;margin-bottom:4px;}\n'
+    +'.meta{font-size:12px;color:var(--dim);margin-bottom:22px;}\n'
+    +'.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;overflow-x:auto;}\n'
+    +'.section-card svg{display:block;max-width:100%;height:auto;margin:0 auto;}\n'
+    +'.flows{margin-top:16px;}\n'
+    +'.flow{font-size:13px;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--border);}\n'
+    +'.flow:last-child{border-bottom:none;}\n'
+    +'.flow b{color:var(--text);}\n'
+    +'.footer{margin-top:36px;text-align:center;font-size:11px;color:var(--dim);}\n'
+    +'@media print{@page{size:A4 landscape;margin:12mm;}body{background:#fff;}.wrap{padding:0;max-width:none;}}\n'
+    +'</style>\n</head>\n<body>\n<div class="wrap">\n'
+    +'<div class="page-title">🔗 '+xe(title)+'</div>\n'
+    +'<div class="meta">'+xe(today)+' &nbsp;·&nbsp; DataForge 비즈니스 모델 도식화</div>\n'
+    +'<div class="section-card">\n'+sceneToSVG(sc)+'\n';
+
+  var lbl={}; cur.nodes.forEach(function(n){ lbl[n.id]=n.label||n.id; });
+  var flows=cur.edges.filter(function(e){ return String(e.label||'').trim(); }).map(function(e){
+    var ar=e.dir==='both'?'↔':(e.dir==='one'?'→':'—');
+    return '<div class="flow"><b>'+xe(lbl[e.from])+'</b> '+ar+' <b>'+xe(lbl[e.to])+'</b> &nbsp;:&nbsp; '+xe(e.label)+'</div>';
+  }).join('\n');
+  if(flows) html+='<div class="flows">\n'+flows+'\n</div>\n';
+
+  html+='</div>\n<div class="footer">DataForge · dataforge.ai.kr · '+xe(today)+'</div>\n</div>\n</body>\n</html>';
+  dl(new Blob([html],{type:'text/html;charset=utf-8'}), fname('html'));
+}
+
+/* ── 마크다운으로 저장 — 주체·화살표 구조를 .md 파일로 내려받는다 (그림은 PNG·SVG 저장 이용) ── */
+function exportMD(){
+  var today=new Date().toISOString().slice(0,10);
+  var T=TEMPLATES[cur.tpl];
+  var title=cur.title.trim()||'비즈니스 모델 도식화';
+  var TYPE={brand:'강조',soft:'연한',plain:'아이콘'};
+  var md='# 🔗 '+title+'\n\n';
+  md+=today+' · DataForge 비즈니스 모델 도식화\n\n';
+  md+='**구조**: '+T.name+' ('+T.sub+')\n\n';
+  md+='## 주체\n\n';
+  cur.nodes.forEach(function(n){
+    md+='- '+(n.icon?n.icon+' ':'')+'**'+(n.label||n.id)+'**'+(TYPE[n.type]?' — '+TYPE[n.type]:'')+'\n';
+  });
+  var lbl={}; cur.nodes.forEach(function(n){ lbl[n.id]=n.label||n.id; });
+  md+='\n## 흐름 (화살표)\n\n';
+  cur.edges.forEach(function(e){
+    var ar=e.dir==='both'?'↔':(e.dir==='one'?'→':'—');
+    var t=String(e.label||'').trim();
+    md+='- **'+lbl[e.from]+'** '+ar+' **'+lbl[e.to]+'**'+(t?' : '+t:'')+'\n';
+  });
+  md+='\n';
+  dl(new Blob([md],{type:'text/markdown;charset=utf-8'}), fname('md'));
+}
+
+/* ── 시작 ── */
+if(!loadLocal()) loadTplDefaults();
+renderTplPicker(); renderThemes(); renderNodeList(); renderEdgeList();
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(onEdit);
+onEdit();
+</script>
+<script>(function(){var k='tf_manage_bizmodel';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firestore 앱 빌더 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="Firestore 앱 빌더 — DataForge">
+<meta property="og:description" content="수집할 항목만 입력하면 AI 코드 생성 프롬프트·보안 규칙·배포 가이드를 자동 생성 — Firestore + Vercel 입문 빌더">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+  --r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:16px;}
+.intro-box strong{color:var(--text);}
+
+.two-col{display:grid;grid-template-columns:1fr 1.2fr;gap:16px;align-items:start;}
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* 흐름 스트립 */
+.flow-strip{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:0;}
+.flow-chip{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;}
+.flow-chip b{font-family:'Space Mono',monospace;color:var(--accent);font-size:10px;}
+.flow-arrow{color:var(--dim);font-size:11px;align-self:center;}
+
+/* 템플릿 선택 */
+.method-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.method-btn{padding:12px 6px;border:1px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;min-height:44px;}
+.method-btn:hover{border-color:rgba(37,99,235,.4);}
+.method-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);}
+.method-btn-icon{font-size:18px;margin-bottom:3px;}
+.method-btn-name{font-size:11px;font-weight:700;color:var(--text);}
+.method-btn-sub{font-size:9px;color:var(--muted);margin-top:1px;}
+.method-desc-box{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.12);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.7;}
+.method-desc-icon{font-size:22px;flex-shrink:0;padding-top:2px;}
+.method-desc-body strong{color:var(--text);}
+
+/* form */
+.form-row{margin-bottom:12px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.form-label small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim);}
+.txt-inp{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:16px;padding:8px 12px;outline:none;font-family:inherit;transition:.2s;}
+.txt-inp:focus{border-color:var(--accent);background:#fff;}
+textarea.txt-inp{resize:vertical;min-height:90px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.5;}
+.sel{background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:8px 8px;outline:none;cursor:pointer;font-family:inherit;}
+.sel:focus{border-color:var(--accent);}
+
+/* 항목(필드) 행 */
+.field-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.field-row{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
+.field-row.banned{border-color:rgba(220,38,38,.5);background:rgba(220,38,38,.05);}
+.field-row.fixed{opacity:.85;}
+.field-main{display:flex;gap:6px;align-items:center;}
+.field-num{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:#fff;background:var(--accent);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.field-inp{flex:1;min-width:0;background:#fff;border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:16px;padding:7px 10px;outline:none;font-family:inherit;}
+.field-inp:focus{border-color:var(--accent);}
+.field-sel{width:96px;flex-shrink:0;background:#fff;border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;padding:7px 4px;outline:none;cursor:pointer;font-family:inherit;}
+.req-toggle{flex-shrink:0;font-size:10px;font-weight:700;padding:6px 8px;border:1px solid var(--border2);border-radius:6px;background:#fff;color:var(--dim);cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap;min-height:32px;}
+.req-toggle.on{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);}
+.field-del{flex-shrink:0;background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:4px 6px;border-radius:4px;transition:.2s;min-width:28px;min-height:28px;}
+.field-del:hover{color:var(--red);background:rgba(220,38,38,.08);}
+.field-opts{display:flex;gap:6px;align-items:center;margin-top:7px;padding-left:26px;flex-wrap:wrap;}
+.field-opts .field-inp{font-size:13px;padding:6px 10px;}
+.opts-lbl{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.preset-btn{font-size:10px;font-weight:700;padding:5px 9px;border:1px solid var(--border2);border-radius:4px;background:#fff;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap;}
+.preset-btn:hover{color:var(--accent);border-color:rgba(37,99,235,.4);}
+.field-warn{margin-top:6px;padding-left:26px;font-size:11px;color:var(--red);font-weight:700;}
+.fixed-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.05);color:var(--dim);border:1px solid var(--border2);flex-shrink:0;}
+
+/* 빠른 추가 칩 */
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{font-size:11px;font-weight:600;padding:6px 11px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;min-height:32px;}
+.chip:hover{border-color:rgba(37,99,235,.4);color:var(--accent);}
+.chip:disabled{opacity:.35;cursor:not-allowed;}
+.add-btn{font-size:12px;font-weight:700;padding:9px 16px;border:1px dashed var(--border2);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;width:100%;min-height:44px;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* 조회 페이지 토글 */
+.viewer-toggle{display:flex;align-items:center;gap:8px;width:100%;font-size:13px;font-weight:700;padding:11px 14px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;min-height:44px;margin-bottom:10px;}
+.viewer-toggle:hover{border-color:rgba(37,99,235,.4);}
+.viewer-toggle.on{background:rgba(37,99,235,.08);border-color:var(--accent);color:var(--accent);}
+.viewer-toggle .col-pill-check{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;}
+.viewer-toggle.on .col-pill-check::after{content:'✓';}
+
+/* firebase config */
+.fb-status{margin-top:8px;font-size:12px;font-weight:700;display:none;padding:8px 12px;border-radius:8px;line-height:1.6;}
+.fb-status.ok{display:block;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);color:#065f46;}
+.fb-status.bad{display:block;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.3);color:#92400e;}
+
+/* info */
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+.info-block strong{color:var(--text);}
+.info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.2);}
+.info-block.danger{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);}
+.info-block + .info-block{margin-top:8px;}
+
+/* 출력 탭 */
+.stat-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px;overflow-x:auto;}
+.stat-tab{padding:11px 16px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;min-height:44px;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;}
+.stat-panel.active{display:block;}
+
+/* code output */
+.code-wrap{position:relative;}
+.code-pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:14px;font-family:'Space Mono',monospace;font-size:11px;line-height:1.6;overflow-x:auto;max-height:520px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.copy-btn{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:6px 12px;border:1px solid rgba(255,255,255,.25);border-radius:5px;background:rgba(255,255,255,.08);color:#cbd5e1;cursor:pointer;transition:.15s;font-family:inherit;min-height:28px;}
+.copy-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+.copy-big{display:block;width:100%;margin-top:10px;padding:12px;font-size:13px;font-weight:700;font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;background:var(--accent);color:#fff;min-height:44px;}
+.copy-big:hover{background:#1d4ed8;}
+.copy-big.done{background:var(--green);}
+
+/* 가이드 스텝 */
+.guide-step{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--border);}
+.guide-step:last-child{border-bottom:none;}
+.guide-num{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.guide-body{font-size:13px;color:var(--muted);line-height:1.7;min-width:0;}
+.guide-body strong{color:var(--text);}
+.guide-body a{color:var(--accent);word-break:break-all;}
+.guide-body code{font-family:'Noto Sans KR', sans-serif;font-size:11px;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+
+@media(max-width:900px){
+  .two-col{grid-template-columns:1fr;}
+}
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:12px 14px;}
+  .method-grid{grid-template-columns:repeat(3,1fr);}
+  .field-sel{width:84px;}
+  .code-pre{max-height:400px;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">Firestore 앱 빌더</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      🔥 <strong>Firestore 앱 빌더</strong> — 저장하고 싶은 항목만 입력하면
+      <strong>AI 코드 생성 프롬프트 · Firestore 보안 규칙 · 배포 가이드</strong>를 자동으로 만들어줍니다.
+      생성된 프롬프트를 <strong>Claude나 ChatGPT에 그대로 붙여넣으면</strong> Firebase에 데이터가 저장되는 웹 페이지가 완성되고,
+      Vercel에 올리면 실제 서비스가 됩니다. 코드를 몰라도 됩니다.
+    </div>
+
+    <div class="a-card" style="margin-bottom:16px;">
+      <div class="flow-strip">
+        <span class="flow-chip"><b>1</b> 항목 입력</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>2</b> 프롬프트 복사</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>3</b> AI에 붙여넣기</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>4</b> 파일 저장</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>5</b> Vercel 배포</span>
+      </div>
+    </div>
+
+    <div class="two-col">
+
+      <!-- ═══════════ LEFT : 입력 ═══════════ -->
+      <div>
+
+        <!-- ① 템플릿 -->
+        <div class="a-card">
+          <div class="a-card-title">① 어떤 페이지를 만들까요?</div>
+          <div class="method-grid" id="tplGrid"></div>
+          <div class="method-desc-box">
+            <div class="method-desc-icon" id="tplDescIcon">📋</div>
+            <div class="method-desc-body" id="tplDescBody"></div>
+          </div>
+        </div>
+
+        <!-- ② 페이지 정보 -->
+        <div class="a-card">
+          <div class="a-card-title">② 페이지 제목</div>
+          <div class="form-row" style="margin-bottom:0;">
+            <input type="text" class="txt-inp" id="inpTitle" maxlength="40">
+          </div>
+        </div>
+
+        <!-- ③ 항목 -->
+        <div class="a-card">
+          <div class="a-card-title" id="fieldsTitle">③ 저장할 항목</div>
+          <div class="chip-row" id="chipRow"></div>
+          <div class="field-list" id="fieldList"></div>
+          <button class="add-btn" id="addBtn" onclick="addItem()">＋ 항목 추가</button>
+          <div id="piiWarn" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- ④ Firebase 설정 -->
+        <div class="a-card">
+          <div class="a-card-title">④ Firebase 설정 <small style="text-transform:none;letter-spacing:0;font-weight:400;">— 나중에 넣어도 됩니다</small></div>
+          <div class="form-row">
+            <label class="form-label">firebaseConfig 붙여넣기 <small>— Firebase 콘솔 &gt; 프로젝트 설정 &gt; 내 앱에서 복사 (배포 가이드 1단계 참고)</small></label>
+            <textarea class="txt-inp" id="inpFb" placeholder="const firebaseConfig = {
+  apiKey: &quot;AIza...&quot;,
+  authDomain: &quot;...&quot;,
+  projectId: &quot;...&quot;,
+  ...
+};  ← 이런 코드를 통째로 붙여넣으세요"></textarea>
+            <div class="fb-status" id="fbStatus"></div>
+          </div>
+          <div class="info-block">
+            💡 비워두면 프롬프트에 <strong>"직접 채우세요" 자리 표시</strong>가 들어갑니다.
+            지금 붙여넣으면 AI가 설정까지 완성된 코드를 만들어줘서 더 편합니다.
+          </div>
+        </div>
+
+        <!-- ⑤ 조회 페이지 -->
+        <div class="a-card">
+          <div class="a-card-title">⑤ 데이터 조회 페이지 <small style="text-transform:none;letter-spacing:0;font-weight:400;">— 선택</small></div>
+          <button class="viewer-toggle" id="viewerToggle" onclick="toggleViewer()">
+            <span class="col-pill-check"></span><span id="viewerToggleLbl">조회 페이지 포함하기</span>
+          </button>
+          <div class="info-block" id="viewerInfo"></div>
+        </div>
+
+      </div>
+
+      <!-- ═══════════ RIGHT : 산출물 ═══════════ -->
+      <div>
+        <div class="a-card">
+          <div class="a-card-title">생성 결과 <span style="font-weight:400;text-transform:none;letter-spacing:0;">입력하는 대로 실시간 반영</span></div>
+
+          <div class="stat-tabs">
+            <button class="stat-tab active" data-tab="prompt" onclick="switchTab('prompt')">🤖 AI 프롬프트</button>
+            <button class="stat-tab" data-tab="viewer" id="tabViewer" style="display:none;" onclick="switchTab('viewer')">📊 조회 페이지</button>
+            <button class="stat-tab" data-tab="rules" onclick="switchTab('rules')">🔐 보안 규칙</button>
+            <button class="stat-tab" data-tab="guide" onclick="switchTab('guide')">🚀 배포 가이드</button>
+          </div>
+
+          <!-- 프롬프트 -->
+          <div id="panel-prompt" class="stat-panel active">
+            <div class="info-block" style="margin-bottom:10px;">
+              ✅ 아래 내용을 <strong>그대로 복사해서 Claude(claude.ai)나 ChatGPT에 붙여넣고 전송</strong>하세요.
+              다른 말을 덧붙일 필요가 없습니다. 내용을 이해하지 못해도 괜찮습니다 — AI가 읽는 문서입니다.
+            </div>
+            <div class="code-wrap">
+              <pre class="code-pre" id="outPrompt"></pre>
+              <button class="copy-btn" onclick="copyOut('outPrompt',this)">복사</button>
+            </div>
+            <button class="copy-big" onclick="copyOut('outPrompt',this)">📋 프롬프트 전체 복사</button>
+          </div>
+
+          <!-- 조회 페이지 -->
+          <div id="panel-viewer" class="stat-panel">
+            <div class="info-block" id="viewerTabInfo" style="margin-bottom:10px;"></div>
+            <div class="code-wrap">
+              <pre class="code-pre" id="outViewer"></pre>
+              <button class="copy-btn" onclick="copyOut('outViewer',this)">복사</button>
+            </div>
+            <button class="copy-big" onclick="copyOut('outViewer',this)">📋 조회 페이지 프롬프트 전체 복사</button>
+          </div>
+
+          <!-- 규칙 -->
+          <div id="panel-rules" class="stat-panel">
+            <div class="info-block" style="margin-bottom:10px;">
+              🔐 이 규칙이 있어야 <strong>데이터 저장이 허용</strong>됩니다.
+              Firebase 콘솔 → <strong>Firestore Database → 규칙 탭</strong>에 기존 내용을 지우고 붙여넣은 뒤 <strong>게시</strong>를 누르세요. (배포 가이드 3단계)
+            </div>
+            <div class="code-wrap">
+              <pre class="code-pre" id="outRules"></pre>
+              <button class="copy-btn" onclick="copyOut('outRules',this)">복사</button>
+            </div>
+            <button class="copy-big" onclick="copyOut('outRules',this)">📋 보안 규칙 전체 복사</button>
+            <div id="rulesNote" style="margin-top:10px;"></div>
+          </div>
+
+          <!-- 가이드 -->
+          <div id="panel-guide" class="stat-panel">
+            <div id="outGuide"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═══════════════════ 상수 ═══════════════════ */
+const F = '```';   // 마크다운 코드 펜스
+const SDK = '10.12.0';
+
+const TEMPLATES = {
+  collect: {
+    icon:'📋', name:'정보 수집 폼', sub:'신청서·접수',
+    desc:'<strong>정보 수집 폼</strong> — 이름·연락처 같은 정보를 입력받아 저장하는 페이지. 저장된 데이터는 화면에 공개되지 않고 <strong>Firebase 콘솔에서만</strong> 확인합니다. 신청서·참가 접수·상담 신청에 적합.',
+    fieldsLabel:'③ 저장할 항목', itemName:'항목',
+  },
+  guestbook: {
+    icon:'📖', name:'방명록', sub:'공개 게시',
+    desc:'<strong>방명록</strong> — 방문자가 글을 남기면 <strong>최근 글 20개가 실시간으로 공개</strong>되는 페이지. 이름·메시지는 기본 포함이고 항목을 더 추가할 수 있습니다. 행사 방명록·응원 메시지에 적합.',
+    fieldsLabel:'③ 저장할 항목', itemName:'항목',
+  },
+  survey: {
+    icon:'🗳️', name:'설문조사', sub:'객관식·주관식',
+    desc:'<strong>설문조사</strong> — 객관식(선택지)과 주관식(직접 입력) 질문으로 설문을 만들고, <strong>결과 페이지에서 실시간 막대그래프</strong>로 집계를 봅니다. 같은 브라우저 재제출은 1표로 처리됩니다.',
+    fieldsLabel:'③ 질문 목록', itemName:'질문',
+  },
+};
+
+/* 한글 항목명 → 필드 키/타입 사전  [key, type, maxLen, options?] */
+const DICT = {
+  '이름':['name','text',50], '성명':['name','text',50], '성함':['name','text',50],
+  '전화번호':['phone','tel',20], '연락처':['phone','tel',20], '휴대폰':['phone','tel',20], '휴대전화':['phone','tel',20], '전화':['phone','tel',20],
+  '이메일':['email','email',100], '메일':['email','email',100], '이메일주소':['email','email',100],
+  '주소':['address','text',200], '거주지':['address','text',200], '배송지':['address','text',200],
+  '생년월일':['birthdate','date',10], '생일':['birthdate','date',10], '날짜':['date','date',10],
+  '나이':['age','number',0], '연령':['age','number',0],
+  '성별':['gender','select',0,['남','여','기타']],
+  '참석여부':['attendance','select',0,['참석','불참']],
+  '소속':['organization','text',100], '회사':['company','text',100], '회사명':['company','text',100],
+  '학교':['school','text',100], '부서':['department','text',100], '직급':['position','text',50], '직업':['job','text',50],
+  '메모':['memo','textarea',500], '내용':['content','textarea',1000], '메시지':['message','textarea',500],
+  '의견':['opinion','textarea',500], '문의':['inquiry','textarea',1000], '문의사항':['inquiry','textarea',1000],
+  '요청사항':['request','textarea',500], '하고싶은말':['comment','textarea',500],
+  '제목':['title','text',100], '별명':['nickname','text',30], '닉네임':['nickname','text',30],
+  '학번':['student_id','text',20], '사번':['employee_id','text',20],
+  '지역':['region','text',50], '국가':['country','text',50], '우편번호':['zipcode','text',10],
+  '홈페이지':['website','text',200], '블로그':['blog','text',200],
+  '인원':['count','number',0], '수량':['quantity','number',0], '금액':['amount','number',0],
+  '가격':['price','number',0], '점수':['score','number',0],
+};
+
+const TYPE_LABELS = { text:'짧은 글', textarea:'긴 글', number:'숫자', date:'날짜', email:'이메일', tel:'전화번호', select:'선택형' };
+const PII_KEYS = ['phone','email','address','birthdate','student_id','employee_id'];
+const QUICK_CHIPS = ['이름','전화번호','이메일','주소','생년월일','성별','소속','메모'];
+const SCALE5 = ['매우 불만족','불만족','보통','만족','매우 만족'];
+
+/* ═══════════════════ 상태 ═══════════════════ */
+function mkField(label, required){
+  const hit = DICT[(label||'').replace(/\s/g,'')];
+  return {
+    label: label,
+    key:   hit ? hit[0] : '',
+    type:  hit ? hit[1] : 'text',
+    max:   hit ? (hit[2]||100) : 100,
+    options: hit && hit[3] ? hit[3].slice() : [],
+    required: !!required,
+    banned: /주민/.test(label||''),
+  };
+}
+function mkQuestion(text, type, options){
+  return { text:text, type:type||'choice', options:(options||SCALE5).slice() };
+}
+
+const state = {
+  template:'collect',
+  viewer:false,
+  fbRaw:'', fbCfg:null,
+  collect:  { title:'고객 정보 수집',  fields:[ mkField('이름',true), mkField('전화번호',true), mkField('이메일',false) ] },
+  guestbook:{ title:'우리 모임 방명록', fields:[] },
+  survey:   { title:'교육 만족도 설문', questions:[ mkQuestion('전반적으로 만족하셨나요?','choice'), mkQuestion('개선했으면 하는 점을 적어주세요.','text') ] },
+};
+/* 방명록 고정 필드 */
+const GB_FIXED = [
+  Object.assign(mkField('이름',true),  {key:'name'}),
+  Object.assign(mkField('메시지',true),{key:'message'}),
+];
+
+/* ═══════════════════ 유틸 ═══════════════════ */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function cur(){ return state[state.template]; }
+function titleOf(s){ return (s.title||'').trim() || '나의 페이지'; }
+
+/* 생성 시 필드 키 확정 (사전에 없으면 field1, field2… / 중복은 접미사) */
+function assignKeys(fields, reserved){
+  const used = {}; (reserved||[]).forEach(k=>used[k]=true);
+  let n = 0;
+  return fields.filter(f=>!f.banned && f.label.trim()).map(f=>{
+    let base = f.key || ('field' + (++n));
+    let k = base, i = 2;
+    while(used[k]){ k = base + i++; }
+    used[k] = true;
+    return Object.assign({}, f, {key:k});
+  });
+}
+
+function parseFbConfig(text){
+  if(!text.trim()) return null;
+  const keys = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+  const out = {}; let found = 0;
+  keys.forEach(k=>{
+    const m = text.match(new RegExp(k + '\\s*[:=]\\s*["\']([^"\']+)["\']'));
+    if(m){ out[k] = m[1]; found++; }
+  });
+  return (out.apiKey && out.projectId) ? out : (found ? {_partial:true} : null);
+}
+
+function fbConfigJs(){
+  if(state.fbCfg && !state.fbCfg._partial){
+    const c = state.fbCfg;
+    const lines = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId']
+      .filter(k=>c[k]).map(k=>'  '+k+': "'+c[k]+'"');
+    return 'export const firebaseConfig = {\n' + lines.join(',\n') + '\n};';
+  }
+  return 'export const firebaseConfig = {\n' +
+         '  // TODO: Firebase 콘솔 > 프로젝트 설정 > 내 앱에서 복사한 값으로 교체하세요\n' +
+         '  apiKey: "여기에_붙여넣기",\n  authDomain: "여기에_붙여넣기",\n  projectId: "여기에_붙여넣기",\n' +
+         '  storageBucket: "여기에_붙여넣기",\n  messagingSenderId: "여기에_붙여넣기",\n  appId: "여기에_붙여넣기"\n};';
+}
+
+function typeDesc(f){
+  switch(f.type){
+    case 'tel':      return '전화번호 형식 (예: 010-1234-5678)';
+    case 'email':    return '이메일 형식 검증';
+    case 'date':     return '날짜 선택 (input type=date, "YYYY-MM-DD" 문자열로 저장)';
+    case 'number':   return '숫자만 (number 타입으로 저장)';
+    case 'select':   return '다음 중 선택: ' + f.options.join(' / ');
+    case 'textarea': return '여러 줄 입력, ' + f.max + '자 이내 (글자 수 카운터 표시)';
+    default:         return f.max + '자 이내';
+  }
+}
+
+function hasPII(fields){
+  return fields.some(f=>!f.banned && PII_KEYS.indexOf(f.key)>=0);
+}
+
+/* ═══════════════════ 프롬프트 생성 ═══════════════════ */
+function commonTechBlock(imports, authImports){
+  return [
+'## 기술 제약 (반드시 지킬 것)',
+'- 빌드 도구 없는 순수 정적 파일로만 구성 (index.html 등 아래 "파일 구성" 참고)',
+'- Firebase JS SDK v' + SDK + ' **modular 방식만** 사용, 반드시 아래 CDN import 형태 사용:',
+'  ' + F + 'js',
+'  import { initializeApp } from "https://www.gstatic.com/firebasejs/' + SDK + '/firebase-app.js";',
+'  import { ' + imports + ' }',
+'    from "https://www.gstatic.com/firebasejs/' + SDK + '/firebase-firestore.js";',
+  ].concat(authImports ? [
+'  import { ' + authImports + ' }',
+'    from "https://www.gstatic.com/firebasejs/' + SDK + '/firebase-auth.js";',
+  ] : []).concat([
+'  ' + F,
+'- v8 네임스페이스 문법(firebase.firestore(), firebase.initializeApp() 등) 절대 사용 금지',
+'- npm, package.json, 번들러, React 등 프레임워크 사용 금지 / 외부 라이브러리·CDN 추가 금지',
+'- app.js와 config.js는 <script type="module">로 로드',
+'- config.js에는 firebaseConfig만 두고 export — 이 파일만 바꾸면 다른 Firebase 프로젝트에서도 동작해야 함',
+'- 모바일 우선 반응형: viewport 메타 태그, 375px 화면에서 가로 스크롤 없음, 입력 필드 font-size 16px 이상',
+'- 깔끔하고 현대적인 디자인 (흰 배경 + 파란색 포인트), 한국어 UI',
+  ]).join('\n');
+}
+
+function commonErrorBlock(){
+  return [
+'## 에러 처리',
+"- 저장/조회 실패 시 error.code가 'permission-denied'면 화면에",
+'  "Firestore 보안 규칙이 적용되지 않았습니다. 배포 가이드 3단계를 확인하세요." 안내 표시',
+'- 기타 오류도 한국어 메시지로 화면에 표시 (console.log에만 남기지 말 것)',
+  ].join('\n');
+}
+
+function outputFormatBlock(files){
+  return [
+'## 출력 형식 (반드시 지킬 것 — 파일 개수가 다르면 실패)',
+'- 위 "파일 구성"에 적힌 ' + files + ' 파일을 **하나도 빠짐없이, 각각 별도 파일로** 출력',
+'- **모든 코드를 index.html 하나에 합치는 것 절대 금지.** CSS를 <style>로, JS를 <script> 본문으로 인라인하지 말고 반드시 별도 .css/.js 파일로 분리해 <link>·<script src>로 연결',
+'- 파일마다 "### 파일명" 제목 + 코드블록 하나로, 생략 없이 완성본 전체를 출력',
+'- 마지막에 출력한 파일 목록을 한 줄로 요약 (예: "생성 파일: ' + files + '")',
+'- 코드 밖 설명은 최소화',
+  ].join('\n');
+}
+
+function fieldTable(fields){
+  const rows = fields.map(f=>{
+    return '| ' + f.key + ' | ' + f.label + ' | ' + (f.type==='number'?'number':'string') + ' | ' + (f.required?'**필수**':'선택') + ' — ' + typeDesc(f) + ' |';
+  });
+  return [
+'| 필드 키 | 라벨(화면 표시) | 저장 타입 | 검증 |',
+'|---------|----------------|----------|------|',
+  ].concat(rows).concat([
+'| createdAt | — | serverTimestamp() | 자동 |',
+  ]).join('\n');
+}
+
+function genPromptCollect(){
+  const s = state.collect;
+  const fields = assignKeys(s.fields, []);
+  return [
+'아래 명세대로 정보 수집 웹 페이지를 만들어줘. 설명보다 완성된 코드가 중요해.',
+'',
+'## 만들 것',
+'"' + titleOf(s) + '" 입력 폼 페이지 1개. 사용자가 폼을 작성해 제출하면 Firebase Firestore에 저장되고',
+'"제출되었습니다 ✓" 완료 화면이 표시된다. **저장된 데이터를 조회하거나 화면에 표시하는 기능은 만들지 않는다.**',
+state.viewer
+  ? '(개인정보 보호 — 데이터 확인은 별도의 관리자 페이지 admin.html에서만 한다. 이 페이지에는 admin.html 링크도 걸지 말 것)'
+  : '(개인정보 보호 — 수집된 데이터는 관리자가 Firebase 콘솔에서만 확인)',
+'',
+'## 파일 구성',
+'- index.html — 폼 페이지',
+'- config.js — firebaseConfig만 export',
+'- app.js — 폼 검증·Firestore 저장 로직',
+'- style.css — 스타일',
+'',
+'## config.js (아래 내용 그대로 사용)',
+F + 'js',
+fbConfigJs(),
+F,
+'',
+commonTechBlock('getFirestore, collection, addDoc, serverTimestamp'),
+'',
+'## 저장 구조 — "submissions" 컬렉션에 addDoc',
+fieldTable(fields),
+'- 문서에 위 표에 없는 필드를 넣지 말 것 (보안 규칙이 거부함)',
+'',
+'## 폼 요구사항',
+'- 항목 검증 실패 시 해당 입력칸 아래에 빨간 안내문 표시 (alert 사용 금지)',
+'- 제출 버튼은 저장 중일 때 비활성화 + "저장 중…" 표시 (중복 제출 방지)',
+'- 제출 성공 시 폼을 숨기고 완료 화면 + "다시 작성하기" 버튼 표시',
+'- 폼 하단에 작게 "입력하신 정보는 안전하게 저장되며 화면에 공개되지 않습니다" 문구 표시',
+'',
+commonErrorBlock(),
+'',
+outputFormatBlock('4개'),
+'',
+'## 완료 체크리스트 (전부 만족해야 완성)',
+'- [ ] 파일이 정확히 4개(index.html, config.js, app.js, style.css)로 분리되어 있다',
+'- [ ] config.js만 교체하면 다른 Firebase 프로젝트에서도 동작한다',
+'- [ ] 명세에 없는 필드를 문서에 저장하지 않는다',
+'- [ ] v8 문법이 한 줄도 없다',
+'- [ ] 제출 성공/실패가 화면에 명확히 표시된다',
+'- [ ] 375px 화면에서 가로 스크롤이 없다',
+  ].join('\n');
+}
+
+function genPromptGuestbook(){
+  const s = state.guestbook;
+  const fields = GB_FIXED.concat(assignKeys(s.fields, ['name','message','createdAt']));
+  return [
+'아래 명세대로 방명록 웹 페이지를 만들어줘. 설명보다 완성된 코드가 중요해.',
+'',
+'## 만들 것',
+'"' + titleOf(s) + '" 방명록 페이지 1개. 방문자가 글을 남기면 Firebase Firestore에 저장되고,',
+'같은 페이지 아래쪽에 **최근 글 20개가 실시간으로** 표시된다.',
+'',
+'## 파일 구성',
+'- index.html — 작성 폼 + 글 목록',
+'- config.js — firebaseConfig만 export',
+'- app.js — 저장·실시간 목록 로직',
+'- style.css — 스타일',
+'',
+'## config.js (아래 내용 그대로 사용)',
+F + 'js',
+fbConfigJs(),
+F,
+'',
+commonTechBlock('getFirestore, collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot'),
+'',
+'## 저장 구조 — "guestbook" 컬렉션에 addDoc',
+fieldTable(fields),
+'- 문서에 위 표에 없는 필드를 넣지 말 것 (보안 규칙이 거부함)',
+'',
+'## 목록 요구사항 (중요)',
+"- query(collection(db,'guestbook'), orderBy('createdAt','desc'), limit(20)) 를 onSnapshot으로 구독",
+'- **limit 없는 쿼리 금지** — 목록은 항상 최근 20개만',
+'- 새 글이 등록되면 새로고침 없이 목록에 바로 나타나야 함',
+'- 각 글에 작성 시각을 "방금 전 / n분 전 / n시간 전 / 날짜" 형태로 표시',
+'- 글 내용은 textContent로 넣어 HTML 태그가 실행되지 않게 할 것 (innerHTML에 사용자 입력 금지)',
+'',
+'## 폼 요구사항',
+'- 검증 실패 시 입력칸 아래 빨간 안내문 (alert 금지), 저장 중 버튼 비활성화',
+'- 등록 성공 시 입력칸 비우기',
+'',
+commonErrorBlock(),
+'',
+outputFormatBlock('4개'),
+'',
+'## 완료 체크리스트 (전부 만족해야 완성)',
+'- [ ] 파일이 정확히 4개(index.html, config.js, app.js, style.css)로 분리되어 있다',
+'- [ ] config.js만 교체하면 다른 Firebase 프로젝트에서도 동작한다',
+'- [ ] limit(20) 없는 컬렉션 읽기가 없다',
+'- [ ] 사용자 입력이 innerHTML로 삽입되는 곳이 없다',
+'- [ ] v8 문법이 한 줄도 없다',
+'- [ ] 375px 화면에서 가로 스크롤이 없다',
+  ].join('\n');
+}
+
+function surveyConst(){
+  const s = state.survey;
+  const qs = s.questions.filter(q=>q.text.trim()).map((q,i)=>{
+    if(q.type==='choice'){
+      return '    { id: "q'+(i+1)+'", type: "choice", text: '+JSON.stringify(q.text)+',\n      options: '+JSON.stringify(q.options)+' }';
+    }
+    return '    { id: "q'+(i+1)+'", type: "text", text: '+JSON.stringify(q.text)+', maxLength: 500 }';
+  });
+  return 'const SURVEY = {\n  id: "survey-1",\n  title: '+JSON.stringify(titleOf(s))+',\n  questions: [\n'+qs.join(',\n')+'\n  ]\n};';
+}
+
+function genPromptSurvey(){
+  const s = state.survey;
+  const hasText = s.questions.some(q=>q.type==='text' && q.text.trim());
+  return [
+'아래 명세대로 설문조사 웹앱을 만들어줘. 설명보다 완성된 코드가 중요해.',
+'',
+'## 만들 것',
+'"' + titleOf(s) + '" 설문 페이지(index.html)와 실시간 결과 페이지(results.html).',
+'제출하면 Firebase Firestore에 저장되고, 결과 페이지에서 객관식 응답 비율을 실시간 막대그래프로 보여준다.',
+'',
+'## 파일 구성',
+'- index.html — 설문 참여 폼',
+'- results.html — 실시간 결과',
+'- config.js — firebaseConfig만 export',
+'- app.js — 설문 제출 로직 / results.js — 결과 표시 로직',
+'- style.css — 공통 스타일',
+'',
+'## config.js (아래 내용 그대로 사용)',
+F + 'js',
+fbConfigJs(),
+F,
+'',
+commonTechBlock('getFirestore, doc, getDoc, setDoc, increment, serverTimestamp, onSnapshot, collection, query, orderBy, limit'),
+'',
+'## 설문 정의 (app.js와 results.js에서 공통 사용 — Firestore에 저장하지 않음)',
+F + 'js',
+surveyConst(),
+F,
+'',
+'## Firestore 데이터 구조',
+F,
+'surveys/{SURVEY.id}/responses/{responseId}   ← 개별 응답 (원본 보존)',
+'  ├ answers: { q1: "만족", q2: "..." }        ← 질문 id → 답변',
+'  └ submittedAt: serverTimestamp()',
+'',
+'surveys/{SURVEY.id}/results/summary          ← 집계 문서 (객관식만)',
+'  ├ counts: { q1: { "매우 만족": 12, "보통": 3, ... } }',
+'  └ responseCount: 15',
+F,
+'',
+'## 응답 제출 로직 (index.html + app.js) — 정확히 이 순서대로',
+'1. 페이지 로드 시 localStorage에서 응답자 ID를 읽고, 없으면 crypto.randomUUID()로 만들어 저장',
+'2. SURVEY 상수로 폼을 동적 렌더링 — choice는 라디오 버튼, text는 textarea(글자 수 카운터)',
+'3. 제출 시 모든 choice 질문은 응답 필수, text는 선택 입력 (검증 실패 시 해당 질문 아래 빨간 안내문)',
+'4. getDoc으로 responses/{응답자ID} 문서를 먼저 읽어 **이전 제출 여부 확인**',
+'5. setDoc으로 responses/{응답자ID}에 저장 (재제출이면 덮어쓰기 → 1인 1응답)',
+'6. results/summary는 setDoc(..., { merge: true })와 increment()로 갱신:',
+'   - 신규 제출: 각 choice 답변 +1, responseCount +1',
+'   - **재제출: 이전 선택 -1, 새 선택 +1, responseCount는 그대로** (중복 집계 금지)',
+'7. 완료 화면 + "결과 보기" 링크(results.html) 표시',
+'',
+'## 결과 페이지 (results.html + results.js)',
+"- results/summary **문서 하나만** onSnapshot으로 구독 — responses 컬렉션 전체 조회 금지",
+'- choice 질문: 선택지별 응답 수와 비율(%)을 CSS 수평 막대로 표시, 실시간 갱신 (차트 라이브러리 금지)',
+hasText ? "- text 질문: responses를 orderBy('submittedAt','desc') + limit(20)으로 최근 20개 답변만 목록 표시 (textContent로 삽입)" : '- (주관식 질문 없음)',
+'- 상단에 총 응답 수(responseCount) 크게 표시',
+'',
+commonErrorBlock(),
+'',
+outputFormatBlock('6개'),
+'',
+'## 완료 체크리스트 (전부 만족해야 완성)',
+'- [ ] 파일이 정확히 6개(index.html, results.html, config.js, app.js, results.js, style.css)로 분리되어 있다',
+'- [ ] config.js만 교체하면 다른 Firebase 프로젝트에서도 동작한다',
+'- [ ] 같은 브라우저에서 재제출해도 responseCount가 늘지 않고, 이전 선택은 -1 된다',
+'- [ ] 결과 페이지의 읽기는 summary 1개 구독' + (hasText? ' + limit(20) 목록' : '') + ' 외에 없다',
+'- [ ] v8 문법이 한 줄도 없다',
+'- [ ] 375px 화면에서 가로 스크롤이 없다',
+  ].join('\n');
+}
+
+/* ═══════════════════ 조회 페이지 프롬프트 ═══════════════════ */
+function viewerTableSpec(){
+  if(state.template==='survey'){
+    return [
+'## 표 구성',
+'- SURVEY.questions 순서대로 질문을 컬럼으로 배치 (헤더는 질문 텍스트, 길면 말줄임)',
+'- answers 맵에서 질문 id(q1, q2…)로 값을 꺼내 채우고, 없는 값은 "-" 표시',
+'- 마지막 컬럼: 제출시각 (YYYY-MM-DD HH:mm)',
+    ].join('\n');
+  }
+  const s = cur();
+  const fields = state.template==='guestbook'
+    ? GB_FIXED.concat(assignKeys(s.fields, ['name','message','createdAt']))
+    : assignKeys(s.fields, []);
+  return [
+'## 표 구성 (컬럼 순서대로)',
+fields.map(f=>'- ' + f.key + ' → 헤더 "' + f.label + '"').join('\n'),
+'- createdAt → 헤더 "제출시각" (YYYY-MM-DD HH:mm 형식)',
+'- 값이 없는 칸은 "-" 표시',
+  ].join('\n');
+}
+
+function genPromptViewer(){
+  const tpl = state.template;
+  const s = cur();
+  const needAuth = (tpl === 'collect');
+  const col   = tpl==='survey' ? "collection(db, 'surveys', SURVEY.id, 'responses')" : (tpl==='guestbook' ? "collection(db, 'guestbook')" : "collection(db, 'submissions')");
+  const csvName = tpl==='survey' ? 'responses' : (tpl==='guestbook' ? 'guestbook' : 'submissions');
+  const orderField = tpl==='survey' ? 'submittedAt' : 'createdAt';
+  const fsImports = 'getFirestore, collection, query, orderBy, limit, getDocs';
+  const authImports = needAuth ? 'getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut' : '';
+  return [
+'아래 명세대로 데이터 조회(관리자) 페이지를 만들어줘. 설명보다 완성된 코드가 중요해.',
+'앞서 만든 "' + titleOf(s) + '" 프로젝트 폴더에 **추가되는 파일**이다.',
+'',
+'## 만들 것',
+needAuth
+  ? 'admin.html — 관리자가 이메일·비밀번호로 로그인하면 저장된 데이터를 표로 보고 CSV로 내려받는 페이지. **로그인 전에는 데이터가 절대 보이지 않는다.**'
+  : 'admin.html — 저장된 데이터 전체(최근 500건)를 표로 보고 CSV로 내려받는 페이지.',
+'',
+'## 파일 구성 (기존 프로젝트에 추가)',
+'- admin.html — 조회 페이지 (스타일은 admin.html 안의 <style>에 포함)',
+'- admin.js — 조회 로직',
+'- config.js — **기존 파일을 그대로 import (다시 만들지 말 것).** 혹시 없다면 아래 내용으로 생성:',
+F + 'js',
+fbConfigJs(),
+F,
+'',
+commonTechBlock(fsImports, authImports),
+  ].concat(tpl==='survey' ? [
+'',
+'## 설문 정의 (기존 app.js와 동일한 상수 — admin.js에도 포함)',
+F + 'js',
+surveyConst(),
+F,
+  ] : []).concat([
+'',
+'## 화면과 동작 (admin.html + admin.js)',
+  ]).concat(needAuth ? [
+'1. 첫 화면은 로그인 폼(이메일·비밀번호). onAuthStateChanged로 로그인 상태를 감시하고,',
+'   로그인 전에는 데이터 조회를 시도하지도, 데이터 영역을 렌더링하지도 않는다',
+'2. signInWithEmailAndPassword로 로그인. 실패 시 "이메일 또는 비밀번호가 올바르지 않습니다" 표시',
+'3. 로그인 성공 시 데이터 화면으로 전환, 우측 상단에 로그아웃 버튼(signOut)',
+'4. 데이터 조회: getDocs(query(' + col + ", orderBy('" + orderField + "','desc'), limit(500)))",
+'   — onSnapshot(실시간) 금지, 새로고침 버튼으로 다시 읽기',
+  ] : [
+'1. 페이지 열면 바로 데이터 조회: getDocs(query(' + col + ", orderBy('" + orderField + "','desc'), limit(500)))",
+'   — onSnapshot(실시간) 금지, 새로고침 버튼으로 다시 읽기',
+  ]).concat([
+'- 상단 바: 총 N건 표시 · 🔄 새로고침 · ⬇ CSV 다운로드' + (needAuth ? ' · 로그아웃' : ''),
+'- 표는 overflow-x:auto 래퍼로 감싸 모바일에서 가로 스크롤 되게',
+'- 셀 값은 반드시 textContent로 넣기 (innerHTML에 사용자 데이터 금지)',
+'',
+viewerTableSpec(),
+'',
+'## CSV 다운로드',
+'- 표와 같은 내용, 첫 줄은 헤더',
+'- **UTF-8 BOM(\\uFEFF)을 파일 맨 앞에 포함** (엑셀에서 한글 깨짐 방지)',
+'- 쉼표·따옴표·줄바꿈이 든 값은 큰따옴표로 감싸고 내부 따옴표는 두 번 쓰기(CSV 이스케이프)',
+'- 파일명: ' + csvName + '_YYYYMMDD.csv',
+'',
+commonErrorBlock(),
+'',
+outputFormatBlock('2개(admin.html, admin.js)'),
+'',
+'## 완료 체크리스트 (전부 만족해야 완성)',
+'- [ ] 파일이 정확히 2개(admin.html, admin.js)로 분리되어 있다 (config.js는 기존 파일 재사용)',
+  ]).concat(needAuth ? [
+'- [ ] 로그아웃 상태에서는 데이터가 전혀 보이지 않고, 조회 요청도 보내지 않는다',
+  ] : []).concat([
+'- [ ] limit(500)을 넘는 읽기가 없다',
+'- [ ] 내려받은 CSV를 엑셀에서 열었을 때 한글이 깨지지 않는다',
+'- [ ] v8 문법이 한 줄도 없다',
+'- [ ] 375px 화면에서 표가 가로 스크롤 래퍼 안에 있다',
+  ]).join('\n');
+}
+
+/* ═══════════════════ 보안 규칙 생성 ═══════════════════ */
+function fieldConds(fields){
+  return fields.map(f=>{
+    const d = 'request.resource.data.' + f.key;
+    let c;
+    if(f.type==='number')      c = d + ' is number';
+    else if(f.type==='select') c = d + ' in [' + f.options.map(o=>"'"+o.replace(/'/g,'')+"'").join(', ') + ']';
+    else if(f.required)        c = d + ' is string && ' + d + '.size() > 0 && ' + d + '.size() <= ' + f.max;
+    else                       c = d + ' is string && ' + d + '.size() <= ' + f.max;
+    if(!f.required) c = "(!('" + f.key + "' in request.resource.data) || (" + c + '))';
+    else            c = "'" + f.key + "' in request.resource.data && " + (f.type==='number'||f.type==='select' ? c : '(' + c + ')');
+    return c;
+  });
+}
+
+function genRulesForm(col, title, readExpr, readComment){
+  const s = cur();
+  const fields = (state.template==='guestbook')
+    ? GB_FIXED.concat(assignKeys(s.fields, ['name','message','createdAt']))
+    : assignKeys(s.fields, []);
+  const keys = fields.map(f=>"'"+f.key+"'").concat(["'createdAt'"]).join(', ');
+  const conds = fieldConds(fields);
+  return [
+"rules_version = '2';",
+'service cloud.firestore {',
+'  match /databases/{database}/documents {',
+'',
+'    // ' + title,
+'    match /' + col + '/{docId} {',
+'      // ' + readComment,
+'      allow read: if ' + readExpr + ';',
+'',
+'      // 정해진 필드만, 형식에 맞을 때만 저장 허용',
+'      allow create: if request.resource.data.keys().hasOnly([' + keys + '])',
+  ].concat(conds.map((c,i)=>'        && ' + c + (i===conds.length-1 ? ';' : '')))
+   .concat([
+conds.length ? null : '      ;',
+'',
+'      // 수정·삭제는 아무도 불가',
+'      allow update, delete: if false;',
+'    }',
+'  }',
+'}',
+  ].filter(l=>l!==null)).join('\n');
+}
+
+function genRulesSurvey(){
+  return [
+"rules_version = '2';",
+'service cloud.firestore {',
+'  match /databases/{database}/documents {',
+'',
+'    // ' + titleOf(state.survey),
+'    match /surveys/{surveyId}/responses/{responseId} {',
+'      // 결과 페이지의 주관식 답변 표시용 (개인정보를 묻는 설문이라면 false로 바꾸세요)',
+'      allow read: if true;',
+'      // answers + submittedAt 두 필드만 허용 (재제출 덮어쓰기 포함)',
+'      allow create, update: if request.resource.data.keys().hasOnly([\'answers\', \'submittedAt\'])',
+'        && request.resource.data.answers is map;',
+'      allow delete: if false;',
+'    }',
+'',
+'    match /surveys/{surveyId}/results/{docId} {',
+'      allow read: if true;',
+'      // 집계 카운터 갱신용 (교육용 단순화 — 실서비스라면 Cloud Functions로 옮기세요)',
+'      allow create, update: if request.resource.data.keys().hasOnly([\'counts\', \'responseCount\']);',
+'      allow delete: if false;',
+'    }',
+'  }',
+'}',
+  ].join('\n');
+}
+
+function genRules(){
+  if(state.template==='survey')    return genRulesSurvey();
+  if(state.template==='guestbook') return genRulesForm('guestbook', titleOf(state.guestbook), 'true', '목록이 공개되는 페이지이므로 읽기 허용');
+  return state.viewer
+    ? genRulesForm('submissions', titleOf(state.collect), 'request.auth != null', '관리자 조회 페이지용 — 로그인한 계정만 읽기 가능')
+    : genRulesForm('submissions', titleOf(state.collect), 'false', '개인정보 보호: 아무도 읽을 수 없음 (확인은 Firebase 콘솔에서)');
+}
+
+/* ═══════════════════ 배포 가이드 ═══════════════════ */
+function genGuide(){
+  const tpl = state.template;
+  const v = state.viewer;
+  const baseFiles = tpl==='survey'
+    ? ['index.html','results.html','config.js','app.js','results.js','style.css']
+    : ['index.html','config.js','app.js','style.css'];
+  const allFiles = v ? baseFiles.concat(['admin.html','admin.js']) : baseFiles;
+  const files = allFiles.join(' · ') + ' (' + allFiles.length + '개)';
+  const steps = [
+    ['Firebase 프로젝트 만들기',
+     '<a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> 접속 → <strong>프로젝트 추가</strong> (구글 애널리틱스는 꺼도 됩니다).<br>' +
+     '만들어지면 <strong>⚙️ 프로젝트 설정 → 일반 → 내 앱 → 웹(&lt;/&gt;) 앱 등록</strong> → 화면에 나오는 <code>firebaseConfig</code> 코드를 복사해서 이 페이지 <strong>④번 칸에 붙여넣으세요</strong>. (호스팅 설정은 체크 안 해도 됩니다)'],
+    ['Firestore 데이터베이스 만들기',
+     'Firebase 콘솔 왼쪽 메뉴 <strong>빌드 → Firestore Database → 데이터베이스 만들기</strong>.<br>' +
+     '위치는 <code>asia-northeast3 (서울)</code>, 모드는 <strong>프로덕션 모드</strong>를 선택하세요. (테스트 모드는 30일 뒤 잠깁니다 — 어차피 다음 단계에서 규칙을 넣습니다)'],
+    ['보안 규칙 적용',
+     'Firestore Database → <strong>규칙</strong> 탭 → 기존 내용을 전부 지우고, 이 빌더의 <strong>[🔐 보안 규칙] 탭 내용을 붙여넣기</strong> → <strong>게시</strong>.<br>' +
+     '이걸 빼먹으면 저장할 때 <code>permission-denied</code> 오류가 납니다. 항목을 수정했다면 규칙도 다시 복사해서 게시하세요.'],
+    ['AI에게 코드 생성 요청',
+     '이 빌더의 <strong>[🤖 AI 프롬프트] 탭 → 전체 복사</strong> → <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>나 <a href="https://chatgpt.com" target="_blank" rel="noopener">chatgpt.com</a> 새 대화에 <strong>붙여넣고 전송</strong>.<br>' +
+     '다른 말을 덧붙일 필요 없습니다. 파일이 잘리거나 빠졌으면 "빠진 파일 전체를 다시 출력해줘"라고 답하세요.' +
+     (v ? '<br><strong>조회 페이지를 켰으므로</strong>, 이어서 <strong>[📊 조회 페이지] 탭 프롬프트도 같은 대화에</strong> 붙여넣어 admin.html·admin.js를 받으세요.' : '')],
+    ['파일 저장',
+     '새 폴더를 하나 만들고, AI가 준 파일들을 <strong>파일명 그대로</strong> 저장하세요: <strong>' + files + '</strong>.<br>' +
+     'VS Code를 권장하고, 메모장을 쓴다면 저장 시 인코딩을 <strong>UTF-8</strong>로 하세요. ④번 칸을 비워뒀다면 <code>config.js</code> 안의 "여기에_붙여넣기"를 내 firebaseConfig 값으로 바꿔야 합니다.<br>' +
+     '<span style="color:var(--dim);">💡 AI가 index.html <strong>한 파일로 합쳐서</strong> 줬다면? <a href="/vibe/split" target="_blank" rel="noopener">HTML 파일 분리기</a>에 업로드하면 index.html·style.css·app.js·config.js로 자동 분리됩니다.</span>'],
+    ['Vercel 배포',
+     '① <a href="https://github.com" target="_blank" rel="noopener">github.com</a> 가입 → <strong>New repository</strong>(Public) 생성 → <strong>"uploading an existing file"</strong> 링크를 눌러 파일 전부 업로드 → Commit.<br>' +
+     '② <a href="https://vercel.com" target="_blank" rel="noopener">vercel.com</a>에 GitHub 계정으로 가입 → <strong>Add New… → Project</strong> → 방금 만든 저장소 <strong>Import → Deploy</strong>. 끝나면 <code>내프로젝트.vercel.app</code> 주소가 생깁니다.<br>' +
+     '<span style="color:var(--dim);">💡 Git 없이 더 쉽게: <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">Netlify Drop</a>은 폴더를 드래그만 하면 배포됩니다.</span>'],
+    ['데이터 확인' + (tpl==='survey' ? ' · 결과 보기' : ''),
+     (tpl==='collect'
+       ? (v
+         ? '제출 테스트 후 배포 주소의 <code>/admin.html</code>에 접속해 관리자 계정으로 로그인 → 표와 CSV 다운로드를 확인하세요. <strong>Firebase 콘솔 → Firestore Database → 데이터</strong> 탭에서도 볼 수 있습니다.'
+         : '제출 테스트 후 <strong>Firebase 콘솔 → Firestore Database → 데이터</strong> 탭에서 <code>submissions</code> 컬렉션에 쌓이는 걸 확인하세요. 수집된 개인정보는 화면에 공개되지 않으며 여기서만 볼 수 있습니다.')
+       : tpl==='guestbook'
+       ? '글을 남겨보고 목록에 바로 나타나는지, <strong>Firebase 콘솔 → Firestore Database → 데이터</strong> 탭의 <code>guestbook</code> 컬렉션에도 쌓이는지 확인하세요.' + (v ? ' 전체 데이터와 CSV는 배포 주소의 <code>/admin.html</code>에서 확인합니다.' : '')
+       : '설문을 제출해보고 <code>results.html</code>에서 막대그래프가 실시간으로 움직이는지 확인하세요. 원본 응답은 <strong>Firebase 콘솔 → Firestore Database → 데이터</strong> 탭의 <code>surveys</code> 컬렉션에 있습니다.' + (v ? ' 응답 원본 표·CSV는 배포 주소의 <code>/admin.html</code>에서 확인합니다.' : ''))],
+  ];
+  if(tpl==='collect' && v){
+    steps.splice(3, 0, ['관리자 로그인 설정 (조회 페이지용)',
+      'Firebase 콘솔 <strong>빌드 → Authentication → 시작하기</strong> → 로그인 방법에서 <strong>이메일/비밀번호</strong> 사용 설정.<br>' +
+      '① <strong>Users 탭 → 사용자 추가</strong>로 관리자용 이메일·비밀번호를 등록하세요 (조회 페이지 로그인 계정).<br>' +
+      '② <strong>설정 → 사용자 작업</strong>에서 <strong>"만들기(가입)" 체크 해제</strong> — 아무나 계정을 만들어 데이터를 읽는 것을 막는 필수 단계입니다.']);
+  }
+  return steps.map((s,i)=>
+    '<div class="guide-step"><div class="guide-num">'+(i+1)+'</div><div class="guide-body"><strong>'+s[0]+'</strong><br>'+s[1]+'</div></div>'
+  ).join('');
+}
+
+/* ═══════════════════ 편집 UI 렌더링 ═══════════════════ */
+function renderTplGrid(){
+  document.getElementById('tplGrid').innerHTML = Object.keys(TEMPLATES).map(k=>{
+    const t = TEMPLATES[k];
+    return '<button class="method-btn'+(state.template===k?' active':'')+'" onclick="setTemplate(\''+k+'\')">'+
+      '<div class="method-btn-icon">'+t.icon+'</div><div class="method-btn-name">'+t.name+'</div><div class="method-btn-sub">'+t.sub+'</div></button>';
+  }).join('');
+  document.getElementById('tplDescIcon').textContent = TEMPLATES[state.template].icon;
+  document.getElementById('tplDescBody').innerHTML = TEMPLATES[state.template].desc;
+  document.getElementById('fieldsTitle').textContent = TEMPLATES[state.template].fieldsLabel;
+  document.getElementById('addBtn').textContent = '＋ ' + TEMPLATES[state.template].itemName + ' 추가';
+}
+
+function renderChips(){
+  const box = document.getElementById('chipRow');
+  if(state.template==='survey'){
+    box.innerHTML = '<button class="chip" onclick="addQuestion(\'choice\')">＋ 객관식 질문</button>' +
+                    '<button class="chip" onclick="addQuestion(\'text\')">＋ 주관식 질문</button>';
+    return;
+  }
+  const labels = cur().fields.map(f=>f.label.replace(/\s/g,''));
+  const fixed = state.template==='guestbook' ? ['이름','메시지'] : [];
+  box.innerHTML = QUICK_CHIPS.map(c=>{
+    const dis = labels.indexOf(c)>=0 || fixed.indexOf(c)>=0;
+    return '<button class="chip" '+(dis?'disabled':'')+' onclick="quickAdd(\''+c+'\')">＋ '+c+'</button>';
+  }).join('');
+}
+
+function typeSelHtml(f, idx){
+  return '<select class="field-sel" onchange="setFieldType('+idx+',this.value)">' +
+    Object.keys(TYPE_LABELS).map(t=>'<option value="'+t+'"'+(f.type===t?' selected':'')+'>'+TYPE_LABELS[t]+'</option>').join('') +
+    '</select>';
+}
+
+function renderFields(){
+  const box = document.getElementById('fieldList');
+  if(state.template==='survey'){ renderQuestions(box); return; }
+  let html = '';
+  if(state.template==='guestbook'){
+    html += GB_FIXED.map(f=>
+      '<div class="field-row fixed"><div class="field-main">'+
+      '<span class="field-num">✓</span>'+
+      '<input class="field-inp" value="'+esc(f.label)+'" disabled>'+
+      '<span class="fixed-badge">기본 포함</span>'+
+      '</div></div>').join('');
+  }
+  html += cur().fields.map((f,i)=>{
+    let row = '<div class="field-row'+(f.banned?' banned':'')+'"><div class="field-main">'+
+      '<span class="field-num">'+(i+1)+'</span>'+
+      '<input class="field-inp" value="'+esc(f.label)+'" placeholder="항목 이름 (예: 이름, 전화번호)" oninput="setFieldLabel('+i+',this.value)">'+
+      typeSelHtml(f,i)+
+      '<button class="req-toggle'+(f.required?' on':'')+'" onclick="toggleReq('+i+')">'+(f.required?'필수':'선택')+'</button>'+
+      '<button class="field-del" onclick="delField('+i+')" title="삭제">✕</button>'+
+      '</div>';
+    if(f.type==='select'){
+      row += '<div class="field-opts"><span class="opts-lbl">선택지</span>'+
+        '<input class="field-inp" value="'+esc(f.options.join(', '))+'" placeholder="쉼표로 구분 (예: 남, 여)" oninput="setFieldOptions('+i+',this.value)"></div>';
+    }
+    if(f.banned){
+      row += '<div class="field-warn">⚠ 주민등록번호는 법적 근거 없이 수집할 수 없습니다. 이 항목은 생성에서 제외됩니다.</div>';
+    }
+    row += '</div>';
+    return row;
+  }).join('');
+  box.innerHTML = html;
+}
+
+function renderQuestions(box){
+  box.innerHTML = state.survey.questions.map((q,i)=>{
+    let row = '<div class="field-row"><div class="field-main">'+
+      '<span class="field-num">'+(i+1)+'</span>'+
+      '<input class="field-inp" value="'+esc(q.text)+'" placeholder="질문을 입력하세요" oninput="setQText('+i+',this.value)">'+
+      '<select class="field-sel" onchange="setQType('+i+',this.value)">'+
+        '<option value="choice"'+(q.type==='choice'?' selected':'')+'>객관식</option>'+
+        '<option value="text"'+(q.type==='text'?' selected':'')+'>주관식</option>'+
+      '</select>'+
+      '<button class="field-del" onclick="delQuestion('+i+')" title="삭제">✕</button>'+
+      '</div>';
+    if(q.type==='choice'){
+      row += '<div class="field-opts"><span class="opts-lbl">선택지</span>'+
+        '<input class="field-inp" value="'+esc(q.options.join(', '))+'" placeholder="쉼표로 구분" oninput="setQOptions('+i+',this.value)">'+
+        '<button class="preset-btn" onclick="setQPreset('+i+')">5점 척도</button></div>';
+    }
+    row += '</div>';
+    return row;
+  }).join('');
+}
+
+function renderPiiWarn(){
+  const box = document.getElementById('piiWarn');
+  const noteBox = document.getElementById('rulesNote');
+  let html = '', note = '';
+  if(state.template!=='survey'){
+    const fields = state.template==='guestbook' ? GB_FIXED.concat(cur().fields) : cur().fields;
+    const withKeys = assignKeys(cur().fields, []);
+    if(state.template==='guestbook' && hasPII(withKeys)){
+      html = '<div class="info-block danger">🚨 <strong>방명록은 모든 방문자에게 공개됩니다.</strong> 전화번호·이메일·주소 같은 개인정보 항목은 넣지 마세요. 개인정보를 수집하려면 <strong>정보 수집 폼</strong> 템플릿을 쓰세요.</div>';
+    } else if(state.template==='collect' && hasPII(withKeys)){
+      html = state.viewer
+        ? '<div class="info-block warn">🔒 개인정보를 수집하는 페이지입니다. 조회 페이지를 켰으므로 보안 규칙이 <strong>로그인한 관리자만 읽기 가능</strong>으로 생성됩니다. 배포 가이드의 <strong>관리자 로그인 설정</strong> 단계(특히 가입 차단)를 꼭 따라 하세요.</div>'
+        : '<div class="info-block warn">🔒 개인정보(연락처·주소 등)를 수집하는 페이지입니다. 보안 규칙이 자동으로 <strong>읽기 전면 금지</strong>로 생성되며, 데이터는 Firebase 콘솔에서만 확인할 수 있습니다. 실제 운영 시에는 수집 목적을 페이지에 안내하고 불필요해진 데이터는 삭제하세요.</div>';
+      note = state.viewer
+        ? '<div class="info-block warn">🔒 조회 페이지를 켰으므로 <strong>allow read: if request.auth != null</strong>(로그인한 계정만 읽기)로 생성되었습니다. 배포 가이드의 <strong>관리자 로그인 설정</strong> 단계까지 마쳐야 조회 페이지가 동작합니다. 규칙을 이미 게시했다면 <strong>다시 복사해서 게시</strong>하세요.</div>'
+        : '<div class="info-block warn">🔒 개인정보 수집 페이지라서 <strong>allow read: if false</strong>로 생성되었습니다. 저장은 되지만 웹에서 조회는 안 되는 게 정상입니다.</div>';
+    }
+  }
+  box.innerHTML = html;
+  noteBox.innerHTML = note;
+}
+
+/* ═══════════════════ 상태 변경 핸들러 ═══════════════════ */
+function setTemplate(k){
+  state.template = k;
+  document.getElementById('inpTitle').value = cur().title;
+  renderTplGrid(); renderChips(); renderFields(); renderViewer(); update();
+}
+
+function toggleViewer(){
+  state.viewer = !state.viewer;
+  renderViewer(); update();
+}
+
+function renderViewer(){
+  const on = state.viewer, tpl = state.template;
+  const btn = document.getElementById('viewerToggle');
+  btn.classList.toggle('on', on);
+  document.getElementById('viewerToggleLbl').textContent = on ? '조회 페이지 포함 — 켜짐' : '조회 페이지 포함하기';
+  const tab = document.getElementById('tabViewer');
+  tab.style.display = on ? '' : 'none';
+  if(!on && tab.classList.contains('active')) switchTab('prompt');
+  document.getElementById('viewerInfo').innerHTML =
+    tpl==='collect'
+      ? '저장된 데이터를 <strong>표로 보고 CSV로 내려받는 admin.html</strong>을 추가합니다. 개인정보가 있으므로 <strong>관리자 로그인(이메일·비밀번호)</strong>이 붙고, 보안 규칙과 배포 가이드가 자동으로 함께 바뀝니다.'
+      : tpl==='guestbook'
+      ? '방명록 전체(최근 500건)를 <strong>표로 보고 CSV로 내려받는 admin.html</strong>을 추가합니다. 방명록은 공개 데이터라 로그인 없이 동작합니다.'
+      : '설문 응답 원본을 <strong>표로 보고 CSV로 내려받는 admin.html</strong>을 추가합니다. 내려받은 CSV는 전처리·분석 실습에 바로 쓸 수 있습니다.';
+  document.getElementById('viewerTabInfo').innerHTML =
+    (tpl==='collect'
+      ? '🔑 이 페이지는 <strong>관리자 로그인이 있어야 동작</strong>합니다 — 배포 가이드의 <strong>관리자 로그인 설정</strong> 단계와 <strong>보안 규칙 게시</strong>를 먼저 마치세요.<br>'
+      : '') +
+    '✅ 아래 내용을 <strong>기본 프롬프트를 보낸 같은 AI 대화에 이어서</strong> 붙여넣으세요. (새 대화에 붙여넣어도 동작합니다)';
+}
+function quickAdd(label){ cur().fields.push(mkField(label, label==='이름')); renderChips(); renderFields(); update(); }
+function addItem(){
+  if(state.template==='survey'){ addQuestion('choice'); return; }
+  cur().fields.push(mkField('', false)); renderFields(); update();
+}
+function addQuestion(type){ state.survey.questions.push(mkQuestion('', type)); renderFields(); update(); }
+function delField(i){ cur().fields.splice(i,1); renderChips(); renderFields(); update(); }
+function delQuestion(i){ state.survey.questions.splice(i,1); renderFields(); update(); }
+function toggleReq(i){ cur().fields[i].required = !cur().fields[i].required; renderFields(); update(); }
+function setFieldLabel(i,v){
+  const f = cur().fields[i];
+  const wasBanned = f.banned;
+  Object.assign(f, mkField(v, f.required));
+  if(wasBanned !== f.banned) renderFields();
+  renderChips(); update();
+}
+function setFieldType(i,v){
+  const f = cur().fields[i];
+  f.type = v;
+  if(v==='select' && !f.options.length) f.options = ['선택 1','선택 2'];
+  if(v==='textarea' && f.max<300) f.max = 500;
+  renderFields(); update();
+}
+function setFieldOptions(i,v){ cur().fields[i].options = v.split(',').map(s=>s.trim()).filter(Boolean); update(); }
+function setQText(i,v){ state.survey.questions[i].text = v; update(); }
+function setQType(i,v){ state.survey.questions[i].type = v; renderFields(); update(); }
+function setQOptions(i,v){ state.survey.questions[i].options = v.split(',').map(s=>s.trim()).filter(Boolean); update(); }
+function setQPreset(i){ state.survey.questions[i].options = SCALE5.slice(); renderFields(); update(); }
+
+/* ═══════════════════ 출력 갱신 ═══════════════════ */
+function update(){
+  cur().title = document.getElementById('inpTitle').value.trim() || cur().title;
+  const gen = state.template==='survey' ? genPromptSurvey : (state.template==='guestbook' ? genPromptGuestbook : genPromptCollect);
+  document.getElementById('outPrompt').textContent = gen();
+  document.getElementById('outViewer').textContent = state.viewer ? genPromptViewer() : '';
+  document.getElementById('outRules').textContent = genRules();
+  document.getElementById('outGuide').innerHTML = genGuide();
+  renderPiiWarn();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.stat-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.stat-panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+name));
+}
+
+function copyOut(id, btn){
+  const text = document.getElementById(id).textContent;
+  const done = ()=>{
+    const orig = btn.textContent;
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('done');
+    setTimeout(()=>{ btn.textContent = orig; btn.classList.remove('done'); }, 1600);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done(); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+/* ═══════════════════ 초기화 ═══════════════════ */
+document.getElementById('inpTitle').addEventListener('input', function(){
+  cur().title = this.value; update();
+});
+document.getElementById('inpFb').addEventListener('input', function(){
+  state.fbRaw = this.value;
+  state.fbCfg = parseFbConfig(this.value);
+  const st = document.getElementById('fbStatus');
+  if(!this.value.trim()){ st.className='fb-status'; st.textContent=''; }
+  else if(state.fbCfg && !state.fbCfg._partial){
+    st.className='fb-status ok';
+    st.textContent = '✓ 인식 완료 — 프로젝트: ' + state.fbCfg.projectId;
+  } else {
+    st.className='fb-status bad';
+    st.textContent = '⚠ firebaseConfig를 인식하지 못했습니다. apiKey와 projectId가 포함된 코드를 통째로 붙여넣으세요.';
+  }
+  update();
+});
+
+document.getElementById('inpTitle').value = state.collect.title;
+renderTplGrid(); renderChips(); renderFields(); renderViewer(); update();
+</script>
+
+<script>(function(){
+  var k='tf_vibe_firestore';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=vibe&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

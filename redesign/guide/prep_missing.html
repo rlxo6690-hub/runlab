@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>결측치·이상치 시뮬레이터 사용법 — 빠진 값과 튀는 값, 적을 먼저 알기 | DataForge 가이드</title>
+  <meta name="description" content="실무 데이터의 결측치와 이상치가 어떤 모양으로 나타나는지 직접 만들어보며 익히는 시뮬레이터 사용법. 결측 비율·패턴 설정부터 히트맵 해석, 보간 방법 비교까지 단계별로 안내합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/prep_missing">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="결측치·이상치 시뮬레이터 사용법 | DataForge 가이드">
+  <meta property="og:description" content="결측치와 이상치가 어떤 모양으로 나타나는지 직접 만들어보며 익히는 시뮬레이터 사용법 안내.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/prep_missing">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">dataforge.ai.kr/prep/missing</div>
+      <h1>결측치·이상치 시뮬레이터 사용법 — 빠진 값과 튀는 값, 적을 먼저 알기</h1>
+      <p class="lead">전처리를 배우기 전에, 결측치와 이상치가 '어떻게 생겼는지'부터 눈으로 익히는 도구입니다.</p>
+      <div class="tabs-line">탭: 🔍 결측치 탐지 · 🔧 결측치 보간 · ⚡ 이상치 탐지 · 📦 박스플롯</div>
+
+      <h2>어떤 상황에서 쓰는 도구인가요</h2>
+      <p>실무에서 받는 데이터는 교과서처럼 깨끗하지 않습니다. 센서가 잠시 꺼져서 값이 비어 있거나(<b>결측치</b>),
+      입력 실수나 장비 오류로 유난히 튀는 값(<b>이상치</b>)이 섞여 있습니다. 문제는 이런 오염이
+      눈에 잘 안 띈다는 것입니다 — 수만 행짜리 표를 스크롤해서는 어디가 비었는지 알 수 없습니다.</p>
+      <p>이 시뮬레이터는 접근을 뒤집습니다. 결측과 이상치를 <b>일부러 만들어서</b> 어떤 모양으로
+      나타나는지 보여줍니다. 깨끗한 데이터에 결측 비율과 패턴을 직접 조절해 넣어보면,
+      나중에 진짜 오염된 데이터를 만났을 때 '아, 이건 특정 컬럼에 몰린 결측이구나'를 바로 알아볼 수 있게 됩니다.</p>
+
+      <h2>이 도구는 무엇을 하나요</h2>
+      <p>결측 비율·패턴·이상치 비율을 조절해 오염된 데이터를 만들고, 통계 타일과 히트맵으로 결측이
+      <b>어디에, 얼마나, 어떤 모양으로</b> 퍼졌는지 확인합니다. 상단 4개 탭으로 결측치 탐지 →
+      결측치 보간 → 이상치 탐지 → 박스플롯을 오가며, 한 번 올린 데이터는 네 탭이 함께 사용합니다.</p>
+
+      <h2>단계별 사용법</h2>
+      <ol class="steps">
+        <li><b>데이터 소스 고르기</b> — 샘플 데이터(🏭 제조 센서 · 🌤 기상 관측 · 📦 판매 실적) 중 하나를
+        누르거나, <b>📂 CSV / XLSX 업로드</b>로 내 데이터를 올립니다. 한 번 올린 파일은 네 탭이 함께 사용합니다.</li>
+        <li><b>결측 비율·패턴 설정</b> — <b>결측 비율</b> 슬라이더로 몇 %를 비울지 정하고, <b>패턴</b>을
+        고릅니다 — 무작위(아무 곳이나) · 연속 구간(한동안 통째로 빔) · 컬럼 집중(특정 열에 몰림).
+        실무에서 센서 고장은 '연속 구간', 설문 무응답은 '컬럼 집중'으로 나타나는 경우가 많습니다.</li>
+        <li><b>이상치 비율 설정</b> — <b>이상치 비율</b> 슬라이더로 튀는 값을 몇 % 섞을지 정합니다.</li>
+        <li><b>▶ 분석 실행</b> — 버튼을 누르면 상단 통계 타일이 채워집니다 — 전체 셀 수 · 결측 셀 수 ·
+        결측 비율 · 완전한 행 비율 · 이상치 셀 수 · 이상치 비율.</li>
+        <li><b>히트맵으로 패턴 읽기</b> — 결측 히트맵(초록=정상, 빨강=결측, 주황=이상치)과
+        컬럼별 결측 비율 · 시간 축 결측 분포 차트로 결측이 몰린 위치를 확인합니다.</li>
+        <li><b>다른 탭 살펴보기</b> — 🔧 결측치 보간(빈칸을 채우는 8가지 방법을 RMSE로 비교) ·
+        ⚡ 이상치 탐지(튀는 값 찾기) · 📦 박스플롯(분포로 이상치 읽기) 탭도 같은 방식으로 씁니다.</li>
+      </ol>
+      <div class="tip">💡 주소 뒤에 <b>#impute</b>처럼 탭 이름을 붙이면 해당 탭이 바로 열립니다.
+      교육 자료나 문서에서 특정 탭으로 바로 안내할 때 유용합니다.</div>
+
+      <h2>결과를 읽는 법</h2>
+      <p><b>완전한 행 비율</b>을 눈여겨보세요. 셀 기준 결측이 5%뿐이어도, 결측이 여러 컬럼에 흩어져 있으면
+      '결측이 하나도 없는 행'은 절반 이하로 떨어질 수 있습니다. 결측 행을 통째로 버리는 전략(listwise deletion)이
+      왜 위험한지 숫자로 확인되는 지점입니다.</p>
+      <p>히트맵의 모양도 정보입니다. 빨간 점이 고르게 흩어져 있으면 무작위 결측이라 보간이 잘 통하지만,
+      세로로 긴 빨간 줄(컬럼 집중)이면 그 컬럼 자체의 수집 과정을 의심해야 하고, 가로로 긴 띠(연속 구간)면
+      해당 기간의 데이터 소스 장애를 의심해야 합니다.</p>
+
+      <div class="think">🤔 <b>생각해볼 점</b> — 패턴을 '무작위'로 둘 때와 '컬럼 집중'으로 둘 때 히트맵 모양이
+      어떻게 달라지나요? 결측이 한 열에 몰려 있다면, 그 열은 통째로 버리는 게 나을까요, 채우는 게 나을까요?</div>
+
+      <a class="cta" href="/prep/missing" target="_blank" rel="noopener">🔍 시뮬레이터 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/prep_interpolate">CSV 보간·병합 사용법 — 진짜 데이터의 결측을 실제로 채우기</a>
+        <a href="/guide/prep_edit">CSV 편집 도구 사용법 — 빈 행 삭제·값 필터·날짜 분리·차분</a>
+        <a href="/guide/data_leakage">데이터 누수 — 전처리는 왜 분할 뒤에 해야 하나</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

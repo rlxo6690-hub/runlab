@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>머신러닝 시뮬레이션 사용법 — K-Means부터 XGBoost까지 코드 없이 원리 관찰 | DataForge 가이드</title>
+  <meta name="description" content="코드 한 줄 없이 슬라이더와 버튼으로 K-Means·KNN·선형 회귀·로지스틱 회귀·결정 트리·랜덤 포레스트·XGBoost·LightGBM·평가지표까지, 머신러닝 알고리즘의 원리를 눈으로 관찰하는 시뮬레이터 사용법을 안내합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/sim_ml">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="머신러닝 시뮬레이션 사용법 | DataForge 가이드">
+  <meta property="og:description" content="K-Means부터 XGBoost까지, 코드 없이 클릭과 슬라이더로 머신러닝 알고리즘의 원리를 관찰하는 시뮬레이터 사용법 안내.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/sim_ml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">dataforge.ai.kr/sim/ml</div>
+      <h1>머신러닝 시뮬레이션 사용법 — K-Means부터 XGBoost까지 코드 없이 원리 관찰</h1>
+      <p class="lead">코드 한 줄 없이, 슬라이더와 버튼만으로 아홉 가지 머신러닝 알고리즘이 어떻게 판단하는지 눈으로 확인하는 도구입니다.</p>
+      <div class="tabs-line">탭: 🔵 K-Means · 🟣 KNN · 📈 선형 회귀 · 🔀 로지스틱 회귀 · 🌿 결정 트리 · 🌲 랜덤 포레스트 · ⚡ XGBoost · 🌗 LightGBM · 📊 평가지표</div>
+
+      <h2>어떤 상황에서 쓰는 도구인가요</h2>
+      <p>머신러닝 공부는 보통 코드부터 시작합니다. <b>fit()</b> 한 줄을 실행하면 결과는 나오지만,
+      그 안에서 무슨 일이 일어났는지는 여전히 블랙박스로 남습니다. K가 3이면 왜 군집이 저렇게
+      나뉘는지, 트리는 어떤 기준으로 가지를 뻗는지, 학습률을 키우면 무엇이 달라지는지 —
+      코드만 봐서는 감이 잘 잡히지 않습니다.</p>
+      <p>이 시뮬레이터는 순서를 뒤집습니다. 코드를 걷어내고 알고리즘의 <b>중간 과정</b>을 화면에
+      펼쳐 놓았습니다. 파이썬을 아직 모르는 입문자도, 이미 코드를 쓰지만 원리를 다시 잡고 싶은
+      분도, 값을 바꿔가며 결과가 달라지는 순간을 직접 관찰할 수 있습니다.</p>
+
+      <h2>이 도구는 무엇을 하나요</h2>
+      <p>상단의 아홉 개 탭이 각각 하나의 알고리즘(또는 평가지표)을 다룹니다. 탭마다 하이퍼파라미터
+      슬라이더가 있어 값을 바꾸면 시각화가 곧바로 갱신됩니다. K-Means·KNN·선형 회귀·로지스틱 회귀·결정 트리
+      탭에는 <b>단계별 시뮬레이터</b>와 <b>인터랙티브 가이드</b> 두 화면이 서브탭으로 나뉘어 있어,
+      먼저 개념을 단계별로 따라간 뒤 실제 예제 데이터로 값을 움직여볼 수 있습니다.</p>
+
+      <h2>군집 — 🔵 K-Means</h2>
+      <p>레이블 없는 데이터를 K개의 군집으로 묶는 비지도 학습입니다. <b>군집 개수(K)</b> 슬라이더와
+      중심점 초기화 방식(무작위 선택 / 멀리 떨어뜨려 배치), 표준화 사용 여부를 정한 뒤
+      <b>▶ 한 단계 실행(할당 → 갱신)</b> 버튼을 누르면 중심점이 한 걸음씩 이동합니다.
+      <b>⏩ 수렴할 때까지 실행</b>으로 끝까지 돌려 중심점이 멈추는 순간도 볼 수 있습니다.
+      인터랙티브 가이드에서는 고객 세분화 예제로 월 방문 횟수·월 지출액을 움직이며
+      새 고객이 어느 군집에 속하는지 확인합니다.</p>
+
+      <h2>분류 — 🟣 KNN · 🔀 로지스틱 회귀 · 트리 계열</h2>
+      <ul>
+        <li><b>🟣 KNN</b> — 가장 가까운 이웃 K명의 투표로 분류합니다. <b>사용할 이웃 수(K)</b>와
+        거리 척도(유클리드/맨해튼), 투표 방식(일반 다수결/거리 가중 투표)을 바꾸면
+        판정이 뒤집히는 순간을 볼 수 있습니다. 표준화를 껐다 켜며 스케일이 결과에 미치는 영향도 확인해 보세요.</li>
+        <li><b>🔀 로지스틱 회귀</b> — 시그모이드로 확률을 만들고 경계를 긋는 분류기입니다.
+        <b>분류 임계값(Threshold)</b>과 <b>L2 규제(λ)</b> 슬라이더로, 임계값을 옮길 때
+        판정이 어떻게 달라지는지 관찰합니다.</li>
+        <li><b>🌿 결정 트리</b> — 데이터를 가장 잘 나누는 질문을 골라 가지를 뻗습니다.
+        <b>최대 깊이(Max Depth)</b>와 분할 조건 슬라이더로 트리가 자라고 잘리는 모양을 보고,
+        인터랙티브 가이드에서 분할·노드·예측 경로를 따라가 봅니다.</li>
+        <li><b>🌲 랜덤 포레스트</b> — 서로 다른 나무 여러 그루의 다수결입니다.
+        <b>생성할 나무 개수(Forest Size)</b>와 <b>노드당 무작위 선택할 변수 개수</b>를 조절하며
+        한 그루일 때와 숲일 때의 차이를 비교합니다.</li>
+        <li><b>⚡ XGBoost</b> — 이전 나무가 남긴 오차를 다음 나무가 메우는 부스팅입니다.
+        <b>학습률(Learning Rate, η)</b>과 <b>부스팅 트리 수(Estimators)</b>를 바꾸며
+        예측이 단계적으로 정교해지는 과정을 봅니다.</li>
+        <li><b>🌗 LightGBM</b> — Leaf-wise 성장·GOSS·EFB로 속도를 끌어올린 부스팅입니다.
+        <b>리프 노드 개수(Num Leaves)</b> 슬라이더와 GOSS의 큰 오차 보존율(a)·작은 오차 샘플율(b)을
+        조절하며, 데이터를 덜 보고도 정확도를 지키는 원리를 확인합니다.</li>
+      </ul>
+
+      <h2>회귀 — 📈 선형 회귀</h2>
+      <p>점들 사이로 최적의 직선을 찾는 문제입니다. <b>수동 기울기(a)</b>와 <b>수동 절편(b)</b>
+      슬라이더로 직선을 직접 움직여 보며 오차가 줄어드는 지점을 손으로 찾아보고,
+      인터랙티브 가이드에서 최소제곱·잔차·R²의 의미를 월 광고비 예제로 확인합니다.
+      직접 그은 선과 알고리즘이 찾은 선을 비교해 보면 '학습'이 하는 일이 분명해집니다.</p>
+
+      <h2>모델 평가 — 📊 평가지표</h2>
+      <p>마지막 탭은 알고리즘이 아니라 <b>모델을 믿어도 되는지 판단하는 법</b>을 다룹니다.
+      실제 양성 수·민감도(Recall)·특이도(Specificity) 슬라이더를 움직이면 혼동행렬의
+      TP/FN/FP/TN 네 칸과 지표 카드, ROC 곡선 &amp; AUC가 실시간으로 다시 계산됩니다.
+      양성 비율을 극단으로 줄여 보면, 정확도(Accuracy)가 높아도 쓸모없는 모델이 되는
+      불균형 데이터의 함정을 숫자로 확인할 수 있습니다.</p>
+
+      <h2>값을 바꿔가며 관찰하는 사용법</h2>
+      <ol class="steps">
+        <li><b>탭 고르기</b> — 상단에서 알고리즘 탭을 선택합니다. 처음이라면 K-Means → KNN →
+        선형 회귀 순서로, 군집·분류·회귀를 하나씩 체험하는 것을 권합니다.</li>
+        <li><b>기본값으로 한 번 실행</b> — 슬라이더를 건드리기 전에 기본 설정 그대로 실행해
+        기준이 되는 결과를 먼저 봐 둡니다.</li>
+        <li><b>한 번에 하나만 바꾸기</b> — 슬라이더 하나만 움직이고 결과가 어디서 어떻게 달라졌는지
+        확인합니다. 여러 값을 동시에 바꾸면 무엇 때문에 달라졌는지 알 수 없습니다.</li>
+        <li><b>극단값으로 밀어보기</b> — K를 최소·최대로, 깊이를 1과 5로, 학습률을 양 끝으로
+        보내 보세요. 알고리즘이 무너지는 지점에서 각 값의 역할이 가장 선명하게 드러납니다.</li>
+        <li><b>인터랙티브 가이드로 마무리</b> — 서브탭의 가이드 화면에서 실제 상황(고객 세분화,
+        합격 예측 등) 예제로 배운 내용을 적용해 봅니다.</li>
+      </ol>
+      <div class="tip">💡 주소 뒤에 <b>#kmeans</b>처럼 탭 이름을 붙이면 해당 탭이 바로 열립니다 —
+      <b>#kmeans #knn #linear #logistic #dtree #rforest #xgboost #lightgbm #metrics</b>.
+      교육 자료에서 특정 알고리즘으로 바로 안내할 때 유용합니다.</div>
+
+      <div class="think">🤔 <b>생각해볼 점</b> — KNN에서 K를 1로 두면 훈련 데이터는 다 맞히지만 새 데이터에는
+      약해집니다. K를 9까지 늘리면 반대의 문제가 생기고요. 결정 트리의 최대 깊이에서도 같은 긴장이
+      보이나요? 두 알고리즘이 전혀 다른데도 '복잡할수록 좋은 게 아니다'라는 같은 결론에 닿는 이유를 생각해 보세요.</div>
+
+      <a class="cta" href="/sim/ml" target="_blank" rel="noopener">🤖 시뮬레이터 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/sim_deep">딥러닝 시뮬레이션 사용법 — 뉴런부터 과적합까지 눈으로 보는 신경망</a>
+        <a href="/guide/accuracy_trap">정확도의 함정 — 높은 Accuracy가 좋은 모델을 뜻하지 않는 이유</a>
+        <a href="/guide/data_leakage">데이터 누수 — 전처리는 왜 분할 뒤에 해야 하나</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

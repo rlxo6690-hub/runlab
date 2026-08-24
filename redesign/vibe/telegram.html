@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>텔레그램 봇 연결 도우미 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="텔레그램 봇 연결 도우미 — DataForge">
+  <meta property="og:description" content="봇파더 토큰 검증 → chat_id 자동 감지 → 테스트 발송 → 활용 코드 생성까지 5단계 마법사. 토큰은 서버로 전송되지 않고 브라우저에서만 사용됩니다.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    :root{
+      --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+      --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+      --accent:#2563eb;--accent2:#6366f1;
+      --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;
+    }
+    body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+         background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;}
+
+    .site-header{padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:#ea580c;font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+    .page{padding:0 24px 80px;}
+    .intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;
+      padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:16px;}
+    .intro-box strong{color:var(--text);}
+
+    .a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;transition:opacity .3s;}
+    .a-card:last-child{margin-bottom:0;}
+    .a-card.locked{opacity:.45;pointer-events:none;}
+    .a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+      display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .step-head{display:flex;align-items:center;gap:10px;}
+    .step-num{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#fff;background:var(--accent);
+      width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .step-name{font-size:14px;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0;}
+
+    .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;display:inline-block;font-family:'Noto Sans KR', sans-serif;}
+    .badge-wait{background:rgba(0,0,0,.05);color:var(--dim);border:1px solid var(--border2);}
+    .badge-run{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.25);}
+    .badge-done{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.25);}
+
+    .guide-body{font-size:13px;color:var(--muted);line-height:1.8;}
+    .guide-body strong{color:var(--text);}
+    .kbd{font-family:'Space Mono',monospace;font-size:12px;background:var(--card2);border:1px solid var(--border2);
+      border-radius:5px;padding:2px 8px;color:var(--text);white-space:nowrap;}
+
+    .btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+      font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;text-decoration:none;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:#1d4ed8;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+    .btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#047857;}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+
+    .mini-btn{font-size:10px;font-weight:700;padding:4px 12px;border:1px solid var(--border2);border-radius:4px;
+      background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+    .mini-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    .tok-inp{flex:1;min-width:240px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;
+      color:var(--text);font-size:13px;padding:9px 12px;outline:none;font-family:'Space Mono',monospace;}
+    .tok-inp:focus{border-color:var(--accent);background:#fff;}
+    .msg-inp{flex:1;min-width:240px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;
+      color:var(--text);font-size:14px;padding:9px 12px;outline:none;font-family:inherit;}
+    .msg-inp:focus{border-color:var(--accent);background:#fff;}
+
+    .ok-box{display:none;padding:12px 16px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);
+      border-radius:8px;font-size:13px;color:#065f46;margin-top:12px;line-height:1.8;}
+    .ok-box.show{display:block;}
+    .err-box{display:none;font-size:12px;color:var(--red);background:rgba(220,38,38,.06);
+      border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:10px 14px;margin-top:12px;line-height:1.6;}
+    .err-box.show{display:block;}
+    .info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;
+      background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+    .info-block strong{color:var(--text);}
+    .info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.2);}
+
+    .cmd-row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap;}
+
+    .pulse{display:none;align-items:center;gap:10px;margin-top:12px;font-size:13px;color:var(--muted);}
+    .pulse.show{display:flex;}
+    .pulse-dot{width:10px;height:10px;border-radius:50%;background:var(--amber);animation:pl 1.2s infinite;}
+    @keyframes pl{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.75);}}
+
+    .chat-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+    .chat-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);
+      border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;transition:.15s;flex-wrap:wrap;}
+    .chat-item:hover{border-color:rgba(37,99,235,.4);}
+    .chat-item.selected{background:rgba(37,99,235,.08);border-color:var(--accent);}
+    .chat-ic{font-size:18px;}
+    .chat-name{font-weight:700;color:var(--text);flex:1;min-width:100px;}
+    .chat-id{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;}
+    .chat-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,.05);color:var(--dim);border:1px solid var(--border2);}
+
+    .stat-tabs{display:flex;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+    .stat-tab{padding:10px 18px;font-size:13px;font-weight:600;background:none;border:none;
+      border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+    .stat-tab:hover{color:var(--text);}
+    .stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .code-wrap{position:relative;margin-top:14px;}
+    .code-wrap pre{max-height:340px;overflow:auto;background:#0f172a;color:#e2e8f0;border-radius:8px;
+      padding:14px 16px;font-family:'Space Mono',monospace;font-size:11px;line-height:1.6;white-space:pre-wrap;word-break:break-all;}
+    .copy-btn{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:4px 12px;
+      border:1px solid rgba(255,255,255,.25);border-radius:5px;background:rgba(255,255,255,.08);color:#e2e8f0;
+      cursor:pointer;font-family:inherit;transition:.15s;}
+    .copy-btn:hover{background:rgba(255,255,255,.18);}
+
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .site-header{padding:12px 14px;}
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">텔레그램 봇 연결 도우미</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      ✈️ <strong>텔레그램 봇 연결 도우미</strong> — 봇 만들기부터 <strong>chat_id 자동 감지, 테스트 발송, 활용 코드 생성</strong>까지 5단계로 안내합니다.
+      가장 어려운 chat_id 찾기는 <strong>봇에게 메시지 한 번 보내면 자동으로 감지</strong>됩니다.
+      입력한 토큰은 <strong>서버로 전송·저장되지 않고</strong> 내 브라우저에서 텔레그램 API를 직접 호출하는 데만 사용됩니다.
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="a-card" id="card1">
+      <div class="a-card-title">
+        <span class="step-head"><span class="step-num">1</span><span class="step-name">봇 만들기 — BotFather</span></span>
+        <span class="badge badge-run" id="badge1">진행</span>
+      </div>
+      <div class="guide-body">
+        <div class="info-block" style="margin-bottom:10px;">
+          📱 <strong>텔레그램이 처음이라면</strong> — 휴대폰에 텔레그램 앱을 설치하고 전화번호로 가입부터 하세요 (신규 가입은 앱에서만 됩니다).
+          가입만 돼 있으면 PC에서는 앱 설치 없이 <a href="https://web.telegram.org" target="_blank" rel="noopener" style="color:var(--accent);">웹 텔레그램</a>으로 아래 과정을 전부 진행할 수 있습니다.
+        </div>
+        텔레그램의 공식 봇 생성기 <strong>BotFather</strong>에게 명령어를 보내 새 봇을 만듭니다. 이미 봇이 있다면 2단계로 바로 가세요.
+        <div class="cmd-row" style="margin-top:10px;">
+          <a class="btn btn-primary" href="https://t.me/BotFather" target="_blank" rel="noopener">✈️ BotFather 열기</a>
+          <span style="font-size:12px;color:var(--dim);">휴대폰이라면 텔레그램 검색창에 <span class="kbd">@BotFather</span> 검색</span>
+        </div>
+        <div class="cmd-row"><span class="kbd">/newbot</span><button class="mini-btn" onclick="copyTxt('/newbot',this)">복사</button><span style="font-size:12px;">← BotFather 채팅창에 보내기</span></div>
+        <div style="margin-top:8px;">
+          ① <strong>봇 이름</strong>을 물으면 아무 이름이나 입력 (예: 내 알림 봇)<br>
+          ② <strong>username</strong>을 물으면 영문으로 입력 — <span class="kbd">_bot</span>으로 <strong>반드시 끝나야</strong> 합니다 (예: <span class="kbd">myalarm2026_bot</span>). 이미 있는 이름이면 다시 물으니 숫자를 붙여보세요.<br>
+          ③ 성공하면 BotFather가 <strong>토큰</strong>을 줍니다 — <span class="kbd">1234567890:AAH9x…</span> 형태의 긴 문자열을 <strong>복사</strong>하세요.
+        </div>
+        <div class="info-block warn" style="margin-top:10px;">
+          🔐 <strong>토큰은 비밀번호와 같습니다.</strong> 토큰만 있으면 누구나 내 봇을 조종할 수 있으니 공개된 곳(GitHub 공개 저장소, 단톡방 등)에 올리지 마세요.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="a-card" id="card2">
+      <div class="a-card-title">
+        <span class="step-head"><span class="step-num">2</span><span class="step-name">토큰 확인</span></span>
+        <span class="badge badge-wait" id="badge2">대기</span>
+      </div>
+      <div class="guide-body">복사한 토큰을 붙여넣으면 텔레그램에 직접 물어봐서 <strong>봇이 살아있는지 확인</strong>합니다.</div>
+      <div class="btn-row">
+        <input class="tok-inp" id="tokenInp" placeholder="1234567890:AAH9x… (BotFather가 준 토큰)" spellcheck="false" autocomplete="off">
+        <button class="btn btn-primary" id="btnVerify">봇 확인 ▶</button>
+      </div>
+      <div class="ok-box" id="ok2"></div>
+      <div class="err-box" id="err2"></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="a-card locked" id="card3">
+      <div class="a-card-title">
+        <span class="step-head"><span class="step-num">3</span><span class="step-name">chat_id 자동 감지</span></span>
+        <span class="badge badge-wait" id="badge3">대기</span>
+      </div>
+      <div class="guide-body" id="guide3">
+        아래 버튼으로 내 봇과의 채팅을 열고 <strong>아무 메시지나 하나 보내세요</strong> (예: 안녕).
+        이 페이지가 자동으로 감지해서 chat_id를 찾아드립니다.
+        <div class="cmd-row" style="margin-top:10px;">
+          <a class="btn btn-primary" id="botLink" href="#" target="_blank" rel="noopener">✈️ 내 봇과 채팅 열기</a>
+          <span style="font-size:12px;color:var(--dim);">휴대폰이라면 텔레그램 검색창에 <span class="kbd" id="botAt">@…</span> 검색 → <strong>시작</strong> 버튼 → 메시지 전송</span>
+        </div>
+        <div style="font-size:12px;color:var(--dim);margin-top:6px;">💡 <strong>그룹 채팅</strong>의 chat_id가 필요하면: 그룹에 봇을 초대하고 그룹에서 아무 메시지나 보내면 그룹도 감지됩니다 (음수 id).</div>
+      </div>
+      <div class="pulse" id="pulse3"><span class="pulse-dot"></span> 메시지를 기다리는 중… 봇에게 메시지를 보내면 여기에 나타납니다</div>
+      <div class="chat-list" id="chatList"></div>
+      <div class="err-box" id="err3"></div>
+      <div class="btn-row" id="webhookRow" style="display:none;">
+        <button class="btn btn-outline" id="btnDelWebhook">🔧 웹훅 해제하고 다시 시도</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="a-card locked" id="card4">
+      <div class="a-card-title">
+        <span class="step-head"><span class="step-num">4</span><span class="step-name">테스트 발송</span></span>
+        <span class="badge badge-wait" id="badge4">대기</span>
+      </div>
+      <div class="guide-body">선택한 채팅으로 메시지를 보내 <strong>연결이 끝났는지 직접 확인</strong>합니다.</div>
+      <div class="btn-row">
+        <input class="msg-inp" id="msgInp" value="연결 성공 🎉 — DataForge 텔레그램 봇 연결 도우미">
+        <button class="btn btn-green" id="btnSend">테스트 발송 ▶</button>
+      </div>
+      <div class="ok-box" id="ok4"></div>
+      <div class="err-box" id="err4"></div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="a-card locked" id="card5">
+      <div class="a-card-title">
+        <span class="step-head"><span class="step-num">5</span><span class="step-name">활용 코드 받기</span></span>
+        <span class="badge badge-wait" id="badge5">대기</span>
+      </div>
+      <div class="guide-body">내 토큰·chat_id가 채워진 <strong>완성 코드</strong>입니다. 그대로 복사해서 쓰거나, <strong>[🤖 AI 프롬프트]</strong>를 AI에게 붙여넣어 알림 기능을 만들어 달라고 하세요.</div>
+      <div class="stat-tabs" style="margin-top:12px;">
+        <button class="stat-tab active" data-lang="python">🐍 Python</button>
+        <button class="stat-tab" data-lang="js">🟨 JavaScript</button>
+        <button class="stat-tab" data-lang="gas">📊 Apps Script</button>
+        <button class="stat-tab" data-lang="curl">💻 curl</button>
+        <button class="stat-tab" data-lang="ai">🤖 AI 프롬프트</button>
+      </div>
+      <div class="code-wrap">
+        <button class="copy-btn" id="btnCopyCode">📋 복사</button>
+        <pre id="codePre"></pre>
+      </div>
+      <div class="info-block warn" style="margin-top:12px;">
+        🔐 이 코드에는 <strong>실제 토큰이 들어 있습니다.</strong> 공개 저장소·게시판에 그대로 올리지 말고, 공유할 때는 토큰 부분을 지우세요.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const API = (token, method) => 'https://api.telegram.org/bot' + token + '/' + method;
+
+let token = '';
+let botInfo = null;       // {username, first_name}
+let chats = {};           // chat.id → chat
+let chatId = null;
+let chatName = '';
+let pollTimer = null;
+let pollOffset = 0;
+
+function copyTxt(t, btn) {
+  const done = () => { const o = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = o; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => {});
+}
+window.copyTxt = copyTxt;
+
+function setBadge(n, state, txt) {
+  const b = $('badge' + n);
+  b.className = 'badge badge-' + state;
+  b.textContent = txt;
+}
+function unlock(n) { $('card' + n).classList.remove('locked'); }
+
+/* ═══════ STEP 2: getMe ═══════ */
+$('btnVerify').addEventListener('click', verifyToken);
+$('tokenInp').addEventListener('keydown', (e) => { if (e.key === 'Enter') verifyToken(); });
+
+async function verifyToken() {
+  const t = $('tokenInp').value.trim().replace(/^bot/i, '');
+  const ok = $('ok2'), err = $('err2');
+  ok.classList.remove('show'); err.classList.remove('show');
+  if (!/^\d+:[\w-]{20,}$/.test(t)) {
+    err.textContent = '토큰 형태가 아닙니다. "숫자:영문숫자" 형태의 전체 토큰을 붙여넣으세요. (앞뒤 공백·따옴표 없이)';
+    err.classList.add('show'); return;
+  }
+  $('btnVerify').disabled = true; $('btnVerify').textContent = '확인 중…';
+  try {
+    const r = await fetch(API(t, 'getMe')).then((x) => x.json());
+    if (!r.ok) throw new Error(r.description || 'unauthorized');
+    token = t;
+    botInfo = r.result;
+    ok.innerHTML = '✅ 봇 확인 완료 — <strong>' + escHtml(botInfo.first_name) + '</strong> (@' + escHtml(botInfo.username) + ')';
+    ok.classList.add('show');
+    setBadge(1, 'done', '완료'); setBadge(2, 'done', '완료'); setBadge(3, 'run', '진행');
+    unlock(3);
+    $('botLink').href = 'https://t.me/' + botInfo.username;
+    $('botAt').textContent = '@' + botInfo.username;
+    startPolling();
+    $('card3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {
+    err.textContent = /unauthorized/i.test(e.message)
+      ? '텔레그램이 이 토큰을 거부했습니다 (401). 토큰을 다시 복사해서 붙여넣으세요 — 중간에 잘렸거나 오타일 가능성이 큽니다.'
+      : '확인 실패: ' + e.message + ' — 네트워크 상태를 확인하고 다시 시도하세요.';
+    err.classList.add('show');
+  } finally {
+    $('btnVerify').disabled = false; $('btnVerify').textContent = '봇 확인 ▶';
+  }
+}
+
+/* ═══════ STEP 3: getUpdates 폴링 → chat_id 감지 ═══════ */
+function startPolling() {
+  stopPolling();
+  $('pulse3').classList.add('show');
+  poll();
+  pollTimer = setInterval(poll, 2500);
+}
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } $('pulse3').classList.remove('show'); }
+
+async function poll() {
+  try {
+    const r = await fetch(API(token, 'getUpdates') + '?timeout=0&offset=' + pollOffset).then((x) => x.json());
+    if (!r.ok) {
+      if (r.error_code === 409) {
+        $('err3').textContent = '이 봇에는 웹훅이 설정되어 있어 메시지를 읽을 수 없습니다 (409). 아래 버튼으로 웹훅을 해제하면 계속할 수 있습니다.';
+        $('err3').classList.add('show');
+        $('webhookRow').style.display = 'flex';
+        stopPolling();
+      }
+      return;
+    }
+    $('err3').classList.remove('show');
+    for (const u of r.result) {
+      pollOffset = u.update_id + 1;
+      const msg = u.message || u.edited_message || u.channel_post || (u.my_chat_member && { chat: u.my_chat_member.chat });
+      if (msg && msg.chat) addChat(msg.chat);
+    }
+  } catch (e) { /* 네트워크 일시 오류는 다음 폴링에서 재시도 */ }
+}
+
+function addChat(c) {
+  const isNew = !chats[c.id];
+  chats[c.id] = c;
+  if (isNew) renderChats();
+}
+function chatLabel(c) {
+  if (c.type === 'private') return [c.first_name, c.last_name].filter(Boolean).join(' ') || ('@' + (c.username || c.id));
+  return c.title || String(c.id);
+}
+function renderChats() {
+  const ids = Object.keys(chats);
+  $('chatList').innerHTML = ids.map((id) => {
+    const c = chats[id];
+    const ic = c.type === 'private' ? '👤' : (c.type === 'channel' ? '📢' : '👥');
+    const ty = c.type === 'private' ? '개인' : (c.type === 'channel' ? '채널' : '그룹');
+    return '<div class="chat-item' + (String(chatId) === String(id) ? ' selected' : '') + '" onclick="pickChat(\'' + id + '\')">' +
+      '<span class="chat-ic">' + ic + '</span>' +
+      '<span class="chat-name">' + escHtml(chatLabel(c)) + '</span>' +
+      '<span class="chat-type">' + ty + '</span>' +
+      '<span class="chat-id">chat_id: ' + id + '</span>' +
+      '</div>';
+  }).join('');
+  if (ids.length === 1 && chatId === null) pickChat(ids[0]);
+}
+window.pickChat = function (id) {
+  chatId = id;
+  chatName = chatLabel(chats[id]);
+  renderChats();
+  setBadge(3, 'done', '완료'); setBadge(4, 'run', '진행');
+  unlock(4);
+  renderCode();
+  unlock(5); setBadge(5, 'run', '진행');
+};
+
+$('btnDelWebhook').addEventListener('click', async () => {
+  try {
+    const r = await fetch(API(token, 'deleteWebhook')).then((x) => x.json());
+    if (r.ok) {
+      $('err3').classList.remove('show');
+      $('webhookRow').style.display = 'none';
+      startPolling();
+    }
+  } catch (e) {}
+});
+
+/* ═══════ STEP 4: sendMessage ═══════ */
+$('btnSend').addEventListener('click', async () => {
+  const ok = $('ok4'), err = $('err4');
+  ok.classList.remove('show'); err.classList.remove('show');
+  const text = $('msgInp').value.trim() || '연결 성공 🎉';
+  $('btnSend').disabled = true; $('btnSend').textContent = '발송 중…';
+  try {
+    const r = await fetch(API(token, 'sendMessage'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text })
+    }).then((x) => x.json());
+    if (!r.ok) throw new Error(r.description || 'send failed');
+    ok.innerHTML = '✅ 발송 완료! 텔레그램 <strong>' + escHtml(chatName) + '</strong> 채팅을 확인하세요. 연결이 끝났습니다 🎉';
+    ok.classList.add('show');
+    setBadge(4, 'done', '완료'); setBadge(5, 'done', '완료');
+    $('card5').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {
+    err.textContent = '발송 실패: ' + e.message + (String(chatId).startsWith('-') ? ' — 그룹이라면 봇이 그룹에서 강퇴되지 않았는지 확인하세요.' : ' — 봇 채팅에서 [시작]을 눌렀는지 확인하세요.');
+    err.classList.add('show');
+  } finally {
+    $('btnSend').disabled = false; $('btnSend').textContent = '테스트 발송 ▶';
+  }
+});
+
+/* ═══════ STEP 5: 코드 생성 ═══════ */
+let curLang = 'python';
+document.querySelectorAll('.stat-tab').forEach((t) => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.stat-tab').forEach((x) => x.classList.remove('active'));
+    t.classList.add('active');
+    curLang = t.dataset.lang;
+    renderCode();
+  });
+});
+
+function snippets() {
+  const T = token || '<봇 토큰>';
+  const C = chatId || '<chat_id>';
+  return {
+    python:
+'import requests\n\nTOKEN = "' + T + '"\nCHAT_ID = "' + C + '"\n\ndef send_telegram(text):\n    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"\n    r = requests.post(url, json={"chat_id": CHAT_ID, "text": text})\n    return r.json()\n\nsend_telegram("파이썬에서 보낸 알림입니다 ✅")',
+    js:
+'const TOKEN = "' + T + '";\nconst CHAT_ID = "' + C + '";\n\nasync function sendTelegram(text) {\n  const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;\n  const r = await fetch(url, {\n    method: "POST",\n    headers: { "Content-Type": "application/json" },\n    body: JSON.stringify({ chat_id: CHAT_ID, text })\n  });\n  return r.json();\n}\n\nsendTelegram("자바스크립트에서 보낸 알림입니다 ✅");',
+    gas:
+'// Google Apps Script — 스프레드시트·폼과 연동할 때\nconst TOKEN = "' + T + '";\nconst CHAT_ID = "' + C + '";\n\nfunction sendTelegram(text) {\n  const url = "https://api.telegram.org/bot" + TOKEN + "/sendMessage";\n  UrlFetchApp.fetch(url, {\n    method: "post",\n    contentType: "application/json",\n    payload: JSON.stringify({ chat_id: CHAT_ID, text: text })\n  });\n}\n\nfunction test() {\n  sendTelegram("앱스 스크립트에서 보낸 알림입니다 ✅");\n}',
+    curl:
+'curl -X POST "https://api.telegram.org/bot' + T + '/sendMessage" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"chat_id": "' + C + '", "text": "터미널에서 보낸 알림입니다 ✅"}\'',
+    ai:
+'아래 텔레그램 봇 정보로 알림 기능을 만들어줘.\n\n- 봇 토큰: ' + T + '\n- chat_id: ' + C + '\n- 발송 방법: https://api.telegram.org/bot<토큰>/sendMessage 에 POST, JSON body {"chat_id": "...", "text": "..."}\n\n요구사항:\n1. (여기에 원하는 동작을 적으세요 — 예: 폼이 제출되면 내용을 텔레그램으로 보내줘)\n2. 실패하면 콘솔이 아니라 화면에 한국어로 오류를 표시해줘\n3. 토큰과 chat_id는 코드 상단 상수로 분리해줘'
+  };
+}
+function renderCode() { $('codePre').textContent = snippets()[curLang]; }
+renderCode();
+
+$('btnCopyCode').addEventListener('click', () => {
+  navigator.clipboard.writeText(snippets()[curLang]).then(() => {
+    $('btnCopyCode').textContent = '✓ 복사됨';
+    setTimeout(() => { $('btnCopyCode').textContent = '📋 복사'; }, 1400);
+  });
+});
+
+function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* 페이지 이탈 시 폴링 정리 */
+window.addEventListener('beforeunload', stopPolling);
+</script>
+
+<script>(function(){
+  var k='tf_vibe_telegram';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=vibe&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

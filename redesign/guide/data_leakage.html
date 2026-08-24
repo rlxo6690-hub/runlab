@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AUC 0.987은 축하가 아니라 경고다 — 데이터 누수 이야기 | DataForge 가이드</title>
+  <meta name="description" content="첫 시도에 AUC 0.987이 나왔다면 축하가 아니라 조사가 필요합니다. 시험 문제를 미리 본 학생 비유로 데이터 누수를 설명하고, 타깃 누수를 걷어내자 0.987이 0.888로 떨어진 — 그리고 그게 정직한 점수인 — 과정을 따라갑니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/data_leakage">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="AUC 0.987은 축하가 아니라 경고다 — 데이터 누수 이야기 | DataForge 가이드">
+  <meta property="og:description" content="너무 좋은 점수는 조사할 일입니다. 타깃 누수를 걷어내자 AUC 0.987이 0.888로 떨어진 이야기와, 전처리를 분할 뒤에 해야 하는 이유.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/data_leakage">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">개념 아티클 · 데이터 분할</div>
+      <h1>AUC 0.987은 축하가 아니라 경고다 — 데이터 누수 이야기</h1>
+      <p class="lead">기대보다 나쁜 모델은 사람을 속이지 않습니다. 사람을 속이는 것은 언제나 기대보다 좋은 모델입니다.</p>
+      <div class="tabs-line">키워드: 데이터 누수 · 타깃 누수 · 데이터 분할 · Pipeline · AUC</div>
+
+      <h2>축하합니다, AUC 0.987입니다</h2>
+      <p>품질팀이 6개월 치 최종검사 기록 3,513행을 넘겨줍니다. 로트 700개 분량이고 불량률은 29.0%입니다.
+      "불량을 미리 예측할 수 있을까요?"라는 요청에, 배운 대로 합니다. 식별자(로트번호·검사일)를 빼고,
+      나머지 컬럼을 전부 특성으로 넣고, 8:2로 나누고, 랜덤포레스트를 돌립니다.</p>
+      <p>결과는 <b>AUC 0.987, 정확도 96.7%</b>. 첫 시도에 이런 숫자가 나왔습니다. 보고서를 쓰고 싶어집니다.</p>
+      <p>그런데 잠깐 멈춰야 합니다. AUC 0.987은 "불량인 부품과 정상인 부품을 무작위로 하나씩 뽑았을 때
+      98.7%의 확률로 불량 쪽에 더 높은 점수를 준다"는 뜻입니다. 사실상 완벽합니다. 그리고
+      <b>제조 현장의 불량 예측에서 이런 숫자는 나오지 않습니다.</b> 온도와 진동 몇 개로 불량을
+      99% 맞힐 수 있었다면 애초에 머신러닝이 필요 없었을 겁니다. 센서에 임계값만 걸면 됐겠지요.</p>
+      <p>너무 좋은 숫자는 축하할 일이 아니라 <b>조사할 일</b>입니다.</p>
+
+      <h2>시험 문제를 미리 본 학생</h2>
+      <p>이런 상황을 이해하는 가장 좋은 비유가 있습니다. 인턴이 자랑합니다. "이탈 예측 모델 만들었는데요,
+      정확도가 100%예요!" 팀장이 딱 한 마디 묻습니다. "그거 어떤 데이터로 채점한 거예요?" —
+      "학습시킨 데이터로요."</p>
+      <p>모델은 암기할 수 있습니다. 학습에 쓴 데이터로 채점하면 외운 것을 확인할 뿐입니다.
+      시험 문제를 미리 보고 답을 외운 학생의 100점이 실력을 전혀 말해주지 않는 것과 같습니다.
+      그래서 데이터의 일부를 일부러 숨겨두고(테스트 세트), 숨긴 데이터로만 채점합니다.</p>
+      <p><b>데이터 누수(data leakage)</b>는 이 원칙이 교묘하게 깨지는 것입니다 — 모델이 실전에서는
+      쓸 수 없는 정보를 학습 중에 훔쳐보는 것. 모의고사 문제지를 미리 본 학생은 모의고사에서
+      100점을 받고, 진짜 시험에서 무너집니다. 무너진 게 아니라 처음부터 그 실력이었던 겁니다.</p>
+      <p>누수된 모델의 무서운 점은 <b>에러가 나지 않는다</b>는 것입니다. 코드는 아름답게 돌아가고,
+      숫자는 훌륭하고, 보고서는 통과합니다. 현장에 배포되고 나서야 정체가 드러납니다.
+      "검증에서 99% 나왔는데 실제로는 60%밖에 안 맞습니다" — 머신러닝 프로젝트가 실패하는
+      가장 흔한 이유 중 하나이고, 알고리즘을 바꿔도 하이퍼파라미터를 튜닝해도 고쳐지지 않습니다.
+      문제가 모델이 아니라 <b>데이터를 다루는 방식</b>에 있기 때문입니다.</p>
+
+      <h2>범인 찾기 — 시간의 화살</h2>
+      <p>AUC 0.987이 어디서 왔는지 뜯어봅니다. 특성 중요도를 뽑아보면 <b>후속공정통보(0.455)</b>와
+      <b>재작업시간(0.331)</b> 두 컬럼이 성능의 78.5%를 만들고 있습니다. 온도도 진동도 압력도
+      거의 기여하지 않습니다.</p>
+      <p>데이터 사전을 보면 정체가 드러납니다. '재작업시간'은 불량 판정된 부품을 손보는 데 걸린 시간이고,
+      '후속공정통보'는 다음 공정에 "불량 나왔다"고 알린 기록입니다. 실제로 불량일 때 재작업시간 평균은
+      18.0분, 정상일 때는 0.2분. 재작업시간이 0보다 큰 행의 불량률은 <b>81.0%</b>입니다.
+      이 컬럼 하나로 거의 답이 나옵니다. 당연합니다 — <b>재작업은 불량이라서 하는 것</b>이니까요.
+      원인과 결과를 거꾸로 넣은 겁니다.</p>
+      <p>타깃 누수를 잡아내는 질문은 딱 하나입니다. <b>"이 값은 내가 예측하려는 시점에 이미 존재하는가?"</b>
+      우리가 예측하려는 시점은 부품이 막 만들어진 순간입니다. 그 순간 온도·진동·압력은 존재하지만,
+      재작업시간은 불량 판정이 난 <b>뒤에야</b> 생깁니다. 이런 '사후 컬럼'은 어느 회사 데이터에나 있습니다.
+      이탈 예측인데 해지사유코드가 있고, 대출 부도 예측인데 추심담당자가 있는 식입니다.
+      업무 시스템은 원래 일이 끝난 뒤 결과를 기록하려고 만든 것이지, 예측하려고 만든 게 아니기 때문입니다.</p>
+      <div class="tip">💡 <b>누수를 의심해야 하는 신호 세 가지</b> — ① 특성 하나(또는 둘)가 중요도를 압도한다
+      ② 그 특성 이름에 '결과'의 냄새가 난다(재작업·통보·사유·처리) ③ 성능이 도메인 상식보다 지나치게 좋다.
+      셋 중 둘 이상이면 거의 확실합니다. 컬럼 이름만으로 판단이 어려우면 현업 담당자에게
+      "이거 언제 입력되는 값이에요?"라고 물어보세요. 가장 값싼 누수 방지책입니다.</div>
+
+      <h2>타깃 누수 제거: 0.987 → 0.888</h2>
+      <p>범인을 찾았으니 걷어냅니다. 재작업시간과 후속공정통보를 빼고, 예측 시점에 진짜로 존재하는
+      값들 — 온도·진동·압력·두께편차·속도 — 만으로 다시 학습합니다. 결과는 <b>AUC 0.987 → 0.888</b>.
+      10%p 가까이 떨어졌습니다.</p>
+      <p>여기서 많은 사람이 이렇게 말합니다. "성능이 너무 떨어지는데... 재작업시간을 다시 넣으면 안 될까요?"
+      절대 안 됩니다. 그 컬럼은 예측 시점에 존재하지 않습니다. 모델을 공장에 배포했다고 상상해 보세요.
+      부품이 막 나왔고 예측을 하려는데, 재작업시간 칸에 무엇을 넣을까요? 아직 재작업을 안 했으니
+      전부 0을 넣게 되고, 학습 때 "재작업시간 0 = 대체로 정상"이라고 배운 모델은 전부 "정상"이라고
+      답합니다. AUC 0.987짜리 모델이 현장에서 아무것도 못 잡는 이유입니다. 성능이 낮아지는 게 아니라
+      <b>작동 자체를 안 합니다.</b></p>
+      <p>그래서 성능이 떨어졌을 때의 올바른 반응은 실망이 아니라 <b>안도</b>입니다. 0.987은 애초에
+      우리 모델의 실력이 아니었습니다. 시험지를 미리 본 점수였습니다. 0.888은 정직한 방향으로
+      한 걸음 간 숫자입니다. 참고로 이 이야기의 원본 실험에서는 여기가 끝이 아닙니다 —
+      같은 로트의 행들이 학습과 테스트에 흩어져 들어간 그룹 누수까지 걷어내자 0.719로,
+      누수를 전부 제거하자 최종 0.638까지 내려갑니다. 내려갈 때마다 모델은 더 좋아지고 있었습니다.
+      올라가 있던 것이 거짓말이었기 때문입니다.</p>
+      <div class="think">🤔 <b>생각해볼 점</b> — 현업 데이터에서 첫 시도에 AUC 0.99가 나왔습니다.
+      기뻐해야 할까요? 그리고 상사가 "0.888보다 0.987이 보고서에 좋아 보이는데"라고 말한다면,
+      배포 후에 벌어질 일을 어떻게 설명하시겠습니까?</div>
+
+      <h2>전처리는 분할 뒤에</h2>
+      <p>누수는 컬럼에만 숨는 게 아니라 <b>절차에도</b> 숨습니다. 대표적인 것이 전처리 순서입니다.
+      StandardScaler().fit(X)처럼 스케일러를 전체 데이터로 학습시키면, 그 평균과 표준편차 안에
+      테스트 세트의 정보가 들어갑니다. 테스트 세트는 '아직 오지 않은 미래'를 흉내 낸 것인데,
+      내일 올 고객의 평균을 오늘 알 수는 없습니다. 그 미래의 통계를 미리 쓰는 것은 반칙입니다.</p>
+      <p>스케일러 정도는 점수를 조금 부풀리는 데 그치지만, <b>특성 선택</b>을 전체 데이터에서 하면
+      재앙이 됩니다. 원본 실험에서는 y와 아무 관련이 없는 <b>난수 특성 300개</b>를 만들고, 전체 데이터에서
+      y와 상관 높은 20개를 고른 뒤 나눠서 학습했습니다. 정보가 정확히 0인 데이터인데
+      <b>AUC 0.6531</b>이 나옵니다. 올바르게 학습 세트 안에서만 고르면 0.5099 — 동전 던지기 수준,
+      즉 정보가 0인 데이터에서 나와야 할 정직한 점수입니다. 그 0.15의 차이는 모델이 발견한 패턴이 아니라
+      우리가 테스트 정답을 보고 골라준 것입니다.</p>
+      <p>규칙은 간단합니다. <b>분할을 코드의 맨 위에 두고, 모든 전처리(스케일러·인코더·결측 대치·특성
+      선택·오버샘플링)는 Pipeline 안에 넣어서 학습 데이터로만 배우게 합니다.</b> 그리고 가장 중요한
+      습관은 코드가 아니라 반사신경입니다 — 성능이 기대보다 좋으면, 축하하기 전에 의심한다.</p>
+      <p>이 글은 DataForge 교육 과정 원고에서 발췌·각색했습니다. 아래 시뮬레이터에서 데이터 분할과
+      모델 학습 과정을 직접 값을 바꿔가며 확인할 수 있습니다.</p>
+
+      <a class="cta" href="/sim/ml" target="_blank" rel="noopener">🤖 머신러닝 시뮬레이터 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/accuracy_trap">정확도 98%의 함정 — 불량 121개 중 110개를 놓친 모델 이야기</a>
+        <a href="/guide/sim_ml">머신러닝 시뮬레이터 사용법 — 코드 없이 모델을 만져보기</a>
+        <a href="/guide/prep_missing">결측치·이상치 시뮬레이터 사용법 — 빠진 값과 튀는 값, 적을 먼저 알기</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

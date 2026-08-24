@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>위치 데이터 분석 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="위치 데이터 분석 — DataForge">
+<meta property="og:description" content="GeoJSON·CSV 파일을 업로드해 지도 위에 위치 데이터를 시각화하는 교육용 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --orange:#ea580c;--amber:#d97706;--green:#059669;--red:#dc2626;
+  --r:10px;
+  --geo:#0d9488;--geo2:#0f766e;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,0,0,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-family:'Noto Sans KR', sans-serif;font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:4px 12px;border-radius:2px;transition:.2s;letter-spacing:.5px;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);}
+
+/* ── Page ── */
+.page{padding:24px 24px 80px;}
+.page-title{margin-bottom:6px;font-family:'Noto Sans KR', sans-serif;font-size:18px;color:var(--geo);}
+.page-desc{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.8;}
+
+/* ── Upload zone ── */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:28px 24px;text-align:center;cursor:pointer;transition:.2s;background:var(--card);margin-bottom:16px;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--geo);background:rgba(13,148,136,.05);}
+.upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-title{font-family:'Noto Sans KR', sans-serif;font-size:12px;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);}
+.upload-formats{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+.fmt-badge{font-family:'Space Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid var(--border2);color:var(--muted);background:var(--card2);}
+.fmt-badge.geo{border-color:rgba(13,148,136,.4);color:var(--geo);background:rgba(13,148,136,.08);}
+#file-input{display:none;}
+
+/* ── File list panel ── */
+.file-list{display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden;}
+.file-list.show{display:block;}
+.file-list-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card2);border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.5px;}
+.file-list-header span{text-transform:uppercase;}
+.btn-clear-all{font-size:10px;font-family:'Noto Sans KR', sans-serif;background:none;border:1px solid var(--border2);color:var(--muted);padding:3px 10px;border-radius:4px;cursor:pointer;transition:.2s;}
+.btn-clear-all:hover{color:var(--text);}
+
+/* ── File row ── */
+.file-row{border-bottom:1px solid var(--border);padding:12px 16px;}
+.file-row:last-child{border-bottom:none;}
+.file-row-main{display:flex;align-items:center;gap:10px;}
+.color-pick{width:28px;height:28px;border:none;padding:0;border-radius:6px;cursor:pointer;background:none;flex-shrink:0;}
+.color-pick::-webkit-color-swatch-wrapper{padding:0;}
+.color-pick::-webkit-color-swatch{border-radius:5px;border:2px solid rgba(0,0,0,.12);}
+.eye-btn{font-size:16px;cursor:pointer;opacity:.9;flex-shrink:0;line-height:1;transition:.2s;user-select:none;}
+.eye-btn.hidden{opacity:.35;}
+.file-row-info{flex:1;min-width:0;}
+.file-row-name{font-size:13px;font-weight:600;color:var(--text);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-row-meta{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+.remove-btn{font-size:11px;font-family:'Noto Sans KR', sans-serif;background:none;border:1px solid var(--border2);color:var(--muted);padding:3px 8px;border-radius:4px;cursor:pointer;transition:.2s;flex-shrink:0;}
+.remove-btn:hover{border-color:#dc2626;color:#dc2626;}
+
+/* ── CSV mapping (inline per file) ── */
+.csv-map{display:none;margin-top:12px;padding:12px 14px;background:var(--card2);border-radius:8px;border:1px solid var(--border);}
+.csv-map.show{display:block;}
+.csv-map-title{font-family:'Noto Sans KR', sans-serif;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.csv-map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.csv-map-group{display:flex;flex-direction:column;gap:4px;}
+.csv-map-group label{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+.csv-map-group select{background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-size:12px;border-radius:6px;outline:none;}
+.csv-map-group select:focus{border-color:var(--geo);}
+.btn-render{margin-top:10px;font-family:'Noto Sans KR', sans-serif;font-size:11px;background:var(--geo);color:#fff;border:none;padding:7px 20px;border-radius:6px;cursor:pointer;transition:.2s;letter-spacing:.5px;}
+.btn-render:hover{background:var(--geo2);}
+.btn-dl-geojson{display:none;font-family:'Space Mono',monospace;font-size:10px;background:none;border:1px solid rgba(13,148,136,.5);color:var(--geo);padding:3px 10px;border-radius:4px;cursor:pointer;transition:.2s;flex-shrink:0;letter-spacing:.5px;}
+.btn-dl-geojson.show{display:inline-block;}
+.btn-dl-geojson:hover{background:rgba(13,148,136,.08);border-color:var(--geo);}
+.shp-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.4);color:var(--geo);margin-left:6px;vertical-align:middle;letter-spacing:.5px;}
+
+/* ── Map ── */
+.map-wrap{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);margin-bottom:16px;}
+#map{height:700px;width:100%;background:#e8f4f8;}
+.map-capture-btn{position:absolute;bottom:12px;right:12px;z-index:1000;font-family:'Noto Sans KR', sans-serif;font-size:11px;background:#fff;border:1px solid rgba(0,0,0,.2);color:var(--text);padding:6px 14px;border-radius:4px;cursor:pointer;transition:.2s;box-shadow:0 1px 5px rgba(0,0,0,.15);letter-spacing:.5px;}
+.map-capture-btn:hover{background:var(--card2);border-color:rgba(0,0,0,.35);}
+.map-capture-btn:disabled{opacity:.6;cursor:wait;}
+.map-boundary-btn{position:absolute;top:12px;right:12px;z-index:1000;font-family:'Space Mono',monospace;font-size:11px;background:#fff;border:1px solid rgba(0,0,0,.2);color:var(--text);padding:6px 14px;border-radius:4px;cursor:pointer;transition:.2s;box-shadow:0 1px 5px rgba(0,0,0,.15);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.map-boundary-btn:hover{background:var(--card2);}
+.map-boundary-btn.active{background:var(--geo);color:#fff;border-color:var(--geo2);}
+.map-overlay-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(248,250,252,.92);z-index:500;pointer-events:none;gap:10px;transition:.3s;}
+.map-overlay-msg.hide{display:none;}
+.map-overlay-icon{font-size:48px;}
+.map-overlay-text{font-family:'Noto Sans KR', sans-serif;font-size:13px;color:var(--muted);}
+
+/* ── Stats ── */
+.stats-grid{display:none;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.stats-grid.show{display:grid;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-label{font-size:10px;color:var(--muted);font-family:'Noto Sans KR', sans-serif;letter-spacing:.5px;margin-bottom:4px;}
+.stat-value{font-size:20px;font-weight:700;color:var(--text);line-height:1.2;}
+.stat-unit{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ── Preview table ── */
+.preview-section{display:none;}
+.preview-section.show{display:block;}
+.preview-title{font-family:'Noto Sans KR', sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.preview-file-sel{margin-bottom:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.preview-file-sel select{background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:5px 10px;font-size:12px;border-radius:6px;outline:none;}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--card2);padding:8px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(13,148,136,.04);}
+tbody td{padding:7px 12px;color:var(--text);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+@media(max-width:600px){
+  .site-header{padding:10px 16px;}
+  .page{padding:16px 16px 60px;}
+  #map{height:480px;}
+  .file-row-main{flex-wrap:wrap;}
+  .csv-map-grid{grid-template-columns:1fr;}
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title">위치 데이터 분석</div>
+  </div>
+  <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+  <div class="page-title">🗺️ GEO · 위치 데이터 분석</div>
+  <div class="page-desc">
+    여러 파일을 동시에 업로드할 수 있습니다. 파일마다 색상을 지정하거나 변경할 수 있습니다.<br>
+    GeoJSON은 즉시 렌더링되며, CSV / Excel은 위도·경도 열 매핑 후 지도에 표시됩니다.<br>
+    <strong>SHP 파일</strong>은 .shp .dbf .prj를 하나의 ZIP으로 묶어 업로드하면 GeoJSON으로 자동 변환됩니다.
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">📂</div>
+    <div class="upload-title">파일을 드래그하거나 클릭 — 여러 파일 동시 업로드 가능</div>
+    <div class="upload-sub">브라우저에서 직접 처리 · 서버에 전송되지 않습니다</div>
+    <div class="upload-formats">
+      <span class="fmt-badge geo">GeoJSON</span>
+      <span class="fmt-badge">CSV</span>
+      <span class="fmt-badge">Excel (.xlsx)</span>
+      <span class="fmt-badge geo">SHP → ZIP</span>
+    </div>
+  </div>
+  <input type="file" id="file-input" accept=".geojson,.json,.csv,.xlsx,.xls,.zip" multiple>
+
+  <!-- File list -->
+  <div class="file-list" id="file-list">
+    <div class="file-list-header">
+      <span>레이어 목록</span>
+      <button class="btn-clear-all" onclick="clearAll()">모두 제거</button>
+    </div>
+    <div id="file-rows"></div>
+  </div>
+
+  <!-- Map -->
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-overlay-msg" id="map-overlay">
+      <div class="map-overlay-icon">🗺️</div>
+      <div class="map-overlay-text">파일을 업로드하면 지도가 표시됩니다</div>
+    </div>
+    <button class="map-boundary-btn" id="boundary-btn" onclick="toggleBoundaryMode()"><span id="boundary-icon">⬜</span> 경계선만</button>
+    <button class="map-capture-btn" id="capture-btn" onclick="captureMap()">📷 캡처</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <!-- Preview table -->
+  <div class="preview-section" id="preview-section">
+    <div class="preview-title">데이터 미리보기</div>
+    <div class="preview-file-sel">
+      파일 선택:
+      <select id="preview-sel" onchange="renderPreview(this.value)"></select>
+    </div>
+    <div class="table-wrap"><table><thead id="prev-thead"></thead><tbody id="prev-tbody"></tbody></table></div>
+  </div>
+</div>
+
+</div><!-- /.page-wrap -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
+<script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ══════ MAP INIT ══════ */
+const map = L.map('map',{zoomControl:true}).setView([36.5,127.8],7);
+const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:19
+}).addTo(map);
+let boundaryMode = false;
+
+/* ══════ STATE ══════ */
+const PALETTE = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#b45309','#0f766e','#6d28d9'];
+let fileId = 0;
+const layers = []; // { id, name, size, color, mapLayer, visible, type, rawGeoJSON, csvData, headers, latCol, lngCol, labelCol, count }
+
+/* ══════ DRAG & DROP ══════ */
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag-over');
+  [...e.dataTransfer.files].forEach(handleFile);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  [...e.target.files].forEach(handleFile);
+  e.target.value = '';
+});
+
+/* ══════ FILE HANDLER ══════ */
+function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const id = ++fileId;
+  const color = PALETTE[(id - 1) % PALETTE.length];
+
+  const entry = { id, name: file.name, size: file.size, color, mapLayer: null, visible: true,
+                  type: null, rawGeoJSON: null, csvData: null, headers: [], latCol:'', lngCol:'', labelCol:'', count: 0 };
+  layers.push(entry);
+  addFileRow(entry);
+
+  if (ext === 'geojson' || ext === 'json') {
+    entry.type = 'geojson';
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        entry.rawGeoJSON = JSON.parse(e.target.result);
+        buildGeoJSONLayer(entry);
+        refreshUI();
+      } catch { alert(`${file.name}: 유효하지 않은 GeoJSON 파일입니다.`); removeEntry(id); }
+    };
+    reader.readAsText(file);
+  } else if (ext === 'csv') {
+    entry.type = 'csv';
+    const reader = new FileReader();
+    reader.onload = e => {
+      const buf = e.target.result;
+      const bytes = new Uint8Array(buf);
+      let text;
+      if (bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF) {
+        text = new TextDecoder('utf-8').decode(buf);
+      } else {
+        try { text = new TextDecoder('utf-8',{fatal:true}).decode(buf); }
+        catch { text = new TextDecoder('euc-kr').decode(buf); }
+      }
+      Papa.parse(text, { header:true, skipEmptyLines:true, complete: r => {
+        entry.csvData = r.data;
+        entry.headers = r.meta.fields;
+        autoGuessColumns(entry);
+        showCSVMap(id);
+        refreshUI();
+      }});
+    };
+    reader.readAsArrayBuffer(file);
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    entry.type = 'csv';
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {defval:''});
+      if (data.length) {
+        entry.csvData = data;
+        entry.headers = Object.keys(data[0]);
+        autoGuessColumns(entry);
+        showCSVMap(id);
+        refreshUI();
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else if (ext === 'zip') {
+    entry.type = 'geojson';
+    const metaEl = document.getElementById(`meta-${id}`);
+    if (metaEl) metaEl.textContent = 'SHP 변환 중...';
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const result = await shp(e.target.result);
+        // shpjs returns FeatureCollection or array of FeatureCollections (multi-layer zip)
+        if (Array.isArray(result)) {
+          entry.rawGeoJSON = {
+            type: 'FeatureCollection',
+            features: result.flatMap(g => Array.isArray(g.features) ? g.features : [])
+          };
+        } else {
+          entry.rawGeoJSON = result;
+        }
+        entry.fromShp = true;
+        // 파일명에 SHP 뱃지 표시
+        const nameEl = document.getElementById(`fname-${id}`);
+        if (nameEl) nameEl.innerHTML = entry.name + '<span class="shp-badge">SHP</span>';
+        buildGeoJSONLayer(entry);
+        // GeoJSON 다운로드 버튼 노출
+        document.getElementById(`dl-geojson-${id}`)?.classList.add('show');
+        refreshUI();
+      } catch(err) {
+        alert(`${file.name} 변환 실패\n\n.shp .dbf .prj 파일이 모두 포함된 ZIP이어야 합니다.\n(${err.message})`);
+        removeEntry(id);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    alert('지원하지 않는 형식입니다.\nGeoJSON / CSV / Excel / SHP(ZIP) 파일을 사용하세요.');
+    layers.splice(layers.indexOf(entry), 1);
+    document.getElementById(`frow-${id}`)?.remove();
+  }
+}
+
+/* ══════ GEOJSON LAYER ══════ */
+function buildGeoJSONLayer(entry) {
+  if (entry.mapLayer) { map.removeLayer(entry.mapLayer); entry.mapLayer = null; }
+  const c = entry.color;
+  let count = 0;
+
+  entry.mapLayer = L.geoJSON(entry.rawGeoJSON, {
+    style: () => ({ color: c, weight: boundaryMode ? 2.5 : 2, fillColor: c, fillOpacity: boundaryMode ? 0 : 0.25 }),
+    pointToLayer: (_,ll) => L.circleMarker(ll, { radius:7, fillColor:c, color:'#fff', weight:1.5, fillOpacity:0.9 }),
+    onEachFeature: (feat, layer) => {
+      count++;
+      if (feat.properties && Object.keys(feat.properties).length) {
+        const rows = Object.entries(feat.properties)
+          .filter(([,v]) => v !== null && v !== '')
+          .map(([k,v]) => `<tr><td style="color:#64748b;font-size:11px;padding:2px 6px;white-space:nowrap">${k}</td><td style="padding:2px 6px">${v}</td></tr>`)
+          .join('');
+        if (rows) layer.bindPopup(`<table style="font-size:12px">${rows}</table>`);
+      }
+    }
+  });
+
+  entry.count = count;
+  if (entry.visible) entry.mapLayer.addTo(map);
+  updateRowMeta(entry);
+}
+
+/* ══════ CSV LAYER ══════ */
+function buildCSVLayer(id) {
+  const entry = layers.find(l => l.id === id);
+  if (!entry || !entry.csvData) return;
+
+  if (entry.mapLayer) { map.removeLayer(entry.mapLayer); entry.mapLayer = null; }
+  const c = entry.color;
+
+  let count = 0, skip = 0;
+  const markers = [];
+
+  entry.csvData.forEach(row => {
+    const lat = parseFloat(String(row[entry.latCol]||'').replace(/,/g,''));
+    const lng = parseFloat(String(row[entry.lngCol]||'').replace(/,/g,''));
+    if (isNaN(lat)||isNaN(lng)||lat<-90||lat>90||lng<-180||lng>180) { skip++; return; }
+
+    const m = L.circleMarker([lat, lng], { radius:7, fillColor:c, color:'#fff', weight:1.5, fillOpacity:0.88 });
+    const label = entry.labelCol && row[entry.labelCol] ? `<strong>${row[entry.labelCol]}</strong><br>` : '';
+    const props = Object.entries(row)
+      .filter(([k]) => k !== entry.latCol && k !== entry.lngCol)
+      .slice(0, 8)
+      .map(([k,v]) => `<tr><td style="color:#64748b;font-size:11px;padding:2px 6px;white-space:nowrap">${k}</td><td style="padding:2px 6px">${v}</td></tr>`)
+      .join('');
+    m.bindPopup(`${label}<table style="font-size:12px">${props}</table>`);
+    markers.push(m);
+    count++;
+  });
+
+  if (count === 0) { alert(`${entry.name}: 유효한 위도/경도 값을 찾을 수 없습니다.\n열 매핑을 확인해주세요.`); return; }
+
+  entry.mapLayer = L.layerGroup(markers);
+  entry.count = count;
+  if (entry.visible) entry.mapLayer.addTo(map);
+  updateRowMeta(entry);
+  fitAllLayers();
+  refreshUI();
+}
+
+/* ══════ COLOR CHANGE ══════ */
+function changeColor(id, color) {
+  const entry = layers.find(l => l.id === id);
+  if (!entry) return;
+  entry.color = color;
+  if (entry.type === 'geojson' && entry.rawGeoJSON) buildGeoJSONLayer(entry);
+  else if (entry.type === 'csv' && entry.mapLayer) buildCSVLayer(id);
+}
+
+/* ══════ TOGGLE VISIBILITY ══════ */
+function toggleVisible(id) {
+  const entry = layers.find(l => l.id === id);
+  if (!entry || !entry.mapLayer) return;
+  entry.visible = !entry.visible;
+  if (entry.visible) entry.mapLayer.addTo(map);
+  else map.removeLayer(entry.mapLayer);
+  const btn = document.getElementById(`eye-${id}`);
+  if (btn) btn.classList.toggle('hidden', !entry.visible);
+}
+
+/* ══════ REMOVE ENTRY ══════ */
+function removeEntry(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx === -1) return;
+  const entry = layers[idx];
+  if (entry.mapLayer) map.removeLayer(entry.mapLayer);
+  layers.splice(idx, 1);
+  document.getElementById(`frow-${id}`)?.remove();
+  refreshUI();
+}
+
+function clearAll() {
+  [...layers].forEach(l => removeEntry(l.id));
+  map.setView([36.5,127.8], 7);
+  document.getElementById('map-overlay').classList.remove('hide');
+}
+
+/* ══════ CSV COLUMN AUTO-GUESS ══════ */
+function autoGuessColumns(entry) {
+  const latKw = /^(lat|latitude|위도|y)$/i;
+  const lngKw = /^(lng|lon|long|longitude|경도|x)$/i;
+  const labelKw = /name|title|label|id|이름|명/i;
+  entry.latCol = entry.headers.find(h => latKw.test(h.trim())) || entry.headers.find(h => /lat|위도/i.test(h)) || entry.headers[0] || '';
+  entry.lngCol = entry.headers.find(h => lngKw.test(h.trim())) || entry.headers.find(h => /lon|경도/i.test(h)) || entry.headers[1] || '';
+  entry.labelCol = entry.headers.find(h => labelKw.test(h)) || '';
+}
+
+function showCSVMap(id) {
+  const el = document.getElementById(`csv-map-${id}`);
+  if (el) el.classList.add('show');
+}
+
+/* ══════ DOM: ADD FILE ROW ══════ */
+function addFileRow(entry) {
+  const list = document.getElementById('file-list');
+  list.classList.add('show');
+  document.getElementById('map-overlay').classList.add('hide');
+
+  const div = document.createElement('div');
+  div.className = 'file-row';
+  div.id = `frow-${entry.id}`;
+  div.innerHTML = `
+    <div class="file-row-main">
+      <input type="color" class="color-pick" value="${entry.color}" title="색상 변경"
+        oninput="changeColor(${entry.id}, this.value)">
+      <span class="eye-btn" id="eye-${entry.id}" title="표시/숨기기"
+        onclick="toggleVisible(${entry.id})">👁</span>
+      <div class="file-row-info">
+        <span class="file-row-name" id="fname-${entry.id}" title="${entry.name}">${entry.name}</span>
+        <span class="file-row-meta" id="meta-${entry.id}">${formatBytes(entry.size)}</span>
+      </div>
+      <button class="btn-dl-geojson" id="dl-geojson-${entry.id}" onclick="downloadGeoJSON(${entry.id})">↓ GeoJSON</button>
+      <button class="remove-btn" onclick="removeEntry(${entry.id})">✕ 제거</button>
+    </div>
+    <div class="csv-map" id="csv-map-${entry.id}">
+      <div class="csv-map-title">열 매핑 — 위도·경도 열을 선택하세요</div>
+      <div class="csv-map-grid">
+        <div class="csv-map-group"><label>위도 (Latitude)</label>
+          <select id="lat-${entry.id}"></select></div>
+        <div class="csv-map-group"><label>경도 (Longitude)</label>
+          <select id="lng-${entry.id}"></select></div>
+        <div class="csv-map-group"><label>라벨 열 (선택)</label>
+          <select id="lbl-${entry.id}"></select></div>
+      </div>
+      <button class="btn-render" onclick="applyCSVMap(${entry.id})">🗺️ 지도에 표시</button>
+    </div>`;
+  document.getElementById('file-rows').appendChild(div);
+}
+
+function populateCSVSelects(entry) {
+  ['lat','lng','lbl'].forEach(prefix => {
+    const sel = document.getElementById(`${prefix}-${entry.id}`);
+    if (!sel) return;
+    sel.innerHTML = (prefix === 'lbl' ? '<option value="">— 없음 —</option>' : '') +
+      entry.headers.map(h => `<option value="${h}">${h}</option>`).join('');
+  });
+  const lat = document.getElementById(`lat-${entry.id}`);
+  const lng = document.getElementById(`lng-${entry.id}`);
+  const lbl = document.getElementById(`lbl-${entry.id}`);
+  if (lat && entry.latCol) lat.value = entry.latCol;
+  if (lng && entry.lngCol) lng.value = entry.lngCol;
+  if (lbl && entry.labelCol) lbl.value = entry.labelCol;
+}
+
+function applyCSVMap(id) {
+  const entry = layers.find(l => l.id === id);
+  if (!entry) return;
+  entry.latCol   = document.getElementById(`lat-${id}`).value;
+  entry.lngCol   = document.getElementById(`lng-${id}`).value;
+  entry.labelCol = document.getElementById(`lbl-${id}`)?.value || '';
+  buildCSVLayer(id);
+  document.getElementById(`csv-map-${id}`).classList.remove('show');
+}
+
+function updateRowMeta(entry) {
+  const el = document.getElementById(`meta-${entry.id}`);
+  if (el) el.textContent = `${formatBytes(entry.size)} · ${entry.count.toLocaleString()}개`;
+}
+
+/* ══════ FIT ALL LAYERS ══════ */
+function fitAllLayers() {
+  const bounds = [];
+  layers.forEach(l => {
+    if (!l.mapLayer || !l.visible) return;
+    try {
+      if (l.mapLayer.getBounds) {
+        const b = l.mapLayer.getBounds();
+        if (b.isValid()) bounds.push(b);
+      } else if (l.mapLayer.getLayers) {
+        l.mapLayer.getLayers().forEach(m => { if (m.getLatLng) bounds.push(L.latLngBounds([m.getLatLng()])); });
+      }
+    } catch {}
+  });
+  if (bounds.length) {
+    const combined = bounds.reduce((acc, b) => acc.extend(b), L.latLngBounds(bounds[0]));
+    if (combined.isValid()) map.fitBounds(combined, { padding: [40, 40] });
+  }
+}
+
+/* ══════ REFRESH UI ══════ */
+function refreshUI() {
+  const visible = layers.filter(l => l.visible && l.mapLayer);
+  const total = layers.reduce((s, l) => s + l.count, 0);
+
+  // CSV selects population (delayed until DOM is ready)
+  layers.filter(l => l.type === 'csv' && l.headers.length).forEach(l => populateCSVSelects(l));
+
+  // Stats
+  const grid = document.getElementById('stats-grid');
+  if (layers.length > 0) {
+    grid.classList.add('show');
+    grid.innerHTML = [
+      { label:'총 레이어', value: layers.length, unit:'개' },
+      { label:'표시 중', value: visible.length, unit:'개' },
+      { label:'총 피처', value: total.toLocaleString(), unit:'개' },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div><div class="stat-unit">${s.unit}</div></div>`).join('');
+  } else {
+    grid.classList.remove('show');
+  }
+
+  // File list visibility
+  const fileList = document.getElementById('file-list');
+  if (layers.length === 0) {
+    fileList.classList.remove('show');
+    document.getElementById('map-overlay').classList.remove('hide');
+  }
+
+  // Preview select
+  const sel = document.getElementById('preview-sel');
+  const prev = document.getElementById('preview-section');
+  const previewable = layers.filter(l => l.type === 'csv' && l.csvData || l.type === 'geojson' && l.rawGeoJSON);
+  if (previewable.length > 0) {
+    sel.innerHTML = previewable.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+    prev.classList.add('show');
+    renderPreview(sel.value);
+  } else {
+    prev.classList.remove('show');
+  }
+
+  // Fit map
+  if (layers.some(l => l.mapLayer && l.visible && l.count > 0)) fitAllLayers();
+}
+
+function renderPreview(id) {
+  const entry = layers.find(l => l.id == id);
+  if (!entry) return;
+
+  let keys = [], rows = [];
+  if (entry.type === 'csv' && entry.csvData) {
+    keys = entry.headers;
+    rows = entry.csvData.slice(0, 50).map(r => keys.map(k => r[k] ?? ''));
+  } else if (entry.type === 'geojson' && entry.rawGeoJSON) {
+    const features = (entry.rawGeoJSON.type === 'FeatureCollection' ? entry.rawGeoJSON.features : [entry.rawGeoJSON])
+      .filter(f => f.properties && Object.keys(f.properties).length).slice(0, 50);
+    if (features.length) {
+      keys = Object.keys(features[0].properties);
+      rows = features.map(f => keys.map(k => f.properties[k] ?? ''));
+    }
+  }
+
+  document.getElementById('prev-thead').innerHTML = keys.length ? '<tr>' + keys.map(k => `<th>${k}</th>`).join('') + '</tr>' : '';
+  document.getElementById('prev-tbody').innerHTML = rows.map(r => '<tr>' + r.map(v => `<td title="${v}">${v}</td>`).join('') + '</tr>').join('');
+}
+
+/* ══════ DOWNLOAD GEOJSON (SHP 변환 결과) ══════ */
+function downloadGeoJSON(id) {
+  const entry = layers.find(l => l.id === id);
+  if (!entry || !entry.rawGeoJSON) return;
+  const json = JSON.stringify(entry.rawGeoJSON, null, 2);
+  const blob = new Blob([json], { type: 'application/geo+json' });
+  const link = document.createElement('a');
+  link.download = entry.name.replace(/\.zip$/i, '') + '.geojson';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+/* ══════ MAP CAPTURE ══════ */
+function captureMap() {
+  const btn = document.getElementById('capture-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 처리 중...';
+
+  // leafletImage로 타일 레이어 캡처 후 벡터 레이어를 직접 재렌더링
+  leafletImage(map, function(err, srcCanvas) {
+    btn.disabled = false;
+    btn.textContent = '📷 캡처';
+    if (err) { alert('캡처 실패: ' + err); return; }
+
+    // ── 벡터 레이어 직접 재렌더링 ──
+    const tileCtx = srcCanvas.getContext('2d');
+    layers.forEach(layer => {
+      if (!layer.visible || layer.count === 0) return;
+      if (layer.type === 'csv' && layer.csvData) {
+        layer.csvData.forEach(row => {
+          const lat = parseFloat(String(row[layer.latCol]||'').replace(/,/g,''));
+          const lng = parseFloat(String(row[layer.lngCol]||'').replace(/,/g,''));
+          if (isNaN(lat)||isNaN(lng)||lat<-90||lat>90||lng<-180||lng>180) return;
+          const pt = map.latLngToContainerPoint([lat, lng]);
+          drawCanvasCircle(tileCtx, pt.x, pt.y, layer.color);
+        });
+      } else if (layer.type === 'geojson' && layer.rawGeoJSON) {
+        const features = layer.rawGeoJSON.type === 'FeatureCollection'
+          ? layer.rawGeoJSON.features : [layer.rawGeoJSON];
+        features.forEach(f => drawGeoFeature(tileCtx, f, layer.color));
+      }
+    });
+
+    const bounds = map.getBounds();
+    const N = bounds.getNorth(), S = bounds.getSouth();
+    const E = bounds.getEast(),  W = bounds.getWest();
+    const cLat = (N + S) / 2,   cLng = (E + W) / 2;
+
+    // 다운로드
+    const now = new Date();
+    const ts = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0') + '_' +
+      String(now.getHours()).padStart(2,'0') +
+      String(now.getMinutes()).padStart(2,'0');
+
+    const link = document.createElement('a');
+    link.download = 'geo_map_' + ts + '.png';
+    link.href = srcCanvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+/* ══════ CANVAS DRAW HELPERS (캡처용) ══════ */
+function drawCanvasCircle(ctx, x, y, color) {
+  ctx.beginPath();
+  ctx.arc(x, y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawGeoFeature(ctx, feature, color) {
+  if (!feature || !feature.geometry) return;
+  const geom = feature.geometry;
+  switch (geom.type) {
+    case 'Point': {
+      const pt = map.latLngToContainerPoint(L.latLng(geom.coordinates[1], geom.coordinates[0]));
+      drawCanvasCircle(ctx, pt.x, pt.y, color);
+      break;
+    }
+    case 'MultiPoint':
+      geom.coordinates.forEach(c => {
+        const pt = map.latLngToContainerPoint(L.latLng(c[1], c[0]));
+        drawCanvasCircle(ctx, pt.x, pt.y, color);
+      });
+      break;
+    case 'LineString':
+      drawCanvasLine(ctx, geom.coordinates, color);
+      break;
+    case 'MultiLineString':
+      geom.coordinates.forEach(line => drawCanvasLine(ctx, line, color));
+      break;
+    case 'Polygon':
+      drawCanvasPolygon(ctx, geom.coordinates, color);
+      break;
+    case 'MultiPolygon':
+      geom.coordinates.forEach(poly => drawCanvasPolygon(ctx, poly, color));
+      break;
+    case 'GeometryCollection':
+      geom.geometries.forEach(g => drawGeoFeature(ctx, { geometry: g }, color));
+      break;
+  }
+}
+
+function drawCanvasLine(ctx, coords, color) {
+  if (coords.length < 2) return;
+  ctx.beginPath();
+  coords.forEach(([lng, lat], i) => {
+    const pt = map.latLngToContainerPoint(L.latLng(lat, lng));
+    i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawCanvasPolygon(ctx, rings, color) {
+  rings.forEach((ring, ri) => {
+    ctx.beginPath();
+    ring.forEach(([lng, lat], i) => {
+      const pt = map.latLngToContainerPoint(L.latLng(lat, lng));
+      i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.closePath();
+    if (ri === 0) {
+      ctx.fillStyle = color + '40';
+      ctx.fill('evenodd');
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function fmtCoord(v, dir) {
+  const abs = Math.abs(v).toFixed(5);
+  if (dir === 'N') return abs + '°' + (v >= 0 ? 'N' : 'S');
+  return abs + '°' + (v >= 0 ? 'E' : 'W');
+}
+
+/* ══════ BOUNDARY MODE TOGGLE ══════ */
+function toggleBoundaryMode() {
+  boundaryMode = !boundaryMode;
+  const btn = document.getElementById('boundary-btn');
+  const lc  = document.querySelector('#map .leaflet-container');
+
+  if (boundaryMode) {
+    tileLayer.setOpacity(0);
+    if (lc) lc.style.background = '#ffffff';
+    btn.classList.add('active');
+    btn.innerHTML = '<span>🗺️</span> 일반 지도';
+  } else {
+    tileLayer.setOpacity(1);
+    if (lc) lc.style.background = '';
+    btn.classList.remove('active');
+    btn.innerHTML = '<span>⬜</span> 경계선만';
+  }
+
+  layers.forEach(entry => {
+    if (entry.type !== 'geojson' || !entry.mapLayer) return;
+    if (typeof entry.mapLayer.setStyle === 'function') {
+      entry.mapLayer.setStyle({
+        stroke:      true,
+        color:       entry.color,
+        weight:      boundaryMode ? 2.5 : 2,
+        opacity:     1,
+        fillOpacity: boundaryMode ? 0 : 0.25,
+      });
+    }
+  });
+}
+
+/* ══════ HELPERS ══════ */
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

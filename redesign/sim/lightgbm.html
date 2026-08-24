@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LightGBM 인터렉티브 튜토리얼</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { indigo:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},blue:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},sky:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},cyan:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},violet:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},purple:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},fuchsia:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'} },
+  fontFamily: { sans: ['Noto Sans KR','Pretendard','system-ui','sans-serif'],
+               mono: ['Space Mono','monospace'] }
+} } };
+</script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        
+        body {
+            font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>:root{--bg:#f8fafc;--card:#fff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--color-indigo-50:#eff6ff!important;--color-indigo-100:#dbeafe!important;--color-indigo-200:#bfdbfe!important;--color-indigo-300:#93c5fd!important;--color-indigo-400:#60a5fa!important;--color-indigo-500:#3b82f6!important;--color-indigo-600:#2563eb!important;--color-indigo-700:#1d4ed8!important;--color-indigo-800:#1e40af!important;--color-indigo-900:#1e3a8a!important;--color-indigo-950:#172554!important;--color-blue-50:#eff6ff!important;--color-blue-100:#dbeafe!important;--color-blue-200:#bfdbfe!important;--color-blue-300:#93c5fd!important;--color-blue-400:#60a5fa!important;--color-blue-500:#3b82f6!important;--color-blue-600:#2563eb!important;--color-blue-700:#1d4ed8!important;--color-blue-800:#1e40af!important;--color-blue-900:#1e3a8a!important;--color-blue-950:#172554!important;--color-sky-50:#eff6ff!important;--color-sky-100:#dbeafe!important;--color-sky-200:#bfdbfe!important;--color-sky-300:#93c5fd!important;--color-sky-400:#60a5fa!important;--color-sky-500:#3b82f6!important;--color-sky-600:#2563eb!important;--color-sky-700:#1d4ed8!important;--color-sky-800:#1e40af!important;--color-sky-900:#1e3a8a!important;--color-sky-950:#172554!important;--color-cyan-50:#eff6ff!important;--color-cyan-100:#dbeafe!important;--color-cyan-200:#bfdbfe!important;--color-cyan-300:#93c5fd!important;--color-cyan-400:#60a5fa!important;--color-cyan-500:#3b82f6!important;--color-cyan-600:#2563eb!important;--color-cyan-700:#1d4ed8!important;--color-cyan-800:#1e40af!important;--color-cyan-900:#1e3a8a!important;--color-cyan-950:#172554!important;--color-violet-50:#eef2ff!important;--color-violet-100:#e0e7ff!important;--color-violet-200:#c7d2fe!important;--color-violet-300:#a5b4fc!important;--color-violet-400:#818cf8!important;--color-violet-500:#6366f1!important;--color-violet-600:#4f46e5!important;--color-violet-700:#4338ca!important;--color-violet-800:#3730a3!important;--color-violet-900:#312e81!important;--color-violet-950:#1e1b4b!important;--color-purple-50:#eef2ff!important;--color-purple-100:#e0e7ff!important;--color-purple-200:#c7d2fe!important;--color-purple-300:#a5b4fc!important;--color-purple-400:#818cf8!important;--color-purple-500:#6366f1!important;--color-purple-600:#4f46e5!important;--color-purple-700:#4338ca!important;--color-purple-800:#3730a3!important;--color-purple-900:#312e81!important;--color-purple-950:#1e1b4b!important;--color-fuchsia-50:#eef2ff!important;--color-fuchsia-100:#e0e7ff!important;--color-fuchsia-200:#c7d2fe!important;--color-fuchsia-300:#a5b4fc!important;--color-fuchsia-400:#818cf8!important;--color-fuchsia-500:#6366f1!important;--color-fuchsia-600:#4f46e5!important;--color-fuchsia-700:#4338ca!important;--color-fuchsia-800:#3730a3!important;--color-fuchsia-900:#312e81!important;--color-fuchsia-950:#1e1b4b!important;}body{background-color:#f8fafc!important;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px)!important;background-size:40px 40px!important;background-attachment:fixed!important;}.df-header{position:sticky;top:0;z-index:100;max-width:1400px;margin:0 auto;width:100%;border-bottom:1px solid rgba(0,0,0,.1);background:rgba(248,250,252,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}.df-header-in{max-width:1400px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;}.df-logo{display:flex;align-items:center;gap:12px;}.df-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none;}.df-brand em{color:#ea580c;font-style:normal;}.df-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0;}.df-title{font-size:13px;color:#64748b;}.df-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}.df-back:hover{color:#1e293b;border-color:rgba(0,0,0,.3);}.df-header.dark{background:rgba(2,6,23,.85);border-bottom:1px solid rgba(255,255,255,.1);}.df-header.dark .df-sep{background:rgba(255,255,255,.18);}.df-header.dark .df-title{color:#94a3b8;}.df-header.dark .df-back{color:#94a3b8;border-color:rgba(255,255,255,.18);}.df-header.dark .df-back:hover{color:#f1f5f9;border-color:rgba(255,255,255,.4);}body,button,input,select,textarea,h1,h2,h3,h4,h5,p,span,div,label,li,a,td,th{font-family:'Noto Sans KR','Pretendard',system-ui,-apple-system,sans-serif;}.df-brand,code,pre,.font-mono{font-family:'Space Mono',monospace;}.df-header,.df-header *{line-height:1.3;}.df-subhead{max-width:1400px;margin:0 auto;width:100%;padding:22px 24px 4px;}.df-subhead-in{display:flex;align-items:center;gap:14px;}.df-subhead-ic{font-size:24px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px;flex-shrink:0;}.df-subhead-t{font-size:20px;font-weight:800;color:#1e293b;letter-spacing:-.01em;line-height:1.2;}.df-subhead-s{font-size:13px;color:#64748b;margin-top:3px;line-height:1.4;}.df-tabbar{max-width:1400px;margin:0 auto;width:100%;padding:12px 24px 0;}.df-tabbar-in{display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:4px;overflow-x:auto;width:fit-content;max-width:100%;}@media(max-width:640px){.df-header-in{padding:12px 14px;}.df-title{display:none;}.df-subhead{padding:16px 14px 4px;}.df-subhead-t{font-size:17px;}.df-subhead-ic{width:40px;height:40px;font-size:20px;}.df-tabbar{padding:10px 14px 0;}}</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/df-skin.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<header class="df-header"><div class="df-header-in"><div class="df-logo"><a href="https://dataforge.ai.kr" class="df-brand">DATA<em>FORGE</em></a><div class="df-sep"></div><div class="df-title">LightGBM 시뮬레이터</div></div><a href="https://dataforge.ai.kr" class="df-back">← DataForge 홈</a></div></header><div class="df-subhead"><div class="df-subhead-in"><div class="df-subhead-ic">🌳</div><div><h1 class="df-subhead-t">LightGBM 시뮬레이터</h1><p class="df-subhead-s">리프 중심 성장과 GOSS·EFB를 실시간으로 실험합니다</p></div></div></div>
+
+    <!-- Header Navigation -->
+    
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- 1. Overview Section -->
+        <section id="overview" class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl text-white p-8 md:p-12 shadow-xl relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div class="relative z-10 max-w-3xl">
+                <span class="bg-indigo-500 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">What is LightGBM?</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold mt-4 mb-6 leading-tight">
+                    대용량 데이터와 빠른 학습 속도를 위한 <br class="hidden sm:inline">최첨단 머신러닝 알고리즘
+                </h2>
+                <p class="text-slate-300 text-lg mb-8 leading-relaxed">
+                    LightGBM은 <strong>Gradient Boosting Decision Tree (GBDT)</strong> 프레임워크입니다. 전통적인 GBDT 방식은 모든 데이터와 피처를 탐색하므로 시간과 메모리 소모가 막대했습니다. LightGBM은 독창적인 기술인 <span class="text-indigo-300 font-semibold">Leaf-wise 성장</span>, <span class="text-indigo-300 font-semibold">GOSS</span>, <span class="text-indigo-300 font-semibold">EFB</span>를 통해 정확도를 유지하면서 압도적인 속도와 효율성을 증명했습니다.
+                </p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-indigo-800">
+                    <div>
+                        <div class="text-2xl font-bold text-indigo-400">10x+</div>
+                        <div class="text-xs text-slate-400">XGBoost 대비 빠른 학습속도</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-indigo-400">Low</div>
+                        <div class="text-xs text-slate-400">극도로 낮은 메모리 사용량</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-indigo-400">Leaf-Wise</div>
+                        <div class="text-xs text-slate-400">최대 손실(Loss) 감소 리프 우선 탐색</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-indigo-400">GPU</div>
+                        <div class="text-xs text-slate-400">대규모 데이터 가속 지원</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Tree Growth Mode (Level-wise vs Leaf-wise) Interactive Concept -->
+        <section id="tree-growth" class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
+            <div class="mb-8">
+                <span class="text-indigo-600 text-xs font-bold uppercase tracking-wide">Key Distinction 01</span>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">의사결정 트리 성장 방식 비교</h3>
+                <p class="text-slate-500 text-sm mt-1">수평적으로 자라는 전통적 알고리즘과 수직적으로 효율을 파고드는 LightGBM의 핵심적인 차이점을 시뮬레이션해 보세요.</p>
+            </div>
+
+            <!-- Tab & Control Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-4">
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-indigo-600"></i> 컨트롤 타워
+                    </h4>
+                    <p class="text-xs text-slate-500">슬라이더를 조작하여 깊이(Depth)의 성장에 따른 노드 분할 과정을 시각적으로 비교해 보세요.</p>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold text-slate-700 flex justify-between">
+                            <span>트리 분할 단계 (Step):</span>
+                            <span id="step-value" class="text-indigo-600 font-bold">1 단계</span>
+                        </label>
+                        <input id="step-slider" type="range" min="1" max="5" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <span>초기 분할</span>
+                            <span>단계 2</span>
+                            <span>단계 3</span>
+                            <span>단계 4</span>
+                            <span>최종 트리</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                            <h5 class="text-xs font-bold text-indigo-900 mb-1">
+                                <i class="fa-solid fa-info-circle"></i> 핵심 요약
+                            </h5>
+                            <p class="text-xs text-indigo-950 leading-relaxed" id="growth-info-text">
+                                **Level-wise**는 균형 잡힌 트리를 만들기 위해 동일 레벨의 모든 노드를 동시에 분할하지만 불필요한 연산이 늘어납니다. 반면 **Leaf-wise**는 최대 손실(Loss)을 줄일 수 있는 단 하나의 리프 노드만 골라 집중적으로 파고들기 때문에 자원이 대폭 절약됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Screens -->
+                <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Level-wise Growth Area (e.g. XGBoost) -->
+                    <div class="border border-slate-200 rounded-xl p-5 bg-white relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-semibold">전통적인 GBDT 방식</span>
+                            <span class="text-xs text-rose-500 font-bold">Level-Wise (수평)</span>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-900 mb-2">균형 중심 성장 (Level-wise)</h4>
+                        <p class="text-xs text-slate-500 mb-6">최대 깊이를 맞추기 위해 모든 형제 노드를 한 번에 평평하게 분할합니다. 불필요한 노드 생성과 학습 시간이 증가합니다.</p>
+                        
+                        <!-- Tree Visualization Area -->
+                        <div class="h-64 border border-dashed border-slate-200 rounded-lg flex flex-col justify-center items-center bg-slate-50 p-4 relative overflow-hidden" id="level-tree-canvas">
+                            <!-- JS will dynamically inject the tree structure based on step slider -->
+                        </div>
+                    </div>
+
+                    <!-- Leaf-wise Growth Area (LightGBM) -->
+                    <div class="border border-indigo-200 rounded-xl p-5 bg-white relative ring-2 ring-indigo-500/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full font-semibold">LightGBM 독창적 방식</span>
+                            <span class="text-xs text-indigo-600 font-bold">Leaf-Wise (수직)</span>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-900 mb-2">손실 중심 성장 (Leaf-wise)</h4>
+                        <p class="text-xs text-slate-500 mb-6">손실 값(Loss)이 가장 크게 떨어지는 노드 하나만 골라 수직으로 계속 확장합니다. 깊이가 깊어지며 오차가 급감합니다.</p>
+                        
+                        <!-- Tree Visualization Area -->
+                        <div class="h-64 border border-dashed border-indigo-200 rounded-lg flex flex-col justify-center items-center bg-indigo-50/50 p-4 relative overflow-hidden" id="leaf-tree-canvas">
+                            <!-- JS will dynamically inject the tree structure based on step slider -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Key Tech: GOSS & EFB Interactive Explained -->
+        <section id="goss-efb" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Left: GOSS (Gradient-based One-Side Sampling) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="mb-4">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Tech 01</span>
+                        <h3 class="text-xl font-bold text-slate-900 mt-2">GOSS (Gradient-based One-Side Sampling)</h3>
+                        <p class="text-slate-500 text-sm mt-1">그라디언트(오차) 크기를 기반으로 한 스마트 데이터 샘플링 원리</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl text-xs text-slate-600 mb-6 space-y-2">
+                        <p><strong>문제점:</strong> 일반 GBDT는 최적의 분할 지점을 찾기 위해 모든 데이터를 계산하여 병목이 발생합니다.</p>
+                        <p><strong>해결책 (GOSS):</strong> 오차가 큰 데이터는 모두 보존하고(더 배울 게 많으므로), 오차가 이미 작은 데이터는 무작위로 일부만 샘플링하여 연산량을 획기적으로 줄이되 정보 유실을 방지합니다.</p>
+                    </div>
+
+                    <!-- Interactive GOSS Visualizer -->
+                    <div class="border border-slate-100 bg-slate-50 p-4 rounded-xl space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-700">전체 데이터 수: 15개</span>
+                            <button id="btn-goss" class="px-3 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700 transition font-semibold">
+                                GOSS 적용 시뮬레이션 해보기
+                            </button>
+                        </div>
+
+                        <!-- Data Points Display -->
+                        <div class="grid grid-cols-5 gap-2" id="goss-points-container">
+                            <!-- Dynamically loaded with 15 data items with high/low gradient -->
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-rose-500 rounded-full inline-block"></span>
+                                <span>큰 오차 (학습 대상 100% 보존)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-emerald-400 rounded-full inline-block"></span>
+                                <span>작은 오차 (가중치 보정 후 무작위 샘플링)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100 text-xs text-emerald-950">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i> 오차가 작은 샘플들에 <strong class="text-emerald-700">가중치(Weight)를 곱하여</strong> 데이터 왜곡 없이 고성능 트리를 완성합니다.
+                </div>
+            </div>
+
+            <!-- Right: EFB (Exclusive Feature Bundling) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="mb-4">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Tech 02</span>
+                        <h3 class="text-xl font-bold text-slate-900 mt-2">EFB (Exclusive Feature Bundling)</h3>
+                        <p class="text-slate-500 text-sm mt-1">상호 배타적 피처들을 묶어서 차원을 축소하는 혁신 기술</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl text-xs text-slate-600 mb-6 space-y-2">
+                        <p><strong>문제점:</strong> 원-핫 인코딩 등 희소(Sparse) 피처가 많아지면 무의미한 0 값이 가득 차 탐색에 비효율적입니다.</p>
+                        <p><strong>해결책 (EFB):</strong> 동시에 0이 아닌 값을 갖지 않는(상호 배타적인) 희소 피처들을 찾아 하나의 '피처 번들'로 병합하여 연산 피처 수를 압축합니다.</p>
+                    </div>
+
+                    <!-- Interactive EFB Visualizer -->
+                    <div class="border border-slate-100 bg-slate-50 p-4 rounded-xl space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-700">희소 피처 테이블 (피처 A, 피처 B)</span>
+                            <button id="btn-efb" class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition font-semibold">
+                                EFB 번들(Bundle) 병합하기
+                            </button>
+                        </div>
+
+                        <!-- Grid Table for Features -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-center border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-200 text-slate-700">
+                                        <th class="p-1 border border-slate-300">인덱스</th>
+                                        <th class="p-1 border border-slate-300">피처 A (희소)</th>
+                                        <th class="p-1 border border-slate-300">피처 B (희소)</th>
+                                        <th class="p-1 border border-slate-300 bg-blue-100 text-blue-900">병합된 번들 (EFB)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="efb-table-body">
+                                    <!-- Dynamic Rows filled by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 text-xs text-blue-950">
+                    <i class="fa-solid fa-circle-check text-blue-600"></i> 각 피처마다 고유한 **오프셋(Offset)**을 부여하여 병합 시 값이 중첩되거나 소실되지 않도록 정밀 제어합니다.
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Interactive Live Simulator -->
+        <section id="simulator" class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
+            <div class="mb-8">
+                <span class="text-indigo-600 text-xs font-bold uppercase tracking-wide">Playground</span>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">LightGBM 하이퍼파라미터 및 결정 경계 시뮬레이터</h3>
+                <p class="text-slate-500 text-sm mt-1">
+                    인공적으로 설계된 2D 데이터 공간에서 하이퍼파라미터에 따라 트리 모델이 결정 경계(Decision Boundary)를 그리는 양상을 실시간 모의 학습으로 관찰합니다.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- Left: Hyperparameter Controls (Span 4) -->
+                <div class="lg:col-span-4 bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-6">
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2 pb-3 border-b border-slate-200">
+                        <i class="fa-solid fa-sliders text-indigo-600"></i> 하이퍼파라미터 튜닝
+                    </h4>
+
+                    <!-- Parameter 1: Dataset Generation -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold text-slate-700">학습용 타겟 데이터 모양</label>
+                        <select id="sim-dataset-type" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="circles">원형 분산형 (Concentric Circles)</option>
+                            <option value="moons">반달 모양 (Two Moons)</option>
+                            <option value="checkerboard">체스판 패턴 (Checkerboard)</option>
+                        </select>
+                    </div>
+
+                    <!-- Parameter 2: Learning Rate -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-700">학습률 (Learning Rate)</label>
+                            <span id="sim-lr-val" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">0.10</span>
+                        </div>
+                        <input id="sim-lr" type="range" min="0.01" max="0.5" step="0.01" value="0.1" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <p class="text-[10px] text-slate-400">학습 보폭 크기입니다. 너무 높으면 과적합, 낮으면 학습 속도가 느려집니다.</p>
+                    </div>
+
+                    <!-- Parameter 3: Max Depth -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-700">최대 깊이 (Max Depth)</label>
+                            <span id="sim-depth-val" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">4</span>
+                        </div>
+                        <input id="sim-depth" type="range" min="2" max="8" step="1" value="4" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <p class="text-[10px] text-slate-400">트리의 최대 세로 높이를 제한하여 과적합을 방지하는 중요 수치입니다.</p>
+                    </div>
+
+                    <!-- Parameter 4: Num Leaves (Leaf-wise Key parameter) -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-700">리프 노드 개수 (Num Leaves)</label>
+                            <span id="sim-leaves-val" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">15</span>
+                        </div>
+                        <input id="sim-leaves" type="range" min="4" max="64" step="1" value="15" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <p class="text-[10px] text-slate-400">LightGBM에서 깊이 조절보다 모델 복잡도를 강력히 통제하는 주 인자입니다.</p>
+                    </div>
+
+                    <!-- Parameter 5: Min Data in Leaf -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-700">최소 리프 샘플 수 (Min Data in Leaf)</label>
+                            <span id="sim-min-samples-val" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">3</span>
+                        </div>
+                        <input id="sim-min-samples" type="range" min="1" max="15" step="1" value="3" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <p class="text-[10px] text-slate-400">리프 노드가 되기 위한 최소 데이터 크기입니다. 작으면 노이즈에 과대적합됩니다.</p>
+                    </div>
+
+                    <!-- Control Action Buttons -->
+                    <div class="pt-4 border-t border-slate-200 flex gap-2">
+                        <button id="btn-train-step" class="flex-1 py-2 px-3 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-1.5 shadow-md shadow-indigo-100">
+                            <i class="fa-solid fa-forward-step"></i> 트레이닝 (1 epoch)
+                        </button>
+                        <button id="btn-reset-sim" class="py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition">
+                            초기화
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Chart & Metric Visualizations (Span 8) -->
+                <div class="lg:col-span-8 flex flex-col justify-between space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Score metrics -->
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                            <div class="text-[10px] text-slate-400 font-bold uppercase">현재 트리 학습 횟수</div>
+                            <div id="metric-epoch" class="text-3xl font-extrabold text-slate-800 mt-1">0</div>
+                        </div>
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                            <div class="text-[10px] text-slate-400 font-bold uppercase">학습 오차 (Loss)</div>
+                            <div id="metric-loss" class="text-3xl font-extrabold text-rose-600 mt-1">N/A</div>
+                        </div>
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                            <div class="text-[10px] text-slate-400 font-bold uppercase">정확도 (Accuracy)</div>
+                            <div id="metric-acc" class="text-3xl font-extrabold text-emerald-600 mt-1">0.0%</div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Area for Decision Boundary -->
+                    <div class="flex-grow flex flex-col md:flex-row gap-6 items-center">
+                        <!-- Decision boundary canvas with explicit overlay container -->
+                        <div class="relative w-full max-w-[360px] aspect-square border border-slate-200 bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center shadow-inner">
+                            <canvas id="decision-boundary-canvas" width="300" height="300" class="w-full h-full block"></canvas>
+                        </div>
+
+                        <!-- Mini explanation Panel -->
+                        <div class="flex-1 space-y-4">
+                            <h4 class="font-bold text-slate-800 text-sm">결정 영역 해석 팁 (Decision Boundary)</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                캔버스의 동그란 원형 포인트들은 저희가 설정한 가상의 이진 분류 데이터셋입니다. 
+                                배경 색상의 영역은 **LightGBM 의사결정 트리**들이 예측하는 클래스 영역을 나타냅니다.
+                            </p>
+                            <ul class="space-y-1.5 text-xs text-slate-600">
+                                <li class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block"></span>
+                                    <span>파란색 점/영역 : 클래스 A 예측 영역</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 bg-orange-500 rounded-full inline-block"></span>
+                                    <span>오렌지색 점/영역 : 클래스 B 예측 영역</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 bg-slate-200 rounded-full inline-block"></span>
+                                    <span>배경 농도 : 예측 결과값에 따른 높은 확신 수준</span>
+                                </li>
+                            </ul>
+                            
+                            <div class="p-3 bg-yellow-50 text-yellow-900 border border-yellow-100 rounded-lg text-xs leading-relaxed">
+                                <i class="fa-solid fa-lightbulb text-yellow-600"></i>
+                                **실험하기**: [트레이닝] 버튼을 여러 번 연속적으로 눌러 보시면서 트리가 세부적으로 분할 영역을 정교화해 가는지 확인해 보세요!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Interactive FAQ Section -->
+    <section class="bg-slate-100 border-t border-slate-200 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 class="text-2xl font-bold text-slate-900 text-center mb-8">자주 묻는 질문 (FAQ)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white p-5 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-slate-900 text-sm mb-2">Q. Leaf-wise 성장은 과적합(Overfitting)에 취약한가요?</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        네, 맞습니다. Leaf-wise는 최대 손실이 낮아지는 쪽으로만 계속 집요하게 분할하기 때문에 깊이가 매우 깊어져 국소 데이터 그룹에 쉽게 과적합될 수 있습니다. 
+                        따라서 `max_depth`를 명시적으로 조절하거나 리프의 개수를 통제하는 `num_leaves`, `min_data_in_leaf` 파라미터 튜닝이 필수적입니다.
+                    </p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-slate-900 text-sm mb-2">Q. GOSS에서 가중치를 곱하는 이유는 무엇인가요?</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        샘플링을 통해 많은 저오차 데이터를 탈락시키면 남은 소수의 저오차 데이터만으로는 원래 전체 데이터의 성격을 대표하지 못합니다. 
+                        따라서 오차가 작은 일부 데이터에 가중치($\frac{1-a}{b}$ 형태의 스케일러)를 부여하여 통계적으로 일관성 있는 분포 상태를 유지하도록 학습률을 보호합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-center text-xs">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 LightGBM Interactive Study Lab. Built for machine learning education.</p>
+        </div>
+    </footer>
+
+    <!-- Scripting for Interactive Elements and Simulator -->
+    <script>
+        // -----------------
+        // Core Web Elements
+        // -----------------
+        const stepSlider = document.getElementById('step-slider');
+        const stepValue = document.getElementById('step-value');
+        const growthInfoText = document.getElementById('growth-info-text');
+        const levelTreeCanvas = document.getElementById('level-tree-canvas');
+        const leafTreeCanvas = document.getElementById('leaf-tree-canvas');
+
+        // Growth steps info
+        const stepsData = [
+            {
+                info: "<strong>1단계 (초기 분할):</strong> 최상단 루트 노드에서 첫 분할이 일어납니다. Level-wise와 Leaf-wise 둘 다 동일한 첫 노드를 쪼갭니다.",
+                levelHtml: `
+                    <div class="flex flex-col items-center">
+                        <div class="bg-indigo-600 text-white font-bold text-xs px-3 py-1.5 rounded shadow">루트 노드 (Loss: 1.0)</div>
+                        <div class="h-6 w-0.5 bg-slate-400"></div>
+                        <div class="flex gap-6">
+                            <div class="bg-indigo-500 text-white text-[10px] px-2 py-1 rounded">하위 1A (Loss: 0.6)</div>
+                            <div class="bg-indigo-500 text-white text-[10px] px-2 py-1 rounded">하위 1B (Loss: 0.4)</div>
+                        </div>
+                    </div>
+                `,
+                leafHtml: `
+                    <div class="flex flex-col items-center">
+                        <div class="bg-indigo-600 text-white font-bold text-xs px-3 py-1.5 rounded shadow">루트 노드 (Loss: 1.0)</div>
+                        <div class="h-6 w-0.5 bg-indigo-400"></div>
+                        <div class="flex gap-6">
+                            <div class="bg-emerald-600 text-white text-[10px] px-2 py-1 rounded ring-2 ring-emerald-300">하위 1A (Loss: 0.6) <i class="fa-solid fa-fire text-amber-300 animate-bounce"></i></div>
+                            <div class="bg-indigo-500 text-white text-[10px] px-2 py-1 rounded">하위 1B (Loss: 0.4)</div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                info: "<strong>2단계:</strong> Level-wise는 균형을 유지하기 위해 1A와 1B를 양쪽 다 평평하게 쪼갭니다. 반면 Leaf-wise는 가장 오차가 큰 1A 노드만 집중해서 집중 타격 분할합니다.",
+                levelHtml: `
+                    <div class="flex flex-col items-center scale-95 transition-transform">
+                        <div class="bg-slate-300 text-slate-800 text-[10px] px-2 py-0.5 rounded">루트</div>
+                        <div class="h-4 w-0.5 bg-slate-400"></div>
+                        <div class="flex gap-12">
+                            <!-- Left branch -->
+                            <div class="flex flex-col items-center">
+                                <div class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded">1A</div>
+                                <div class="h-4 w-0.5 bg-slate-400"></div>
+                                <div class="flex gap-2">
+                                    <div class="bg-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded">2A (0.3)</div>
+                                    <div class="bg-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded">2B (0.3)</div>
+                                </div>
+                            </div>
+                            <!-- Right branch -->
+                            <div class="flex flex-col items-center">
+                                <div class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded">1B</div>
+                                <div class="h-4 w-0.5 bg-slate-400"></div>
+                                <div class="flex gap-2">
+                                    <div class="bg-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded">2C (0.25)</div>
+                                    <div class="bg-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded">2D (0.15)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                leafHtml: `
+                    <div class="flex flex-col items-center scale-95 transition-transform">
+                        <div class="bg-slate-300 text-slate-800 text-[10px] px-2 py-0.5 rounded">루트</div>
+                        <div class="h-4 w-0.5 bg-indigo-400"></div>
+                        <div class="flex gap-12">
+                            <!-- Left branch (Expanded!) -->
+                            <div class="flex flex-col items-center">
+                                <div class="bg-indigo-600 text-white text-[10px] px-1.5 py-0.5 rounded">1A (Loss: 0.6)</div>
+                                <div class="h-4 w-0.5 bg-indigo-400"></div>
+                                <div class="flex gap-2">
+                                    <div class="bg-emerald-600 text-white text-[9px] px-1.5 py-0.5 rounded ring-2 ring-emerald-300">2A (Loss: 0.45) <i class="fa-solid fa-fire text-amber-300"></i></div>
+                                    <div class="bg-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded">2B (Loss: 0.15)</div>
+                                </div>
+                            </div>
+                            <!-- Right branch (Not Expanded yet) -->
+                            <div class="flex flex-col items-center justify-start">
+                                <div class="bg-indigo-400 text-white text-[10px] px-2 py-1 rounded">1B (Loss: 0.4)</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                info: "<strong>3단계:</strong> Level-wise는 레벨이 꽉 찬 뒤에야 다음 아래 레벨의 일괄 분할을 시행합니다. Leaf-wise는 2A가 여전히 가장 큰 오차를 보이므로, 다른 노드(1B, 2B)를 전혀 보지 않고 2A를 또다시 수직 분할합니다.",
+                levelHtml: `
+                    <div class="flex flex-col items-center scale-90 transition-transform">
+                        <div class="bg-slate-300 text-slate-800 text-[9px] px-1 rounded">루트</div>
+                        <div class="h-3 w-0.5 bg-slate-300"></div>
+                        <div class="flex gap-8">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-slate-400 text-white text-[9px] px-1 rounded">1A</div>
+                                <div class="h-3 w-0.5 bg-slate-300"></div>
+                                <div class="flex gap-1">
+                                    <div class="bg-indigo-600 text-white text-[8px] px-1 rounded">2A</div>
+                                    <div class="bg-indigo-600 text-white text-[8px] px-1 rounded">2B</div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="bg-slate-400 text-white text-[9px] px-1 rounded">1B</div>
+                                <div class="h-3 w-0.5 bg-slate-300"></div>
+                                <div class="flex gap-1">
+                                    <div class="bg-indigo-600 text-white text-[8px] px-1 rounded">2C</div>
+                                    <div class="bg-indigo-600 text-white text-[8px] px-1 rounded">2D</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-[9px] text-slate-400">→ 다음 세대 레벨 전체 동시 분할 예정</div>
+                    </div>
+                `,
+                leafHtml: `
+                    <div class="flex flex-col items-center scale-90 transition-transform">
+                        <div class="bg-slate-300 text-slate-800 text-[9px] px-1.5 py-0.5 rounded">루트</div>
+                        <div class="h-3 w-0.5 bg-indigo-400"></div>
+                        <div class="flex gap-10">
+                            <!-- Left deep branch -->
+                            <div class="flex flex-col items-center">
+                                <div class="bg-slate-400 text-white text-[9px] px-1 rounded">1A</div>
+                                <div class="h-3 w-0.5 bg-indigo-400"></div>
+                                <div class="flex gap-4">
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-indigo-600 text-white text-[8px] px-1 rounded">2A</div>
+                                        <div class="h-3 w-0.5 bg-indigo-400"></div>
+                                        <div class="flex gap-1">
+                                            <div class="bg-indigo-500 text-white text-[8px] px-1 rounded">3A (0.25)</div>
+                                            <div class="bg-emerald-600 text-white text-[8px] px-1 rounded ring-2 ring-emerald-300">3B (0.20) <i class="fa-solid fa-fire text-amber-300"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-indigo-400 text-white text-[8px] px-1 rounded self-start mt-1">2B (0.15)</div>
+                                </div>
+                            </div>
+                            <!-- Right branch -->
+                            <div class="bg-indigo-300 text-white text-[9px] px-1.5 py-0.5 rounded self-start mt-1">1B (0.4)</div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                info: "<strong>4단계:</strong> 트리 세분화가 극대화되는 시기입니다. Leaf-wise는 최대 깊이를 초과하지 않는 선에서 3B노드를 깊이있게 마저 공략합니다. 오차가 높은 세부 그룹에 순식간에 수렴합니다.",
+                levelHtml: `
+                    <div class="text-xs text-slate-400 italic text-center">
+                        <p class="mb-2">레벨 3 전체 분할 중...</p>
+                        <div class="flex gap-1 justify-center">
+                            <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                            <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
+                            <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></span>
+                        </div>
+                    </div>
+                `,
+                leafHtml: `
+                    <div class="flex flex-col items-center scale-90">
+                        <div class="bg-slate-300 text-slate-800 text-[9px] px-1 rounded">루트</div>
+                        <div class="h-3 w-0.5 bg-indigo-400"></div>
+                        <div class="flex gap-8">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-slate-400 text-white text-[9px] px-1 rounded">1A</div>
+                                <div class="h-3 w-0.5 bg-indigo-400"></div>
+                                <div class="flex gap-3">
+                                    <div class="flex flex-col items-center">
+                                        <div class="bg-slate-400 text-white text-[8px] px-1 rounded">2A</div>
+                                        <div class="h-3 w-0.5 bg-indigo-400"></div>
+                                        <div class="flex gap-2">
+                                            <div class="bg-indigo-500 text-white text-[8px] px-1 rounded">3A</div>
+                                            <div class="flex flex-col items-center">
+                                                <div class="bg-indigo-600 text-white text-[8px] px-1 rounded">3B</div>
+                                                <div class="h-2 w-0.5 bg-indigo-400"></div>
+                                                <div class="flex gap-1">
+                                                    <div class="bg-amber-500 text-white text-[7px] px-0.5 rounded">리프 4A</div>
+                                                    <div class="bg-amber-500 text-white text-[7px] px-0.5 rounded">리프 4B</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-indigo-400 text-white text-[8px] px-1 rounded self-start mt-1">2B</div>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-300 text-white text-[9px] px-1 rounded self-start mt-1">1B</div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                info: "<strong>5단계 (최종 상태):</strong> Level-wise도 최종 노드 구성을 완성했으나, 중요하지 않은 분할(오차가 미미했던 우측 분할들)에 자원을 낭비했습니다. 반면 LightGBM의 Leaf-wise는 중요한 핵심 분할(좌측 깊은 줄기)을 끝까지 뚫어내며 손실률(Loss)을 최소화했습니다.",
+                levelHtml: `
+                    <div class="bg-slate-100 p-3 rounded-lg border border-slate-300 text-center text-xs text-slate-700">
+                        <i class="fa-solid fa-circle-info text-slate-500 mb-1 block text-lg"></i>
+                        동등 깊이 트리 완성 <br>
+                        <span class="font-bold text-slate-900">연산 시간: 상대적으로 긺 (XGBoost 기본값)</span>
+                    </div>
+                `,
+                leafHtml: `
+                    <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-200 text-center text-xs text-indigo-900">
+                        <i class="fa-solid fa-circle-check text-indigo-600 mb-1 block text-lg"></i>
+                        손실 최소화 트리 편향 타격 완성 <br>
+                        <span class="font-bold text-indigo-700">속도: 대폭 빠름 (LightGBM 기본값)</span>
+                    </div>
+                `
+            }
+        ];
+
+        function updateTreeGrowthVisualization(step) {
+            const index = step - 1;
+            const data = stepsData[index];
+            stepValue.textContent = `${step} 단계`;
+            growthInfoText.innerHTML = data.info;
+            levelTreeCanvas.innerHTML = data.levelHtml;
+            leafTreeCanvas.innerHTML = data.leafHtml;
+        }
+
+        // Initialize growth step interactive
+        stepSlider.addEventListener('input', (e) => {
+            updateTreeGrowthVisualization(parseInt(e.target.value));
+        });
+        updateTreeGrowthVisualization(1);
+
+
+        // -----------------
+        // Tech 1: GOSS Core Simulation
+        // -----------------
+        const btnGoss = document.getElementById('btn-goss');
+        const gossContainer = document.getElementById('goss-points-container');
+
+        // Initial Data point generators
+        let sampleData = [
+            { id: 1, type: 'high', val: 0.94, active: true },
+            { id: 2, type: 'high', val: 0.81, active: true },
+            { id: 3, type: 'high', val: 0.78, active: true },
+            { id: 4, type: 'high', val: 0.85, active: true },
+            { id: 5, type: 'high', val: 0.91, active: true },
+            { id: 6, type: 'low', val: 0.12, active: true },
+            { id: 7, type: 'low', val: 0.05, active: true },
+            { id: 8, type: 'low', val: 0.15, active: true },
+            { id: 9, type: 'low', val: 0.08, active: true },
+            { id: 10, type: 'low', val: 0.21, active: true },
+            { id: 11, type: 'low', val: 0.11, active: true },
+            { id: 12, type: 'low', val: 0.03, active: true },
+            { id: 13, type: 'low', val: 0.19, active: true },
+            { id: 14, type: 'low', val: 0.23, active: true },
+            { id: 15, type: 'low', val: 0.06, active: true }
+        ];
+
+        function renderGossPoints() {
+            gossContainer.innerHTML = '';
+            sampleData.forEach(item => {
+                const isSelected = item.active;
+                const bgColor = item.type === 'high' 
+                    ? (isSelected ? 'bg-rose-500 text-white border-rose-600' : 'bg-rose-100 text-rose-300 border-rose-200 line-through')
+                    : (isSelected ? 'bg-emerald-400 text-emerald-950 border-emerald-500' : 'bg-emerald-100 text-emerald-300 border-emerald-200 opacity-20');
+                
+                const elem = document.createElement('div');
+                elem.className = `p-2 border text-center rounded-lg text-xs font-semibold shadow-sm transition-all duration-300 ${bgColor}`;
+                elem.innerHTML = `
+                    <div class="text-[9px] uppercase opacity-75">${item.type === 'high' ? 'High' : 'Low'}</div>
+                    <div class="text-sm font-extrabold">${item.val}</div>
+                    <div class="text-[8px] opacity-90">${isSelected ? '선택됨' : '탈락'}</div>
+                `;
+                gossContainer.appendChild(elem);
+            });
+        }
+
+        btnGoss.addEventListener('click', () => {
+            // Apply GOSS algorithm:
+            // 1. Keep all High Gradients (top 5 item)
+            // 2. Randomly sample from remaining Low Gradients (e.g. keep only 3 out of 10)
+            sampleData.forEach(item => {
+                if (item.type === 'high') {
+                    item.active = true; // All high gradients are kept
+                } else {
+                    item.active = Math.random() < 0.35; // keep roughly 35%
+                }
+            });
+            renderGossPoints();
+
+            // Custom non-blocking visual feedback inside button
+            btnGoss.classList.add('bg-emerald-800');
+            btnGoss.textContent = '샘플링 재설정';
+            setTimeout(() => {
+                btnGoss.classList.remove('bg-emerald-800');
+            }, 1000);
+        });
+
+        // Initialize GOSS render
+        renderGossPoints();
+
+
+        // -----------------
+        // Tech 2: EFB Interactive Simulation
+        // -----------------
+        const btnEfb = document.getElementById('btn-efb');
+        const efbTableBody = document.getElementById('efb-table-body');
+
+        let isEfbMerged = false;
+        const rawEfbData = [
+            { index: 1, a: 5.2, b: 0.0 },
+            { index: 2, a: 0.0, b: 1.8 },
+            { index: 3, a: 3.1, b: 0.0 },
+            { index: 4, a: 0.0, b: 4.5 },
+            { index: 5, a: 0.0, b: 0.0 },
+            { index: 6, a: 1.9, b: 0.0 }
+        ];
+
+        function renderEfbTable() {
+            efbTableBody.innerHTML = '';
+            rawEfbData.forEach(row => {
+                let mergedVal = '-';
+                if (isEfbMerged) {
+                    // Feature B gets an offset of 10 to keep separation
+                    if (row.a > 0) mergedVal = row.a;
+                    else if (row.b > 0) mergedVal = (row.b + 10.0).toFixed(1) + ' (B)';
+                    else mergedVal = 0.0;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-100 transition";
+                tr.innerHTML = `
+                    <td class="p-2 border border-slate-200 font-bold text-slate-600">${row.index}</td>
+                    <td class="p-2 border border-slate-200 ${row.a > 0 ? 'text-indigo-600 font-semibold' : 'text-slate-300'}">${row.a}</td>
+                    <td class="p-2 border border-slate-200 ${row.b > 0 ? 'text-teal-600 font-semibold' : 'text-slate-300'}">${row.b}</td>
+                    <td class="p-2 border border-slate-200 bg-blue-50/50 font-bold text-blue-700 transition-all duration-500">${mergedVal}</td>
+                `;
+                efbTableBody.appendChild(tr);
+            });
+        }
+
+        btnEfb.addEventListener('click', () => {
+            isEfbMerged = !isEfbMerged;
+            btnEfb.textContent = isEfbMerged ? '원본 피처로 복구' : 'EFB 번들(Bundle) 병합하기';
+            btnEfb.className = isEfbMerged 
+                ? 'px-3 py-1 bg-slate-600 text-white rounded text-xs hover:bg-slate-700 transition font-semibold'
+                : 'px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition font-semibold';
+            renderEfbTable();
+        });
+
+        // Initialize EFB render
+        renderEfbTable();
+
+
+        // -------------------------------------------------------------
+        // 5. ML Playground Decision Boundary Simulator & Engine
+        // -------------------------------------------------------------
+        const simDatasetType = document.getElementById('sim-dataset-type');
+        const simLr = document.getElementById('sim-lr');
+        const simLrVal = document.getElementById('sim-lr-val');
+        const simDepth = document.getElementById('sim-depth');
+        const simDepthVal = document.getElementById('sim-depth-val');
+        const simLeaves = document.getElementById('sim-leaves');
+        const simLeavesVal = document.getElementById('sim-leaves-val');
+        const simMinSamples = document.getElementById('sim-min-samples');
+        const simMinSamplesVal = document.getElementById('sim-min-samples-val');
+
+        const btnTrainStep = document.getElementById('btn-train-step');
+        const btnResetSim = document.getElementById('btn-reset-sim');
+
+        const metricEpoch = document.getElementById('metric-epoch');
+        const metricLoss = document.getElementById('metric-loss');
+        const metricAcc = document.getElementById('metric-acc');
+
+        const canvas = document.getElementById('decision-boundary-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // State variables
+        let dataset = [];
+        let numTrees = 0;
+        let modelPredictions = []; // Cache to keep track of gradient boosting state
+        let currentLoss = 1.0;
+        let currentAccuracy = 0.0;
+
+        // Sync slider labels
+        simLr.addEventListener('input', () => simLrVal.textContent = parseFloat(simLr.value).toFixed(2));
+        simDepth.addEventListener('input', () => simDepthVal.textContent = simDepth.value);
+        simLeaves.addEventListener('input', () => simLeavesVal.textContent = simLeaves.value);
+        simMinSamples.addEventListener('input', () => simMinSamplesVal.textContent = simMinSamples.value);
+
+        // Generate Dataset helper
+        function generateData(type) {
+            const data = [];
+            const count = 120;
+            
+            if (type === 'circles') {
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    // Class 0: Inside circle
+                    if (i < count / 2) {
+                        const r = Math.random() * 0.45;
+                        data.push({
+                            x: 0.5 + Math.cos(angle) * r,
+                            y: 0.5 + Math.sin(angle) * r,
+                            label: 0
+                        });
+                    } else { // Class 1: Outer circle ring
+                        const r = 0.6 + Math.random() * 0.35;
+                        data.push({
+                            x: 0.5 + Math.cos(angle) * r,
+                            y: 0.5 + Math.sin(angle) * r,
+                            label: 1
+                        });
+                    }
+                }
+            } else if (type === 'moons') {
+                for (let i = 0; i < count; i++) {
+                    if (i < count / 2) { // Top moon
+                        const theta = Math.PI * (Math.random() * 1.0);
+                        const r = 0.35 + Math.random() * 0.1;
+                        data.push({
+                            x: 0.35 + Math.cos(theta) * r,
+                            y: 0.55 + Math.sin(theta) * r,
+                            label: 0
+                        });
+                    } else { // Bottom moon
+                        const theta = -Math.PI * (Math.random() * 1.0);
+                        const r = 0.35 + Math.random() * 0.1;
+                        data.push({
+                            x: 0.65 + Math.cos(theta) * r,
+                            y: 0.45 + Math.sin(theta) * r,
+                            label: 1
+                        });
+                    }
+                }
+            } else { // Checkerboard
+                for (let i = 0; i < count; i++) {
+                    const x = Math.random();
+                    const y = Math.random();
+                    const xGrid = Math.floor(x * 3);
+                    const yGrid = Math.floor(y * 3);
+                    const label = (xGrid + yGrid) % 2 === 0 ? 0 : 1;
+                    data.push({ x, y, label });
+                }
+            }
+            return data;
+        }
+
+        // Initialize prediction state
+        function initSimulator() {
+            dataset = generateData(simDatasetType.value);
+            numTrees = 0;
+            currentLoss = 1.0;
+            currentAccuracy = 0.0;
+            
+            // F(x) initialized to 0 for all pixels & dataset points
+            modelPredictions = dataset.map(() => 0.0);
+            
+            metricEpoch.textContent = '0';
+            metricLoss.textContent = '0.693'; // ln(2) approx
+            metricAcc.textContent = '50.0%';
+            
+            drawSimulatorState();
+        }
+
+        // Sigmoid activation function
+        function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
+        }
+
+        // Simulating LightGBM Leaf-wise Trees with a 2D Spatial Split Decision System
+        class LeafWiseSimTree {
+            constructor(maxDepth, numLeaves, minSamples, learningRate) {
+                this.maxDepth = maxDepth;
+                this.numLeaves = numLeaves;
+                this.minSamples = minSamples;
+                this.lr = learningRate;
+                this.splits = []; // array of {feature: 'x'|'y', threshold: float, leftVal: float, rightVal: float}
+            }
+
+            train(X, residuals) {
+                // To keep it high performance in browser canvas, we simulate a greedy leaf-wise gradient search.
+                // It builds orthogonal axis splits that minimize gradient variance (Loss reduction).
+                const splitsToMake = Math.min(this.numLeaves - 1, 6); // Cap split counts for stability in 2D
+                
+                // Active dataset indices for this training round
+                let currentLeaves = [X.map((_, i) => i)];
+
+                for (let s = 0; s < splitsToMake; s++) {
+                    let bestLeafIndex = -1;
+                    let bestSplit = null;
+                    let maxLossReduction = -1;
+
+                    // Leaf-wise search: find the leaf with the highest gain (simplified to highest sum of gradient variance)
+                    for (let l = 0; l < currentLeaves.length; l++) {
+                        const leafIndices = currentLeaves[l];
+                        if (leafIndices.length < this.minSamples * 2) continue;
+
+                        // Try splits on X and Y axis
+                        ['x', 'y'].forEach(feature => {
+                            // Try multiple split candidate thresholds
+                            for (let p = 0.1; p < 1.0; p += 0.1) {
+                                const leftGroup = leafIndices.filter(idx => X[idx][feature] < p);
+                                const rightGroup = leafIndices.filter(idx => X[idx][feature] >= p);
+
+                                if (leftGroup.length < this.minSamples || rightGroup.length < this.minSamples) continue;
+
+                                // Simplified gradient variance reduction (gain calculation)
+                                const sumGLeft = leftGroup.reduce((acc, idx) => acc + residuals[idx], 0);
+                                const sumGRight = rightGroup.reduce((acc, idx) => acc + residuals[idx], 0);
+                                
+                                const gain = (sumGLeft*sumGLeft / leftGroup.length) + (sumGRight*sumGRight / rightGroup.length);
+
+                                if (gain > maxLossReduction) {
+                                    maxLossReduction = gain;
+                                    bestLeafIndex = l;
+                                    bestSplit = {
+                                        feature,
+                                        threshold: p,
+                                        leftIndices: leftGroup,
+                                        rightIndices: rightGroup,
+                                        leftVal: -this.lr * (sumGLeft / (leftGroup.length + 1.0)), // regularized gradient step
+                                        rightVal: -this.lr * (sumGRight / (rightGroup.length + 1.0))
+                                    };
+                                }
+                            }
+                        });
+                    }
+
+                    // Apply the best leaf split
+                    if (bestSplit && bestLeafIndex !== -1) {
+                        currentLeaves.splice(bestLeafIndex, 1);
+                        currentLeaves.push(bestSplit.leftIndices);
+                        currentLeaves.push(bestSplit.rightIndices);
+                        this.splits.push(bestSplit);
+                    } else {
+                        break; // No more beneficial splits found
+                    }
+                }
+            }
+
+            predict(point) {
+                // Accumulate decision score from splits
+                let output = 0;
+                if (this.splits.length === 0) return 0;
+                
+                // Fallback default path approximation
+                this.splits.forEach(split => {
+                    if (point[split.feature] < split.threshold) {
+                        output += split.leftVal;
+                    } else {
+                        output += split.rightVal;
+                    }
+                });
+                return output;
+            }
+        }
+
+        // Tree models list
+        let ensemble = [];
+
+        function trainOneEpoch() {
+            if (dataset.length === 0) return;
+
+            // 1. Calculate residuals (Negative Gradient for LogLoss)
+            // p_i = sigmoid(pred_score_i)
+            // residual_i = label_i - p_i
+            const residuals = dataset.map((d, i) => d.label - sigmoid(modelPredictions[i]));
+
+            // 2. Train Leaf-wise Tree Simulator
+            const tree = new LeafWiseSimTree(
+                parseInt(simDepth.value),
+                parseInt(simLeaves.value),
+                parseInt(simMinSamples.value),
+                parseFloat(simLr.value)
+            );
+            tree.train(dataset, residuals);
+            ensemble.push(tree);
+
+            // 3. Update Model Cumulative Score predictions
+            for (let i = 0; i < dataset.length; i++) {
+                modelPredictions[i] += tree.predict(dataset[i]);
+            }
+
+            numTrees++;
+            updateStats();
+            drawSimulatorState();
+        }
+
+        function updateStats() {
+            let logLoss = 0;
+            let correct = 0;
+
+            for (let i = 0; i < dataset.length; i++) {
+                const p = sigmoid(modelPredictions[i]);
+                const y = dataset[i].label;
+                
+                // Binary Cross Entropy Loss
+                logLoss += -(y * Math.log(Math.max(p, 1e-15)) + (1 - y) * Math.log(Math.max(1 - p, 1e-15)));
+                
+                // Accuracy Check
+                const predClass = p >= 0.5 ? 1 : 0;
+                if (predClass === y) correct++;
+            }
+
+            currentLoss = (logLoss / dataset.length).toFixed(3);
+            currentAccuracy = ((correct / dataset.length) * 100).toFixed(1);
+
+            metricEpoch.textContent = numTrees;
+            metricLoss.textContent = currentLoss;
+            metricAcc.textContent = `${currentAccuracy}%`;
+        }
+
+        // Draw decision space and raw data
+        function drawSimulatorState() {
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // 1. Draw Decision Boundary background pixels
+            const resolution = 4; // grid step size
+            for (let px = 0; px < width; px += resolution) {
+                for (let py = 0; py < height; py += resolution) {
+                    const normX = px / width;
+                    const normY = py / height;
+                    
+                    // Predict using the boosting forest ensemble
+                    let accumScore = 0;
+                    ensemble.forEach(tree => {
+                        accumScore += tree.predict({ x: normX, y: normY });
+                    });
+                    
+                    const p = sigmoid(accumScore);
+                    
+                    // Continuous spectrum coloring for gradient visual
+                    let color = '';
+                    if (p >= 0.5) {
+                        // Blue-ish prediction
+                        const alpha = Math.min((p - 0.5) * 2.0, 0.95);
+                        color = `rgba(59, 130, 246, ${alpha * 0.4})`; // Tailwind blue
+                    } else {
+                        // Orange-ish prediction
+                        const alpha = Math.min((0.5 - p) * 2.0, 0.95);
+                        color = `rgba(249, 115, 22, ${alpha * 0.4})`; // Tailwind orange
+                    }
+
+                    ctx.fillStyle = color || '#ffffff';
+                    ctx.fillRect(px, py, resolution, resolution);
+                }
+            }
+
+            // 2. Draw raw data points
+            dataset.forEach(d => {
+                const drawX = d.x * width;
+                const drawY = d.y * height;
+
+                ctx.beginPath();
+                ctx.arc(drawX, drawY, 5, 0, Math.PI * 2);
+                
+                // Accent borders around dots to look super premium
+                if (d.label === 0) {
+                    ctx.fillStyle = '#3b82f6'; // Deep Blue
+                    ctx.strokeStyle = '#ffffff';
+                } else {
+                    ctx.fillStyle = '#f97316'; // Vivid Orange
+                    ctx.strokeStyle = '#ffffff';
+                }
+                
+                ctx.lineWidth = 1.5;
+                ctx.fill();
+                ctx.stroke();
+            });
+        }
+
+        // Register Action Click listeners
+        btnTrainStep.addEventListener('click', () => {
+            trainOneEpoch();
+        });
+
+        btnResetSim.addEventListener('click', () => {
+            ensemble = [];
+            initSimulator();
+        });
+
+        simDatasetType.addEventListener('change', () => {
+            ensemble = [];
+            initSimulator();
+        });
+
+        // Initialize Simulator on startup
+        initSimulator();
+
+    </script>
+</body>
+</html>
