@@ -14,6 +14,7 @@ from core import views_stream as strm
 from core import views_timeseries as ts
 from core import views_text as txt
 from core import views_ml as ml
+from core import views_work as work
 from core import frontend
 
 urlpatterns = [
@@ -45,6 +46,12 @@ urlpatterns = [
     path("sim/api/timeseries_calc.php", ts.timeseries_calc),
     path("sim/api/text_proxy.php", txt.text_proxy),
     path("sim/api/ml_proxy.php", ml.ml_proxy),
+
+    # ── work 프록시(외부 바이너리 위임) ──
+    path("work/api/ocr_proxy.php", work.ocr_proxy),
+    path("work/api/youtube_dl.php", work.youtube_dl),
+    path("work/api/ppt_pdf_proxy.php", work.ppt_pdf_proxy),
+    path("work/api/ppt_proxy.php", work.ppt_proxy),
 
     # ── 관리자 페이지(self-router + 로그아웃) ──
     path("admin/", apage.admin_page),

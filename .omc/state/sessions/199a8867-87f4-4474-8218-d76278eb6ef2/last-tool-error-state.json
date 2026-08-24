@@ -1,7 +1,7 @@
 {
-  "tool_name": "mcp__Claude_Browser__computer",
-  "tool_input_preview": "{\"action\":\"scroll\",\"coordinate\":[400,300],\"scroll_direction\":\"down\",\"scroll_amount\":6}",
-  "error": "computer timed out after 30s. The Browser pane is currently hidden. The pane may be stuck (modal dialog, navigation hang, or unresponsive renderer). Check preview_console_logs for errors.",
-  "timestamp": "2026-08-24T08:25:59.536Z",
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd ~/Desktop/태태/dataforge-복구/backend\\ntail -2 /tmp/df-django.log\\necho \\\"=== work 프록시 배선/파이프라인 스모크 (글자 그리기 없이) ===\\\"\\n../.venv/bin/python - <<'PY'\\nimport urllib.request as ur, json, io\\nB...",
+  "error": "Exit code 1\n[24/Aug/2026 12:16:10] \"POST /sim/api/ml_proxy.php?algo=xgboost HTTP/1.1\" 200 286\n[24/Aug/2026 12:16:10] \"POST /sim/api/ml_proxy.php?algo=linear HTTP/1.1\" 200 469\n=== work 프록시 배선/파이프라인 스모크 (글자 그리기 없이) ===\nTraceback (most recent call last):\n  File \"<stdin>\", line 9, in <module>\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/urllib/request.py\", line 187, in urlopen\n    return opener.open(url, data, timeout)\n           ~~~~~~~~~~...",
+  "timestamp": "2026-08-24T12:19:06.472Z",
   "retry_count": 1
 }

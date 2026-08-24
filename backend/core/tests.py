@@ -214,3 +214,38 @@ class ComputeProxyTests(TestCase):
         self.assertNotIn("error", rf)
         self.assertIn("accuracy", rf["test_metrics"])
         self.assertEqual(len(rf["feature_importances"]), 4)
+
+
+class WorkProxyTests(TestCase):
+    def test_ocr_structure(self):
+        # 빈 이미지 → 에러 없이 {lines, full_text} 구조
+        import io
+        try:
+            from PIL import Image
+        except ImportError:
+            return
+        buf = io.BytesIO(); Image.new("RGB", (60, 30), "white").save(buf, "PNG")
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        img = SimpleUploadedFile("t.png", buf.getvalue(), content_type="image/png")
+        r = self.client.post("/work/api/ocr_proxy.php", {"image": img}).json()
+        self.assertIn("lines", r); self.assertIn("full_text", r)
+
+    def test_youtube_status_missing_job(self):
+        r = self.client.get("/work/api/youtube_dl.php?action=status&job=nope").json()
+        self.assertEqual(r["status"], "error")
+
+    def test_ppt_chunk_assembly(self):
+        # 청크 저장 → 조립이 원본 바이트를 복원하는지 (soffice 없이 로직만)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        import os
+        from core import views_work as w
+        uid = "testchunkasm"
+        for i, part in enumerate([b"AAAA", b"BBBB", b"CCCC"]):
+            c = SimpleUploadedFile("c", part)
+            self.client.post("/work/api/ppt_pdf_proxy.php?action=chunk",
+                             {"upload_id": uid, "chunk_index": str(i),
+                              "total_chunks": "3", "chunk": c})
+        out = os.path.join(w.TMP, "assembled_test.bin")
+        w._assemble(uid, out)
+        self.assertEqual(open(out, "rb").read(), b"AAAABBBBCCCC")
+        os.remove(out)
