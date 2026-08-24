@@ -15,3 +15,4 @@
 {"t":0,"agent":"a09281c","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":327457}
 {"t":0,"agent":"ac87eeb","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":441218}
 {"t":0,"agent":"a0b8f7b","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":505147}
+{"t":0,"agent":"a464ab7","agent_type":"untracked-native-fork","event":"agent_stop","success":true,"synthetic":true,"telemetry_status":"unmatched_stop","reason":"SubagentStop arrived without a matching SubagentStart; native Agent/Task start telemetry was not observed."}
