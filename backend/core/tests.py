@@ -161,3 +161,56 @@ class StreamTests(TestCase):
     def test_sensor_api_shape(self):
         d = Client().get("/factory_lab/sensor/api.php").json()
         self.assertTrue(all({"sensor_code", "value", "status"} <= set(s) for s in d["sensors"]))
+
+
+class ComputeProxyTests(TestCase):
+    """ML/텍스트/시계열 프록시 — 계약 형태 스모크."""
+    def test_timeseries_models(self):
+        import json
+        data = [10, 12, 13, 12, 15, 16, 18, 17, 19, 22, 21, 23]
+        for action, params in [("sma", {"window": 3}), ("holt", {"alpha": .3, "beta": .1}),
+                               ("ar", {"p": 2})]:
+            r = self.client.post("/sim/api/timeseries_calc.php",
+                                 data=json.dumps({"action": action, "data": data,
+                                                  "params": {**params, "forecast": 3}}),
+                                 content_type="application/json").json()
+            self.assertTrue(r["ok"], action)
+            self.assertEqual(len(r["fitted"]), len(data))
+            self.assertEqual(len(r["forecast"]), 3)
+            self.assertIn("rmse", r["metrics"])
+
+    def test_text_mining(self):
+        r = self.client.post("/sim/api/text_proxy.php", {
+            "text": "데이터 분석 좋아요\n머신러닝 데이터 재밌어요",
+            "pos_filter": "noun", "min_len": "2", "max_words": "20",
+            "include_tfidf": "true", "include_ngram": "true", "include_wordcloud": "false",
+        }).json()
+        self.assertNotIn("error", r)
+        self.assertEqual(r["word_freq"][0], ["데이터", 2])  # 최빈 단어
+        self.assertTrue(all(isinstance(k, str) and not k.isascii() or k == "기타"
+                            for k in r["pos_distribution"]))  # 라벨 한글화
+
+    def test_ml_kmeans_and_classifier(self):
+        import io
+        from sklearn.datasets import load_iris
+        df = load_iris(as_frame=True).frame
+        df.columns = ["a", "b", "c", "d", "target"]
+        csv = df.to_csv(index=False)
+
+        def up(name):
+            from django.core.files.uploadedfile import SimpleUploadedFile
+            return SimpleUploadedFile(f"{name}.csv", csv.encode(), content_type="text/csv")
+
+        km = self.client.post("/sim/api/ml_proxy.php?algo=kmeans",
+                              {"train_file": up("train"), "test_file": up("test"),
+                               "n_clusters": "3", "scale": "true"}).json()
+        self.assertNotIn("error", km)
+        self.assertEqual(len(km["cluster_counts"]), 3)
+        self.assertIn("silhouette_score", km["train_metrics"])
+
+        rf = self.client.post("/sim/api/ml_proxy.php?algo=rforest",
+                              {"train_file": up("train"), "test_file": up("test"),
+                               "target": "target", "n_estimators": "20"}).json()
+        self.assertNotIn("error", rf)
+        self.assertIn("accuracy", rf["test_metrics"])
+        self.assertEqual(len(rf["feature_importances"]), 4)

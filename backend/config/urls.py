@@ -11,6 +11,9 @@ from core import views_public as pub
 from core import views_admin as adm
 from core import views_adminpage as apage
 from core import views_stream as strm
+from core import views_timeseries as ts
+from core import views_text as txt
+from core import views_ml as ml
 from core import frontend
 
 urlpatterns = [
@@ -37,6 +40,11 @@ urlpatterns = [
     path("mfg/api/stream_state.php", strm.stream_state),
     path("mfg/api/db_write.php", strm.db_write),
     path("factory_lab/sensor/api.php", strm.sensor_api),
+
+    # ── ML/계산 프록시 (Python 통합) ──
+    path("sim/api/timeseries_calc.php", ts.timeseries_calc),
+    path("sim/api/text_proxy.php", txt.text_proxy),
+    path("sim/api/ml_proxy.php", ml.ml_proxy),
 
     # ── 관리자 페이지(self-router + 로그아웃) ──
     path("admin/", apage.admin_page),
