@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>방위산업 이미지 프롬프트 생성기 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="방위산업 이미지 프롬프트 생성기 — DataForge">
+<meta property="og:description" content="대상 시스템·임무·형상·배경·시점·스타일 6개 항목 선택으로 방산 이미지 생성용 프롬프트를 완성하세요. 한글·영문 전환, 복사 한 번으로 바로 활용.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626; --orange:#ea580c;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  font-size:14px;line-height:1.6;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+.page{padding:0 24px 80px;}
+
+/* ── HEADER ── */
+.site-header{
+  padding:14px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── INTRO ── */
+.intro-box{
+  background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+  border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);
+  line-height:1.7;margin-top:20px;
+}
+.intro-box strong{color:var(--text);}
+
+/* ── CARD ── */
+.a-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 18px;margin-bottom:16px;
+}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{
+  font-size:10px;font-weight:700;color:var(--muted);
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.toolbar-label{font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.seg{display:inline-flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;}
+.seg button{
+  padding:6px 16px;font-size:12px;font-weight:700;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;transition:.15s;font-family:'Noto Sans KR',sans-serif;
+}
+.seg button.active{background:var(--accent);color:#fff;}
+.preset-btn{
+  font-size:11px;font-weight:700;padding:6px 12px;
+  border:1px solid var(--border2);border-radius:6px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:.15s;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.preset-btn:hover{color:var(--accent);border-color:rgba(37,99,235,.4);}
+.toolbar-spacer{flex:1;}
+.mini-btn{
+  font-size:10px;font-weight:700;padding:4px 10px;
+  border:1px solid var(--border2);border-radius:4px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:.15s;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.mini-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.mini-btn.danger:hover{color:var(--red);border-color:rgba(220,38,38,.4);}
+
+/* ── LAYOUT ── */
+.gen-grid{
+  display:grid;grid-template-columns:minmax(0,1fr) 400px;
+  gap:16px;align-items:start;margin-top:16px;
+}
+.side{position:sticky;top:76px;}
+
+/* ── BLOCK CARD ── */
+.blk{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 18px;margin-bottom:12px;}
+.blk-head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.blk-icon{font-size:16px;flex-shrink:0;}
+.blk-tag{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;}
+.blk-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;}
+.blk-q{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.blk-count{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
+  color:var(--dim);border:1px solid var(--border2);border-radius:10px;
+  padding:1px 8px;white-space:nowrap;transition:.15s;}
+.blk-count.on{color:var(--accent);border-color:rgba(37,99,235,.4);background:rgba(37,99,235,.07);}
+.blk-arrow{font-size:10px;color:var(--dim);transition:transform .2s;}
+.blk.closed .blk-arrow{transform:rotate(-90deg);}
+.blk-body{margin-top:12px;}
+.blk.closed .blk-body{display:none;}
+.blk-tip{
+  font-size:11px;color:var(--muted);line-height:1.7;
+  padding:7px 11px;background:rgba(37,99,235,.04);
+  border:1px solid rgba(37,99,235,.1);border-radius:6px;margin-bottom:10px;
+}
+.blk-tip strong{color:var(--text);}
+
+/* ── TERM PILLS ── */
+.pill-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.term-pill{
+  padding:5px 11px;border:1px solid var(--border2);border-radius:6px;
+  cursor:pointer;font-size:12px;user-select:none;transition:all .15s;
+  color:var(--muted);background:transparent;font-family:'Noto Sans KR',sans-serif;
+}
+.term-pill:hover{border-color:rgba(37,99,235,.4);color:var(--text);}
+.term-pill.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.term-pill.custom{border-style:dashed;}
+.term-pill.custom.selected{border-style:solid;}
+
+/* ── CUSTOM INPUT ── */
+.custom-row{display:flex;gap:6px;margin-top:10px;}
+.custom-inp{
+  flex:1;min-width:0;background:var(--card2);border:1px solid var(--border2);
+  border-radius:6px;color:var(--text);font-size:12px;padding:6px 10px;
+  outline:none;font-family:'Noto Sans KR',sans-serif;
+}
+.custom-inp:focus{border-color:var(--accent);}
+.custom-add{
+  font-size:11px;font-weight:700;padding:6px 12px;border:1px solid var(--border2);
+  border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;
+  transition:.15s;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;
+}
+.custom-add:hover{color:var(--accent);border-color:rgba(37,99,235,.4);}
+
+/* ── PREVIEW ── */
+.preview-card{margin-bottom:0;}
+.sel-count{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--accent);}
+.prompt-view{
+  background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;max-height:calc(100vh - 320px);min-height:180px;overflow:auto;
+}
+.pv-empty{font-size:12px;color:var(--dim);text-align:center;padding:40px 10px;line-height:1.8;}
+.pv-block{margin-bottom:14px;}
+.pv-block:last-child{margin-bottom:0;}
+.pv-tag{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.pv-text{font-size:12.5px;color:var(--text);line-height:1.7;word-break:keep-all;}
+.btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+  font-family:'Noto Sans KR',sans-serif;border:none;border-radius:8px;
+  cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+.preview-hint{font-size:11px;color:var(--dim);margin-top:10px;line-height:1.7;}
+
+/* ── MOBILE FAB ── */
+.fab{
+  display:none;position:fixed;right:16px;bottom:16px;z-index:110;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--accent);color:#fff;font-size:20px;
+  box-shadow:0 4px 14px rgba(37,99,235,.35);
+}
+.copied-toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:#fff;font-size:12px;font-weight:700;
+  padding:9px 22px;border-radius:20px;opacity:0;pointer-events:none;
+  transition:all .25s;z-index:200;
+}
+.copied-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:1024px){
+  .gen-grid{grid-template-columns:1fr;}
+  .side{position:static;}
+  .prompt-view{max-height:400px;}
+  .fab{display:block;}
+}
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:12px 14px;}
+  .blk-q{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">방위산업 이미지 프롬프트 생성기</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      <strong>방산 장비·무기체계 이미지 생성용 프롬프트를 항목 선택만으로 완성합니다.</strong>
+      대상 시스템·임무·형상·배경·시점·스타일 6개 항목에서 표현을 고르면 오른쪽에 최종 프롬프트가 실시간으로 조합됩니다.
+      한글·영문과 한 줄형·블록형 출력을 전환할 수 있고, 복사 한 번으로 ChatGPT·Gemini·Midjourney 등 이미지 생성 AI에 바로 붙여넣어 사용하세요.
+      영상용 프롬프트는 <a href="/builder/defense_video" style="color:var(--accent);">방위산업 영상 프롬프트 생성기</a>를 이용하세요.
+    </div>
+
+    <div class="a-card" style="margin-top:16px;margin-bottom:0;">
+      <div class="toolbar">
+        <span class="toolbar-label">출력 언어</span>
+        <div class="seg" id="langSeg">
+          <button data-lang="ko" class="active">한글</button>
+          <button data-lang="en">English</button>
+        </div>
+        <span class="toolbar-label">출력 형식</span>
+        <div class="seg" id="fmtSeg">
+          <button data-fmt="line" class="active">한 줄형</button>
+          <button data-fmt="block">블록형</button>
+        </div>
+        <span class="toolbar-label">예시 불러오기</span>
+        <button class="preset-btn" data-preset="drone">🛩️ 전술 정찰 드론</button>
+        <button class="preset-btn" data-preset="brochure">🚙 브로슈어용 장갑차</button>
+        <button class="preset-btn" data-preset="techdoc">📡 기술 일러스트 레이더</button>
+        <span class="toolbar-spacer"></span>
+        <button class="mini-btn danger" id="resetAll">전체 초기화</button>
+      </div>
+    </div>
+
+    <div class="gen-grid">
+      <div id="blocks"></div>
+
+      <div class="side">
+        <div class="a-card preview-card">
+          <div class="a-card-title">
+            <span>완성 프롬프트</span>
+            <span class="sel-count" id="totalCount">0 selected</span>
+          </div>
+          <div class="prompt-view" id="promptView"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="copyBtn">📋 프롬프트 복사</button>
+            <button class="btn btn-outline" id="dlBtn">⬇ TXT 저장</button>
+          </div>
+          <div class="preview-hint">
+            선택하지 않은 항목은 자동으로 제외됩니다 · 직접 입력한 표현은 언어 전환과 무관하게 그대로 출력됩니다
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="fab" id="fabBtn" title="완성 프롬프트로 이동">📋</button>
+<div class="copied-toast" id="toast">✓ 프롬프트가 복사되었습니다</div>
+
+<script>
+/* ── 용어 데이터 (uploads/방산_이미지_프롬프트_가이드.md에서 자동 추출) ── */
+const TERMS = {"subject":[{"e":"armored fighting vehicle","k":"장갑 전투 차량"},{"e":"unmanned ground vehicle","k":"무인 지상 차량"},{"e":"naval air-defense system","k":"해상 방공 시스템"},{"e":"long-range surveillance radar","k":"장거리 감시 레이더"},{"e":"multi-role tactical drone","k":"다목적 전술 드론"},{"e":"command and control center","k":"지휘통제센터"}],"mission":[{"e":"reconnaissance","k":"정찰"},{"e":"air defense","k":"방공"},{"e":"coastal surveillance","k":"해안 감시"},{"e":"battlefield communication","k":"전장 통신"},{"e":"electronic warfare","k":"전자전"},{"e":"logistics support","k":"군수 지원"},{"e":"border patrol","k":"국경 경계"}],"components":[{"e":"tracked chassis","k":"궤도형 차체"},{"e":"8x8 wheeled platform","k":"8×8 차륜형 플랫폼"},{"e":"rotating turret","k":"회전식 포탑"},{"e":"radar mast","k":"레이더 마스트"},{"e":"missile launch cells","k":"미사일 발사 셀"},{"e":"electro-optical sensor","k":"전자광학 센서"},{"e":"communication antenna","k":"통신 안테나"},{"e":"modular armor panels","k":"모듈형 장갑 패널"},{"e":"remote weapon station","k":"원격 사격 통제 체계 / 원격 무장 스테이션"},{"e":"foldable wings","k":"접이식 날개"}],"environment":[{"e":"desert training ground","k":"사막 훈련장"},{"e":"naval deck at sunset","k":"일몰의 함정 갑판"},{"e":"mountain border area","k":"산악 국경 지역"},{"e":"military expo booth","k":"방산 전시회 부스"},{"e":"clean white studio background","k":"깔끔한 흰색 스튜디오 배경"},{"e":"futuristic battlefield simulation","k":"미래형 전장 시뮬레이션 환경"},{"e":"engineering presentation board","k":"공학·기술 발표용 배경"}],"view":[{"e":"front three-quarter view","k":"전면 3/4 시점"},{"e":"side profile","k":"측면 시점"},{"e":"top-down technical view","k":"위에서 내려다본 기술적 시점"},{"e":"exploded view","k":"분해도"},{"e":"isometric concept render","k":"아이소메트릭 개념 렌더링"},{"e":"cinematic low-angle shot","k":"영화 같은 로우 앵글"},{"e":"cutaway view","k":"내부 절개도"}],"style":[{"e":"photorealistic render","k":"실사형 렌더링"},{"e":"defense industry brochure style","k":"방산업체 브로슈어 스타일"},{"e":"concept art","k":"콘셉트 아트"},{"e":"technical illustration","k":"기술 일러스트"},{"e":"CAD-like presentation visual","k":"CAD 형태의 발표용 이미지"},{"e":"infographic style","k":"인포그래픽 스타일"},{"e":"clean product render","k":"깔끔한 제품 렌더링"}]};
+
+/* ── 프롬프트 블록 구성 (가이드 ①~⑥) ── */
+const BLOCKS = [
+  {key:'subject',     tag:'Subject',       name:'대상 시스템',    icon:'🎯', q:'무엇을 그릴 것인가?',                groups:[['','subject']]},
+  {key:'mission',     tag:'Mission',       name:'임무·역할',      icon:'🛰️', q:'어떤 임무를 수행하는 장비인가?',     groups:[['','mission']]},
+  {key:'components',  tag:'Components',    name:'형상·구성 요소', icon:'🔩', q:'외형과 주요 구성요소는 무엇인가?',   groups:[['','components']]},
+  {key:'environment', tag:'Environment',   name:'환경·배경',      icon:'🏔️', q:'어디에 등장하는가?',
+    tip:'제안서·PPT용이면 <strong>깔끔한 흰색 스튜디오 배경</strong>을 선택하세요 — 장비 자체가 잘 보입니다.', groups:[['','environment']]},
+  {key:'view',        tag:'View / Camera', name:'시점·카메라',    icon:'🎥', q:'어느 방향에서 보여줄 것인가?',
+    tip:'장비 전체 모습을 보여주려면 <strong>전면 3/4 시점</strong>이 가장 활용도가 높습니다.', groups:[['','view']]},
+  {key:'style',       tag:'Style',         name:'스타일·결과물',  icon:'🎨', q:'어떤 목적·형태의 이미지인가?',       groups:[['','style']]},
+];
+
+/* ── 예시 프리셋 ── */
+const PRESETS = {
+  drone: [
+    'multi-role tactical drone','reconnaissance',
+    'foldable wings','electro-optical sensor','communication antenna',
+    'mountain border area','front three-quarter view','photorealistic render'
+  ],
+  brochure: [
+    'armored fighting vehicle','border patrol',
+    '8x8 wheeled platform','rotating turret','remote weapon station','modular armor panels',
+    'clean white studio background','front three-quarter view','defense industry brochure style'
+  ],
+  techdoc: [
+    'long-range surveillance radar','coastal surveillance',
+    'radar mast','communication antenna',
+    'engineering presentation board','isometric concept render','technical illustration'
+  ]
+};
+
+/* ── 상태 ── */
+const STORE = 'df_defimg_v1';
+let sel = new Set();          // 'section|index'
+let custom = {};              // blockKey -> [string]
+let lang = 'ko';
+let fmt = 'line';
+
+function save(){
+  try{ localStorage.setItem(STORE, JSON.stringify({sel:[...sel], custom, lang, fmt})); }catch(e){}
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(STORE));
+    if(!d) return;
+    sel = new Set(Array.isArray(d.sel)?d.sel:[]);
+    custom = d.custom && typeof d.custom==='object' ? d.custom : {};
+    if(d.lang==='en'||d.lang==='ko') lang = d.lang;
+    if(d.fmt==='line'||d.fmt==='block') fmt = d.fmt;
+  }catch(e){}
+}
+
+/* ── 렌더 ── */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function buildBlocks(){
+  const wrap = document.getElementById('blocks');
+  wrap.innerHTML = BLOCKS.map(b => {
+    const groups = b.groups.map(([gname, sec]) => {
+      const pills = TERMS[sec].map((t,i) =>
+        `<button class="term-pill" data-id="${sec}|${i}" title="${esc(lang==='ko'?t.e:t.k)}">${esc(lang==='ko'?t.k:t.e)}</button>`
+      ).join('');
+      return (gname?`<div class="grp-label">${esc(gname)}</div>`:'') + `<div class="pill-grid">${pills}</div>`;
+    }).join('');
+    return `
+    <div class="blk" id="blk-${b.key}">
+      <div class="blk-head" data-blk="${b.key}">
+        <span class="blk-icon">${b.icon}</span>
+        <span class="blk-tag">[${esc(b.tag)}]</span>
+        <span class="blk-name">${esc(b.name)}</span>
+        <span class="blk-q">${esc(b.q)}</span>
+        <span class="blk-count" id="cnt-${b.key}">0</span>
+        <span class="blk-arrow">▼</span>
+      </div>
+      <div class="blk-body">
+        ${b.tip?`<div class="blk-tip">💡 ${b.tip}</div>`:''}
+        ${groups}
+        <div class="pill-grid" id="custom-${b.key}" style="margin-top:8px;"></div>
+        <div class="custom-row">
+          <input class="custom-inp" id="inp-${b.key}" placeholder="직접 입력 후 추가 (예: 위장 도색)" maxlength="120">
+          <button class="custom-add" data-add="${b.key}">+ 추가</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function relabelPills(){
+  BLOCKS.forEach(b => b.groups.forEach(([,sec]) => {
+    TERMS[sec].forEach((t,i) => {
+      const el = document.querySelector(`.term-pill[data-id="${sec}|${i}"]`);
+      if(el){ el.textContent = lang==='ko'?t.k:t.e; el.title = lang==='ko'?t.e:t.k; }
+    });
+  }));
+}
+
+function renderCustom(bk){
+  const box = document.getElementById('custom-'+bk);
+  const list = custom[bk]||[];
+  box.innerHTML = list.map((s,i) =>
+    `<button class="term-pill custom selected" data-custom="${bk}|${i}" title="클릭하여 제거">✕ ${esc(s)}</button>`
+  ).join('');
+  box.style.display = list.length ? '' : 'none';
+}
+
+function syncPills(){
+  document.querySelectorAll('.term-pill[data-id]').forEach(el =>
+    el.classList.toggle('selected', sel.has(el.dataset.id)));
+  BLOCKS.forEach(b => renderCustom(b.key));
+}
+
+/* ── 조합 ── */
+function blockTerms(b){
+  const out = [];
+  b.groups.forEach(([,sec]) => TERMS[sec].forEach((t,i) => {
+    if(sel.has(sec+'|'+i)) out.push(lang==='ko'?t.k:t.e);
+  }));
+  (custom[b.key]||[]).forEach(s => out.push(s));
+  return out;
+}
+
+function composeText(){
+  const parts = BLOCKS.map(b => ({b, t: blockTerms(b)})).filter(x => x.t.length);
+  if(!parts.length) return '';
+  if(fmt==='line') return parts.map(x => x.t.join(', ')).join(', ');
+  return parts.map(x => `[${x.b.tag}]\n${x.t.join(', ')}`).join('\n\n');
+}
+
+function updatePreview(){
+  let total = 0;
+  const view = document.getElementById('promptView');
+  const parts = [];
+  BLOCKS.forEach(b => {
+    const t = blockTerms(b);
+    const cnt = document.getElementById('cnt-'+b.key);
+    cnt.textContent = t.length;
+    cnt.classList.toggle('on', t.length>0);
+    total += t.length;
+    if(t.length) parts.push({b, t});
+  });
+  if(!parts.length){
+    view.innerHTML = `<div class="pv-empty">아래 항목에서 표현을 선택하면<br>프롬프트가 여기에 조합됩니다.<br><br>🛩️ 예시 불러오기로 빠르게 시작해 보세요.</div>`;
+  } else if(fmt==='line'){
+    view.innerHTML = `<div class="pv-block"><div class="pv-text">${esc(parts.map(x => x.t.join(', ')).join(', '))}</div></div>`;
+  } else {
+    view.innerHTML = parts.map(x =>
+      `<div class="pv-block"><div class="pv-tag">[${esc(x.b.tag)}]</div><div class="pv-text">${esc(x.t.join(', '))}</div></div>`).join('');
+  }
+  document.getElementById('totalCount').textContent = total + ' selected';
+  document.getElementById('copyBtn').disabled = total===0;
+  document.getElementById('dlBtn').disabled = total===0;
+}
+
+function refresh(){ syncPills(); updatePreview(); save(); }
+
+/* ── 이벤트 ── */
+document.addEventListener('click', e => {
+  const pill = e.target.closest('.term-pill[data-id]');
+  if(pill){
+    const id = pill.dataset.id;
+    sel.has(id) ? sel.delete(id) : sel.add(id);
+    pill.classList.toggle('selected', sel.has(id));
+    updatePreview(); save();
+    return;
+  }
+  const cpill = e.target.closest('.term-pill[data-custom]');
+  if(cpill){
+    const [bk,i] = cpill.dataset.custom.split('|');
+    (custom[bk]||[]).splice(+i,1);
+    renderCustom(bk); updatePreview(); save();
+    return;
+  }
+  const add = e.target.closest('[data-add]');
+  if(add){ addCustom(add.dataset.add); return; }
+  const head = e.target.closest('.blk-head');
+  if(head){ document.getElementById('blk-'+head.dataset.blk).classList.toggle('closed'); return; }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter' && e.target.classList.contains('custom-inp')){
+    e.preventDefault();
+    addCustom(e.target.id.replace('inp-',''));
+  }
+});
+
+function addCustom(bk){
+  const inp = document.getElementById('inp-'+bk);
+  const v = inp.value.trim();
+  if(!v) return;
+  custom[bk] = custom[bk]||[];
+  if(!custom[bk].includes(v)) custom[bk].push(v);
+  inp.value = '';
+  renderCustom(bk); updatePreview(); save();
+}
+
+/* 언어 전환 */
+document.getElementById('langSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if(!btn || btn.dataset.lang===lang) return;
+  lang = btn.dataset.lang;
+  document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+  relabelPills(); updatePreview(); save();
+});
+
+/* 형식 전환 */
+document.getElementById('fmtSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-fmt]');
+  if(!btn || btn.dataset.fmt===fmt) return;
+  fmt = btn.dataset.fmt;
+  document.querySelectorAll('#fmtSeg button').forEach(b => b.classList.toggle('active', b.dataset.fmt===fmt));
+  updatePreview(); save();
+});
+
+/* 프리셋 */
+document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', () => {
+  const list = PRESETS[btn.dataset.preset];
+  if(!list) return;
+  sel = new Set(); custom = {};
+  const index = {};
+  Object.keys(TERMS).forEach(sec => TERMS[sec].forEach((t,i) => {
+    (index[t.e] = index[t.e]||[]).push(sec+'|'+i);
+  }));
+  list.forEach(en => (index[en]||[]).forEach(id => sel.add(id)));
+  refresh();
+}));
+
+/* 초기화 */
+document.getElementById('resetAll').onclick = () => {
+  if(!confirm('선택한 항목과 직접 입력을 모두 초기화할까요?')) return;
+  sel = new Set(); custom = {};
+  refresh();
+};
+
+/* 복사 · 저장 */
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = composeText();
+  if(!text) return;
+  const done = () => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+});
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done(); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+document.getElementById('dlBtn').addEventListener('click', () => {
+  const text = composeText();
+  if(!text) return;
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'defense_image_prompt.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('fabBtn').addEventListener('click', () =>
+  document.querySelector('.preview-card').scrollIntoView({behavior:'smooth'}));
+
+/* ── 초기화 ── */
+load();
+document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+document.querySelectorAll('#fmtSeg button').forEach(b => b.classList.toggle('active', b.dataset.fmt===fmt));
+buildBlocks();
+refresh();
+</script>
+<script>(function(){
+  var k='tf_builder_defimage';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=builder&page='+encodeURIComponent(location.pathname)});
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

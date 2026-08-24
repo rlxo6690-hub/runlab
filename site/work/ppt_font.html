@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PPT 폰트 변경 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="PPT 폰트 변경 — DataForge">
+  <meta property="og:description" content="PPTX 파일을 업로드하면 모든 슬라이드의 폰트를 일괄 변경합니다.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);
+      --border2:rgba(0,0,0,.15);
+      --text:#1e293b;
+      --muted:#64748b;
+      --dim:#94a3b8;
+      --accent:#2563eb;
+      --accent2:#6366f1;
+      --amber:#d97706;
+      --green:#059669;
+      --red:#dc2626;
+      --orange:#ea580c;
+      --r:10px;
+    }
+
+    body{
+      font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;font-size:14px;line-height:1.6;
+    }
+
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;
+    }
+
+    /* ── 헤더 ── */
+    .site-header{
+      padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;
+    }
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+                color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:#ea580c;font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;
+                 border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    /* ── 레이아웃 ── */
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+    .page{padding:0 24px 80px;}
+
+    /* ── 인트로 박스 ── */
+    .intro-box{
+      background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+      border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);
+      line-height:1.7;margin-top:20px;margin-bottom:16px;
+    }
+    .intro-box strong{color:var(--text);}
+
+    /* ── 카드 ── */
+    .a-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:var(--r);padding:16px 18px;margin-bottom:16px;
+    }
+    .a-card:last-child{margin-bottom:0;}
+    .a-card-title{
+      font-size:10px;font-weight:700;color:var(--muted);
+      letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+    }
+
+    /* ── 업로드 존 ── */
+    .upload-zone{
+      border:2px dashed rgba(37,99,235,.3);border-radius:10px;
+      padding:32px 18px;text-align:center;cursor:pointer;transition:all .2s;
+      background:rgba(37,99,235,.03);position:relative;
+    }
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{font-size:32px;margin-bottom:8px;}
+    .upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .upload-sub{font-size:11px;color:var(--muted);}
+
+    .file-info{
+      display:none;padding:12px 16px;
+      background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);
+      border-radius:8px;font-size:12px;color:#065f46;margin-top:12px;line-height:1.8;
+    }
+    .file-info.show{display:flex;align-items:center;gap:10px;}
+    .file-info-name{font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .file-info-size{white-space:nowrap;opacity:.8;}
+    .file-info-del{background:none;border:none;color:#065f46;opacity:.6;cursor:pointer;font-size:15px;padding:0 4px;transition:.2s;}
+    .file-info-del:hover{opacity:1;color:var(--red);}
+
+    /* ── 폰트 그리드 ── */
+    .font-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .font-option input[type=radio]{display:none;}
+    .font-option label{
+      display:block;border:1px solid var(--border2);border-radius:8px;
+      padding:10px 14px;cursor:pointer;transition:all .2s;background:var(--card2);
+    }
+    .font-option input:checked + label{border-color:var(--accent);background:rgba(37,99,235,.08);}
+    .font-option label:hover{border-color:rgba(37,99,235,.4);}
+    .font-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
+    .font-sample{font-size:10px;color:var(--muted);}
+
+    .custom-row{margin-top:10px;display:none;gap:8px;align-items:center;}
+    .custom-row.show{display:flex;}
+    .custom-row input[type=text]{
+      flex:1;border:1px solid var(--border2);border-radius:8px;
+      padding:8px 12px;font-size:13px;font-family:inherit;
+      background:var(--card);color:var(--text);outline:none;transition:.2s;
+    }
+    .custom-row input:focus{border-color:var(--accent);}
+
+    /* ── 버튼 ── */
+    .btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+         font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+    .btn-primary{background:var(--accent);color:#fff;width:100%;padding:13px;font-size:14px;}
+    .btn-primary:hover:not(:disabled){background:#1d4ed8;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+
+    /* ── 상태 박스 ── */
+    .status-box{
+      display:none;align-items:center;gap:10px;
+      padding:12px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-top:12px;
+    }
+    .status-box.show{display:flex;}
+    .status-box.processing{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);color:var(--accent);}
+    .status-box.success{background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);color:var(--green);}
+    .status-box.error{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:var(--red);}
+
+    .spinner{
+      width:16px;height:16px;border:2px solid rgba(37,99,235,.2);
+      border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* ── 알림 블록 ── */
+    .info-block{
+      font-size:12px;color:var(--muted);line-height:1.7;
+      padding:10px 14px;background:rgba(37,99,235,.04);
+      border-radius:8px;border:1px solid rgba(37,99,235,.1);margin-top:12px;
+    }
+    .info-block strong{color:var(--text);}
+
+    /* ── 진행률 바 ── */
+    .progress-wrap{margin-top:12px;display:none;}
+    .progress-label{font-size:12px;color:var(--muted);margin-bottom:6px;}
+    .progress-track{background:var(--card2);border-radius:100px;height:6px;overflow:hidden;}
+    .progress-fill{height:100%;background:var(--accent);border-radius:100px;transition:width .3s ease;width:0%;}
+    .progress-pct{font-size:11px;color:var(--dim);text-align:right;margin-top:4px;}
+
+    /* ── 반응형 ── */
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .font-grid{grid-template-columns:repeat(2,1fr);}
+      .site-header{padding:12px 14px;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">PPT 폰트 변경</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      <strong>PPTX 파일의 모든 슬라이드 폰트를 한 번에 변경합니다.</strong><br>
+      텍스트 상자·도형·슬라이드 마스터까지 서버에서 일괄 처리 후 변환된 파일을 즉시 다운로드합니다.
+    </div>
+
+    <!-- ① 파일 업로드 -->
+    <div class="a-card">
+      <div class="a-card-title">① PPTX 파일 업로드</div>
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pptx">
+        <div class="upload-icon">📊</div>
+        <div class="upload-main">파일을 드래그하거나 클릭하여 선택</div>
+        <div class="upload-sub">.pptx 파일만 지원 · 크기 제한 없음</div>
+      </div>
+
+      <div class="file-info" id="fileInfo">
+        <span>📊</span>
+        <span class="file-info-name" id="fileName"></span>
+        <span class="file-info-size" id="fileSize"></span>
+        <button class="file-info-del" id="fileRemove" title="파일 제거">✕</button>
+      </div>
+    </div>
+
+    <!-- ② 폰트 선택 -->
+    <div class="a-card">
+      <div class="a-card-title">② 변경할 폰트 선택</div>
+
+      <div class="font-grid">
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_0" value="맑은 고딕" checked>
+          <label for="font_0">
+            <div class="font-name">맑은 고딕</div>
+            <div class="font-sample">범용 윈도우 고딕체</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_1" value="Noto Sans KR" >
+          <label for="font_1">
+            <div class="font-name">Noto Sans KR</div>
+            <div class="font-sample">구글 노토 산스 한국어</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_2" value="나눔고딕" >
+          <label for="font_2">
+            <div class="font-name">나눔고딕</div>
+            <div class="font-sample">네이버 오픈소스 고딕</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_3" value="나눔명조" >
+          <label for="font_3">
+            <div class="font-name">나눔명조</div>
+            <div class="font-sample">네이버 오픈소스 명조</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_4" value="HY헤드라인M" >
+          <label for="font_4">
+            <div class="font-name">HY헤드라인M</div>
+            <div class="font-sample">헤드라인용 굵은 폰트</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_5" value="돋움" >
+          <label for="font_5">
+            <div class="font-name">돋움</div>
+            <div class="font-sample">클래식 윈도우 돋움체</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_6" value="굴림" >
+          <label for="font_6">
+            <div class="font-name">굴림</div>
+            <div class="font-sample">클래식 윈도우 굴림체</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_7" value="Arial" >
+          <label for="font_7">
+            <div class="font-name">Arial</div>
+            <div class="font-sample">영문 범용 산세리프</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_8" value="Calibri" >
+          <label for="font_8">
+            <div class="font-name">Calibri</div>
+            <div class="font-sample">MS Office 기본 영문</div>
+          </label>
+        </div>
+                <div class="font-option">
+          <input type="radio" name="font_preset" id="font_9" value="Times New Roman" >
+          <label for="font_9">
+            <div class="font-name">Times New Roman</div>
+            <div class="font-sample">영문 세리프 폰트</div>
+          </label>
+        </div>
+        
+        <div class="font-option">
+          <input type="radio" name="font_preset" id="font_custom" value="__custom__">
+          <label for="font_custom">
+            <div class="font-name">직접 입력</div>
+            <div class="font-sample">폰트명 직접 입력</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="custom-row" id="customRow">
+        <input type="text" id="customFont" placeholder="예: 배달의민족 주아" maxlength="80">
+      </div>
+
+      <div class="info-block">
+        <strong>주의:</strong> 폰트 이름은 대소문자·띄어쓰기를 정확히 입력해야 합니다.
+        변환 파일을 열 PC에 해당 폰트가 설치돼 있어야 올바르게 표시됩니다.
+      </div>
+    </div>
+
+    <!-- ③ 실행 -->
+    <div class="a-card">
+      <div class="a-card-title">③ 변환 실행</div>
+      <button class="btn btn-primary" id="runBtn" disabled>PPTX 파일을 먼저 업로드하세요</button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label" id="progressLabel"></div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-pct" id="progressPct">0%</div>
+      </div>
+      <div class="status-box" id="statusBox"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const uploadZone  = document.getElementById('uploadZone');
+const fileInput   = document.getElementById('fileInput');
+const fileInfo    = document.getElementById('fileInfo');
+const fileName    = document.getElementById('fileName');
+const fileSize    = document.getElementById('fileSize');
+const fileRemove  = document.getElementById('fileRemove');
+const runBtn      = document.getElementById('runBtn');
+const statusBox   = document.getElementById('statusBox');
+const customRow   = document.getElementById('customRow');
+const customFont  = document.getElementById('customFont');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const progressPct   = document.getElementById('progressPct');
+
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10 MB
+
+let selectedFile = null;
+
+function fmtSize(b) {
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function genUploadId() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+function setFile(f) {
+  if (!f || !f.name.toLowerCase().endsWith('.pptx')) {
+    showStatus('error', '.pptx 파일만 업로드할 수 있습니다.');
+    return;
+  }
+  selectedFile = f;
+  fileName.textContent = f.name;
+  fileSize.textContent = fmtSize(f.size);
+  fileInfo.classList.add('show');
+  uploadZone.style.display = 'none';
+  runBtn.disabled = false;
+  runBtn.textContent = '폰트 변경 후 다운로드 ▶';
+  clearStatus();
+  hideProgress();
+}
+
+function clearFile() {
+  selectedFile = null;
+  fileInput.value = '';
+  fileInfo.classList.remove('show');
+  uploadZone.style.display = '';
+  runBtn.disabled = true;
+  runBtn.textContent = 'PPTX 파일을 먼저 업로드하세요';
+  clearStatus();
+  hideProgress();
+}
+
+function showProgress(pct, label) {
+  progressWrap.style.display = '';
+  progressFill.style.width   = pct + '%';
+  progressLabel.textContent  = label;
+  progressPct.textContent    = Math.round(pct) + '%';
+}
+
+function hideProgress() {
+  progressWrap.style.display = 'none';
+  progressFill.style.width   = '0%';
+}
+
+function showStatus(type, html) {
+  const icons = { processing: '<div class="spinner"></div>', success: '✅', error: '❌' };
+  statusBox.className = 'status-box show ' + type;
+  statusBox.innerHTML = (icons[type] || '') + '<span>' + html + '</span>';
+}
+function clearStatus() {
+  statusBox.className = 'status-box';
+  statusBox.innerHTML = '';
+}
+
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+fileRemove.addEventListener('click', clearFile);
+
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+
+document.querySelectorAll('input[name=font_preset]').forEach(r => {
+  r.addEventListener('change', () => {
+    customRow.classList.toggle('show', r.value === '__custom__');
+  });
+});
+
+runBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+
+  const preset = document.querySelector('input[name=font_preset]:checked')?.value;
+  const font   = preset === '__custom__' ? customFont.value.trim() : preset;
+  if (!font) { showStatus('error', '폰트 이름을 입력해주세요.'); return; }
+
+  runBtn.disabled = true;
+  clearStatus();
+
+  const file        = selectedFile;
+  const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+  const uploadId    = genUploadId();
+
+  try {
+    /* ── Phase 1: 청크 업로드 ── */
+    for (let i = 0; i < totalChunks; i++) {
+      const start        = i * CHUNK_SIZE;
+      const chunk        = file.slice(start, start + CHUNK_SIZE);
+      const uploadedNow  = Math.min((i + 1) * CHUNK_SIZE, file.size);
+      const pct          = (i / totalChunks) * 100;
+
+      showProgress(pct, `업로드 중… ${fmtSize(Math.min(i * CHUNK_SIZE, file.size))} / ${fmtSize(file.size)}`);
+
+      const fd = new FormData();
+      fd.append('upload_id',    uploadId);
+      fd.append('chunk_index',  i);
+      fd.append('total_chunks', totalChunks);
+      fd.append('chunk', chunk, 'chunk');
+
+      const res = await fetch('/work/api/ppt_proxy.php?action=chunk', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({ error: '청크 업로드 실패' }));
+        throw new Error(j.error || '청크 업로드 실패');
+      }
+
+      showProgress((uploadedNow / file.size) * 100,
+        `업로드 중… ${fmtSize(uploadedNow)} / ${fmtSize(file.size)}`);
+    }
+
+    /* ── Phase 2: 폰트 변환 (ML 서버) ── */
+    hideProgress();
+    showStatus('processing', '서버에서 폰트 변환 중입니다… 파일 크기에 따라 수 분 소요될 수 있습니다.');
+
+    const fd2 = new FormData();
+    fd2.append('upload_id', uploadId);
+    fd2.append('font_name',  font);
+    fd2.append('filename',   file.name);
+
+    const res2 = await fetch('/work/api/ppt_proxy.php?action=finalize', { method: 'POST', body: fd2 });
+    if (!res2.ok) {
+      const j = await res2.json().catch(() => ({ error: '처리 서버 오류' }));
+      throw new Error(j.error || '서버 오류 ' + res2.status);
+    }
+
+    const data = await res2.json();
+
+    /* ── Phase 3: 다운로드 (직접 스트리밍) ── */
+    const a = document.createElement('a');
+    a.href     = '/work/api/ppt_proxy.php?action=download&token=' + encodeURIComponent(data.token);
+    a.download = data.filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    showStatus('success', `"${font}" 폰트로 변경된 파일이 다운로드됩니다.`);
+  } catch (e) {
+    hideProgress();
+    showStatus('error', e.message);
+  }
+
+  runBtn.disabled = false;
+});
+</script>
+
+<script>(function(){
+  var k='tf_work_ppt_font';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=work&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

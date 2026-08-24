@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge LMS — 교육생 포털</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#fff;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.14);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --green:#059669;--red:#dc2626;
+  --sidebar-w:260px;
+  --sidebar-bg:#0f172a;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+/* ══ LOGIN PAGE ══ */
+.login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:linear-gradient(135deg,#1e1b4b 0%,#1e3a5f 50%,#0f172a 100%);position:relative;overflow:hidden;}
+.login-wrap::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+.login-logo{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#fff;letter-spacing:3px;margin-bottom:8px;text-align:center;}
+.login-logo em{color:#60a5fa;font-style:normal;}
+.login-subtitle{font-size:13px;color:rgba(255,255,255,0.45);text-align:center;margin-bottom:40px;letter-spacing:.5px;}
+.login-card{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,.08);}
+.login-card-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.login-card-desc{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+.login-field{margin-bottom:16px;}
+.login-label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;}
+.login-input{width:100%;background:#f8fafc;border:1.5px solid var(--border2);border-radius:10px;color:var(--text);font-size:18px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:3px;padding:13px 16px;outline:none;transition:border-color .2s,box-shadow .2s;text-align:center;}
+.login-input::placeholder{letter-spacing:2px;font-size:14px;font-weight:400;color:var(--dim);}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.12);}
+.login-input.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,0.1);}
+.login-error{font-size:12px;color:var(--red);margin-top:8px;min-height:20px;font-weight:500;}
+.login-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s,transform .1s;margin-top:4px;letter-spacing:.5px;}
+.login-btn:hover{background:#1d4ed8;}
+.login-btn:active{transform:scale(.985);}
+.login-hint{margin-top:28px;padding-top:20px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);text-align:center;line-height:1.8;}
+.login-hint strong{color:var(--text);}
+
+/* ══ DASHBOARD LAYOUT ══ */
+body.dash{background:var(--bg);}
+
+/* Sidebar */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:100;overflow:hidden;}
+.sb-logo{padding:20px 20px 0;flex-shrink:0;}
+.sb-logo-text{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:#fff;letter-spacing:2px;}
+.sb-logo-text em{color:#60a5fa;font-style:normal;}
+.sb-session{padding:14px 20px 12px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+.sb-session-name{font-size:13px;font-weight:700;color:#e2e8f0;line-height:1.4;margin-bottom:4px;}
+.sb-session-dates{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.3px;}
+.sb-nav-label{padding:14px 20px 8px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;}
+.sb-modules{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 10px 10px;}
+.sb-modules::-webkit-scrollbar{width:4px;}
+.sb-modules::-webkit-scrollbar-track{background:transparent;}
+.sb-modules::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+.sb-mod{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;cursor:pointer;transition:background .15s;margin-bottom:2px;text-decoration:none;min-width:0;max-width:100%;}
+.sb-mod:hover{background:rgba(255,255,255,.06);}
+.sb-mod.active{background:rgba(37,99,235,.35);border-left:3px solid #60a5fa;}
+.sb-mod.active .sb-mod-num{color:#60a5fa;}
+.sb-mod-num{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:rgba(255,255,255,.3);width:22px;flex-shrink:0;text-align:right;}
+.sb-mod-info{flex:1;min-width:0;overflow:hidden;}
+/* 제목은 한 줄 말줄임 — 긴 제목이 사이드바를 밀어 가로 스크롤이 생기지 않게 한다 (전체 제목은 title 툴팁) */
+.sb-mod-title{display:block;font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.sb-mod-check{flex-shrink:0;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:10px;transition:.2s;}
+.sb-mod-check.done{background:var(--green);border-color:var(--green);color:#fff;}
+/* 과정(category) 그룹 */
+.sb-course{margin:4px 0 10px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);min-width:0;max-width:100%;overflow:hidden;}
+.sb-course:first-child{border-top:none;margin-top:0;padding-top:0;}
+/* 과정명을 누르면 그 과정의 단계가 열리고 닫힌다 (버튼이라 키보드·스크린리더도 동작) */
+.sb-course-hd{display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;
+  background:none;border:0;font-family:inherit;text-align:left;cursor:pointer;
+  border-radius:6px;transition:background .15s;}
+.sb-course-hd:hover{background:rgba(255,255,255,.05);}
+.sb-course-hd:focus-visible{outline:2px solid #60a5fa;outline-offset:-2px;}
+.sb-course-caret{flex-shrink:0;width:10px;font-size:9px;color:rgba(255,255,255,.4);
+  transition:transform .2s;transform:rotate(0deg);}
+.sb-course.open .sb-course-caret{transform:rotate(90deg);}
+.sb-course-name{flex:1;min-width:0;font-size:10px;font-weight:700;color:#93c5fd;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-course-prog{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);flex-shrink:0;}
+/* 닫힌 과정에 현재 보고 있는 단계가 들어 있으면 표시해 준다 */
+.sb-course-dot{flex-shrink:0;width:5px;height:5px;border-radius:50%;background:#60a5fa;opacity:0;transition:opacity .2s;}
+.sb-course.has-current:not(.open) .sb-course-dot{opacity:1;}
+.sb-course-body{overflow:hidden;max-height:0;transition:max-height .28s ease;}
+.sb-course.open > .sb-course-body{max-height:none;}
+@media (prefers-reduced-motion:reduce){
+  .sb-course-body{transition:none;}
+  .sb-course-caret{transition:none;}
+}
+.sb-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+.sb-code{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px;margin-bottom:8px;}
+.sb-logout{display:block;font-size:11px;color:rgba(255,255,255,.4);text-decoration:none;border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:6px 12px;text-align:center;transition:.2s;}
+.sb-logout:hover{color:#fff;border-color:rgba(255,255,255,.3);}
+
+/* Main content */
+.main-content{margin-left:var(--sidebar-w);min-height:100vh;padding:0;}
+
+/* Module view */
+.mod-view{max-width:820px;margin:0 auto;padding:48px 40px 80px;}
+.mod-header{margin-bottom:32px;}
+.mod-num-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;}
+.mod-num-badge span{font-family:'Space Mono',monospace;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.15);color:var(--accent);border-radius:20px;padding:3px 10px;}
+.mod-icon-wrap{font-size:44px;margin-bottom:16px;line-height:1;}
+.mod-title{font-size:30px;font-weight:800;color:var(--text);line-height:1.3;margin-bottom:10px;}
+.mod-desc-lead{font-size:16px;color:var(--muted);line-height:1.7;border-left:3px solid rgba(37,99,235,.3);padding-left:16px;}
+.mod-divider{height:1px;background:var(--border);margin:28px 0;}
+.mod-content{color:var(--text);font-size:16px;line-height:1.9;}
+.mod-content p{margin-bottom:14px;}
+.mod-content p:last-child{margin-bottom:0;}
+
+/* Attachments */
+.mod-attach{margin-top:32px;}
+.mod-attach-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;}
+.mod-attach-list{display:grid;gap:8px;}
+.mod-attach-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;text-decoration:none;transition:border-color .2s,box-shadow .15s;}
+.mod-attach-item:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(37,99,235,.08);}
+.mod-attach-icon{font-size:20px;flex-shrink:0;}
+.mod-attach-name{flex:1;font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mod-attach-size{font-size:11px;color:var(--muted);flex-shrink:0;}
+.mod-attach-dl{font-size:12px;color:var(--accent);flex-shrink:0;font-weight:600;}
+
+/* Tool cards in module */
+.mod-tools{margin-top:32px;}
+.mod-tools-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;}
+.mod-tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.mod-tool-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;text-decoration:none;transition:border-color .2s,box-shadow .2s,transform .15s;cursor:pointer;}
+.mod-tool-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(37,99,235,.1);transform:translateY(-1px);}
+.mod-tool-icon{font-size:26px;flex-shrink:0;margin-top:2px;}
+.mod-tool-info{flex:1;min-width:0;}
+.mod-tool-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.mod-tool-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+.mod-tool-arrow{font-size:14px;color:var(--accent);margin-left:auto;flex-shrink:0;align-self:center;}
+
+/* Navigation buttons */
+.mod-nav{display:flex;justify-content:space-between;align-items:center;margin-top:48px;padding-top:24px;border-top:1px solid var(--border);}
+.mod-nav-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:.2s;text-decoration:none;}
+.mod-nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.mod-nav-btn.disabled{opacity:.3;pointer-events:none;}
+.mod-nav-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.mod-nav-btn.primary:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff;}
+
+/* Complete button */
+.mod-complete-wrap{margin-top:28px;text-align:center;}
+.mod-complete-btn{padding:12px 32px;border-radius:10px;border:2px solid var(--green);background:transparent;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;letter-spacing:.3px;}
+.mod-complete-btn:hover{background:var(--green);color:#fff;}
+.mod-complete-btn.done{background:rgba(5,150,105,.08);color:var(--green);}
+.mod-complete-btn.done::before{content:'✓ ';}
+
+/* Empty state */
+.mod-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px;}
+.mod-empty-icon{font-size:56px;margin-bottom:20px;opacity:.5;}
+.mod-empty-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:10px;}
+.mod-empty-desc{font-size:13px;color:var(--muted);line-height:1.7;}
+
+/* Progress bar in sidebar */
+.sb-progress{padding:12px 20px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-progress-label{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.35);margin-bottom:6px;}
+.sb-progress-bar-bg{height:3px;background:rgba(255,255,255,.1);border-radius:2px;}
+.sb-progress-bar{height:3px;background:#60a5fa;border-radius:2px;transition:width .4s ease;}
+
+/* Mobile toggle */
+.sb-toggle{display:none;position:fixed;top:14px;left:14px;z-index:200;width:38px;height:38px;background:var(--sidebar-bg);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:18px;align-items:center;justify-content:center;cursor:pointer;}
+
+/* ══ MODULE SECTIONS ══ */
+.mod-section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+
+/* 문제 */
+.mod-problem{background:rgba(37,99,235,.04);border:1.5px solid rgba(37,99,235,.18);border-radius:12px;padding:22px 26px;margin-bottom:28px;}
+.mod-problem .mod-section-label{color:var(--accent);margin-bottom:12px;}
+.mod-problem-text{font-size:15px;color:var(--text);line-height:1.85;white-space:pre-wrap;}
+
+/* 정답 보기 (토글) */
+.mod-answer{background:rgba(16,185,129,.04);border:1.5px solid rgba(16,185,129,.22);border-radius:12px;margin-top:36px;margin-bottom:28px;overflow:hidden;}
+/* 미공개 정답 — 회색 잠금 상태 */
+.mod-answer.locked{background:rgba(100,116,139,.05);border-color:rgba(100,116,139,.25);}
+.mod-answer.locked .mod-answer-label,.mod-answer.locked .mod-answer-arrow{color:var(--muted);}
+.mod-answer.locked .mod-answer-toggle:hover{background:rgba(100,116,139,.07);}
+.mod-answer-toggle{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;cursor:pointer;user-select:none;}
+.mod-answer-toggle:hover{background:rgba(16,185,129,.07);}
+.mod-answer-label{font-size:13px;font-weight:700;letter-spacing:.06em;color:#10b981;}
+.mod-answer-arrow{font-size:11px;color:#10b981;transition:transform .22s;display:inline-block;}
+.mod-answer-arrow.open{transform:rotate(90deg);}
+.mod-answer-body{display:none;padding:0 22px 22px;}
+.mod-answer-text{font-size:15px;color:var(--text);line-height:1.85;white-space:pre-wrap;}
+.mod-answer-msg{font-size:13px;color:var(--muted);line-height:1.8;padding:4px 2px 8px;}
+
+/* 교육 내용 */
+.mod-content-section{margin-bottom:28px;}
+.mod-content-section .mod-section-label{color:var(--muted);}
+
+/* PDF 뷰어 */
+.mod-pdf-wrap{margin-top:20px;}
+.mod-pdf-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.mod-pdf-info{font-size:12px;color:var(--muted);font-family:'Noto Sans KR', sans-serif;}
+.mod-pdf-container{background:#525659;border-radius:12px;padding:20px;}
+.mod-pdf-page{display:block;margin:0 auto 14px;max-width:100%;box-shadow:0 4px 16px rgba(0,0,0,.45);border-radius:2px;}
+.mod-pdf-page:last-child{margin-bottom:0;}
+.mod-pdf-loading{text-align:center;padding:60px 20px;color:rgba(255,255,255,.4);font-size:13px;line-height:2;}
+.mod-pdf-error{text-align:center;padding:40px;color:#fc8181;font-size:13px;line-height:1.8;}
+
+/* 이미지 (스크린샷) — ![캡션](url) */
+.mod-figure{margin:18px auto;max-width:540px;}
+.mod-figure img{display:block;max-width:100%;height:auto;border-radius:10px;border:1px solid var(--border);
+  box-shadow:0 2px 12px rgba(0,0,0,.08);cursor:zoom-in;transition:box-shadow .2s;}
+.mod-figure img:hover{box-shadow:0 6px 22px rgba(37,99,235,.18);}
+.mod-figure figcaption{margin-top:8px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6;}
+.mod-figures{display:grid;gap:6px;margin-top:16px;}
+
+/* 라이트박스 */
+.lms-lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.92);
+  align-items:center;justify-content:center;padding:32px;cursor:zoom-out;}
+.lms-lightbox img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 12px 48px rgba(0,0,0,.5);}
+.lms-lightbox-close{position:absolute;top:20px;right:26px;font-size:26px;color:#fff;background:none;border:none;cursor:pointer;line-height:1;}
+
+/* 예제 */
+.mod-example{background:#0f172a;border-radius:12px;padding:20px 24px;margin-top:28px;}
+.mod-example-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.mod-example-hd .mod-section-label{color:rgba(255,255,255,.4);margin-bottom:0;}
+.mod-example-actions{display:flex;align-items:center;gap:8px;}
+.mod-example-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:4px;font-family:'Noto Sans KR', sans-serif;letter-spacing:.04em;}
+.mod-example-badge.prompt{background:rgba(99,102,241,.25);color:#a5b4fc;border:1px solid rgba(99,102,241,.35);}
+.mod-example-badge.code{background:rgba(16,185,129,.2);color:#6ee7b7;border:1px solid rgba(16,185,129,.3);}
+.mod-example-badge.formula{background:rgba(245,158,11,.2);color:#fcd34d;border:1px solid rgba(245,158,11,.32);}
+.mod-example-badge.pivot{background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.32);}
+.mod-example-copy{font-size:11px;font-weight:700;color:rgba(255,255,255,.35);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:4px 10px;cursor:pointer;transition:.2s;font-family:inherit;}
+.mod-example-copy:hover{color:#fff;background:rgba(255,255,255,.12);}
+.mod-example-copy.copied{color:#6ee7b7;border-color:rgba(16,185,129,.4);}
+.mod-example-code{font-family:'Space Mono',monospace;font-size:13px;color:#e2e8f0;line-height:1.85;white-space:pre-wrap;word-break:break-word;}
+/* 파이썬 문법 강조 (다크 코드창) */
+.tk-c{color:#7c8aa5;font-style:italic;}
+.tk-s{color:#86efac;}
+.tk-k{color:#c4b5fd;font-weight:700;}
+.tk-n{color:#fbbf24;}
+.tk-b{background:#fbbf24;color:#0f172a;border-radius:3px;padding:0 3px;font-weight:700;}
+
+/* 본문·문제·정답 공통 경량 서식 */
+.mod-content strong,.mod-problem-text strong,.mod-answer-text strong{font-weight:700;color:#0f172a;}
+.md-code{font-family:'Space Mono',monospace;font-size:.88em;background:rgba(37,99,235,.07);
+  border:1px solid rgba(37,99,235,.16);border-radius:5px;padding:1px 5px;color:#1d4ed8;word-break:break-all;}
+.md-head{font-weight:700;color:var(--accent);margin-top:20px;margin-bottom:8px;letter-spacing:.01em;}
+.mod-content .md-head:first-child{margin-top:0;}
+.md-li{padding-left:1.15em;text-indent:-1.15em;}
+.md-table{font-family:'Space Mono',monospace;font-size:12.5px;line-height:1.8;color:var(--text);
+  background:rgba(15,23,42,.045);border:1px solid var(--border);border-radius:8px;
+  padding:12px 14px;margin:12px 0;overflow-x:auto;white-space:pre;}
+
+/* ══ FHD 최적화 (≥1400px) ══ */
+@media(min-width:1400px){
+  :root{--sidebar-w:300px;}
+
+  /* 사이드바 */
+  .sb-logo{padding:26px 24px 0;}
+  .sb-logo-text{font-size:16px;}
+  .sb-session{padding:16px 24px 14px;}
+  .sb-session-name{font-size:14px;}
+  .sb-session-dates{font-size:12px;}
+  .sb-nav-label{padding:18px 24px 10px;font-size:11px;}
+  .sb-modules{padding:0 12px 12px;}
+  .sb-mod{padding:11px 12px;gap:12px;margin-bottom:3px;}
+  .sb-mod-num{font-size:12px;width:26px;}
+  .sb-mod-title{font-size:13px;}
+  .sb-mod-check{width:20px;height:20px;font-size:11px;}
+  /* 손가락으로 누르는 곳이라 44px 확보 */
+  .sb-course-hd{min-height:44px;padding:10px 12px;gap:9px;}
+  .sb-course-name{font-size:12px;}
+  .sb-course-prog{font-size:11px;}
+  .sb-course-caret{width:12px;font-size:11px;}
+  .sb-footer{padding:18px 24px;}
+  .sb-code{font-size:12px;margin-bottom:10px;}
+  .sb-logout{font-size:12px;padding:8px 14px;}
+  .sb-progress{padding:14px 24px;}
+  .sb-progress-label{font-size:11px;}
+  .sb-progress-bar-bg,.sb-progress-bar{height:4px;}
+
+  /* 컨텐츠 영역 */
+  .mod-view{max-width:1280px;padding:60px 56px 100px;}
+
+  /* 모듈 헤더 */
+  .mod-num-badge{font-size:12px;margin-bottom:20px;}
+  .mod-icon-wrap{font-size:56px;margin-bottom:20px;}
+  .mod-title{font-size:36px;margin-bottom:12px;}
+  .mod-desc-lead{font-size:17px;padding-left:20px;border-left-width:4px;}
+  .mod-divider{margin:36px 0;}
+
+  /* 본문 */
+  .mod-content{font-size:17px;line-height:2;}
+  .mod-content p{margin-bottom:20px;}
+
+  /* 실습 도구 그리드 — 3열 */
+  .mod-tools{margin-top:40px;}
+  .mod-tools-label{font-size:12px;margin-bottom:16px;}
+  .mod-tools-grid{grid-template-columns:repeat(3,1fr);gap:14px;}
+  .mod-tool-card{padding:20px 22px;border-radius:12px;gap:16px;}
+  .mod-tool-icon{font-size:30px;}
+  .mod-tool-title{font-size:16px;margin-bottom:4px;}
+  .mod-tool-desc{font-size:14px;}
+
+  /* PDF */
+  .mod-pdf-container{padding:28px;}
+
+  /* 섹션 */
+  .mod-problem{padding:28px 32px;margin-bottom:36px;}
+  .mod-problem-text{font-size:16px;}
+  .mod-example{padding:24px 28px;margin-top:36px;}
+  .mod-example-code{font-size:14px;}
+
+  /* 하단 네비 */
+  .mod-nav{margin-top:60px;padding-top:28px;}
+  .mod-nav-btn{padding:12px 26px;font-size:14px;border-radius:10px;}
+  .mod-complete-wrap{margin-top:36px;}
+  .mod-complete-btn{padding:14px 40px;font-size:14px;border-radius:12px;}
+}
+
+/* ══ 모바일 ══ */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);}
+  .main-content{margin-left:0;}
+  .mod-view{padding:24px 16px 60px;}
+  .mod-title{font-size:24px;}
+  .mod-content{font-size:15px;}
+  .mod-tool-title{font-size:14px;}
+  .mod-tool-desc{font-size:12px;}
+  .sb-toggle{display:flex;}
+  .mod-tools-grid{grid-template-columns:1fr;}
+  .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;}
+  .sb-overlay.show{display:block;}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
+</script>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     로그인 페이지
+════════════════════════════════ -->
+<div class="login-wrap">
+  <div class="login-logo">DATA<em>FORGE</em></div>
+  <div class="login-subtitle">Learning Management System</div>
+
+  <div class="login-card">
+    <div class="login-card-title">🎓 교육생 포털</div>
+    <div class="login-card-desc">강사에게 받은 교육 코드를 입력하면<br>DataForge 학습 과정에 접근할 수 있습니다.</div>
+
+    <form method="POST" action="/lms/" autocomplete="off">
+      <div class="login-field">
+        <label class="login-label" for="code-input">교육 코드</label>
+        <input
+          type="text"
+          id="code-input"
+          name="code"
+          class="login-input"
+          placeholder="EDU-XXXX-XXXX"
+          maxlength="13"
+          autocomplete="off"
+          spellcheck="false"
+          oninput="fmtCode(this)"
+          required>
+        <div class="login-error"></div>
+      </div>
+      <button type="submit" class="login-btn">교육 시작하기 →</button>
+    </form>
+
+    <div class="login-hint">
+      코드를 모르시나요?<br>
+      <strong>담당 강사</strong>에게 교육 코드를 문의해주세요.<br>
+      관리자: <a href="/admin/" style="color:var(--accent);text-decoration:none">dataforge.ai.kr/admin</a>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function fmtCode(el) {
+  let v = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (v.length > 3) v = v.slice(0, 3) + '-' + v.slice(3);
+  if (v.length > 8) v = v.slice(0, 8) + '-' + v.slice(8);
+  el.value = v.slice(0, 13);
+}
+</script>
+<script>(function(){var k='tf_lms';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=lms&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네트워크 분석 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="네트워크 분석 — DataForge">
+<meta property="og:description" content="IPC 코드·키워드 동시출현 네트워크 분석 — 노드·엣지·중심성 시각화">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;     --card:#ffffff;   --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b;   --muted:#64748b;  --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706;  --green:#059669;  --red:#dc2626; --orange:#ea580c;
+  --r:10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; font-size:14px; line-height:1.6;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+  background-size:40px 40px; pointer-events:none; z-index:0;
+}
+.page-wrap { max-width:1400px; margin:0 auto; position:relative; }
+.page      { padding:0 24px 80px; }
+
+/* Header */
+.site-header {
+  padding:14px 24px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(248,250,252,.95); backdrop-filter:blur(16px);
+  position:sticky; top:0; z-index:100;
+}
+.logo          { display:flex; align-items:center; gap:12px; }
+.logo-brand    { font-family:'Space Mono',monospace; font-size:18px; font-weight:700;
+                 color:var(--accent); letter-spacing:2px; text-decoration:none; }
+.logo-brand em { color:#ea580c; font-style:normal; }
+.logo-sep      { width:1px; height:16px; background:var(--border2); flex-shrink:0; }
+.logo-title    { font-size:13px; color:var(--muted); }
+.header-back   { font-size:12px; color:var(--muted); text-decoration:none;
+                 border:1px solid var(--border2); padding:5px 14px; border-radius:8px; transition:.2s; }
+.header-back:hover { color:var(--text); border-color:rgba(0,0,0,.3); }
+
+/* Intro */
+.intro-box {
+  background:rgba(59,130,246,.06); border:1px solid rgba(59,130,246,.15);
+  border-radius:10px; padding:12px 16px;
+  font-size:13px; color:var(--muted); line-height:1.7; margin-top:20px;
+}
+.intro-box strong { color:var(--text); }
+
+/* Card */
+.a-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:16px 18px; margin-bottom:16px;
+}
+.a-card-title {
+  font-size:10px; font-weight:700; color:var(--muted);
+  letter-spacing:.07em; text-transform:uppercase; margin-bottom:14px;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+
+/* Input tabs */
+.stat-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:16px; }
+.stat-tab {
+  padding:10px 20px; font-size:13px; font-weight:600;
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:var(--muted); cursor:pointer; transition:all .2s;
+  font-family:inherit; white-space:nowrap;
+}
+.stat-tab:hover  { color:var(--text); }
+.stat-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.stat-panel        { display:none; }
+.stat-panel.active { display:block; }
+
+/* Upload zone */
+.upload-zone {
+  border:2px dashed rgba(37,99,235,.3); border-radius:10px;
+  padding:28px 18px; text-align:center; cursor:pointer; transition:all .2s;
+  background:rgba(37,99,235,.03); position:relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color:var(--accent); background:rgba(37,99,235,.07); }
+.upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon { font-size:32px; margin-bottom:8px; }
+.upload-main { font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.upload-sub  { font-size:11px; color:var(--muted); }
+.file-info { display:none; padding:12px 16px; background:rgba(5,150,105,.07);
+             border:1px solid rgba(5,150,105,.25); border-radius:8px;
+             font-size:12px; color:#065f46; margin-top:12px; line-height:1.8; }
+.file-info.show { display:block; }
+
+/* Column select row */
+.col-select-row { display:flex; align-items:center; gap:10px; padding:10px 14px;
+  background:rgba(37,99,235,.05); border:1px solid rgba(37,99,235,.15);
+  border-radius:8px; font-size:12px; margin-top:12px; flex-wrap:wrap; }
+.col-select-row label { font-weight:700; color:var(--accent); white-space:nowrap; }
+
+/* Textarea */
+.ta { width:100%; background:var(--card2); border:1px solid var(--border2); border-radius:8px;
+  color:var(--text); font-size:13px; padding:10px 13px; outline:none;
+  font-family:'Space Mono',monospace; resize:vertical; transition:border-color .15s; line-height:1.8; }
+.ta:focus { border-color:var(--accent); }
+
+/* Controls */
+.ctrl-row   { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+.ctrl-group { display:flex; gap:8px; align-items:center; padding:6px 12px;
+  background:var(--card2); border:1px solid var(--border); border-radius:8px; }
+.ctrl-label { font-size:11px; font-weight:700; color:var(--muted);
+  letter-spacing:.02em; white-space:nowrap; }
+.ctrl-val   { font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
+  color:var(--accent); min-width:28px; text-align:right; }
+.range-inp { -webkit-appearance:none; width:130px; height:5px;
+  border-radius:3px; background:rgba(37,99,235,.15); outline:none; cursor:pointer; }
+.range-inp::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px;
+  border-radius:50%; background:var(--accent); cursor:pointer; }
+.sel { background:var(--card2); border:1px solid var(--border2); border-radius:8px;
+  color:var(--text); font-size:12px; padding:6px 10px; outline:none; cursor:pointer; font-family:inherit; }
+.sel:focus { border-color:var(--accent); }
+.option-item { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); cursor:pointer; }
+.option-item input[type=checkbox] { width:15px; height:15px; cursor:pointer; accent-color:var(--accent); }
+
+/* Buttons */
+.btn { display:inline-block; padding:9px 20px; font-size:12px; font-weight:700;
+  font-family:'Noto Sans KR',sans-serif; border:none; border-radius:8px;
+  cursor:pointer; transition:all .2s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:#1d4ed8; }
+.btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+.btn-outline { background:transparent; border:1px solid var(--border2); color:var(--muted); }
+.btn-outline:hover { color:var(--text); border-color:rgba(0,0,0,.3); }
+.btn-green { background:var(--green); color:#fff; }
+.btn-green:hover { background:#047857; }
+.btn-sm { padding:5px 14px; font-size:11px; }
+
+/* Status */
+.status-bar { display:none; align-items:center; gap:8px; padding:8px 14px;
+  border-radius:7px; font-size:12px; margin-top:12px; }
+.s-ok   { display:flex; background:rgba(5,150,105,.07);  border:1px solid rgba(5,150,105,.2);  color:#065f46; }
+.s-err  { display:flex; background:rgba(220,38,38,.07);  border:1px solid rgba(220,38,38,.2);  color:#7f1d1d; }
+.s-run  { display:flex; background:rgba(37,99,235,.07);  border:1px solid rgba(37,99,235,.2);  color:#1e3a8a; }
+.s-warn { display:flex; background:rgba(217,119,6,.07);  border:1px solid rgba(217,119,6,.2);  color:#78350f; }
+
+/* Stats */
+.stat-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.stat-box { background:var(--card2); border:1px solid var(--border); border-radius:8px;
+  padding:12px; text-align:center; }
+.stat-val { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; color:var(--accent); }
+.stat-lbl { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* Network canvas */
+#net-box { position:relative; height:540px; border:1px solid var(--border);
+  border-radius:8px; background:#fff; overflow:hidden; }
+#net-box.empty::after { content:'데이터를 입력하면 네트워크가 여기에 그려집니다';
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:13px; color:var(--dim); }
+.net-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; font-size:11px; color:var(--muted); }
+.net-legend-item { display:flex; align-items:center; gap:5px; }
+.net-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* Tables */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.table-wrap { overflow-x:auto; max-height:340px; overflow-y:auto;
+  border-radius:8px; border:1px solid var(--border); }
+.data-table { width:100%; border-collapse:collapse; font-size:12px; }
+.data-table th { background:var(--card2); color:var(--accent);
+  padding:7px 12px; text-align:left;
+  font-family:'Space Mono',monospace; font-size:10px; white-space:nowrap;
+  border-bottom:1px solid var(--border); position:sticky; top:0; }
+.data-table td { padding:5px 12px; border-bottom:1px solid var(--border);
+  color:var(--muted); white-space:nowrap;
+  font-family:'Space Mono',monospace; font-size:11px; }
+.data-table tr:hover td { background:rgba(37,99,235,.04); color:var(--text); }
+.data-table td.code-cell { color:var(--text); font-weight:700; }
+.mini-bar-wrap { width:80px; height:6px; background:rgba(0,0,0,.08);
+  border-radius:3px; display:inline-block; vertical-align:middle; }
+.mini-bar { height:100%; border-radius:3px; background:var(--accent); transition:width .3s; }
+
+/* Info block */
+.info-block { font-size:12px; color:var(--muted); line-height:1.7;
+  padding:10px 14px; background:rgba(37,99,235,.04);
+  border-radius:8px; border:1px solid rgba(37,99,235,.1); }
+.info-block strong { color:var(--text); }
+
+/* 중심성 지표 설명 */
+.metric-help { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.metric-item { background:var(--card2); border:1px solid var(--border); border-radius:8px;
+  padding:11px 14px; font-size:12px; color:var(--muted); line-height:1.7; }
+.metric-item .m-name { font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.metric-item .m-name em { font-style:normal; font-family:'Space Mono',monospace;
+  font-size:10px; color:var(--accent); margin-left:6px; }
+.metric-item strong { color:var(--text); }
+
+.results-wrap { display:none; }
+.results-wrap.show { display:block; }
+
+@media(max-width:900px) { .two-col, .metric-help { grid-template-columns:1fr; } }
+@media(max-width:640px) {
+  .page        { padding:0 14px 60px; }
+  .site-header { padding:12px 14px; }
+  .stat-grid-4 { grid-template-columns:repeat(2,1fr); }
+  #net-box     { height:400px; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">네트워크 분석</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>동시출현(Co-occurrence) 네트워크 분석</strong> — 한 행(특허·문서)에 쉼표로 나열된 코드들이 <strong>함께 등장한 관계</strong>를 네트워크로 그립니다.
+    IPC 특허 분류(<span style="font-family:'Space Mono',monospace;">G05D,G01S,G01S</span>), 논문 키워드, 공동 저자처럼 "한 항목에 여러 값"이 든 데이터라면 무엇이든 분석할 수 있습니다.
+    노드 크기는 출현 빈도, 선 굵기는 동시출현 횟수입니다. 모든 계산은 브라우저 안에서 실행됩니다.
+  </div>
+
+  <!-- 데이터 입력 -->
+  <div class="a-card">
+    <div class="a-card-title">📂 데이터 입력</div>
+    <div class="stat-tabs" style="margin-top:0;">
+      <button class="stat-tab active" onclick="switchTab('file',this)">엑셀 / CSV 업로드</button>
+      <button class="stat-tab" onclick="switchTab('paste',this)">직접 입력</button>
+      <button class="stat-tab" onclick="switchTab('sample',this)">샘플 데이터</button>
+    </div>
+
+    <div id="panel-file" class="stat-panel active">
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="loadFile(this)">
+        <div class="upload-icon">🕸️</div>
+        <div class="upload-main">파일을 드래그하거나 클릭하여 선택</div>
+        <div class="upload-sub">.xlsx · .xls · .csv — 쉼표로 구분된 코드 컬럼 자동 감지 (예: G05D,G01S,G08G)</div>
+      </div>
+      <div class="file-info" id="file-info"></div>
+      <div class="col-select-row" id="col-row" style="display:none;">
+        <label>🏷️ 분석 컬럼</label>
+        <select id="col-select" class="sel" style="flex:1;max-width:280px;" onchange="onColChange()"></select>
+        <span id="col-info" style="color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;"></span>
+        <button class="btn btn-primary btn-sm" onclick="runAnalysis()">분석 실행 ▶</button>
+      </div>
+    </div>
+
+    <div id="panel-paste" class="stat-panel">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">한 줄 = 한 행(특허·문서), 값은 쉼표로 구분</div>
+      <textarea id="paste-area" class="ta" rows="8" placeholder="G05D,G01S,G08G
+G05D,G01S,B60W
+G01S,H04W
+G06N,G05D,B60W"></textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="loadPaste()">분석 실행 ▶</button>
+    </div>
+
+    <div id="panel-sample" class="stat-panel">
+      <div class="info-block" style="margin-bottom:10px;">
+        <strong>자율주행·드론 특허 IPC 샘플 (30건)</strong> — 자율주행 제어(G05D)·레이더(G01S)·교통제어(G08G)·차량제어(B60W)·AI(G06N) 등이 얽힌 가상의 특허 목록입니다.
+        어떤 기술 분류가 함께 출원되는지 네트워크로 확인해보세요.
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadSample()">샘플 데이터 불러오기 ▶</button>
+    </div>
+
+    <div class="col-select-row" id="opt-row" style="display:none;">
+      <label class="option-item"><input type="checkbox" id="opt-ipc" onchange="onIpcToggle()"><span>IPC 코드 정규화 (대문자·4자리 서브클래스 추출)</span></label>
+      <span style="color:var(--dim);font-size:11px;">끄면 값을 그대로 사용 — 키워드·저자명 등 일반 데이터용</span>
+    </div>
+    <div id="status-bar" class="status-bar"></div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="results-wrap" id="results-wrap">
+
+    <div class="stat-grid-4" id="stat-grid"></div>
+
+    <!-- 네트워크 그래프 -->
+    <div class="a-card">
+      <div class="a-card-title">
+        <span>🕸️ 동시출현 네트워크</span>
+        <span style="display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="refit()">전체 보기</button>
+          <button class="btn btn-outline btn-sm" onclick="reshake()">재배치</button>
+          <button class="btn btn-green btn-sm" onclick="downloadPNG()">⬇ PNG 저장</button>
+        </span>
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-group">
+          <span class="ctrl-label">표시 노드 Top</span>
+          <input type="range" class="range-inp" id="top-n" min="10" max="150" step="5" value="60" oninput="onCtrl()">
+          <span class="ctrl-val" id="top-n-val">60</span>
+        </div>
+        <div class="ctrl-group">
+          <span class="ctrl-label">최소 동시출현</span>
+          <input type="range" class="range-inp" id="min-w" min="1" max="10" step="1" value="1" oninput="onCtrl()">
+          <span class="ctrl-val" id="min-w-val">1</span>
+        </div>
+        <span style="font-size:11px;color:var(--dim);">노드 드래그·휠 확대 가능 · 노드를 클릭하면 연결된 이웃이 강조됩니다</span>
+      </div>
+      <div id="net-box" class="empty"></div>
+      <div class="net-legend" id="net-legend"></div>
+    </div>
+
+    <!-- 테이블 -->
+    <div class="two-col">
+      <div class="a-card" style="margin-bottom:0;">
+        <div class="a-card-title">
+          <span>📊 노드 중심성</span>
+          <span style="display:flex;gap:6px;align-items:center;">
+            <select id="node-sort" class="sel" style="padding:4px 8px;font-size:11px;" onchange="renderNodeTable()">
+              <option value="3">연결 강도순</option>
+              <option value="2">연결 중심성순</option>
+              <option value="4">매개 중심성순</option>
+              <option value="5">근접 중심성순</option>
+              <option value="6">고유벡터 중심성순</option>
+              <option value="1">출현 행순</option>
+            </select>
+            <button class="btn btn-green btn-sm" onclick="downloadNodesCSV()">⬇ CSV</button>
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>코드</th><th>출현 행</th><th>연결</th><th>강도</th><th>매개</th><th>근접</th><th>고유벡터</th></tr></thead>
+            <tbody id="node-tbody"></tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--dim);margin-top:8px;">연결 = 함께 등장한 서로 다른 코드 수(연결 중심성) · 강도 = 동시출현 횟수 합 · 매개·근접·고유벡터는 표시 그래프 기준 0~1 정규화 — 각 지표 의미는 아래 <strong style="color:var(--muted);">중심성 지표 설명</strong> 참조</div>
+      </div>
+      <div class="a-card" style="margin-bottom:0;">
+        <div class="a-card-title">
+          <span>🔗 동시출현 상위 조합</span>
+          <button class="btn btn-green btn-sm" onclick="downloadEdgesCSV()">⬇ CSV (엣지 리스트)</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>코드 쌍</th><th>동시출현</th><th></th></tr></thead>
+            <tbody id="edge-tbody"></tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--dim);margin-top:8px;">CSV는 source·target·weight 형식 — Gephi 등 네트워크 도구에서 바로 열 수 있습니다</div>
+      </div>
+    </div>
+
+    <!-- 중심성 지표 설명 -->
+    <div class="a-card">
+      <div class="a-card-title">📖 중심성 지표 설명</div>
+      <div class="metric-help">
+        <div class="metric-item">
+          <div class="m-name">출현 행<em>Frequency</em></div>
+          해당 코드가 등장한 행(특허·문서)의 수입니다. 네트워크 구조와 무관하게 <strong>그 코드 자체가 얼마나 자주 쓰였는지</strong>를 보여주며, 그래프의 노드 크기가 이 값에 비례합니다.
+        </div>
+        <div class="metric-item">
+          <div class="m-name">연결 중심성<em>Degree Centrality</em></div>
+          직접 연결된 <strong>서로 다른 코드의 수</strong>입니다. 값이 높을수록 다양한 기술과 두루 함께 등장하는 <strong>허브형 노드</strong> — 관계의 "폭"을 나타냅니다.
+        </div>
+        <div class="metric-item">
+          <div class="m-name">연결 강도<em>Weighted Degree · Strength</em></div>
+          연결된 모든 엣지의 <strong>동시출현 횟수 합</strong>입니다. 연결 수가 관계의 폭이라면 강도는 관계의 "양" — 소수의 상대와 깊게 결합해도 높아질 수 있습니다.
+        </div>
+        <div class="metric-item">
+          <div class="m-name">매개 중심성<em>Betweenness Centrality</em></div>
+          다른 노드 쌍을 잇는 <strong>최단 경로 위에 얼마나 자주 놓이는지</strong>입니다. 값이 높으면 서로 다른 기술 그룹을 연결하는 <strong>다리(broker)</strong> 역할 — 이 노드가 빠지면 네트워크가 끊어지기 쉽습니다.
+        </div>
+        <div class="metric-item">
+          <div class="m-name">근접 중심성<em>Closeness Centrality</em></div>
+          나머지 모든 노드까지의 <strong>평균 거리가 얼마나 짧은지</strong>입니다. 값이 높으면 네트워크의 중앙에 위치해, 어떤 기술과도 몇 단계 안에 닿을 수 있는 노드입니다.
+        </div>
+        <div class="metric-item">
+          <div class="m-name">고유벡터 중심성<em>Eigenvector Centrality</em></div>
+          "<strong>중요한 노드와 연결된 노드가 중요하다</strong>"는 원리로, 연결 상대의 중요도까지 반영합니다. 허브들과 붙어 있으면 자기 연결이 적어도 높아집니다 — Google PageRank의 원형이 된 지표입니다.
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:10px;">
+        ※ 매개·근접·고유벡터 중심성은 현재 화면에 표시된 그래프(표시 노드 Top·최소 동시출현 필터 적용) 기준으로 계산되며, 비교하기 쉽도록 0~1로 정규화해 표시합니다. 필터를 바꾸면 값도 함께 달라집니다.
+      </div>
+    </div>
+
+    <div class="info-block">
+      💡 <strong>동시출현 네트워크 읽는 법</strong> — 중앙에 크게 자리잡은 노드는 여러 기술과 함께 쓰이는 <strong>허브 코드</strong>,
+      굵은 선으로 묶인 그룹은 자주 함께 출원되는 <strong>기술 묶음(클러스터)</strong>입니다.
+      "최소 동시출현"을 올리면 약한 연결이 사라져 핵심 구조만 남습니다.
+      특허 IPC 외에도 논문 키워드, 장바구니 품목, 협업 관계 등 "함께 등장하는" 모든 데이터에 같은 방법을 쓸 수 있습니다.
+    </div>
+
+  </div>
+
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+// ── 상태 ─────────────────────────────────────────────────
+const state = {
+  headers:[], rawRows:[],        // 파일 업로드 원본
+  rowStrings:[],                 // 현재 입력 소스의 행 문자열 (쉼표 구분)
+  rowsTokens:[],                 // 정규화된 행별 토큰 배열
+  nodes:[], edges:[],            // 전체 분석 결과
+  metrics:null,                  // 표시 그래프 중심성 (deg·str·btw·clo·ev)
+  net:null, netData:null,        // vis-network 인스턴스
+  ipcMode:false
+};
+
+const SAMPLE = [
+'G05D,G01S,G08G','G05D,G01S,B60W','G01S,H04W','G06N,G05D,B60W','G05D,G01S,G01S',
+'B64C,G05D,G08G','G06N,G01S,B60W','G05D,B60W,G08G','G01S,G08G','G06T,G01S,G06N',
+'B64C,G05D','G05D,G01S,H04W,G08G','G06N,G06T','B60W,G01S,G05D','G08G,H04W',
+'G06T,G01S','B64C,G08G,G05D','G06N,B60W','G05D,H04W','G01S,G06T,G05D',
+'B60W,G08G','G06N,G05D,G06T','B64C,G01S','G05D,G01S,G06N','H04W,G08G,G01S',
+'B60W,G05D','G06T,G06N,G01S','B64C,H04W','G05D,G08G,B60W','G01S,G05D,G08G'
+];
+
+const PALETTE = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0d9488','#ea580c','#6366f1'];
+const IPC_SECTIONS = {
+  A:'생활필수품', B:'처리조작 · 운수', C:'화학 · 야금', D:'섬유 · 지류',
+  E:'고정구조물(건설)', F:'기계공학 · 조명 · 가열 · 무기', G:'물리학', H:'전기'
+};
+const SECTION_COLORS = { A:'#7c3aed', B:'#d97706', C:'#059669', D:'#a16207', E:'#dc2626', F:'#0d9488', G:'#2563eb', H:'#ea580c' };
+
+// ── 탭 ───────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.stat-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.stat-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── 라이브러리 lazy load ──────────────────────────────────
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+let _xlsx = null, _vis = null;
+async function ensureXLSX() { if (!_xlsx) { await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'); _xlsx = true; } }
+async function ensureVis()  { if (!_vis)  { await loadScript('https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js'); _vis = true; } }
+
+// ── 파일 업로드 ───────────────────────────────────────────
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) { try { document.getElementById('file-input').files = e.dataTransfer.files; } catch(_){} loadFile(document.getElementById('file-input')); }
+});
+
+function splitTokens(cell) {
+  return String(cell == null ? '' : cell).split(/[,;|]+/).map(t => t.trim()).filter(Boolean);
+}
+
+async function loadFile(input) {
+  const file = input.files[0]; if (!file) return;
+  setStatus('파일 파싱 중...', 'run');
+  try {
+    await ensureXLSX();
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type:'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+    if (rows.length < 2) { setStatus('데이터 부족 (헤더 + 1행 이상 필요)', 'err'); return; }
+    state.headers = rows[0].map(h => String(h));
+    state.rawRows = rows.slice(1);
+    // 컬럼 자동 감지: 쉼표 구분 토큰이 가장 많은 컬럼, IPC·분류·키워드 헤더 우선
+    const scores = state.headers.map((_, ci) =>
+      state.rawRows.reduce((a, r) => a + splitTokens(r[ci]).length, 0)
+    );
+    let best = scores.indexOf(Math.max(...scores));
+    const named = state.headers.map((h,i) => /ipc|분류|키워드|코드|keyword/i.test(h) ? i : -1).filter(i => i >= 0);
+    if (named.length) best = named.reduce((a,b) => scores[b] > scores[a] ? b : a);
+    const sel = document.getElementById('col-select');
+    sel.innerHTML = state.headers.map((h,i) => `<option value="${i}"${i===best?' selected':''}>${esc(h)}</option>`).join('');
+    document.getElementById('col-row').style.display = '';
+    const fi = document.getElementById('file-info');
+    fi.textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB · ${state.rawRows.length}행)`;
+    fi.classList.add('show');
+    onColChange();
+  } catch(e) { setStatus('파일 파싱 오류: ' + e.message, 'err'); }
+}
+
+function colStrings() {
+  const ci = +document.getElementById('col-select').value;
+  return state.rawRows.map(r => String(r[ci] == null ? '' : r[ci]));
+}
+
+// 컬럼 선택·변경: 미리보기 정보만 갱신, 분석은 "분석 실행" 버튼에서
+function onColChange() {
+  state.rowStrings = colStrings();
+  autoDetectIpc();
+  let rows = 0, toks = 0;
+  state.rowStrings.forEach(s => { const t = splitTokens(s).length; if (t) { rows++; toks += t; } });
+  document.getElementById('col-info').textContent = `값 있는 행 ${rows.toLocaleString()} · 토큰 ${toks.toLocaleString()}개`;
+  setStatus('분석할 컬럼을 지정하고 "분석 실행 ▶" 버튼을 누르세요', 'run');
+}
+
+function runAnalysis() {
+  if (!state.rawRows.length) { setStatus('먼저 파일을 업로드하세요', 'warn'); return; }
+  state.rowStrings = colStrings();
+  rebuild();
+}
+
+function loadPaste() {
+  const raw = document.getElementById('paste-area').value.trim();
+  if (!raw) { setStatus('데이터를 입력하세요', 'warn'); return; }
+  state.rowStrings = raw.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  autoDetectIpc();
+  rebuild();
+}
+
+function loadSample() {
+  state.rowStrings = SAMPLE.slice();
+  autoDetectIpc();
+  rebuild();
+}
+
+// IPC 정규화 토글: 이미 분석 결과가 떠 있을 때만 즉시 재계산
+function onIpcToggle() {
+  if (document.getElementById('results-wrap').classList.contains('show')) rebuild();
+}
+
+// IPC 패턴 토큰이 60% 이상이면 정규화 자동 켬
+function autoDetectIpc() {
+  let ipc = 0, total = 0;
+  state.rowStrings.forEach(s => splitTokens(s).forEach(t => { total++; if (/^[A-Ha-h]\s?\d{2}/.test(t)) ipc++; }));
+  document.getElementById('opt-ipc').checked = total > 0 && ipc / total >= 0.6;
+  document.getElementById('opt-row').style.display = '';
+}
+
+// ── 네트워크 구축 ─────────────────────────────────────────
+function rebuild() {
+  if (!state.rowStrings.length) return;
+  const ipcNorm = document.getElementById('opt-ipc').checked;
+  state.ipcMode = ipcNorm;
+
+  let dropped = 0;
+  state.rowsTokens = state.rowStrings.map(s => {
+    let toks = splitTokens(s);
+    if (ipcNorm) {
+      toks = toks.map(t => {
+        const m = t.toUpperCase().match(/^([A-H])\s?(\d{2})\s?([A-Z]?)/);
+        if (!m) { dropped++; return null; }
+        return m[1] + m[2] + m[3];
+      }).filter(Boolean);
+    }
+    return toks;
+  }).filter(toks => toks.length);
+
+  if (!state.rowsTokens.length) {
+    setStatus('분석할 값을 찾지 못했습니다 — 컬럼 선택이나 정규화 옵션을 확인하세요', 'err');
+    document.getElementById('results-wrap').classList.remove('show');
+    return;
+  }
+
+  // 노드: 코드 → 출현 행 수 / 엣지: 행 내 고유 코드쌍 → 동시출현 행 수
+  const nodeFreq = new Map(), edgeW = new Map();
+  state.rowsTokens.forEach(toks => {
+    const uniq = [...new Set(toks)].slice(0, 50);   // 한 행 최대 50개 (쌍 폭발 방지)
+    uniq.forEach(c => nodeFreq.set(c, (nodeFreq.get(c) || 0) + 1));
+    for (let i = 0; i < uniq.length; i++)
+      for (let j = i + 1; j < uniq.length; j++) {
+        const key = uniq[i] < uniq[j] ? uniq[i] + '|' + uniq[j] : uniq[j] + '|' + uniq[i];
+        edgeW.set(key, (edgeW.get(key) || 0) + 1);
+      }
+  });
+  state.nodes = [...nodeFreq.entries()].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+  state.edges = [...edgeW.entries()].map(([k,w]) => { const [a,b] = k.split('|'); return [a,b,w]; })
+    .sort((a,b) => b[2]-a[2]);
+
+  ensureVis().then(render).catch(() => setStatus('네트워크 라이브러리 로드 실패 — 네트워크 연결을 확인하세요', 'err'));
+  setStatus(`데이터 적용 완료 · ${state.rowsTokens.length.toLocaleString()}행 · 고유 코드 ${state.nodes.length.toLocaleString()}개`
+    + (dropped ? ` · IPC 형식이 아닌 값 ${dropped.toLocaleString()}건 제외` : ''), 'ok');
+}
+
+function onCtrl() {
+  document.getElementById('top-n-val').textContent = document.getElementById('top-n').value;
+  document.getElementById('min-w-val').textContent = document.getElementById('min-w').value;
+  if (state.nodes.length && _vis) render();
+}
+
+// ── 렌더링 ────────────────────────────────────────────────
+function render() {
+  const topN = +document.getElementById('top-n').value;
+  const minW = +document.getElementById('min-w').value;
+
+  const shown = new Set(state.nodes.slice(0, topN).map(([c]) => c));
+  const edges = state.edges.filter(([a,b,w]) => w >= minW && shown.has(a) && shown.has(b));
+
+  // 표시 그래프 기준 지표: 연결 수·강도·컴포넌트
+  const deg = new Map(), str = new Map(), parent = new Map();
+  shown.forEach(c => { deg.set(c,0); str.set(c,0); parent.set(c,c); });
+  const find = x => { while (parent.get(x) !== x) { parent.set(x, parent.get(parent.get(x))); x = parent.get(x); } return x; };
+  edges.forEach(([a,b,w]) => {
+    deg.set(a, deg.get(a)+1); deg.set(b, deg.get(b)+1);
+    str.set(a, str.get(a)+w); str.set(b, str.get(b)+w);
+    parent.set(find(a), find(b));
+  });
+  const compOf = new Map(); let compN = 0;
+  shown.forEach(c => { const root = find(c); if (!compOf.has(root)) compOf.set(root, compN++); });
+
+  const N = shown.size, E = edges.length;
+  const density = N > 1 ? (2*E) / (N*(N-1)) : 0;
+
+  // 매개·근접·고유벡터 중심성 (표시 그래프 기준, 0~1 정규화)
+  const nodesArr = [...shown];
+  const adj = new Map(); nodesArr.forEach(c => adj.set(c, []));
+  edges.forEach(([a,b,w]) => { adj.get(a).push([b,w]); adj.get(b).push([a,w]); });
+
+  const btw = new Map(), clo = new Map();
+  nodesArr.forEach(c => { btw.set(c,0); clo.set(c,0); });
+  nodesArr.forEach(s => {                        // Brandes: 각 출발점에서 BFS
+    const stack = [], pred = new Map(), sigma = new Map(), dist = new Map(), delta = new Map();
+    nodesArr.forEach(v => { pred.set(v,[]); sigma.set(v,0); dist.set(v,-1); delta.set(v,0); });
+    sigma.set(s,1); dist.set(s,0);
+    const q = [s]; let qi = 0;
+    while (qi < q.length) {
+      const v = q[qi++]; stack.push(v);
+      for (const [u] of adj.get(v)) {
+        if (dist.get(u) < 0) { dist.set(u, dist.get(v)+1); q.push(u); }
+        if (dist.get(u) === dist.get(v)+1) { sigma.set(u, sigma.get(u)+sigma.get(v)); pred.get(u).push(v); }
+      }
+    }
+    // 근접: 도달 가능 노드까지 평균 거리 역수 (비연결 그래프 Wasserman-Faust 보정)
+    let dSum = 0, reach = 0;
+    nodesArr.forEach(v => { const d = dist.get(v); if (d > 0) { dSum += d; reach++; } });
+    if (dSum > 0 && N > 1) clo.set(s, (reach*reach) / ((N-1)*dSum));
+    // 매개: 최단경로 기여 역누적
+    while (stack.length) {
+      const v = stack.pop();
+      pred.get(v).forEach(p => delta.set(p, delta.get(p) + sigma.get(p)/sigma.get(v)*(1+delta.get(v))));
+      if (v !== s) btw.set(v, btw.get(v)+delta.get(v));
+    }
+  });
+  const btwNorm = N > 2 ? (N-1)*(N-2) : 1;       // 무방향: 쌍당 2회 누적 포함
+  nodesArr.forEach(c => btw.set(c, btw.get(c)/btwNorm));
+
+  const ev = new Map(); nodesArr.forEach(c => ev.set(c, 1));
+  for (let it = 0; it < 100; it++) {             // 시프트 거듭제곱 반복 x←Ax+x (이분 그래프 진동 방지)
+    const next = new Map(); let norm = 0;
+    nodesArr.forEach(v => {
+      let acc = ev.get(v);
+      adj.get(v).forEach(([u,w]) => acc += ev.get(u)*w);
+      next.set(v, acc); norm += acc*acc;
+    });
+    norm = Math.sqrt(norm);
+    if (!norm) break;
+    let diff = 0;
+    nodesArr.forEach(v => { const nv = next.get(v)/norm; diff += Math.abs(nv-ev.get(v)); ev.set(v, nv); });
+    if (diff < 1e-8) break;
+  }
+  const evMax = Math.max(0, ...ev.values()) || 1;
+  nodesArr.forEach(c => ev.set(c, ev.get(c)/evMax));
+
+  state.metrics = { nodesArr, deg, str, btw, clo, ev };
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${state.rowsTokens.length.toLocaleString()}</div><div class="stat-lbl">분석 행 (특허·문서)</div></div>
+    <div class="stat-box"><div class="stat-val">${N.toLocaleString()}<span style="font-size:12px;color:var(--dim);">/${state.nodes.length.toLocaleString()}</span></div><div class="stat-lbl">표시 노드 / 전체 코드</div></div>
+    <div class="stat-box"><div class="stat-val">${E.toLocaleString()}</div><div class="stat-lbl">엣지 (동시출현 관계)</div></div>
+    <div class="stat-box"><div class="stat-val">${(density*100).toFixed(1)}%</div><div class="stat-lbl">네트워크 밀도</div></div>
+  `;
+
+  // vis-network 데이터
+  const freq = new Map(state.nodes);
+  const nodeColor = c => state.ipcMode
+    ? (SECTION_COLORS[c[0]] || '#64748b')
+    : PALETTE[compOf.get(find(c)) % PALETTE.length];
+  const visNodes = [...shown].map(c => ({
+    id:c, label:c, value:freq.get(c),
+    color:{ background:nodeColor(c), border:'rgba(0,0,0,.18)',
+      highlight:{ background:nodeColor(c), border:'#1e293b' } },
+    title:`${c} · ${freq.get(c)}행 출현 · 연결 ${deg.get(c)}개 (강도 ${str.get(c)})`
+  }));
+  const visEdges = edges.map(([a,b,w]) => ({
+    from:a, to:b, value:w, title:`${a} — ${b} · 동시출현 ${w}회`
+  }));
+
+  const container = document.getElementById('net-box');
+  container.classList.remove('empty');
+  const data = {
+    nodes:new vis.DataSet(visNodes),
+    edges:new vis.DataSet(visEdges)
+  };
+  const options = {
+    nodes:{ shape:'dot', scaling:{ min:8, max:34 },
+      font:{ face:"'Space Mono', monospace", size:13, color:'#1e293b', strokeWidth:4, strokeColor:'#ffffff' } },
+    edges:{ color:{ color:'rgba(100,116,139,.35)', highlight:'#2563eb', hover:'#2563eb' },
+      scaling:{ min:1, max:8 }, smooth:{ type:'continuous' } },
+    physics:{ solver:'forceAtlas2Based',
+      forceAtlas2Based:{ gravitationalConstant:-42, springLength:110, springConstant:.06, avoidOverlap:.3 },
+      stabilization:{ iterations:180 } },
+    interaction:{ hover:true, tooltipDelay:120 }
+  };
+  if (state.net) { state.net.setData(data); state.net.setOptions(options); }
+  else state.net = new vis.Network(container, data, options);
+  state.netData = data;
+  state.net.once('stabilizationIterationsDone', () => state.net.fit({ animation:{ duration:400 } }));
+
+  // 범례
+  const lg = document.getElementById('net-legend');
+  if (state.ipcMode) {
+    const secs = [...new Set([...shown].map(c => c[0]))].sort();
+    lg.innerHTML = secs.map(s =>
+      `<span class="net-legend-item"><span class="net-dot" style="background:${SECTION_COLORS[s]||'#64748b'};"></span>` +
+      `<b style="font-family:'Space Mono',monospace;">${s}</b>&nbsp;${IPC_SECTIONS[s]||'기타'}</span>`).join('');
+  } else {
+    lg.innerHTML = `<span class="net-legend-item"><span class="net-dot" style="background:${PALETTE[0]};"></span>색상 = 연결 그룹(컴포넌트)</span>`;
+  }
+
+  // 노드 테이블
+  renderNodeTable();
+
+  // 엣지 테이블
+  const maxW = edges[0]?.[2] || 1;
+  document.getElementById('edge-tbody').innerHTML = edges.map(([a,b,w], i) =>
+    `<tr><td>${i+1}</td><td class="code-cell">${esc(a)} — ${esc(b)}</td><td>${w.toLocaleString()}</td>
+     <td><span class="mini-bar-wrap"><span class="mini-bar" style="display:block;width:${(w/maxW*100).toFixed(1)}%"></span></span></td></tr>`
+  ).join('');
+
+  document.getElementById('results-wrap').classList.add('show');
+}
+
+function renderNodeTable() {
+  const m = state.metrics; if (!m) return;
+  const freq = new Map(state.nodes);
+  const rows = m.nodesArr.map(c =>
+    [c, freq.get(c), m.deg.get(c), m.str.get(c), m.btw.get(c), m.clo.get(c), m.ev.get(c)]);
+  const si = +document.getElementById('node-sort').value;
+  rows.sort((a,b) => b[si]-a[si] || b[3]-a[3] || b[2]-a[2] || String(a[0]).localeCompare(b[0]));
+  document.getElementById('node-tbody').innerHTML = rows.map((r,i) =>
+    `<tr><td>${i+1}</td><td class="code-cell">${esc(r[0])}</td>
+     <td>${r[1].toLocaleString()}</td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td>
+     <td>${r[4].toFixed(3)}</td><td>${r[5].toFixed(3)}</td><td>${r[6].toFixed(3)}</td></tr>`
+  ).join('');
+}
+
+function refit()   { if (state.net) state.net.fit({ animation:{ duration:400 } }); }
+function reshake() { if (state.net) { state.net.stabilize(180); state.net.once('stabilizationIterationsDone', refit); } }
+
+// ── 다운로드 ──────────────────────────────────────────────
+function downloadPNG() {
+  const cv = document.querySelector('#net-box canvas');
+  if (!cv) return;
+  const out = document.createElement('canvas');
+  out.width = cv.width; out.height = cv.height;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(cv, 0, 0);
+  const a = document.createElement('a');
+  a.href = out.toDataURL('image/png');
+  a.download = 'network.png';
+  a.click();
+}
+function dlCSV(rows, name) {
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+csv], { type:'text/csv;charset=utf-8' }));
+  a.download = name;
+  a.click();
+}
+function downloadNodesCSV() {
+  if (!state.nodes.length) return;
+  const freq = new Map(state.nodes);
+  const deg = new Map(), str = new Map();
+  state.nodes.forEach(([c]) => { deg.set(c,0); str.set(c,0); });
+  state.edges.forEach(([a,b,w]) => {
+    deg.set(a, deg.get(a)+1); deg.set(b, deg.get(b)+1);
+    str.set(a, str.get(a)+w); str.set(b, str.get(b)+w);
+  });
+  // 매개·근접·고유벡터는 표시 그래프 기준 — 표시되지 않은 노드는 빈 값
+  const m = state.metrics;
+  const cv = (map, c) => (m && map.has(c)) ? map.get(c).toFixed(4) : '';
+  dlCSV([['id','frequency','degree','strength','betweenness','closeness','eigenvector'],
+    ...state.nodes.map(([c,f]) => [c, f, deg.get(c), str.get(c),
+      cv(m?.btw ?? new Map(), c), cv(m?.clo ?? new Map(), c), cv(m?.ev ?? new Map(), c)])], 'network_nodes.csv');
+}
+function downloadEdgesCSV() {
+  if (!state.edges.length) return;
+  dlCSV([['source','target','weight'], ...state.edges.map(([a,b,w]) => [a,b,w])], 'network_edges.csv');
+}
+
+// ── 유틸 ─────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setStatus(msg, type='info') {
+  const el = document.getElementById('status-bar');
+  el.className = 'status-bar ' + ({ok:'s-ok',err:'s-err',run:'s-run',warn:'s-warn'}[type] || 's-run');
+  el.textContent = msg;
+}
+</script>
+<script>(function(){
+  var k='tf_sim_network';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=sim&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

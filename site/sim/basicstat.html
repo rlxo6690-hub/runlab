@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기초 통계 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="기초 통계 시뮬레이터 — DataForge">
+<meta property="og:description" content="평균·표준편차·정규분포·큰 수의 법칙·중심극한정리·신뢰구간·p-값 — 숫자의 의미를 눈으로 확인하는 개념 시뮬레이터">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1100px;margin:0 auto;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+.intro-box a{color:var(--accent);font-weight:700;text-decoration:none;}
+
+/* Tabs */
+.stat-tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-top:20px;}
+.stat-tab{padding:14px 24px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;padding-top:20px;}
+.stat-panel.active{display:block;}
+
+/* Cards */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* Controls */
+.ctrl-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.ctrl-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.ctrl-val{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);min-width:36px;}
+.range-inp{-webkit-appearance:none;width:170px;height:5px;border-radius:3px;background:rgba(37,99,235,.15);outline:none;cursor:pointer;}
+.range-inp::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;}
+
+/* Buttons */
+.btn{font-family:inherit;font-size:12px;font-weight:700;padding:9px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--muted);cursor:pointer;transition:.15s;min-height:40px;}
+.btn:hover{color:var(--accent);border-color:var(--accent);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{opacity:.88;color:#fff;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* Stat boxes */
+.stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.stat-val{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);}
+.stat-val.orange{color:var(--orange);}
+.stat-val.green{color:var(--green);}
+.stat-val.red{color:var(--red);}
+.stat-val.txt{font-family:'Noto Sans KR','Segoe UI',sans-serif;font-size:16px;letter-spacing:0;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* Canvas */
+.sim-canvas{width:100%;display:block;border:1px solid var(--border);border-radius:8px;background:#fff;}
+.sim-canvas.draggable{touch-action:none;cursor:grab;}
+.canvas-hint{font-size:11px;color:var(--dim);margin-top:6px;}
+
+/* Insight */
+.insight{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 14px;font-size:12.5px;line-height:1.7;margin-top:12px;}
+.insight b{color:#92400e;}
+.insight .lbl{font-weight:700;color:var(--amber);margin-right:6px;}
+
+/* Formula chips (분산 계산 과정) */
+.calc-flow{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-top:12px;}
+.calc-chip{flex:1;min-width:120px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;}
+.calc-chip .cl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.calc-chip .cv{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--text);margin-top:3px;}
+.calc-chip.hl .cv{color:var(--accent);}
+.calc-arrow{display:flex;align-items:center;color:var(--dim);font-weight:700;}
+
+/* Quartile strip */
+.q-strip{display:flex;gap:3px;flex-wrap:wrap;margin:12px 0;}
+.q-chip{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;padding:7px 0;border-radius:6px;text-align:center;flex:1;min-width:34px;border:1px solid var(--border);}
+.q-g1{background:rgba(37,99,235,.10);color:#1d4ed8;}
+.q-g2{background:rgba(5,150,105,.10);color:#047857;}
+.q-g3{background:rgba(217,119,6,.10);color:#b45309;}
+.q-g4{background:rgba(219,39,119,.10);color:#be185d;}
+.q-out{background:rgba(220,38,38,.14);color:var(--red);border-color:rgba(220,38,38,.4);}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px;}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+
+@media(max-width:768px){
+  .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+  .range-inp{width:130px;}
+}
+@media(max-width:600px){
+  .stat-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .stat-tab{padding:12px 14px;font-size:12px;}
+  .page{padding:0 12px 60px;}
+  .logo-sep,.logo-title{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">기초 통계 시뮬레이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+  <div class="intro-box">
+    <strong>기초 통계 시뮬레이터</strong> — 평균·표준편차·사분위수·정규분포·큰 수의 법칙·중심극한정리·신뢰구간·p-값을
+    점을 <strong>직접 끌어보며</strong> 익힙니다. 개념이 손에 익으면 다음 단계는
+    <a href="/sim/stat">통계 분석 시뮬레이터 →</a>
+  </div>
+
+  <div class="stat-tabs">
+    <button class="stat-tab active" onclick="switchTab('mean')">⚖️ 평균 vs 중앙값</button>
+    <button class="stat-tab" onclick="switchTab('spread')">📏 분산 · 표준편차</button>
+    <button class="stat-tab" onclick="switchTab('quartile')">📦 사분위수</button>
+    <button class="stat-tab" onclick="switchTab('shape')">🔔 분포 모양</button>
+    <button class="stat-tab" onclick="switchTab('znorm')">📐 정규분포 · 표준화</button>
+    <button class="stat-tab" onclick="switchTab('lln')">🪙 큰 수의 법칙</button>
+    <button class="stat-tab" onclick="switchTab('clt')">⛰️ 중심극한정리</button>
+    <button class="stat-tab" onclick="switchTab('ci')">🎯 신뢰구간</button>
+    <button class="stat-tab" onclick="switchTab('pvalue')">🎲 p-값</button>
+  </div>
+
+  <!-- ══════════════ TAB 1 : 평균 vs 중앙값 ══════════════ -->
+  <div id="panel-mean" class="stat-panel active">
+    <div class="a-card">
+      <div class="a-card-title">점을 끌어서 평균과 중앙값이 어떻게 움직이는지 보세요</div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val orange" id="m-mean">—</div><div class="stat-lbl">평균 (모든 값의 합 ÷ 개수)</div></div>
+        <div class="stat-box"><div class="stat-val" id="m-median">—</div><div class="stat-lbl">중앙값 (정렬했을 때 가운데)</div></div>
+        <div class="stat-box"><div class="stat-val" id="m-diff">—</div><div class="stat-lbl">평균 − 중앙값</div></div>
+        <div class="stat-box"><div class="stat-val green" id="m-n">—</div><div class="stat-lbl">데이터 개수</div></div>
+      </div>
+      <canvas class="sim-canvas draggable" id="m-canvas" height="300"></canvas>
+      <div class="canvas-hint">🖱️ 점을 좌우로 드래그해 값을 바꿔보세요 · <span style="color:var(--orange);font-weight:700">▲ 평균</span> · <span style="color:var(--accent);font-weight:700">▼ 중앙값</span></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-primary" onclick="mAddOutlier()">⚡ 이상치 하나 추가</button>
+        <button class="btn" onclick="mRemoveLast()">점 하나 제거</button>
+        <button class="btn" onclick="mReset()">↺ 리셋</button>
+      </div>
+      <div class="insight" id="m-insight"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 2 : 분산 · 표준편차 ══════════════ -->
+  <div id="panel-spread" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">퍼짐을 숫자 하나로 — 편차 → 분산 → 표준편차</div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val orange" id="s-mean">—</div><div class="stat-lbl">평균</div></div>
+        <div class="stat-box"><div class="stat-val" id="s-var">—</div><div class="stat-lbl">분산 (편차²의 평균)</div></div>
+        <div class="stat-box"><div class="stat-val" id="s-std">—</div><div class="stat-lbl">표준편차 σ (√분산)</div></div>
+        <div class="stat-box"><div class="stat-val green" id="s-range">—</div><div class="stat-lbl">범위 (최대−최소)</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">데이터 퍼뜨리기</span>
+        <input type="range" class="range-inp" id="s-scale" min="0.3" max="2" step="0.05" value="1" oninput="sScale(this.value)">
+        <span class="ctrl-val" id="s-scale-val">×1.00</span>
+        <button class="btn" onclick="sPreset(0.4)">뭉친 데이터</button>
+        <button class="btn" onclick="sPreset(1)">보통</button>
+        <button class="btn" onclick="sPreset(1.8)">퍼진 데이터</button>
+      </div>
+      <canvas class="sim-canvas draggable" id="s-canvas" height="300"></canvas>
+      <div class="canvas-hint">🖱️ 점을 드래그해도 됩니다 · 회색 선 = 평균과의 거리(편차) · 파란 띠 = 평균 ± 1σ 구간</div>
+      <div class="calc-flow" id="s-calc"></div>
+      <div class="insight" id="s-insight"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 3 : 사분위수 ══════════════ -->
+  <div id="panel-quartile" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">정렬해서 4등분 — Q1 · 중앙값 · Q3, 그리고 IQR</div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val" id="q-q1">—</div><div class="stat-lbl">Q1 (하위 25% 지점)</div></div>
+        <div class="stat-box"><div class="stat-val" id="q-q2">—</div><div class="stat-lbl">중앙값 Q2 (50% 지점)</div></div>
+        <div class="stat-box"><div class="stat-val" id="q-q3">—</div><div class="stat-lbl">Q3 (상위 25% 지점)</div></div>
+        <div class="stat-box"><div class="stat-val green" id="q-iqr">—</div><div class="stat-lbl">IQR (Q3 − Q1)</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">데이터 개수</span>
+        <input type="range" class="range-inp" id="q-n" min="8" max="24" step="1" value="12" oninput="qRegen(+this.value)">
+        <span class="ctrl-val" id="q-n-val">12</span>
+        <button class="btn" onclick="qRegen()">🎲 새 데이터</button>
+        <button class="btn btn-primary" onclick="qAddOutlier()">⚡ 이상치 추가</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:6px">정렬된 데이터 — 색 = 4등분 구간, 빨강 = IQR 울타리 밖(이상치)</div>
+      <div class="q-strip" id="q-strip"></div>
+      <canvas class="sim-canvas" id="q-canvas" height="170"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:rgba(37,99,235,.35)"></span>상자 = Q1~Q3 (가운데 50%)</span>
+        <span><span class="sw" style="background:#1e293b"></span>상자 안 세로선 = 중앙값</span>
+        <span><span class="sw" style="background:#94a3b8"></span>수염 = 울타리(1.5×IQR) 안 최소·최대</span>
+        <span><span class="sw" style="background:#dc2626"></span>점 = 이상치</span>
+      </div>
+      <div class="insight" id="q-insight"></div>
+      <div class="intro-box" style="margin-top:14px">
+        💡 박스플롯을 단계별로 차근차근 배우고 싶다면 <a href="/prep/missing#boxplot">박스플롯 6단계 시뮬레이터 →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 4 : 분포 모양 ══════════════ -->
+  <div id="panel-shape" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">분포가 기울면 평균·중앙값·최빈값이 갈라집니다</div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val orange" id="h-mean">—</div><div class="stat-lbl">평균</div></div>
+        <div class="stat-box"><div class="stat-val" id="h-median">—</div><div class="stat-lbl">중앙값</div></div>
+        <div class="stat-box"><div class="stat-val green" id="h-mode">—</div><div class="stat-lbl">최빈값 (가장 흔한 구간)</div></div>
+        <div class="stat-box"><div class="stat-val txt" id="h-skew">—</div><div class="stat-lbl">기울기 (왜도 방향)</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">꼬리 방향</span>
+        <input type="range" class="range-inp" id="h-slider" min="-1" max="1" step="0.05" value="0" oninput="hSetSkew(+this.value)">
+        <span class="ctrl-val" id="h-slider-val">0.00</span>
+        <button class="btn" onclick="hPreset(0.9)">💰 월급 분포 (오른쪽 꼬리)</button>
+        <button class="btn" onclick="hPreset(0)">📝 시험 점수 (대칭)</button>
+        <button class="btn" onclick="hPreset(-0.9)">🎯 쉬운 시험 (왼쪽 꼬리)</button>
+        <button class="btn" onclick="hRegen()">🎲 다시 뽑기</button>
+      </div>
+      <canvas class="sim-canvas" id="h-canvas" height="320"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:#ea580c"></span>평균</span>
+        <span><span class="sw" style="background:#2563eb"></span>중앙값</span>
+        <span><span class="sw" style="background:#059669"></span>최빈값</span>
+      </div>
+      <div class="insight" id="h-insight"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB : 정규분포 vs 표준정규분포 ══════════════ -->
+  <div id="panel-znorm" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">정규분포 vs 표준정규분포 — 어떤 종 모양이든 표준화하면 하나가 됩니다</div>
+      <div class="intro-box" style="margin:0 0 14px">
+        정규분포는 평균 μ와 표준편차 σ에 따라 <strong>위치와 폭이 제각각</strong>입니다.
+        그런데 모든 값에서 <strong>평균을 빼고 σ로 나누면(z = (x−μ)÷σ)</strong>,
+        어떤 정규분포든 <strong>평균 0, σ 1의 표준정규분포 하나</strong>로 겹쳐집니다 —
+        단위가 다른 시험·키·몸무게를 <strong>같은 잣대로 비교</strong>할 수 있게 되는 마법입니다.
+      </div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val orange" id="z-bmu">—</div><div class="stat-lbl">평균 μ</div></div>
+        <div class="stat-box"><div class="stat-val" id="z-bsigma">—</div><div class="stat-lbl">표준편차 σ</div></div>
+        <div class="stat-box"><div class="stat-val" id="z-bx">—</div><div class="stat-lbl">선택한 값 x</div></div>
+        <div class="stat-box"><div class="stat-val green" id="z-bz">—</div><div class="stat-lbl">z-점수 = (x−μ)÷σ</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">평균 μ</span>
+        <input type="range" class="range-inp" id="z-mu" min="20" max="80" step="1" value="60" oninput="zRender()">
+        <span class="ctrl-val" id="z-mu-val">60</span>
+        <span class="ctrl-label">표준편차 σ</span>
+        <input type="range" class="range-inp" id="z-sigma" min="4" max="22" step="1" value="10" oninput="zRender()">
+        <span class="ctrl-val" id="z-sigma-val">10</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">내 값 x</span>
+        <input type="range" class="range-inp" id="z-x" min="0" max="100" step="1" value="75" oninput="zRender()">
+        <span class="ctrl-val" id="z-x-val">75</span>
+        <button class="btn" onclick="zPreset(70,5,80)">📖 국어: 평균70 · σ5 · 나 80점</button>
+        <button class="btn" onclick="zPreset(50,15,70)">📐 수학: 평균50 · σ15 · 나 70점</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin:8px 0 4px">① 원래 정규분포 N(μ, σ) — 띠 = 68 / 95 / 99.7% 구간</div>
+      <canvas class="sim-canvas" id="z-top-canvas" height="190"></canvas>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin:12px 0 4px">② 표준화한 뒤 — 표준정규분포 N(0, 1)</div>
+      <canvas class="sim-canvas" id="z-bot-canvas" height="190"></canvas>
+      <div class="insight" id="z-insight"></div>
+      <div class="intro-box" style="margin-top:14px">
+        🆚 <strong>왜 필요한가요?</strong> 국어(평균70·σ5)에서 80점은 z=+2.0, 수학(평균50·σ15)에서 70점은 z=+1.33.
+        점수만 보면 국어 80 < 수학... 아니, 원점수로는 비교가 안 됩니다.
+        <strong>z-점수로 바꾸면 국어 80점이 더 드문(대단한) 성적</strong>임이 드러납니다 — 위 프리셋 두 개를 눌러 직접 확인해 보세요.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB : 큰 수의 법칙 ══════════════ -->
+  <div id="panel-lln" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">던질수록 진짜 확률로 — 큰 수의 법칙</div>
+      <div class="intro-box" style="margin:0 0 14px">
+        동전을 10번 던지면 앞면 비율이 30%도, 70%도 잘 나옵니다. 하지만 <strong>1,000번</strong> 던지면?
+        누적 비율은 <strong>진짜 확률로 서서히 수렴</strong>합니다 — 초반의 우연이 사라져서가 아니라,
+        <strong>분모가 커지며 희석</strong>되기 때문입니다.
+      </div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val orange" id="l-p">—</div><div class="stat-lbl">진짜 앞면 확률</div></div>
+        <div class="stat-box"><div class="stat-val" id="l-first">—</div><div class="stat-lbl">처음 10번의 비율 (1번 실험)</div></div>
+        <div class="stat-box"><div class="stat-val" id="l-final">—</div><div class="stat-lbl">전체 비율 (1번 실험)</div></div>
+        <div class="stat-box"><div class="stat-val green" id="l-err">—</div><div class="stat-lbl">진짜 확률과의 오차</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">진짜 앞면 확률</span>
+        <input type="range" class="range-inp" id="l-prob" min="0.3" max="0.7" step="0.05" value="0.5" oninput="llnSetP(+this.value)">
+        <span class="ctrl-val" id="l-prob-val">0.50</span>
+        <span class="ctrl-label">던질 횟수</span>
+        <button class="btn" onclick="llnSetN(100)">100번</button>
+        <button class="btn" onclick="llnSetN(1000)">1,000번</button>
+        <button class="btn" onclick="llnSetN(5000)">5,000번</button>
+        <button class="btn btn-primary" onclick="llnRerun()">🪙 다시 던지기</button>
+      </div>
+      <canvas class="sim-canvas" id="l-canvas" height="300"></canvas>
+      <div class="canvas-hint">세 개의 선 = 독립적인 실험 3회 · 가로축은 로그 눈금 (초반이 넓게 보임) · 주황 점선 = 진짜 확률</div>
+      <div class="insight" id="l-insight"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB : 중심극한정리 ══════════════ -->
+  <div id="panel-clt" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">모집단이 어떤 모양이든 — 표본평균들의 분포는 종 모양이 됩니다</div>
+      <div class="intro-box" style="margin:0 0 14px">
+        <strong>왜 중요한가요?</strong> 현실의 데이터(모집단)는 삐뚤빼뚤해도, 거기서 <strong>n개씩 뽑아 평균낸 값들</strong>은
+        놀랍게도 <strong>종 모양(정규분포)</strong>으로 모입니다. 표본이 클수록(√n배로) 더 좁게 모이죠 —
+        여론조사·품질검사가 "일부만 보고도" 전체를 말할 수 있는 근거입니다.
+      </div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val txt" id="c-shape">—</div><div class="stat-lbl">모집단 모양</div></div>
+        <div class="stat-box"><div class="stat-val" id="c-n">—</div><div class="stat-lbl">표본 크기 n</div></div>
+        <div class="stat-box"><div class="stat-val green" id="c-se">—</div><div class="stat-lbl">표본평균들의 퍼짐 (실측)</div></div>
+        <div class="stat-box"><div class="stat-val orange" id="c-theory">—</div><div class="stat-lbl">이론값 σ ÷ √n</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">모집단</span>
+        <button class="btn" id="c-pop-uniform" onclick="cSetPop('uniform')">🎲 균등 (주사위형)</button>
+        <button class="btn" id="c-pop-skew" onclick="cSetPop('skew')">💰 오른쪽 꼬리 (소득형)</button>
+        <button class="btn" id="c-pop-bimodal" onclick="cSetPop('bimodal')">🐫 두 봉우리</button>
+        <button class="btn" id="c-pop-lottery" onclick="cSetPop('lottery')">🎰 복권형 (거의 0, 가끔 대박)</button>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">표본 크기 n</span>
+        <input type="range" class="range-inp" id="c-slider" min="1" max="50" step="1" value="1" oninput="cSetN(+this.value)">
+        <span class="ctrl-val" id="c-n-val">1</span>
+        <button class="btn" onclick="cPresetN(1)">n=1</button>
+        <button class="btn" onclick="cPresetN(5)">n=5</button>
+        <button class="btn" onclick="cPresetN(30)">n=30</button>
+        <button class="btn btn-primary" onclick="cRerun()">🎲 3,000번 다시 뽑기</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin:8px 0 4px">① 모집단의 분포 (원래 데이터의 모양)</div>
+      <canvas class="sim-canvas" id="c-pop-canvas" height="170"></canvas>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin:12px 0 4px">② n개씩 3,000번 뽑아 평균낸 값들의 분포</div>
+      <canvas class="sim-canvas" id="c-mean-canvas" height="200"></canvas>
+      <div class="insight" id="c-insight"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB : 신뢰구간 ══════════════ -->
+  <div id="panel-ci" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">95% 신뢰구간의 진짜 의미 — 구간 100개를 만들어보면 보입니다</div>
+      <div class="intro-box" style="margin:0 0 14px">
+        참값 μ=<strong>50</strong>인 모집단에서 표본을 뽑아 신뢰구간을 <strong>100개</strong> 만들었습니다.
+        "μ가 구간 안에 있을 확률 95%"가 아니라 — <strong>"이런 식으로 구간을 만들면 100번 중 약 95번은 μ를 잡는다"</strong>는 뜻임을
+        직접 세어서 확인하세요.
+      </div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val orange" id="ci-mu">50</div><div class="stat-lbl">참값 μ (빨간 선)</div></div>
+        <div class="stat-box"><div class="stat-val" id="ci-level">95%</div><div class="stat-lbl">신뢰수준</div></div>
+        <div class="stat-box"><div class="stat-val green" id="ci-hits">—</div><div class="stat-lbl">μ를 잡은 구간 (100개 중)</div></div>
+        <div class="stat-box"><div class="stat-val" id="ci-width">—</div><div class="stat-lbl">구간의 평균 폭</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">표본 크기 n</span>
+        <input type="range" class="range-inp" id="ci-n" min="5" max="100" step="1" value="20" oninput="ciSetN(+this.value)">
+        <span class="ctrl-val" id="ci-n-val">20</span>
+        <span class="ctrl-label">신뢰수준</span>
+        <button class="btn" id="ci-l90" onclick="ciSetLevel(90)">90%</button>
+        <button class="btn" id="ci-l95" onclick="ciSetLevel(95)">95%</button>
+        <button class="btn" id="ci-l99" onclick="ciSetLevel(99)">99%</button>
+        <button class="btn btn-primary" onclick="ciRerun()">🎲 100개 다시 뽑기</button>
+      </div>
+      <canvas class="sim-canvas" id="ci-canvas" height="440"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:rgba(37,99,235,.55)"></span>μ를 잡은 구간</span>
+        <span><span class="sw" style="background:#dc2626"></span>μ를 놓친 구간</span>
+        <span><span class="sw" style="background:#ea580c"></span>참값 μ = 50</span>
+      </div>
+      <div class="insight" id="ci-insight"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 5 : p-값 ══════════════ -->
+  <div id="panel-pvalue" class="stat-panel">
+    <div class="a-card">
+      <div class="a-card-title">p-값 = "이게 그냥 우연일 확률" — 공정한 동전 5,000번 실험으로 확인</div>
+      <div class="intro-box" style="margin:0 0 14px">
+        동전을 <strong id="p-story-n">20</strong>번 던졌는데 앞면이 <strong id="p-story-k">14</strong>번 나왔습니다.
+        "동전이 이상한데?" — 정말 그럴까요? <strong>공정한 동전</strong>으로 같은 실험을 5,000번 반복해서,
+        지금만큼(또는 더) 치우친 결과가 <strong>우연히 몇 번 나오는지</strong> 세어봅니다. 그 비율이 <strong>p-값</strong>입니다.
+      </div>
+      <div class="stat-grid-4">
+        <div class="stat-box"><div class="stat-val" id="p-obs">—</div><div class="stat-lbl">관측된 앞면 수</div></div>
+        <div class="stat-box"><div class="stat-val orange" id="p-exp">—</div><div class="stat-lbl">공정하다면 기대값</div></div>
+        <div class="stat-box"><div class="stat-val red" id="p-pv">—</div><div class="stat-lbl">p-값 (우연히 이만큼 치우칠 확률)</div></div>
+        <div class="stat-box"><div class="stat-val txt" id="p-verdict">—</div><div class="stat-lbl">판정 (기준 0.05)</div></div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">던진 횟수</span>
+        <input type="range" class="range-inp" id="p-n" min="10" max="100" step="2" value="20" oninput="pSetN(+this.value)">
+        <span class="ctrl-val" id="p-n-val">20</span>
+        <span class="ctrl-label">앞면 수</span>
+        <input type="range" class="range-inp" id="p-k" min="0" max="20" step="1" value="14" oninput="pSetK(+this.value)">
+        <span class="ctrl-val" id="p-k-val">14</span>
+      </div>
+      <div class="btn-row" style="margin-bottom:12px">
+        <button class="btn" onclick="pPreset(20,11)">😐 11/20 — 흔한 결과</button>
+        <button class="btn" onclick="pPreset(20,15)">🤨 15/20 — 수상한데?</button>
+        <button class="btn" onclick="pPreset(20,18)">😱 18/20 — 확실히 이상함</button>
+        <button class="btn btn-primary" onclick="pRerun()">🎲 5,000번 다시 실험</button>
+      </div>
+      <canvas class="sim-canvas" id="p-canvas" height="300"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:rgba(99,102,241,.5)"></span>공정한 동전의 결과 분포 (5,000회)</span>
+        <span><span class="sw" style="background:#dc2626"></span>관측만큼(또는 더) 치우친 결과 — 이 비율이 p-값</span>
+      </div>
+      <div class="insight" id="p-insight"></div>
+      <div class="intro-box" style="margin-top:14px">
+        💡 t-검정·가설검정을 정식으로 다뤄보려면 <a href="/sim/stat#ttest">통계 분석 시뮬레이터 → T-검정</a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+// ════════════════════════════════════════════════════
+// 공통 유틸
+// ════════════════════════════════════════════════════
+const $id = s => document.getElementById(s);
+const fmt = v => Number.isFinite(v) ? (Math.round(v * 10) / 10).toLocaleString() : '—';
+
+function mean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+function median(a){ const s=[...a].sort((x,y)=>x-y), n=s.length; return n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2; }
+function variancePop(a){ const m=mean(a); return a.reduce((s,v)=>s+(v-m)*(v-m),0)/a.length; }
+// 사분위수 — Tukey 방식(절반의 중앙값): 박스플롯 학습 페이지와 동일 기준
+function quartiles(a){
+  const s=[...a].sort((x,y)=>x-y), n=s.length;
+  const lower=s.slice(0, Math.floor(n/2));
+  const upper=s.slice(Math.ceil(n/2));
+  return { q1: median(lower), q2: median(s), q3: median(upper) };
+}
+
+// 캔버스 DPR 스케일링 — CSS 폭 기준으로 좌표계를 잡는다
+function setupCanvas(cv){
+  const cssW = cv.clientWidth || cv.parentElement.clientWidth;
+  const cssH = +cv.getAttribute('height');
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = cssW * dpr; cv.height = cssH * dpr;
+  cv.style.height = cssH + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, W: cssW, H: cssH };
+}
+
+function drawAxis(ctx, W, y, pad){
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W-pad, y); ctx.stroke();
+  ctx.fillStyle='#94a3b8'; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
+  for(let v=0; v<=100; v+=20){
+    const x = pad + (W-2*pad)*v/100;
+    ctx.beginPath(); ctx.moveTo(x, y-3); ctx.lineTo(x, y+3); ctx.stroke();
+    ctx.fillText(v, x, y+16);
+  }
+}
+const valToX = (v,W,pad) => pad + (W-2*pad)*v/100;
+const xToVal = (x,W,pad) => Math.max(0, Math.min(100, (x-pad)/(W-2*pad)*100));
+
+// 드래그 엔진 — 렌더 시 저장한 점 위치(hit)를 기준으로 값 배열을 수정
+function makeDraggable(cv, getHits, setVal){
+  let dragIdx = -1;
+  const pos = e => { const r=cv.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; };
+  cv.addEventListener('pointerdown', e => {
+    const p=pos(e), hits=getHits();
+    let best=-1, bd=196; // 14px²
+    hits.forEach((h,i)=>{ const d=(h.x-p.x)**2+(h.y-p.y)**2; if(d<bd){bd=d;best=i;} });
+    if(best>=0){ dragIdx=best; cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing'; }
+  });
+  cv.addEventListener('pointermove', e => {
+    if(dragIdx<0) return;
+    const p=pos(e);
+    setVal(dragIdx, xToVal(p.x, cv.clientWidth, 46));
+  });
+  const end = e => { dragIdx=-1; cv.style.cursor='grab'; };
+  cv.addEventListener('pointerup', end);
+  cv.addEventListener('pointercancel', end);
+}
+
+// 점 스택 배치: 값이 비슷한 점끼리 위로 쌓는다
+function stackPoints(vals, W, pad, baseY, gap){
+  const bins = {};
+  return vals.map(v => {
+    const key = Math.round(v/3);
+    bins[key] = (bins[key]||0) + 1;
+    return { x: valToX(v,W,pad), y: baseY - (bins[key]-1)*gap, v };
+  });
+}
+
+// ════════════════════════════════════════════════════
+// TAB 1 · 평균 vs 중앙값
+// ════════════════════════════════════════════════════
+const M_INIT = [12,25,31,38,45,50,55,62,70,78,85];
+let mVals = [...M_INIT];
+let mHits = [];
+
+function mRender(){
+  const cv=$id('m-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, axisY=H-44;
+  drawAxis(ctx,W,axisY,pad);
+
+  const mn=mean(mVals), md=median(mVals);
+
+  // 평균·중앙값 마커
+  const mx=valToX(mn,W,pad), dx=valToX(md,W,pad);
+  ctx.strokeStyle='rgba(234,88,12,.85)'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(mx,26); ctx.lineTo(mx,axisY); ctx.stroke();
+  ctx.strokeStyle='rgba(37,99,235,.85)';
+  ctx.beginPath(); ctx.moveTo(dx,26); ctx.lineTo(dx,axisY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font='bold 11px "Noto Sans KR",sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle='#ea580c'; ctx.fillText('평균 '+fmt(mn), mx, 16);
+  ctx.fillStyle='#2563eb'; ctx.fillText('중앙값 '+fmt(md), dx, axisY+34);
+
+  // 점
+  mHits = stackPoints(mVals, W, pad, axisY-16, 22);
+  mHits.forEach(h=>{
+    ctx.beginPath(); ctx.arc(h.x,h.y,9,0,Math.PI*2);
+    ctx.fillStyle='rgba(37,99,235,.15)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(h.x,h.y,6.5,0,Math.PI*2);
+    ctx.fillStyle='#2563eb'; ctx.fill();
+  });
+
+  $id('m-mean').textContent=fmt(mn);
+  $id('m-median').textContent=fmt(md);
+  $id('m-diff').textContent=(mn-md>=0?'+':'')+fmt(mn-md);
+  $id('m-n').textContent=mVals.length;
+
+  const gap=mn-md;
+  let msg;
+  if(Math.abs(gap)<2) msg='지금은 평균과 중앙값이 <b>거의 같습니다</b> — 데이터가 대칭에 가깝다는 뜻입니다. 점 하나를 오른쪽 끝(95 근처)으로 끌어보세요.';
+  else if(gap>0) msg=`큰 값 쪽 이상치가 평균을 <b>${fmt(gap)}만큼 오른쪽으로</b> 끌고 갔습니다. 중앙값은 순서만 보기 때문에 거의 움직이지 않았죠 — 연봉·집값처럼 <b>극단값이 있는 데이터에 중앙값을 쓰는 이유</b>입니다.`;
+  else msg=`작은 값 쪽 이상치가 평균을 <b>${fmt(-gap)}만큼 왼쪽으로</b> 끌고 갔습니다. 중앙값은 그대로 버티고 있습니다.`;
+  $id('m-insight').innerHTML='<span class="lbl">💡 읽기</span>'+msg;
+}
+function mAddOutlier(){ if(mVals.length<18) mVals.push(93+Math.random()*6); mRender(); }
+function mRemoveLast(){ if(mVals.length>3) mVals.pop(); mRender(); }
+function mReset(){ mVals=[...M_INIT]; mRender(); }
+
+// ════════════════════════════════════════════════════
+// TAB 2 · 분산 · 표준편차
+// ════════════════════════════════════════════════════
+const S_BASE = [30,38,42,46,50,54,58,62,70,50];
+let sVals=[...S_BASE];
+let sHits=[];
+
+function sRender(){
+  const cv=$id('s-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, axisY=H-44;
+
+  const mn=mean(sVals), vr=variancePop(sVals), sd=Math.sqrt(vr);
+  const rng=Math.max(...sVals)-Math.min(...sVals);
+
+  // 평균 ± 1σ 띠
+  const x1=valToX(Math.max(0,mn-sd),W,pad), x2=valToX(Math.min(100,mn+sd),W,pad);
+  ctx.fillStyle='rgba(37,99,235,.07)';
+  ctx.fillRect(x1, 24, x2-x1, axisY-24);
+
+  drawAxis(ctx,W,axisY,pad);
+
+  // 평균선
+  const mx=valToX(mn,W,pad);
+  ctx.strokeStyle='rgba(234,88,12,.9)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(mx,24); ctx.lineTo(mx,axisY); ctx.stroke();
+  ctx.fillStyle='#ea580c'; ctx.font='bold 11px "Noto Sans KR",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('평균 '+fmt(mn), mx, 15);
+
+  // 편차 선 + 점
+  sHits = stackPoints(sVals, W, pad, axisY-16, 24);
+  sHits.forEach(h=>{
+    ctx.strokeStyle='rgba(100,116,139,.45)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(mx,h.y); ctx.lineTo(h.x,h.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(h.x,h.y,6.5,0,Math.PI*2);
+    ctx.fillStyle='#6366f1'; ctx.fill();
+  });
+
+  $id('s-mean').textContent=fmt(mn);
+  $id('s-var').textContent=fmt(vr);
+  $id('s-std').textContent=fmt(sd);
+  $id('s-range').textContent=fmt(rng);
+
+  const sq=sVals.reduce((s,v)=>s+(v-mn)*(v-mn),0);
+  $id('s-calc').innerHTML=`
+    <div class="calc-chip"><div class="cl">① 편차 = 값 − 평균</div><div class="cv" style="font-family:'Noto Sans KR',sans-serif;font-size:13px">점마다 회색 선</div></div>
+    <div class="calc-arrow">→</div>
+    <div class="calc-chip"><div class="cl">② 편차² 모두 더하기</div><div class="cv">${fmt(sq)}</div></div>
+    <div class="calc-arrow">→</div>
+    <div class="calc-chip"><div class="cl">③ ÷ 개수 (${sVals.length}) = 분산</div><div class="cv">${fmt(vr)}</div></div>
+    <div class="calc-arrow">→</div>
+    <div class="calc-chip hl"><div class="cl">④ √분산 = 표준편차</div><div class="cv">σ = ${fmt(sd)}</div></div>`;
+
+  const inBand=sVals.filter(v=>v>=mn-sd&&v<=mn+sd).length;
+  $id('s-insight').innerHTML='<span class="lbl">💡 읽기</span>'
+    +`표준편차 σ = <b>${fmt(sd)}</b>는 "값들이 평균에서 평균적으로 이만큼 떨어져 있다"는 뜻입니다. `
+    +`지금 파란 띠(평균 ±1σ) 안에 <b>${sVals.length}개 중 ${inBand}개</b>가 들어 있습니다. `
+    +`분산(${fmt(vr)})은 단위가 제곱이라 감이 안 오니, 루트를 씌운 σ로 읽습니다.`;
+}
+function sScale(f){
+  f=+f;
+  $id('s-scale-val').textContent='×'+f.toFixed(2);
+  const m=mean(S_BASE);
+  sVals=S_BASE.map(v=>Math.max(0,Math.min(100, m+(v-m)*f)));
+  sRender();
+}
+function sPreset(f){ $id('s-scale').value=f; sScale(f); }
+
+// ════════════════════════════════════════════════════
+// TAB 3 · 사분위수
+// ════════════════════════════════════════════════════
+let qVals=[];
+
+function qGen(n){
+  const a=[];
+  for(let i=0;i<n;i++) a.push(Math.round(20+Math.random()*55+Math.random()*15));
+  return a;
+}
+function qRegen(n){
+  n = n || qVals.length || 12;
+  $id('q-n-val').textContent=n;
+  qVals=qGen(n);
+  qRender();
+}
+function qAddOutlier(){ qVals.push(Math.round(95+Math.random()*5)); qRender(); }
+
+function qRender(){
+  const s=[...qVals].sort((a,b)=>a-b), n=s.length;
+  const {q1,q2,q3}=quartiles(s);
+  const iqr=q3-q1, lo=q1-1.5*iqr, hi=q3+1.5*iqr;
+
+  $id('q-q1').textContent=fmt(q1);
+  $id('q-q2').textContent=fmt(q2);
+  $id('q-q3').textContent=fmt(q3);
+  $id('q-iqr').textContent=fmt(iqr);
+
+  // 정렬 스트립 — 4구간 색 + 이상치 빨강
+  $id('q-strip').innerHTML=s.map(v=>{
+    if(v<lo||v>hi) return `<span class="q-chip q-out">${v}</span>`;
+    const g = v<q1?'q-g1':(v<q2?'q-g2':(v<q3?'q-g3':'q-g4'));
+    return `<span class="q-chip ${g}">${v}</span>`;
+  }).join('');
+
+  // 박스플롯
+  const cv=$id('q-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, axisY=H-38, boxY=34, boxH=52;
+  drawAxis(ctx,W,axisY,pad);
+  const X=v=>valToX(v,W,pad);
+  const inFence=s.filter(v=>v>=lo&&v<=hi);
+  const wLo=Math.min(...inFence), wHi=Math.max(...inFence);
+  const cy=boxY+boxH/2;
+
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(X(wLo),cy); ctx.lineTo(X(q1),cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(q3),cy); ctx.lineTo(X(wHi),cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(wLo),cy-10); ctx.lineTo(X(wLo),cy+10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(wHi),cy-10); ctx.lineTo(X(wHi),cy+10); ctx.stroke();
+
+  ctx.fillStyle='rgba(37,99,235,.18)'; ctx.strokeStyle='#2563eb';
+  ctx.fillRect(X(q1),boxY,X(q3)-X(q1),boxH); ctx.strokeRect(X(q1),boxY,X(q3)-X(q1),boxH);
+  ctx.strokeStyle='#1e293b'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(X(q2),boxY); ctx.lineTo(X(q2),boxY+boxH); ctx.stroke();
+
+  s.filter(v=>v<lo||v>hi).forEach(v=>{
+    ctx.beginPath(); ctx.arc(X(v),cy,5,0,Math.PI*2);
+    ctx.fillStyle='#dc2626'; ctx.fill();
+  });
+
+  ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center'; ctx.fillStyle='#2563eb';
+  ctx.fillText('Q1 '+fmt(q1), X(q1), boxY-8);
+  ctx.fillText('Q3 '+fmt(q3), X(q3), boxY-8);
+  ctx.fillStyle='#1e293b'; ctx.fillText('Q2 '+fmt(q2), X(q2), boxY+boxH+14);
+
+  const outs=s.filter(v=>v<lo||v>hi).length;
+  $id('q-insight').innerHTML='<span class="lbl">💡 읽기</span>'
+    +`가운데 50%(Q1~Q3)가 <b>IQR = ${fmt(iqr)}</b> 폭 안에 모여 있습니다. `
+    +`울타리는 Q1−1.5×IQR = <b>${fmt(lo)}</b> 부터 Q3+1.5×IQR = <b>${fmt(hi)}</b> 까지이고, `
+    +(outs? `이 밖의 <b style="color:var(--red)">${outs}개</b>가 이상치로 잡혔습니다.`
+          : `지금은 울타리 밖 이상치가 없습니다 — <b>⚡ 이상치 추가</b>를 눌러보세요.`);
+}
+
+// ════════════════════════════════════════════════════
+// TAB 4 · 분포 모양
+// ════════════════════════════════════════════════════
+let hSkew=0, hZ=[];
+
+function hGenBase(){
+  hZ=[];
+  for(let i=0;i<240;i++){
+    const u1=Math.random()||1e-9, u2=Math.random();
+    hZ.push(Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2)); // Box-Muller
+  }
+}
+function hData(){
+  // 왜도 변환: z + s(z²−1)/2 — s>0이면 오른쪽 꼬리
+  return hZ.map(z=>{
+    const y=z + hSkew*(z*z-1)/1.6;
+    return Math.max(0,Math.min(100, 50+15*y));
+  });
+}
+function hSetSkew(s){ hSkew=s; $id('h-slider-val').textContent=s.toFixed(2); hRender(); }
+function hPreset(s){ $id('h-slider').value=s; hSetSkew(s); }
+function hRegen(){ hGenBase(); hRender(); }
+
+function hRender(){
+  const d=hData();
+  const cv=$id('h-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, axisY=H-44;
+  drawAxis(ctx,W,axisY,pad);
+
+  // 히스토그램 (20구간)
+  const BINS=20, cnt=new Array(BINS).fill(0);
+  d.forEach(v=>cnt[Math.min(BINS-1,Math.floor(v/100*BINS))]++);
+  const maxC=Math.max(...cnt);
+  const bw=(W-2*pad)/BINS;
+  cnt.forEach((c,i)=>{
+    const h=(axisY-40)*c/maxC;
+    ctx.fillStyle='rgba(99,102,241,.35)';
+    ctx.strokeStyle='rgba(99,102,241,.6)';
+    ctx.fillRect(pad+i*bw+1, axisY-h, bw-2, h);
+    ctx.strokeRect(pad+i*bw+1, axisY-h, bw-2, h);
+  });
+
+  const mn=mean(d), md=median(d);
+  const modeBin=cnt.indexOf(maxC), mo=(modeBin+0.5)*100/BINS;
+
+  const marks=[
+    {v:mn, c:'#ea580c', t:'평균',  ly:14},
+    {v:md, c:'#2563eb', t:'중앙값', ly:30},
+    {v:mo, c:'#059669', t:'최빈값', ly:46},
+  ];
+  ctx.font='bold 11px "Noto Sans KR",sans-serif'; ctx.textAlign='center';
+  marks.forEach(m=>{
+    const x=valToX(m.v,W,pad);
+    ctx.strokeStyle=m.c; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(x,8); ctx.lineTo(x,axisY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=m.c; ctx.fillText(m.t+' '+fmt(m.v), x, m.ly);
+  });
+
+  $id('h-mean').textContent=fmt(mn);
+  $id('h-median').textContent=fmt(md);
+  $id('h-mode').textContent=fmt(mo);
+  $id('h-skew').textContent = hSkew>0.15?'오른쪽 꼬리':(hSkew<-0.15?'왼쪽 꼬리':'대칭에 가까움');
+
+  let msg;
+  if(hSkew>0.15) msg=`오른쪽으로 긴 꼬리 — 소수의 큰 값이 평균을 오른쪽으로 끌어서 <b>평균(${fmt(mn)}) &gt; 중앙값(${fmt(md)})</b>이 됩니다. 월급·집값 통계에서 "평균이 내 체감보다 높은" 이유입니다.`;
+  else if(hSkew<-0.15) msg=`왼쪽으로 긴 꼬리 — 소수의 작은 값이 평균을 왼쪽으로 끌어서 <b>평균(${fmt(mn)}) &lt; 중앙값(${fmt(md)})</b>이 됩니다. 쉬운 시험 점수 분포가 이런 모양입니다.`;
+  else msg=`대칭에 가까운 분포에서는 <b>평균 ≈ 중앙값 ≈ 최빈값</b>이 한자리에 모입니다. 슬라이더를 움직여 세 값이 갈라지는 순간을 보세요.`;
+  $id('h-insight').innerHTML='<span class="lbl">💡 읽기</span>'+msg;
+}
+
+// ════════════════════════════════════════════════════
+// TAB · 정규분포 vs 표준정규분포
+// ════════════════════════════════════════════════════
+function normPdf(x, mu, s){ return Math.exp(-0.5*((x-mu)/s)**2)/(s*Math.sqrt(2*Math.PI)); }
+// 표준정규 CDF 근사 (Abramowitz–Stegun)
+function normCdf(z){
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989423*Math.exp(-z*z/2);
+  let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>0 ? 1-p : p;
+}
+
+function zCurve(ctx,W,H,mu,s,xMin,xMax,marker,bands){
+  const pad=46, axisY=H-34;
+  // 축
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,axisY); ctx.lineTo(W-pad,axisY); ctx.stroke();
+  ctx.fillStyle='#94a3b8'; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
+  const step=(xMax-xMin)/8;
+  for(let v=xMin; v<=xMax+0.001; v+=step){
+    const x=pad+(W-2*pad)*(v-xMin)/(xMax-xMin);
+    ctx.beginPath(); ctx.moveTo(x,axisY-3); ctx.lineTo(x,axisY+3); ctx.stroke();
+    ctx.fillText(Math.round(v*10)/10, x, axisY+14);
+  }
+  const X=v=>pad+(W-2*pad)*(v-xMin)/(xMax-xMin);
+  const peak=normPdf(mu,mu,s);
+  const Y=v=>axisY-(axisY-22)*normPdf(v,mu,s)/peak;
+
+  // 68/95/99.7 띠
+  if(bands){
+    [[3,'rgba(37,99,235,.05)'],[2,'rgba(37,99,235,.09)'],[1,'rgba(37,99,235,.16)']].forEach(([k,col])=>{
+      const a=Math.max(xMin,mu-k*s), b=Math.min(xMax,mu+k*s);
+      ctx.fillStyle=col;
+      ctx.beginPath(); ctx.moveTo(X(a),axisY);
+      for(let v=a;v<=b;v+=(xMax-xMin)/240) ctx.lineTo(X(v),Y(v));
+      ctx.lineTo(X(b),axisY); ctx.closePath(); ctx.fill();
+    });
+    ctx.font='bold 10px "Space Mono",monospace';
+    ctx.fillStyle='#2563eb';
+    ctx.fillText('68%', X(mu), Y(mu+0.5*s)-6);
+    if(mu+1.5*s<xMax) ctx.fillText('95%', X(mu+1.5*s), axisY-10);
+    if(mu+2.5*s<xMax) ctx.fillText('99.7%', X(mu+2.5*s), axisY-10);
+  }
+
+  // 곡선
+  ctx.strokeStyle='#6366f1'; ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let v=xMin;v<=xMax;v+=(xMax-xMin)/240){
+    const px=X(v), py=Y(v);
+    v===xMin ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // 평균선
+  ctx.strokeStyle='rgba(234,88,12,.8)'; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(X(mu),16); ctx.lineTo(X(mu),axisY); ctx.stroke(); ctx.setLineDash([]);
+
+  // 마커
+  if(marker!==null && marker>=xMin && marker<=xMax){
+    ctx.strokeStyle='#dc2626'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(X(marker),16); ctx.lineTo(X(marker),axisY); ctx.stroke();
+    ctx.beginPath(); ctx.arc(X(marker),Y(marker),5,0,Math.PI*2); ctx.fillStyle='#dc2626'; ctx.fill();
+  }
+}
+
+function zRender(){
+  const mu=+$id('z-mu').value, s=+$id('z-sigma').value, x=+$id('z-x').value;
+  $id('z-mu-val').textContent=mu;
+  $id('z-sigma-val').textContent=s;
+  $id('z-x-val').textContent=x;
+  const z=(x-mu)/s;
+
+  $id('z-bmu').textContent=mu;
+  $id('z-bsigma').textContent=s;
+  $id('z-bx').textContent=x;
+  $id('z-bz').textContent=(z>=0?'+':'')+ (Math.round(z*100)/100);
+
+  const cv1=$id('z-top-canvas'), a=setupCanvas(cv1);
+  zCurve(a.ctx,a.W,a.H,mu,s,0,100,x,true);
+
+  const cv2=$id('z-bot-canvas'), b=setupCanvas(cv2);
+  zCurve(b.ctx,b.W,b.H,0,1,-4,4,Math.max(-4,Math.min(4,z)),false);
+
+  const pct=normCdf(z);
+  const top=(1-pct)*100;
+  let msg=`x=${x}는 평균보다 <b>${Math.abs(x-mu)}점 ${x>=mu?'위':'아래'}</b>, σ(${s}) 단위로는 <b>z=${(z>=0?'+':'')+(Math.round(z*100)/100)}</b>입니다. `;
+  msg+=`표준정규분포에서 이 위치는 <b>${top<50 ? '상위 약 '+top.toFixed(1) : '하위 약 '+(100-top).toFixed(1)}%</b> 지점 — `;
+  if(Math.abs(z)<1) msg+='±1σ 안(전체의 68%)에 있는 <b>흔한 값</b>입니다.';
+  else if(Math.abs(z)<2) msg+='1~2σ 구간 — <b>제법 드문 값</b>입니다.';
+  else msg+='2σ 밖(전체의 5% 미만) — <b>매우 드문 값</b>입니다. 이상치 후보를 z로 거르는 이유죠.';
+  msg+=' μ·σ 슬라이더를 아무리 바꿔도 <b>아래 그래프는 변하지 않는다</b>는 걸 확인하세요 — 그게 표준화의 힘입니다.';
+  $id('z-insight').innerHTML='<span class="lbl">💡 읽기</span>'+msg;
+}
+function zPreset(mu,s,x){
+  $id('z-mu').value=mu; $id('z-sigma').value=s; $id('z-x').value=x;
+  zRender();
+}
+
+// ════════════════════════════════════════════════════
+// TAB · 큰 수의 법칙
+// ════════════════════════════════════════════════════
+let llnP=0.5, llnN=1000, llnRuns=[];
+
+function llnSimulate(){
+  llnRuns=[];
+  for(let r=0;r<3;r++){
+    const arr=[]; let heads=0;
+    for(let i=1;i<=llnN;i++){ if(Math.random()<llnP) heads++; arr.push(heads/i); }
+    llnRuns.push(arr);
+  }
+}
+function llnSetP(p){ llnP=p; $id('l-prob-val').textContent=p.toFixed(2); llnSimulate(); llnRender(); }
+function llnSetN(n){ llnN=n; llnSimulate(); llnRender(); }
+function llnRerun(){ llnSimulate(); llnRender(); }
+
+function llnRender(){
+  const cv=$id('l-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, padR=20, axisY=H-38, topY=16;
+  const logMax=Math.log10(llnN);
+  const X=i=>pad+(W-pad-padR)*Math.log10(Math.max(1,i))/logMax;
+  const Y=v=>axisY-(axisY-topY)*v;
+
+  // 축
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,axisY); ctx.lineTo(W-padR,axisY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad,topY); ctx.lineTo(pad,axisY); ctx.stroke();
+  ctx.fillStyle='#94a3b8'; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
+  for(let e=0;e<=logMax;e++){
+    const t=Math.pow(10,e);
+    ctx.beginPath(); ctx.moveTo(X(t),axisY-3); ctx.lineTo(X(t),axisY+3); ctx.stroke();
+    ctx.fillText(t.toLocaleString(), X(t), axisY+16);
+  }
+  ctx.textAlign='right';
+  [0,0.25,0.5,0.75,1].forEach(v=>ctx.fillText(v.toFixed(2), pad-6, Y(v)+3));
+
+  // 진짜 확률선
+  ctx.strokeStyle='rgba(234,88,12,.9)'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(pad,Y(llnP)); ctx.lineTo(W-padR,Y(llnP)); ctx.stroke(); ctx.setLineDash([]);
+
+  // 실험 3회
+  const cols=['rgba(99,102,241,.9)','rgba(13,148,136,.6)','rgba(148,163,184,.55)'];
+  llnRuns.forEach((run,r)=>{
+    ctx.strokeStyle=cols[r]; ctx.lineWidth=r===0?2:1.5;
+    ctx.beginPath();
+    run.forEach((v,i)=>{ const px=X(i+1), py=Y(v); i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); });
+    ctx.stroke();
+  });
+
+  const run1=llnRuns[0];
+  const first10=mean(run1.length>=10?[run1[9]]:[run1[run1.length-1]]);
+  const fin=run1[run1.length-1];
+  $id('l-p').textContent=llnP.toFixed(2);
+  $id('l-first').textContent=(first10*100).toFixed(0)+'%';
+  $id('l-final').textContent=(fin*100).toFixed(1)+'%';
+  $id('l-err').textContent=(Math.abs(fin-llnP)*100).toFixed(1)+'%p';
+
+  $id('l-insight').innerHTML='<span class="lbl">💡 읽기</span>'
+    +`1번 실험은 처음 10번에서 <b>${(first10*100).toFixed(0)}%</b>였지만, ${llnN.toLocaleString()}번 뒤에는 <b>${(fin*100).toFixed(1)}%</b>로 진짜 확률(${(llnP*100).toFixed(0)}%)에 붙었습니다. `
+    +'주의 — 앞면이 많이 나왔다고 <b>"이제 뒷면이 나올 차례"는 아닙니다</b>(도박사의 오류). 동전은 기억이 없고, 초반의 치우침은 보정되는 게 아니라 <b>커진 분모에 희석</b>될 뿐입니다.';
+}
+
+// ════════════════════════════════════════════════════
+// TAB · 중심극한정리
+// ════════════════════════════════════════════════════
+let cPop='uniform', cN=1;
+const C_POP_NAME={uniform:'균등 (주사위형)', skew:'오른쪽 꼬리 (소득형)', bimodal:'두 봉우리', lottery:'복권형'};
+
+function cDraw1(){
+  const r=Math.random();
+  if(cPop==='uniform') return r*100;
+  if(cPop==='skew')    return Math.min(100, -Math.log(Math.random()||1e-9)*18);
+  if(cPop==='bimodal'){
+    const z=Math.sqrt(-2*Math.log(Math.random()||1e-9))*Math.cos(2*Math.PI*Math.random());
+    return Math.max(0,Math.min(100,(r<0.5?27:73)+8*z));
+  }
+  // lottery: 95%는 0~10, 5%는 90~100
+  return r<0.95 ? Math.random()*10 : 90+Math.random()*10;
+}
+
+let cPopSample=[], cMeans=[];
+function cSimulate(){
+  cPopSample=[];
+  for(let i=0;i<20000;i++) cPopSample.push(cDraw1());
+  cMeans=[];
+  for(let t=0;t<3000;t++){
+    let s=0;
+    for(let i=0;i<cN;i++) s+=cDraw1();
+    cMeans.push(s/cN);
+  }
+}
+
+function cHist(ctx,W,H,data,bins,color,stroke){
+  const pad=46, axisY=H-38;
+  drawAxis(ctx,W,axisY,pad);
+  const cnt=new Array(bins).fill(0);
+  data.forEach(v=>cnt[Math.min(bins-1,Math.floor(v/100*bins))]++);
+  const maxC=Math.max(...cnt);
+  const bw=(W-2*pad)/bins;
+  cnt.forEach((c,i)=>{
+    if(!c) return;
+    const h=(axisY-16)*c/maxC;
+    ctx.fillStyle=color;
+    ctx.fillRect(pad+i*bw+0.5, axisY-h, Math.max(1,bw-1), h);
+  });
+  return {pad, axisY};
+}
+
+function cRender(){
+  $id('c-shape').textContent=C_POP_NAME[cPop];
+  $id('c-n').textContent=cN;
+  $id('c-n-val').textContent=cN;
+
+  // 모집단 버튼 활성 표시
+  ['uniform','skew','bimodal','lottery'].forEach(p=>{
+    const b=$id('c-pop-'+p);
+    b.style.borderColor = p===cPop ? 'var(--accent)' : '';
+    b.style.color = p===cPop ? 'var(--accent)' : '';
+  });
+
+  const mu=mean(cPopSample), sigma=Math.sqrt(variancePop(cPopSample));
+  const se=Math.sqrt(variancePop(cMeans));
+  $id('c-se').textContent=fmt(se);
+  $id('c-theory').textContent=fmt(sigma/Math.sqrt(cN));
+
+  // ① 모집단
+  const cv1=$id('c-pop-canvas'), a=setupCanvas(cv1);
+  const g1=cHist(a.ctx,a.W,a.H,cPopSample,50,'rgba(99,102,241,.45)');
+  const mx1=valToX(mu,a.W,g1.pad);
+  a.ctx.strokeStyle='#ea580c'; a.ctx.lineWidth=2; a.ctx.setLineDash([5,4]);
+  a.ctx.beginPath(); a.ctx.moveTo(mx1,8); a.ctx.lineTo(mx1,g1.axisY); a.ctx.stroke(); a.ctx.setLineDash([]);
+  a.ctx.fillStyle='#ea580c'; a.ctx.font='bold 11px "Noto Sans KR",sans-serif'; a.ctx.textAlign='center';
+  a.ctx.fillText('모집단 평균 μ='+fmt(mu), Math.min(Math.max(mx1,70),a.W-80), 14);
+
+  // ② 표본평균들의 분포
+  const cv2=$id('c-mean-canvas'), b=setupCanvas(cv2);
+  const g2=cHist(b.ctx,b.W,b.H,cMeans,60,'rgba(5,150,105,.5)');
+  const mx2=valToX(mu,b.W,g2.pad);
+  b.ctx.strokeStyle='#ea580c'; b.ctx.lineWidth=2; b.ctx.setLineDash([5,4]);
+  b.ctx.beginPath(); b.ctx.moveTo(mx2,8); b.ctx.lineTo(mx2,g2.axisY); b.ctx.stroke(); b.ctx.setLineDash([]);
+  b.ctx.fillStyle='#ea580c'; b.ctx.font='bold 11px "Noto Sans KR",sans-serif'; b.ctx.textAlign='center';
+  b.ctx.fillText('μ='+fmt(mu), Math.min(Math.max(mx2,40),b.W-40), 14);
+
+  let msg;
+  if(cN===1) msg='n=1이면 "평균"이 그냥 값 하나라서, 아래 분포는 <b>모집단과 똑같은 모양</b>입니다. 이제 n을 키워보세요 — 모양이 변하기 시작합니다.';
+  else if(cN<10) msg=`n=${cN}만 되어도 아래 분포가 <b>가운데로 모이며 대칭</b>이 되어 갑니다. 위(모집단)는 그대로인데 아래만 변하고 있다는 게 핵심입니다.`;
+  else msg=`n=${cN}: 모집단이 ${C_POP_NAME[cPop]}인데도 표본평균들은 <b>μ=${fmt(mu)} 주변의 종 모양</b>으로 모였습니다. 퍼짐도 이론값 σ/√n = <b>${fmt(mean(cPopSample) ? Math.sqrt(variancePop(cPopSample))/Math.sqrt(cN) : 0)}</b>과 거의 일치(실측 ${fmt(se)}) — 표본을 4배 키우면 오차는 절반이 되는 이유입니다.`;
+  $id('c-insight').innerHTML='<span class="lbl">💡 읽기</span>'+msg;
+}
+function cSetPop(p){ cPop=p; cSimulate(); cRender(); }
+function cSetN(n){ cN=n; cSimulate(); cRender(); }
+function cPresetN(n){ $id('c-slider').value=n; cSetN(n); }
+function cRerun(){ cSimulate(); cRender(); }
+
+// ════════════════════════════════════════════════════
+// TAB · 신뢰구간
+// ════════════════════════════════════════════════════
+const CI_MU=50, CI_SIGMA=15;
+let ciN=20, ciZ=1.96, ciLevel=95, ciData=[];
+
+function ciDraw1(){
+  const z=Math.sqrt(-2*Math.log(Math.random()||1e-9))*Math.cos(2*Math.PI*Math.random());
+  return CI_MU+CI_SIGMA*z;
+}
+function ciSimulate(){
+  ciData=[];
+  for(let t=0;t<100;t++){
+    const s=[]; for(let i=0;i<ciN;i++) s.push(ciDraw1());
+    const m=mean(s);
+    const sd=Math.sqrt(s.reduce((a,v)=>a+(v-m)*(v-m),0)/(ciN-1));   // 표본표준편차 (n−1)
+    const half=ciZ*sd/Math.sqrt(ciN);
+    ciData.push({lo:m-half, hi:m+half, m, hit:(m-half)<=CI_MU && CI_MU<=(m+half)});
+  }
+}
+function ciSetN(n){ ciN=n; $id('ci-n-val').textContent=n; ciSimulate(); ciRender(); }
+function ciSetLevel(lv){
+  ciLevel=lv; ciZ = lv===90?1.645:(lv===95?1.96:2.576);
+  $id('ci-level').textContent=lv+'%';
+  ciSimulate(); ciRender();
+}
+function ciRerun(){ ciSimulate(); ciRender(); }
+
+function ciRender(){
+  ['90','95','99'].forEach(l=>{
+    const b=$id('ci-l'+l);
+    b.style.borderColor = +l===ciLevel ? 'var(--accent)' : '';
+    b.style.color = +l===ciLevel ? 'var(--accent)' : '';
+  });
+
+  const hits=ciData.filter(c=>c.hit).length;
+  const avgW=mean(ciData.map(c=>c.hi-c.lo));
+  $id('ci-hits').textContent=hits+'개';
+  $id('ci-width').textContent='±'+fmt(avgW/2);
+
+  const cv=$id('ci-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, topY=14, botY=H-30;
+  const lo=Math.min(10, ...ciData.map(c=>c.lo)), hi=Math.max(90, ...ciData.map(c=>c.hi));
+  const X=v=>pad+(W-2*pad)*(v-lo)/(hi-lo);
+
+  // 축 (값)
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,botY); ctx.lineTo(W-pad,botY); ctx.stroke();
+  ctx.fillStyle='#94a3b8'; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
+  for(let v=Math.ceil(lo/10)*10; v<=hi; v+=10) ctx.fillText(v, X(v), botY+14);
+
+  // 참값 μ
+  ctx.strokeStyle='#ea580c'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(X(CI_MU),topY-4); ctx.lineTo(X(CI_MU),botY); ctx.stroke();
+
+  // 구간 100개
+  const rowH=(botY-topY)/100;
+  ciData.forEach((c,i)=>{
+    const y=topY+i*rowH+rowH/2;
+    ctx.strokeStyle = c.hit ? 'rgba(37,99,235,.5)' : '#dc2626';
+    ctx.lineWidth = c.hit ? 1.2 : 2;
+    ctx.beginPath(); ctx.moveTo(X(c.lo),y); ctx.lineTo(X(c.hi),y); ctx.stroke();
+    if(!c.hit){ ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(X(c.m),y,2,0,Math.PI*2); ctx.fill(); }
+  });
+
+  $id('ci-insight').innerHTML='<span class="lbl">💡 읽기</span>'
+    +`${ciLevel}% 신뢰구간 100개 중 <b>${hits}개</b>가 참값 μ=50을 잡았습니다 (이론상 약 ${ciLevel}개). `
+    +`다시 뽑을 때마다 놓치는 구간(빨강)이 달라지죠 — <b>확률은 μ가 아니라 "구간을 만드는 방법"에 붙어 있습니다</b>. `
+    +`n을 키우면 구간이 <b>좁아지면서도</b> 잡는 비율은 유지되고(σ/√n), 신뢰수준을 99%로 올리면 더 많이 잡는 대신 구간이 <b>넓어집니다</b> — 정밀함과 확신은 맞바꾸는 관계입니다.`;
+}
+
+// ════════════════════════════════════════════════════
+// TAB 5 · p-값 (몬테카를로)
+// ════════════════════════════════════════════════════
+let pN=20, pK=14, pSims=[];
+
+function pSimulate(){
+  pSims=[];
+  for(let t=0;t<5000;t++){
+    let h=0;
+    for(let i=0;i<pN;i++) if(Math.random()<0.5) h++;
+    pSims.push(h);
+  }
+}
+function pSetN(n){
+  pN=n; $id('p-n-val').textContent=n;
+  const ks=$id('p-k'); ks.max=n;
+  if(pK>n){ pK=n; ks.value=n; $id('p-k-val').textContent=n; }
+  pSimulate(); pRender();
+}
+function pSetK(k){ pK=k; $id('p-k-val').textContent=k; pRender(); }
+function pPreset(n,k){
+  $id('p-n').value=n; pN=n; $id('p-n-val').textContent=n;
+  const ks=$id('p-k'); ks.max=n; ks.value=k; pK=k; $id('p-k-val').textContent=k;
+  pSimulate(); pRender();
+}
+function pRerun(){ pSimulate(); pRender(); }
+
+function pRender(){
+  const dev=Math.abs(pK-pN/2);
+  const extreme=pSims.filter(h=>Math.abs(h-pN/2)>=dev).length;
+  const pv=extreme/pSims.length;
+
+  $id('p-story-n').textContent=pN;
+  $id('p-story-k').textContent=pK;
+  $id('p-obs').textContent=pK;
+  $id('p-exp').textContent=fmt(pN/2);
+  $id('p-pv').textContent = pv<0.001 ? '<0.001' : pv.toFixed(3);
+  const verdict = pv<0.01 ? '우연이라 보기 어려움' : (pv<0.05 ? '유의미한 치우침' : '우연의 범위 안');
+  const vEl=$id('p-verdict');
+  vEl.textContent=verdict;
+  vEl.style.color = pv<0.05 ? 'var(--red)' : 'var(--green)';
+
+  // 히스토그램 (앞면 수 0..N)
+  const cv=$id('p-canvas'), {ctx,W,H}=setupCanvas(cv);
+  const pad=46, axisY=H-44;
+  const cnt=new Array(pN+1).fill(0);
+  pSims.forEach(h=>cnt[h]++);
+  const maxC=Math.max(...cnt);
+  const bw=(W-2*pad)/(pN+1);
+
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,axisY); ctx.lineTo(W-pad,axisY); ctx.stroke();
+  ctx.fillStyle='#94a3b8'; ctx.font='10px "Space Mono",monospace'; ctx.textAlign='center';
+  const tick=Math.max(1,Math.round(pN/10));
+  for(let c=0;c<=pN;c+=tick) ctx.fillText(c, pad+(c+0.5)*bw, axisY+16);
+
+  cnt.forEach((c,i)=>{
+    if(!c) return;
+    const h=(axisY-46)*c/maxC;
+    const isExt = Math.abs(i-pN/2)>=dev;
+    ctx.fillStyle = isExt ? 'rgba(220,38,38,.65)' : 'rgba(99,102,241,.45)';
+    ctx.fillRect(pad+i*bw+0.5, axisY-h, Math.max(1,bw-1), h);
+  });
+
+  // 관측값 마커
+  const kx=pad+(pK+0.5)*bw;
+  ctx.strokeStyle='#1e293b'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(kx,10); ctx.lineTo(kx,axisY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#1e293b'; ctx.font='bold 11px "Noto Sans KR",sans-serif';
+  ctx.fillText('관측 '+pK+'번', kx, 22);
+
+  let msg;
+  if(dev===0) msg='관측값이 정확히 기대값과 같습니다 — 치우침이 전혀 없으니 p-값은 <b>1.0</b>, 완벽한 우연 범위입니다. 앞면 수 슬라이더를 끌어 치우침을 만들어보세요.';
+  else if(pv<0.01) msg=`공정한 동전 5,000번 실험 중 이만큼 치우친 경우는 <b>${extreme}번(${(pv*100).toFixed(1)}%)</b>뿐입니다. "우연"이라고 하기엔 너무 드물어서, <b>동전(또는 가정)이 잘못됐다고 의심</b>하는 게 합리적입니다.`;
+  else if(pv<0.05) msg=`5,000번 중 <b>${extreme}번(${(pv*100).toFixed(1)}%)</b>만 이만큼 치우쳤습니다. 관례적 기준 0.05보다 작으니 <b>"우연이 아니다"</b> 쪽에 무게가 실립니다 — 다만 100번에 ${Math.round(pv*100)}번은 공정한 동전도 이런 결과를 냅니다.`;
+  else msg=`5,000번 중 <b>${extreme}번(${(pv*100).toFixed(1)}%)</b>이나 이만큼 치우쳤습니다 — 공정한 동전으로도 <b>흔히 나오는 결과</b>라서, 동전이 이상하다고 말할 근거가 없습니다. p-값이 크다고 "공정함이 증명"된 건 아니고, <b>의심할 근거가 부족</b>하다는 뜻입니다.`;
+  $id('p-insight').innerHTML='<span class="lbl">💡 읽기</span>'+msg;
+}
+
+// ════════════════════════════════════════════════════
+// 탭 전환 + 해시 딥링크 + 리사이즈
+// ════════════════════════════════════════════════════
+const TAB_IDS=['mean','spread','quartile','shape','znorm','lln','clt','ci','pvalue'];
+const RENDER={mean:mRender, spread:sRender, quartile:qRender, shape:hRender, znorm:zRender, lln:llnRender, clt:cRender, ci:ciRender, pvalue:pRender};
+let _curTab='mean';
+
+function switchTab(name){
+  _curTab=name;
+  TAB_IDS.forEach((n,i)=>{
+    document.querySelectorAll('.stat-tab')[i].classList.toggle('active', n===name);
+    document.getElementById('panel-'+n).classList.toggle('active', n===name);
+  });
+  requestAnimationFrame(()=>RENDER[name]());
+  if(history.replaceState) history.replaceState(null,'','#'+name);
+}
+
+makeDraggable($id('m-canvas'), ()=>mHits, (i,v)=>{ mVals[i]=v; mRender(); });
+makeDraggable($id('s-canvas'), ()=>sHits, (i,v)=>{ sVals[i]=v; sRender(); });
+
+window.addEventListener('resize', ()=>RENDER[_curTab]());
+
+// 웹폰트가 늦게 로드되면 캔버스 한글이 폴백 폰트로 고정됨 → 로드 완료 시 다시 그린다
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => RENDER[_curTab]());
+
+hGenBase();
+pSimulate();
+cSimulate();
+llnSimulate();
+ciSimulate();
+qRegen(12);
+requestAnimationFrame(()=>{
+  mRender(); sRender(); hRender();
+  const h=location.hash.slice(1);
+  if(TAB_IDS.includes(h)) switchTab(h);
+});
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

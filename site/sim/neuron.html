@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴런, 퍼셉트론, 활성화 함수 시각화</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { indigo:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},blue:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},sky:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},cyan:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},violet:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},purple:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},fuchsia:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'} },
+  fontFamily: { sans: ['Noto Sans KR','Pretendard','system-ui','sans-serif'],
+               mono: ['Space Mono','monospace'] }
+} } };
+</script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .pulse-active {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(1.05); }
+        }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>:root{--bg:#f8fafc;--card:#fff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--color-indigo-50:#eff6ff!important;--color-indigo-100:#dbeafe!important;--color-indigo-200:#bfdbfe!important;--color-indigo-300:#93c5fd!important;--color-indigo-400:#60a5fa!important;--color-indigo-500:#3b82f6!important;--color-indigo-600:#2563eb!important;--color-indigo-700:#1d4ed8!important;--color-indigo-800:#1e40af!important;--color-indigo-900:#1e3a8a!important;--color-indigo-950:#172554!important;--color-blue-50:#eff6ff!important;--color-blue-100:#dbeafe!important;--color-blue-200:#bfdbfe!important;--color-blue-300:#93c5fd!important;--color-blue-400:#60a5fa!important;--color-blue-500:#3b82f6!important;--color-blue-600:#2563eb!important;--color-blue-700:#1d4ed8!important;--color-blue-800:#1e40af!important;--color-blue-900:#1e3a8a!important;--color-blue-950:#172554!important;--color-sky-50:#eff6ff!important;--color-sky-100:#dbeafe!important;--color-sky-200:#bfdbfe!important;--color-sky-300:#93c5fd!important;--color-sky-400:#60a5fa!important;--color-sky-500:#3b82f6!important;--color-sky-600:#2563eb!important;--color-sky-700:#1d4ed8!important;--color-sky-800:#1e40af!important;--color-sky-900:#1e3a8a!important;--color-sky-950:#172554!important;--color-cyan-50:#eff6ff!important;--color-cyan-100:#dbeafe!important;--color-cyan-200:#bfdbfe!important;--color-cyan-300:#93c5fd!important;--color-cyan-400:#60a5fa!important;--color-cyan-500:#3b82f6!important;--color-cyan-600:#2563eb!important;--color-cyan-700:#1d4ed8!important;--color-cyan-800:#1e40af!important;--color-cyan-900:#1e3a8a!important;--color-cyan-950:#172554!important;--color-violet-50:#eef2ff!important;--color-violet-100:#e0e7ff!important;--color-violet-200:#c7d2fe!important;--color-violet-300:#a5b4fc!important;--color-violet-400:#818cf8!important;--color-violet-500:#6366f1!important;--color-violet-600:#4f46e5!important;--color-violet-700:#4338ca!important;--color-violet-800:#3730a3!important;--color-violet-900:#312e81!important;--color-violet-950:#1e1b4b!important;--color-purple-50:#eef2ff!important;--color-purple-100:#e0e7ff!important;--color-purple-200:#c7d2fe!important;--color-purple-300:#a5b4fc!important;--color-purple-400:#818cf8!important;--color-purple-500:#6366f1!important;--color-purple-600:#4f46e5!important;--color-purple-700:#4338ca!important;--color-purple-800:#3730a3!important;--color-purple-900:#312e81!important;--color-purple-950:#1e1b4b!important;--color-fuchsia-50:#eef2ff!important;--color-fuchsia-100:#e0e7ff!important;--color-fuchsia-200:#c7d2fe!important;--color-fuchsia-300:#a5b4fc!important;--color-fuchsia-400:#818cf8!important;--color-fuchsia-500:#6366f1!important;--color-fuchsia-600:#4f46e5!important;--color-fuchsia-700:#4338ca!important;--color-fuchsia-800:#3730a3!important;--color-fuchsia-900:#312e81!important;--color-fuchsia-950:#1e1b4b!important;}body{background-color:#f8fafc!important;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px)!important;background-size:40px 40px!important;background-attachment:fixed!important;}.df-header{position:sticky;top:0;z-index:100;max-width:1400px;margin:0 auto;width:100%;border-bottom:1px solid rgba(0,0,0,.1);background:rgba(248,250,252,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}.df-header-in{max-width:1400px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;}.df-logo{display:flex;align-items:center;gap:12px;}.df-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none;}.df-brand em{color:#ea580c;font-style:normal;}.df-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0;}.df-title{font-size:13px;color:#64748b;}.df-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}.df-back:hover{color:#1e293b;border-color:rgba(0,0,0,.3);}.df-header.dark{background:rgba(2,6,23,.85);border-bottom:1px solid rgba(255,255,255,.1);}.df-header.dark .df-sep{background:rgba(255,255,255,.18);}.df-header.dark .df-title{color:#94a3b8;}.df-header.dark .df-back{color:#94a3b8;border-color:rgba(255,255,255,.18);}.df-header.dark .df-back:hover{color:#f1f5f9;border-color:rgba(255,255,255,.4);}body,button,input,select,textarea,h1,h2,h3,h4,h5,p,span,div,label,li,a,td,th{font-family:'Noto Sans KR','Pretendard',system-ui,-apple-system,sans-serif;}.df-brand,code,pre,.font-mono{font-family:'Space Mono',monospace;}.df-header,.df-header *{line-height:1.3;}.df-subhead{max-width:1400px;margin:0 auto;width:100%;padding:22px 24px 4px;}.df-subhead-in{display:flex;align-items:center;gap:14px;}.df-subhead-ic{font-size:24px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px;flex-shrink:0;}.df-subhead-t{font-size:20px;font-weight:800;color:#1e293b;letter-spacing:-.01em;line-height:1.2;}.df-subhead-s{font-size:13px;color:#64748b;margin-top:3px;line-height:1.4;}.df-tabbar{max-width:1400px;margin:0 auto;width:100%;padding:12px 24px 0;}.df-tabbar-in{display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:4px;overflow-x:auto;width:fit-content;max-width:100%;}
+/* design.md 표준 탭 (.stat-tabs) */
+.df-tabbar .stat-tabs{display:flex;border-bottom:1px solid var(--border);margin-top:0;overflow-x:auto;}
+.df-tabbar .stat-tab{padding:12px 20px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Noto Sans KR','Segoe UI',system-ui,sans-serif;white-space:nowrap;}
+.df-tabbar .stat-tab:hover{color:var(--text);}
+.df-tabbar .stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}@media(max-width:640px){.df-header-in{padding:12px 14px;}.df-title{display:none;}.df-subhead{padding:16px 14px 4px;}.df-subhead-t{font-size:17px;}.df-subhead-ic{width:40px;height:40px;font-size:20px;}.df-tabbar{padding:10px 14px 0;}}</style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+<header class="df-header"><div class="df-header-in"><div class="df-logo"><a href="https://dataforge.ai.kr" class="df-brand">DATA<em>FORGE</em></a><div class="df-sep"></div><div class="df-title">뉴런·신경망</div></div><a href="https://dataforge.ai.kr" class="df-back">← DataForge 홈</a></div></header><div class="df-subhead"><div class="df-subhead-in"><div class="df-subhead-ic">🧠</div><div><h1 class="df-subhead-t">뉴런·신경망</h1><p class="df-subhead-s">뉴런에서 퍼셉트론, 활성화 함수까지 단계별로 살펴봅니다</p></div></div></div><div class="df-tabbar"><div class="stat-tabs"><button onclick="switchTab('neuron')" id="btn-neuron" class="stat-tab">🧬 뉴런 구조 비교</button><button onclick="switchTab('perceptron')" id="btn-perceptron" class="stat-tab">🔗 퍼셉트론 시뮬레이터</button><button onclick="switchTab('activation')" id="btn-activation" class="stat-tab">📈 활성화 함수</button><button onclick="switchTab('gates')" id="btn-gates" class="stat-tab">🎚️ 논리 게이트 실습</button></div></div>
+
+    <!-- Header -->
+    
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+        
+        <!-- SECTION 1: BIOLOGICAL VS ARTIFICIAL NEURON -->
+        <section id="tab-neuron" class="tab-content block space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Info Intro -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">배경 지식</span>
+                        <h2 class="text-2xl font-black mt-2 mb-4">생물학적 영감</h2>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            인공 신경망(Artificial Neural Networks)은 인간 두뇌의 물리적 구조를 모방하여 설계되었습니다. 
+                            두뇌의 기본 작동 단위인 <strong>생물학적 뉴런</strong>은 전기적, 화학적 신호를 받아들이고 처리하여 다음 뉴런으로 전달합니다.
+                        </p>
+                        <p class="text-sm text-slate-600 leading-relaxed mt-3">
+                            이를 수학적으로 극도로 추상화한 모델이 바로 <strong>퍼셉트론(Perceptron)</strong> 혹은 <strong>인공 뉴런</strong>입니다.
+                        </p>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <h3 class="text-md font-bold mb-3 flex items-center text-indigo-600">
+                            <i class="fa-solid fa-link mr-2"></i>핵심 매핑 관계
+                        </h3>
+                        <div class="space-y-3 text-xs sm:text-sm">
+                            <div class="flex justify-between items-center p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                <span class="font-medium text-slate-600">수상돌기 (Dendrites)</span>
+                                <i class="fa-solid fa-arrow-right text-indigo-600 text-xs"></i>
+                                <span class="font-bold text-emerald-600">입력값 (Inputs, x)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                <span class="font-medium text-slate-600">시냅스 (Synapses)</span>
+                                <i class="fa-solid fa-arrow-right text-indigo-600 text-xs"></i>
+                                <span class="font-bold text-emerald-600">가중치 (Weights, w)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                <span class="font-medium text-slate-600">세포체 (Cell Body)</span>
+                                <i class="fa-solid fa-arrow-right text-indigo-600 text-xs"></i>
+                                <span class="font-bold text-emerald-600">가중합 (Weighted Sum, ∑)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                <span class="font-medium text-slate-600">축삭 (Axon, 임계치)</span>
+                                <i class="fa-solid fa-arrow-right text-indigo-600 text-xs"></i>
+                                <span class="font-bold text-emerald-600">활성화 함수 (Activation, f)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Mapping Visualization -->
+                <div class="lg:col-span-8 flex flex-col space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl flex-grow">
+                        <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+                            <span>시각적 비교 다이어그램</span>
+                            <span class="text-xs font-normal text-slate-500">각 부분을 클릭하거나 마우스를 올려 매핑을 확인하세요</span>
+                        </h3>
+                        
+                        <!-- Comparison Canvas / SVG Container -->
+                        <div class="relative w-full border border-slate-200 bg-slate-100 rounded-xl p-4 overflow-hidden min-h-[380px] flex flex-col md:flex-row gap-6">
+                            
+                            <!-- Biological Neuron SVG Diagram -->
+                            <div class="flex-1 border border-slate-200 rounded-lg p-3 bg-slate-50 flex flex-col justify-between">
+                                <div class="text-center font-bold text-xs text-indigo-600 mb-2">생물학적 뉴런 (Biological)</div>
+                                <div class="relative flex items-center justify-center h-56">
+                                    <svg viewBox="0 0 400 200" class="w-full h-full max-h-[180px]">
+                                        <!-- Dendrites -->
+                                        <path d="M 20 60 Q 40 80 80 100" stroke="#6366f1" stroke-width="3" fill="none" class="neuron-part cursor-pointer hover:stroke-indigo-400 transition" onclick="highlightPart('dendrite')"/>
+                                        <path d="M 20 140 Q 40 120 80 100" stroke="#6366f1" stroke-width="3" fill="none" class="neuron-part cursor-pointer hover:stroke-indigo-400 transition" onclick="highlightPart('dendrite')"/>
+                                        <path d="M 10 100 L 80 100" stroke="#6366f1" stroke-width="3" fill="none" class="neuron-part cursor-pointer hover:stroke-indigo-400 transition" onclick="highlightPart('dendrite')"/>
+                                        <!-- Cell Body / Nucleus -->
+                                        <circle cx="80" cy="100" r="30" fill="#c7d2fe" stroke="#4f46e5" stroke-width="3" class="neuron-part cursor-pointer hover:fill-indigo-950 transition" onclick="highlightPart('cellbody')"/>
+                                        <circle cx="80" cy="100" r="10" fill="#4f46e5" />
+                                        <!-- Axon -->
+                                        <path d="M 110 100 L 250 100" stroke="#ec4899" stroke-width="4" stroke-dasharray="5 3" class="neuron-part cursor-pointer hover:stroke-pink-400 transition" onclick="highlightPart('axon')"/>
+                                        <!-- Myelin Sheath -->
+                                        <rect x="130" y="92" width="30" height="16" rx="4" fill="#f43f5e" opacity="0.8"/>
+                                        <rect x="175" y="92" width="30" height="16" rx="4" fill="#f43f5e" opacity="0.8"/>
+                                        <rect x="220" y="92" width="30" height="16" rx="4" fill="#f43f5e" opacity="0.8"/>
+                                        <!-- Axon Terminals -->
+                                        <path d="M 250 100 Q 280 80 320 60" stroke="#10b981" stroke-width="3" fill="none" class="neuron-part cursor-pointer hover:stroke-emerald-400 transition" onclick="highlightPart('synapse')"/>
+                                        <path d="M 250 100 Q 280 120 320 140" stroke="#10b981" stroke-width="3" fill="none" class="neuron-part cursor-pointer hover:stroke-emerald-400 transition" onclick="highlightPart('synapse')"/>
+                                        <path d="M 250 100 L 320 100" stroke="#10b981" stroke-width="3" fill="none" class="neuron-part cursor-pointer hover:stroke-emerald-400 transition" onclick="highlightPart('synapse')"/>
+                                        
+                                        <!-- Labels -->
+                                        <text x="25" y="45" fill="#4f46e5" font-size="10" font-weight="bold">수상돌기 (신호 수신)</text>
+                                        <text x="50" y="150" fill="#4f46e5" font-size="10" font-weight="bold">세포체 (통합)</text>
+                                        <text x="170" y="80" fill="#db2777" font-size="10" font-weight="bold">축삭 (전달)</text>
+                                        <text x="260" y="155" fill="#059669" font-size="10" font-weight="bold">축삭말단/시냅스 (전송)</text>
+                                    </svg>
+                                </div>
+                                <p class="text-[11px] text-slate-500 text-center">자극이 역치(Threshold) 이상일 때만 축삭을 통해 흥분이 전도됩니다.</p>
+                            </div>
+
+                            <!-- Artificial Neuron / Perceptron SVG -->
+                            <div class="flex-1 border border-slate-200 rounded-lg p-3 bg-slate-50 flex flex-col justify-between">
+                                <div class="text-center font-bold text-xs text-emerald-600 mb-2">인공 뉴런 (Artificial / Perceptron)</div>
+                                <div class="relative flex items-center justify-center h-56">
+                                    <svg viewBox="0 0 400 200" class="w-full h-full max-h-[180px]">
+                                        <!-- Inputs -->
+                                        <circle cx="40" cy="50" r="15" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+                                        <text x="35" y="54" fill="#1e293b" font-size="12" font-weight="bold">x₁</text>
+                                        
+                                        <circle cx="40" cy="100" r="15" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+                                        <text x="35" y="104" fill="#1e293b" font-size="12" font-weight="bold">x₂</text>
+
+                                        <circle cx="40" cy="150" r="15" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+                                        <text x="37" y="154" fill="#1e293b" font-size="12" font-weight="bold">b</text>
+                                        <text x="15" y="180" fill="#94a3b8" font-size="9">(Bias/편향)</text>
+
+                                        <!-- Weights (Connections) -->
+                                        <line x1="55" y1="50" x2="170" y2="100" stroke="#818cf8" stroke-width="2" class="neuron-part cursor-pointer hover:stroke-indigo-400 transition" onclick="highlightPart('dendrite')"/>
+                                        <text x="90" y="65" fill="#818cf8" font-size="11" font-weight="bold">w₁</text>
+                                        
+                                        <line x1="55" y1="100" x2="170" y2="100" stroke="#818cf8" stroke-width="2" class="neuron-part cursor-pointer hover:stroke-indigo-400 transition" onclick="highlightPart('dendrite')"/>
+                                        <text x="90" y="95" fill="#818cf8" font-size="11" font-weight="bold">w₂</text>
+
+                                        <line x1="55" y1="150" x2="170" y2="100" stroke="#818cf8" stroke-width="2" class="neuron-part cursor-pointer hover:stroke-indigo-400 transition" onclick="highlightPart('dendrite')"/>
+                                        <text x="90" y="140" fill="#818cf8" font-size="11" font-weight="bold">1</text>
+
+                                        <!-- Summation Node -->
+                                        <circle cx="200" cy="100" r="30" fill="#c7d2fe" stroke="#4f46e5" stroke-width="3" class="neuron-part cursor-pointer hover:fill-indigo-950 transition" onclick="highlightPart('cellbody')"/>
+                                        <text x="187" y="105" fill="#4f46e5" font-size="16" font-weight="bold">∑</text>
+
+                                        <!-- Out of Summation to Activation -->
+                                        <line x1="230" y1="100" x2="280" y2="100" stroke="#db2777" stroke-width="3" class="neuron-part cursor-pointer hover:stroke-pink-400 transition" onclick="highlightPart('axon')"/>
+                                        <text x="240" y="90" fill="#db2777" font-size="10">Net z</text>
+
+                                        <!-- Activation Function Node -->
+                                        <circle cx="310" cy="100" r="20" fill="#fce7f3" stroke="#db2777" stroke-width="2" class="neuron-part cursor-pointer hover:fill-pink-950 transition" onclick="highlightPart('axon')"/>
+                                        <text x="303" y="104" fill="#db2777" font-size="13" font-weight="bold">f(z)</text>
+
+                                        <!-- Output Connection -->
+                                        <line x1="330" y1="100" x2="380" y2="100" stroke="#10b981" stroke-width="3" class="neuron-part cursor-pointer hover:stroke-emerald-400 transition" onclick="highlightPart('synapse')"/>
+                                        <text x="350" y="90" fill="#059669" font-size="12" font-weight="bold">y</text>
+                                    </svg>
+                                </div>
+                                <p class="text-[11px] text-slate-500 text-center">수학식: $y = f(\sum_{i} w_i x_i + b)$</p>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Explanation box based on mapping -->
+                        <div id="mapping-explanation" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+                            <h4 class="font-bold text-indigo-600 text-sm flex items-center">
+                                <i class="fa-solid fa-circle-info mr-2"></i>탐색 가이드
+                            </h4>
+                            <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                                다이어그램 상의 구성요소(줄선, 노드 등)를 클릭해보세요. 생물학적 뉴런의 기관이 인공신경망에 어떻게 대응되는지 상세한 설명이 나타납니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: PERCEPTRON SIMULATOR -->
+        <section id="tab-perceptron" class="tab-content hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Parameters Control & Formula -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+                            <span>매개변수(Weights & Bias) 조절</span>
+                            <button onclick="resetPerceptron()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded border border-slate-200 transition">
+                                <i class="fa-solid fa-arrow-rotate-left mr-1"></i>초기화
+                            </button>
+                        </h3>
+
+                        <!-- Sliders -->
+                        <div class="space-y-5">
+                            <!-- Input x1 -->
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">입력값 1 (x₁)</span>
+                                    <span id="val-x1" class="text-indigo-600 font-bold">1.0</span>
+                                </div>
+                                <input type="range" id="slide-x1" min="-2" max="2" step="0.1" value="1.0" oninput="updatePerceptron()" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
+
+                            <!-- Input x2 -->
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">입력값 2 (x₂)</span>
+                                    <span id="val-x2" class="text-indigo-600 font-bold">-0.5</span>
+                                </div>
+                                <input type="range" id="slide-x2" min="-2" max="2" step="0.1" value="-0.5" oninput="updatePerceptron()" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
+
+                            <hr class="border-slate-200 my-2">
+
+                            <!-- Weight w1 -->
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">가중치 1 (w₁)</span>
+                                    <span id="val-w1" class="text-purple-600 font-bold">0.8</span>
+                                </div>
+                                <input type="range" id="slide-w1" min="-3" max="3" step="0.1" value="0.8" oninput="updatePerceptron()" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                                <p class="text-[10px] text-slate-400">입력 1의 신호 강도 조절 (경계선 기울기 결정)</p>
+                            </div>
+
+                            <!-- Weight w2 -->
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">가중치 2 (w₂)</span>
+                                    <span id="val-w2" class="text-purple-600 font-bold">1.2</span>
+                                </div>
+                                <input type="range" id="slide-w2" min="-3" max="3" step="0.1" value="1.2" oninput="updatePerceptron()" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                                <p class="text-[10px] text-slate-400">입력 2의 신호 강도 조절</p>
+                            </div>
+
+                            <!-- Bias b -->
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">편향 (Bias, b)</span>
+                                    <span id="val-b" class="text-pink-600 font-bold">-0.2</span>
+                                </div>
+                                <input type="range" id="slide-b" min="-3" max="3" step="0.1" value="-0.2" oninput="updatePerceptron()" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-pink-500">
+                                <p class="text-[10px] text-slate-400">뉴런이 얼마나 쉽게 활성화(firing)될지 조절 (경계선 평행 이동)</p>
+                            </div>
+
+                            <hr class="border-slate-200 my-2">
+
+                            <!-- Activation Fn Selector -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">활성화 함수 선택 (Activation Function)</label>
+                                <select id="select-act-fn" onchange="updatePerceptron()" class="w-full bg-slate-100 border border-slate-200 text-slate-700 rounded-lg p-2 text-sm focus:outline-none focus:border-indigo-500">
+                                    <option value="step" selected>Step Function (계단 함수 - 전통 퍼셉트론)</option>
+                                    <option value="sigmoid">Sigmoid (시그모이드 - 확률 출력)</option>
+                                    <option value="relu">ReLU (정류 선형 유닛 - 현대 딥러닝 표준)</option>
+                                    <option value="tanh">Tanh (쌍곡 탄젠트 - 범위 -1 ~ 1)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formula breakdown -->
+                    <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-xl">
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">실시간 수식 계산 추적</h4>
+                        <div class="bg-slate-100 p-3.5 rounded-xl border border-slate-200 font-mono text-xs sm:text-sm space-y-2">
+                            <div>
+                                <span class="text-slate-500">1. 가중합 (z) 계산:</span>
+                                <div class="text-indigo-600 mt-1 font-bold" id="formula-z">z = (x₁ · w₁) + (x₂ · w₂) + b</div>
+                                <div class="text-slate-400 text-[11px]" id="formula-z-eval">z = (1.0 · 0.8) + (-0.5 · 1.2) - 0.2 = 0.0</div>
+                            </div>
+                            <div class="pt-2 border-t border-slate-200">
+                                <span class="text-slate-500">2. 활성화 출력 (y) 계산:</span>
+                                <div class="text-pink-600 mt-1 font-bold" id="formula-y">y = f(z)</div>
+                                <div class="text-emerald-600 text-sm font-black mt-0.5" id="formula-y-eval">y = Step(0.0) = 1.0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Perceptron Network & 2D Decision Boundary -->
+                <div class="lg:col-span-7 space-y-6">
+                    <!-- Network Diagram with active firing glow -->
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <h3 class="text-lg font-bold mb-3 flex items-center justify-between">
+                            <span>실시간 뉴런 활성화 상태</span>
+                            <span id="firing-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30">활성화(Firing)!</span>
+                        </h3>
+
+                        <!-- Interactive flow map -->
+                        <div class="relative bg-slate-100 rounded-xl p-4 border border-slate-200 h-44 flex items-center justify-around overflow-hidden">
+                            <!-- Background particles / flows -->
+                            <div class="absolute inset-0 pointer-events-none opacity-20">
+                                <div class="absolute top-1/4 left-1/4 w-12 h-12 bg-indigo-500 rounded-full blur-2xl animate-pulse"></div>
+                                <div class="absolute bottom-1/4 right-1/4 w-16 h-16 bg-pink-500 rounded-full blur-2xl animate-pulse"></div>
+                            </div>
+
+                            <!-- Input Node 1 -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="node-x1" class="w-12 h-12 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-800 transition duration-300">
+                                    1.00
+                                </div>
+                                <span class="text-[10px] text-slate-500 mt-1">입력 x₁</span>
+                            </div>
+
+                            <!-- Weight Lines Connector representation -->
+                            <div class="flex flex-col justify-around h-full py-6 text-xs text-indigo-600 font-mono">
+                                <div id="line-w1-val" class="border-b border-indigo-500/40 pb-1 px-2">w₁: 0.8</div>
+                                <div id="line-w2-val" class="border-b border-indigo-500/40 pb-1 px-2">w₂: 1.2</div>
+                            </div>
+
+                            <!-- Input Node 2 -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="node-x2" class="w-12 h-12 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-800 transition duration-300">
+                                    -0.50
+                                </div>
+                                <span class="text-[10px] text-slate-500 mt-1">입력 x₂</span>
+                            </div>
+
+                            <!-- Arrow to center -->
+                            <div class="text-slate-400"><i class="fa-solid fa-chevron-right text-lg"></i></div>
+
+                            <!-- Core Cell Body Node (Summation + Activation) -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="node-sum" class="w-20 h-20 rounded-full border-4 border-indigo-600 bg-indigo-100 flex flex-col items-center justify-center shadow-lg transition duration-300">
+                                    <span class="text-[10px] text-indigo-600">Sum (z)</span>
+                                    <span id="node-sum-val" class="text-sm font-black text-slate-800">0.00</span>
+                                </div>
+                                <span class="text-[10px] text-slate-500 mt-1">가중합 통합 노드</span>
+                            </div>
+
+                            <!-- Arrow to output -->
+                            <div class="text-slate-400"><i class="fa-solid fa-chevron-right text-lg"></i></div>
+
+                            <!-- Output Node -->
+                            <div class="flex flex-col items-center z-10">
+                                <div id="node-out" class="w-14 h-14 rounded-full border-2 border-slate-200 bg-white flex flex-col items-center justify-center transition duration-500">
+                                    <span class="text-[9px] text-slate-500">출력 (y)</span>
+                                    <span id="node-out-val" class="text-sm font-bold text-slate-700">1.00</span>
+                                </div>
+                                <span class="text-[10px] text-slate-500 mt-1">출력값</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Decision Boundary Plot -->
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="text-lg font-bold">2D 결정 경계 시각화</h3>
+                                <p class="text-xs text-slate-500">가중치와 편향에 의해 2차원 공간이 어떻게 분할되는지 실시간으로 관찰합니다.</p>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded text-slate-600 border border-slate-200">식: w₁x₁ + w₂x₂ + b = 0</span>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-3 border border-slate-200 relative">
+                            <canvas id="boundaryChart" class="w-full max-h-[280px]"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ACTIVATION FUNCTIONS -->
+        <section id="tab-activation" class="tab-content hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Selectors & Theory -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <span class="text-xs font-bold text-pink-600 uppercase tracking-widest">비선형성 부여</span>
+                        <h2 class="text-2xl font-black mt-2 mb-3">활성화 함수란?</h2>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            활성화 함수(Activation Function)는 인공신경망에 <strong>비선형성(Non-linearity)</strong>을 부여하는 장치입니다. 
+                            만약 활성화 함수가 없다면 아무리 신경망을 깊게 쌓아도 단순한 일차식(선형 결합)의 반복에 불과하여 선형 분리가 불가능한 복잡한 문제를 풀 수 없습니다.
+                        </p>
+                    </div>
+
+                    <!-- Interactive Selector and Math Formula -->
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl space-y-4">
+                        <h3 class="text-md font-bold text-indigo-600">조사할 활성화 함수 선택</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="selectActTab('step')" id="act-tab-step" class="act-tab-btn py-2.5 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-indigo-600 text-white border-indigo-500">
+                                Step Function
+                            </button>
+                            <button onclick="selectActTab('sigmoid')" id="act-tab-sigmoid" class="act-tab-btn py-2.5 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200">
+                                Sigmoid
+                            </button>
+                            <button onclick="selectActTab('relu')" id="act-tab-relu" class="act-tab-btn py-2.5 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200">
+                                ReLU
+                            </button>
+                            <button onclick="selectActTab('tanh')" id="act-tab-tanh" class="act-tab-btn py-2.5 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200">
+                                Tanh
+                            </button>
+                        </div>
+
+                        <!-- Info details of selected function -->
+                        <div id="act-detail-box" class="pt-4 border-t border-slate-200 space-y-3">
+                            <!-- Dynamic Content Inserted by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphs and Live tracing -->
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold">실시간 입출력 추적 그래프</h3>
+                                <p class="text-xs text-slate-500">아래 슬라이더를 움직여 특정 입력값(z)에 대한 출력값(y)의 실시간 변환 경로를 확인해보세요.</p>
+                            </div>
+                            <!-- Live indicator -->
+                            <div class="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex gap-4 text-xs font-mono">
+                                <div>입력 z = <span id="trace-z-val" class="text-indigo-600 font-bold">1.50</span></div>
+                                <div>출력 y = <span id="trace-y-val" class="text-pink-600 font-bold">1.00</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Canvas Plot for Function Curve -->
+                        <div class="bg-slate-100 rounded-xl p-3 border border-slate-200 relative">
+                            <canvas id="activationChart" class="w-full max-h-[300px]"></canvas>
+                        </div>
+
+                        <!-- Trace Slider Control -->
+                        <div class="mt-6 p-4 bg-slate-100 rounded-xl border border-slate-200">
+                            <div class="flex justify-between text-xs font-semibold mb-2">
+                                <span class="text-slate-500">가중합 입력값 (z) 수동 조절:</span>
+                                <span class="text-indigo-600 font-bold text-sm" id="slider-trace-num">1.50</span>
+                            </div>
+                            <input type="range" id="slide-trace-z" min="-4" max="4" step="0.1" value="1.5" oninput="updateActivationTrace()" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>강한 음의 자극 (-4)</span>
+                                <span>중립 자극 (0)</span>
+                                <span>강한 양의 자극 (+4)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: LOGIC GATES PLAYGROUND -->
+        <section id="tab-gates" class="tab-content hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Theory & Selectors -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest">퍼셉트론의 응용</span>
+                        <h2 class="text-2xl font-black mt-2 mb-3">논리 게이트 문제</h2>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            퍼셉트론은 입력값과 가중치를 적절히 조절하면 기본 논리 회로인 <strong>AND, OR, NAND 게이트</strong> 등을 학습 및 표현할 수 있습니다. 
+                        </p>
+                        <p class="text-sm text-slate-600 leading-relaxed mt-2">
+                            하지만 단 하나의 퍼셉트론(선형 분류기)으로는 아무리 용을 써도 <strong>XOR 게이트(배타적 논리합)</strong> 문제를 해결할 수 없습니다. 
+                            이 사건은 인공지능 역사에 첫 번째 겨울을 오게 한 장본인입니다.
+                        </p>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl space-y-4">
+                        <h3 class="text-md font-bold text-indigo-600">원하는 게이트를 선택하세요</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="selectGate('AND')" id="gate-btn-AND" class="gate-btn py-2 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-indigo-600 text-white border-indigo-500">
+                                AND 게이트
+                            </button>
+                            <button onclick="selectGate('OR')" id="gate-btn-OR" class="gate-btn py-2 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200">
+                                OR 게이트
+                            </button>
+                            <button onclick="selectGate('NAND')" id="gate-btn-NAND" class="gate-btn py-2 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200">
+                                NAND 게이트
+                            </button>
+                            <button onclick="selectGate('XOR')" id="gate-btn-XOR" class="gate-btn py-2 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200">
+                                XOR 게이트
+                            </button>
+                        </div>
+
+                        <!-- Architecture Selector -->
+                        <div id="network-architecture-box" class="hidden p-3 bg-slate-100/80 rounded-xl border border-slate-200 space-y-2">
+                            <label class="block text-xs font-semibold text-slate-500">네트워크 아키텍처 선택</label>
+                            <div class="flex gap-2">
+                                <button onclick="setNetworkType('single')" id="net-btn-single" class="flex-1 py-1.5 rounded text-xs font-bold transition bg-indigo-600 text-white border border-indigo-500">
+                                    단층 퍼셉트론
+                                </button>
+                                <button onclick="setNetworkType('multi')" id="net-btn-multi" class="flex-1 py-1.5 rounded text-xs font-bold transition bg-slate-100 text-slate-500 border border-slate-200">
+                                    다층 (은닉층 추가)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Current Perceptron Settings Info for selected Gate -->
+                        <div id="gate-tip-box" class="p-3 bg-slate-100/80 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Table & Decision Boundary for selected Gate -->
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold" id="gate-title-interactive">AND 게이트 퍼셉트론 트레이닝</h3>
+                                <p class="text-xs text-slate-500" id="gate-subtitle-interactive">아래 진리표의 출력값을 정답(Target)과 일치하도록 가중치와 편향 슬라이더를 수동으로 조절해 최적의 매개변수를 직접 찾아보세요!</p>
+                            </div>
+                            <div id="gate-match-status" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-600 border border-rose-500/30">
+                                상태: 불일치 ❌
+                            </div>
+                        </div>
+
+                        <!-- Manual Training Sliders for Single-Layer Perceptron -->
+                        <div id="single-layer-sliders" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-slate-100 p-4 rounded-xl border border-slate-200">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">가중치 w₁</span>
+                                    <span id="gate-w1-val" class="text-purple-600 font-bold">0.5</span>
+                                </div>
+                                <input type="range" id="gate-slide-w1" min="-2" max="2" step="0.1" value="0.5" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">가중치 w₂</span>
+                                    <span id="gate-w2-val" class="text-purple-600 font-bold">0.5</span>
+                                </div>
+                                <input type="range" id="gate-slide-w2" min="-2" max="2" step="0.1" value="0.5" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-500">편향 b</span>
+                                    <span id="gate-b-val" class="text-pink-600 font-bold">-0.7</span>
+                                </div>
+                                <input type="range" id="gate-slide-b" min="-2" max="2" step="0.1" value="-0.7" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-pink-500">
+                            </div>
+                        </div>
+
+                        <!-- Manual Training Sliders for Multi-Layer Perceptron (MLP) -->
+                        <div id="multi-layer-sliders" class="hidden space-y-4 mb-6 bg-slate-100 p-4 rounded-xl border border-slate-200 text-xs">
+                            <div class="text-indigo-600 font-bold border-b border-slate-200 pb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-layer-group"></i> 다층 은닉 노드 설정 (NAND & OR 노드 ➡ AND 출력 노드 구조)
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Hidden Node 1 (NAND role) -->
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                                    <div class="font-bold text-purple-600 mb-1">은닉 노드 1 (NAND역할)</div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>w₁₁ (x₁강도)</span><span id="mlp-w11-val" class="font-semibold text-slate-600">-1.0</span></div>
+                                        <input type="range" id="mlp-slide-w11" min="-2" max="2" step="0.1" value="-1.0" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-purple-500">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>w₁₂ (x₂강도)</span><span id="mlp-w12-val" class="font-semibold text-slate-600">-1.0</span></div>
+                                        <input type="range" id="mlp-slide-w12" min="-2" max="2" step="0.1" value="-1.0" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-purple-500">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>편향 b₁</span><span id="mlp-b1-val" class="font-semibold text-slate-600">1.5</span></div>
+                                        <input type="range" id="mlp-slide-b1" min="-2" max="2" step="0.1" value="1.5" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-pink-500">
+                                    </div>
+                                </div>
+                                <!-- Hidden Node 2 (OR role) -->
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                                    <div class="font-bold text-indigo-600 mb-1">은닉 노드 2 (OR역할)</div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>w₂₁ (x₁강도)</span><span id="mlp-w21-val" class="font-semibold text-slate-600">1.0</span></div>
+                                        <input type="range" id="mlp-slide-w21" min="-2" max="2" step="0.1" value="1.0" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-indigo-500">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>w₂₂ (x₂강도)</span><span id="mlp-w22-val" class="font-semibold text-slate-600">1.0</span></div>
+                                        <input type="range" id="mlp-slide-w22" min="-2" max="2" step="0.1" value="1.0" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-indigo-500">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>편향 b₂</span><span id="mlp-b2-val" class="font-semibold text-slate-600">-0.5</span></div>
+                                        <input type="range" id="mlp-slide-b2" min="-2" max="2" step="0.1" value="-0.5" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-pink-500">
+                                    </div>
+                                </div>
+                                <!-- Output Node (AND role) -->
+                                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                                    <div class="font-bold text-emerald-600 mb-1">출력 노드 (AND역할)</div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>v₁ (s₁강도)</span><span id="mlp-v1-val" class="font-semibold text-slate-600">1.0</span></div>
+                                        <input type="range" id="mlp-slide-v1" min="-2" max="2" step="0.1" value="1.0" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-emerald-500">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>v₂ (s₂강도)</span><span id="mlp-v2-val" class="font-semibold text-slate-600">1.0</span></div>
+                                        <input type="range" id="mlp-slide-v2" min="-2" max="2" step="0.1" value="1.0" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-emerald-500">
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-[10px] mb-0.5"><span>편향 b₃</span><span id="mlp-b3-val" class="font-semibold text-slate-600">-1.5</span></div>
+                                        <input type="range" id="mlp-slide-b3" min="-2" max="2" step="0.1" value="-1.5" oninput="updateGateSimulation()" class="w-full h-1 bg-slate-100 rounded accent-pink-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Truth Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse" id="gate-truth-table">
+                                <!-- Dynamic Headers & Rows filled by JS -->
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2D Decision Plot for the selected Gate -->
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xl">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                            <div>
+                                <h3 class="text-base font-bold">결정 경계선 상태 시각화</h3>
+                                <p class="text-xs text-slate-500" id="gate-chart-desc">빨간점(0)과 초록점(1)을 올바르게 선 하나로 가를 수 있어야 합니다.</p>
+                            </div>
+                            
+                            <!-- Space View Switcher (Only for multi-layer) -->
+                            <div id="gate-space-toggle-box" class="hidden bg-slate-100 p-1 rounded-lg border border-slate-200">
+                                <button onclick="setGateChartView('input')" id="gate-chart-view-input" class="px-2.5 py-1 text-xs font-semibold rounded transition bg-indigo-600 text-white">입력 공간 (x₁, x₂)</button>
+                                <button onclick="setGateChartView('hidden')" id="gate-chart-view-hidden" class="px-2.5 py-1 text-xs font-semibold rounded transition text-slate-500 hover:text-slate-800">은닉 공간 (s₁, s₂)</button>
+                            </div>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-3 border border-slate-200 relative">
+                            <canvas id="gateChart" class="w-full max-h-[250px]"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-slate-100/80 py-6 mt-12 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 딥러닝 개념 시각화 연구용 앱. 오픈소스 라이선스 적용.</p>
+            <p class="mt-1">수식을 렌더링하기 위해 정교하게 연산하며 실시간 2D 결정 경계 그래프가 구현되어 있습니다.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts for Logic & Interactions -->
+    <script>
+        // GLOBALS
+        let boundaryChartInstance = null;
+        let activationChartInstance = null;
+        let gateChartInstance = null;
+
+        let activeTab = 'neuron';
+        let activeActTab = 'step';
+        let activeGate = 'AND';
+        let activeNetworkType = 'single'; // 'single' or 'multi'
+        let gateChartView = 'input';      // 'input' or 'hidden' (for multi-layer space visualization)
+
+        // ONLOAD
+        window.onload = function() {
+            // Initializing tabs
+            switchTab('neuron');
+            highlightPart('dendrite'); // Initial tip
+            
+            // Perceptron Tab initial trigger
+            updatePerceptron();
+            
+            // Activation Tab initial trigger
+            selectActTab('step');
+            
+            // Logic Gate Tab initial trigger
+            selectGate('AND');
+        }
+
+        // TAB SWITCHER
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.stat-tab').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + tabId).classList.add('active');
+
+            // Trigger redraw of charts upon tab reveal
+            if (tabId === 'perceptron') {
+                setTimeout(() => initBoundaryChart(), 50);
+            } else if (tabId === 'activation') {
+                setTimeout(() => initActivationChart(), 50);
+            } else if (tabId === 'gates') {
+                setTimeout(() => {
+                    initGateChart();
+                    updateGateSimulation();
+                }, 50);
+            }
+        }
+
+        // --- SECTION 1 LOGIC: NEURON MAPPING ---
+        const neuronExplanations = {
+            dendrite: {
+                title: "수상돌기 (Dendrites) ↔ 인공 뉴런 입력값 & 가중치",
+                text: "생물의 수상돌기는 외부의 자극이나 다른 뉴런으로부터 화학 물질을 수신합니다. 인공 뉴런에서는 다차원 입력 데이터 <strong>x₁</strong>, <strong>x₂</strong>가 이에 대응됩니다. 그리고 입력값에 곱해지는 시냅스의 강도인 <strong>가중치(Weights, w)</strong>가 결합하여 다음 단계로 신호가 흘러 들어갑니다."
+            },
+            cellbody: {
+                title: "세포체 (Cell Body) ↔ 가중합 연산기 (∑)",
+                text: "세포체(Soma)는 수많은 수상돌기로부터 전달받은 신호들의 세기를 하나로 누적합산(Integrate)합니다. 컴퓨터에서는 이 역할을 <strong>가중합(Weighted Sum)</strong>으로 처리합니다. 입력값에 가중치를 곱하고, 뉴런 자체의 활성화 민감도를 보정하는 <strong>편향(Bias, b)</strong>을 더해 연산값 <strong>z = w₁x₁ + w₂x₂ + b</strong>를 산출합니다."
+            },
+            axon: {
+                title: "축삭 (Axon) & 축삭구 ↔ 활성화 함수 (f)",
+                text: "생물학적 뉴런은 세포체가 모은 흥분의 누적치가 특정 임계치(Threshold)를 넘는 순간에만 신호를 축삭(Axon)을 통해 하류로 보냅니다. 이를 '실무율(All-or-None Law)'이라고 합니다. 인공 신경망에서는 이 '자극 역치 조건'을 수학적으로 부드럽거나 극적이게 재현하기 위해 <strong>활성화 함수(Activation Function, f(z))</strong>를 사용합니다."
+            },
+            synapse: {
+                title: "시냅스 (Synapse) ↔ 출력값 (y)",
+                text: "축삭말단에 다다른 임계 신호는 화학적 시냅스를 통해 방출되어 다음 뉴런의 수상돌기를 자극하게 됩니다. 인공 뉴런에서는 활성화 함수를 통과한 최종 계산 결과값 <strong>y</strong>가 출력되어 다음 계층(Layer)의 또 다른 뉴런들의 입력 변수로 전달됩니다."
+            }
+        };
+
+        function highlightPart(partKey) {
+            const expBox = document.getElementById('mapping-explanation');
+            const data = neuronExplanations[partKey];
+            
+            expBox.innerHTML = `
+                <h4 class="font-bold text-indigo-600 text-sm flex items-center">
+                    <i class="fa-solid fa-microscope mr-2"></i> ${data.title}
+                </h4>
+                <p class="text-xs sm:text-sm text-slate-700 mt-1.5 leading-relaxed">${data.text}</p>
+            `;
+        }
+
+
+        // --- SECTION 2 LOGIC: PERCEPTRON SIMULATOR ---
+        function getActivation(z, fnName) {
+            switch(fnName) {
+                case 'step':
+                    return z >= 0 ? 1.0 : 0.0;
+                case 'sigmoid':
+                    return 1 / (1 + Math.exp(-z));
+                case 'relu':
+                    return Math.max(0, z);
+                case 'tanh':
+                    return Math.tanh(z);
+                default:
+                    return z;
+            }
+        }
+
+        function getActivationNameHTML(fnName) {
+            switch(fnName) {
+                case 'step': return "Step";
+                case 'sigmoid': return "Sigmoid";
+                case 'relu': return "ReLU";
+                case 'tanh': return "Tanh";
+            }
+        }
+
+        function resetPerceptron() {
+            document.getElementById('slide-x1').value = "1.0";
+            document.getElementById('slide-x2').value = "-0.5";
+            document.getElementById('slide-w1').value = "0.8";
+            document.getElementById('slide-w2').value = "1.2";
+            document.getElementById('slide-b').value = "-0.2";
+            document.getElementById('select-act-fn').value = "step";
+            updatePerceptron();
+        }
+
+        function updatePerceptron() {
+            // Read UI inputs
+            const x1 = parseFloat(document.getElementById('slide-x1').value);
+            const x2 = parseFloat(document.getElementById('slide-x2').value);
+            const w1 = parseFloat(document.getElementById('slide-w1').value);
+            const w2 = parseFloat(document.getElementById('slide-w2').value);
+            const b = parseFloat(document.getElementById('slide-b').value);
+            const actFn = document.getElementById('select-act-fn').value;
+
+            // Update sliders text
+            document.getElementById('val-x1').textContent = x1.toFixed(1);
+            document.getElementById('val-x2').textContent = x2.toFixed(1);
+            document.getElementById('val-w1').textContent = w1.toFixed(1);
+            document.getElementById('val-w2').textContent = w2.toFixed(1);
+            document.getElementById('val-b').textContent = b.toFixed(1);
+
+            // Update network diagram nodes text
+            document.getElementById('node-x1').textContent = x1.toFixed(2);
+            document.getElementById('node-x2').textContent = x2.toFixed(2);
+            document.getElementById('line-w1-val').textContent = `w₁: ${w1.toFixed(1)}`;
+            document.getElementById('line-w2-val').textContent = `w₂: ${w2.toFixed(1)}`;
+
+            // Calculations
+            const z = (x1 * w1) + (x2 * w2) + b;
+            const y = getActivation(z, actFn);
+
+            // Update live network values
+            document.getElementById('node-sum-val').textContent = z.toFixed(2);
+            document.getElementById('node-out-val').textContent = y.toFixed(2);
+
+            // Update active states visual glow
+            const sumNode = document.getElementById('node-sum');
+            const outNode = document.getElementById('node-out');
+            const firingBadge = document.getElementById('firing-badge');
+
+            if (y > 0.05) {
+                // Firing state
+                sumNode.className = "w-20 h-20 rounded-full border-4 border-indigo-500 bg-indigo-100 flex flex-col items-center justify-center shadow-lg shadow-indigo-500/50 pulse-active transition duration-300";
+                outNode.className = "w-14 h-14 rounded-full border-2 border-emerald-500 bg-emerald-100 flex flex-col items-center justify-center shadow-md shadow-emerald-500/40 transition duration-300";
+                firingBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30";
+                firingBadge.textContent = "활성화 (Firing!)";
+            } else {
+                // Dormant state
+                sumNode.className = "w-20 h-20 rounded-full border-4 border-slate-200 bg-white flex flex-col items-center justify-center transition duration-300";
+                outNode.className = "w-14 h-14 rounded-full border-2 border-slate-200 bg-slate-50 flex flex-col items-center justify-center transition duration-300";
+                firingBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200";
+                firingBadge.textContent = "비활성화 (Silent)";
+            }
+
+            // Formulas block dynamic fill
+            document.getElementById('formula-z-eval').textContent = `z = (${x1.toFixed(1)} · ${w1.toFixed(1)}) + (${x2.toFixed(1)} · ${w2.toFixed(1)}) + (${b.toFixed(1)}) = ${z.toFixed(2)}`;
+            document.getElementById('formula-y-eval').textContent = `y = ${getActivationNameHTML(actFn)}(${z.toFixed(2)}) = ${y.toFixed(3)}`;
+
+            // Redraw 2D Chart
+            if (boundaryChartInstance) {
+                updateBoundaryChart(w1, w2, b, x1, x2);
+            }
+        }
+
+        function initBoundaryChart() {
+            const ctx = document.getElementById('boundaryChart').getContext('2d');
+            
+            if (boundaryChartInstance) {
+                boundaryChartInstance.destroy();
+            }
+
+            boundaryChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: '결정 경계선 (w₁x₁ + w₂x₂ + b = 0)',
+                            type: 'line',
+                            data: [],
+                            borderColor: '#db2777',
+                            borderWidth: 2,
+                            showLine: true,
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: '현재 입력 벡터 (x₁, x₂)',
+                            data: [],
+                            backgroundColor: '#6366f1',
+                            borderColor: '#1e293b',
+                            borderWidth: 2,
+                            pointRadius: 8,
+                            pointHoverRadius: 10
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#64748b', font: { size: 10 } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: -2,
+                            max: 2,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' },
+                            title: { display: true, text: '입력 공간 x₁', color: '#64748b', font: { size: 10 } }
+                        },
+                        y: {
+                            min: -2,
+                            max: 2,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' },
+                            title: { display: true, text: '입력 공간 x₂', color: '#64748b', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            updatePerceptron(); // Draw data initially
+        }
+
+        function updateBoundaryChart(w1, w2, b, curX1, curX2) {
+            // Line points calc: w1*x1 + w2*x2 + b = 0 => x2 = (-w1*x1 - b)/w2
+            const linePoints = [];
+            
+            // Avoid division by zero
+            if (Math.abs(w2) > 0.001) {
+                const x1Vals = [-2, 2];
+                x1Vals.forEach(x1 => {
+                    const x2 = (-w1 * x1 - b) / w2;
+                    linePoints.push({x: x1, y: x2});
+                });
+            } else {
+                // If w2 is zero, line is vertical x1 = -b/w1
+                const x1 = -b / (w1 || 0.0001);
+                linePoints.push({x: x1, y: -2});
+                linePoints.push({x: x1, y: 2});
+            }
+
+            boundaryChartInstance.data.datasets[0].data = linePoints;
+            boundaryChartInstance.data.datasets[1].data = [{x: curX1, y: curX2}];
+            boundaryChartInstance.update('none');
+        }
+
+
+        // --- SECTION 3 LOGIC: ACTIVATION FUNCTIONS TAB ---
+        const activationDetails = {
+            step: {
+                title: "Step Function (계단 함수)",
+                formula: "f(z) = 1 (if z ≥ 0), 0 (if z < 0)",
+                derivative: "f'(z) = 0 (z ≠ 0에서 항상 0, z=0에서 불능)",
+                desc: "출력값이 오직 0 또는 1로 극명하게 갈리는 가장 원초적인 활성화 함수입니다. 전통적인 로젠블라트 퍼셉트론에 사용되었습니다. <strong>미분값이 항상 0</strong>이므로, 경사하강법을 통한 '역전파 학습(Backpropagation)'을 적용할 수 없는 치명적인 단점이 존재합니다."
+            },
+            sigmoid: {
+                title: "Sigmoid Function (시그모이드)",
+                formula: "f(z) = 1 / (1 + e⁻ᶻ)",
+                derivative: "f'(z) = f(z) · (1 - f(z))",
+                desc: "모든 입력값을 <strong>0과 1 사이의 부드러운 확률값</strong>으로 찌부러뜨립니다. 미분 계산이 매우 간편하여 초기 딥러닝에서 대단히 유행했으나, 깊은 층을 구성할 때 미분값 소실(Vanishing Gradient, 최대 0.25)을 초래하는 현상 때문에 출력층(이진 분류)을 제외하면 은닉층에는 잘 사용되지 않습니다."
+            },
+            relu: {
+                title: "ReLU (Rectified Linear Unit)",
+                formula: "f(z) = max(0, z)",
+                derivative: "f'(z) = 1 (z > 0), 0 (z < 0)",
+                desc: "현대 딥러닝에서 은닉층 활성화 함수로 <strong>가장 널리 쓰이는 표준</strong>입니다. 양수 영역에서 선형적인 형태를 유지하므로 기울기 소실 문제가 발생하지 않으며, 연산 속도가 경이롭게 빠릅니다. 단, 입력이 음수가 되면 노드가 영구적으로 죽어버리는 'Dying ReLU' 문제가 있습니다."
+            },
+            tanh: {
+                title: "Hyperbolic Tangent (쌍곡 탄젠트 / Tanh)",
+                formula: "f(z) = tanh(z) = (eᶻ - e⁻ᶻ)/(eᶻ + e⁻ᶻ)",
+                derivative: "f'(z) = 1 - tanh²(z)",
+                desc: "시그모이드 함수와 유사한 S자형 곡선이지만 <strong>출력 범위가 -1에서 +1 사이</strong>입니다. 출력 데이터의 중심이 0(Zero-centered)에 수렴하므로 시그모이드에 비해 경사하강법의 최적화 효율이 좋습니다. 여전히 미분 최대 한계치 문제(Vanishing Gradient)는 안고 있습니다."
+            }
+        };
+
+        function selectActTab(actKey) {
+            activeActTab = actKey;
+            
+            // Toggle tab active styles
+            document.querySelectorAll('.act-tab-btn').forEach(btn => {
+                btn.className = 'act-tab-btn py-2.5 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200';
+            });
+            const selectedBtn = document.getElementById('act-tab-' + actKey);
+            selectedBtn.className = 'act-tab-btn py-2.5 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-indigo-600 text-white border-indigo-500';
+
+            // Infill detailed info
+            const data = activationDetails[actKey];
+            const detailBox = document.getElementById('act-detail-box');
+            detailBox.innerHTML = `
+                <div class="space-y-2">
+                    <h4 class="text-md font-bold text-slate-800">${data.title}</h4>
+                    <div class="bg-slate-100 p-2.5 rounded-lg border border-slate-200 text-xs font-mono">
+                        <div class="text-pink-600 font-bold"><span class="text-slate-500">수식:</span> ${data.formula}</div>
+                        <div class="text-purple-600 font-bold mt-1"><span class="text-slate-500">도함수:</span> ${data.derivative}</div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed mt-2">${data.desc}</p>
+                </div>
+            `;
+
+            // Adjust graph curve
+            if (activationChartInstance) {
+                drawActivationCurve(actKey);
+                updateActivationTrace();
+            }
+        }
+
+        function initActivationChart() {
+            const ctx = document.getElementById('activationChart').getContext('2d');
+            if (activationChartInstance) {
+                activationChartInstance.destroy();
+            }
+
+            activationChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: '함수 형태',
+                            data: [],
+                            borderColor: '#6366f1',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: '현재 데이터 포인터 (z, f(z))',
+                            data: [],
+                            backgroundColor: '#db2777',
+                            borderColor: '#1e293b',
+                            borderWidth: 2,
+                            pointRadius: 8,
+                            type: 'scatter'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: -4,
+                            max: 4,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' }
+                        },
+                        y: {
+                            min: -1.5,
+                            max: 2,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' }
+                        }
+                    }
+                }
+            });
+
+            drawActivationCurve(activeActTab);
+            updateActivationTrace();
+        }
+
+        function drawActivationCurve(actKey) {
+            const points = [];
+            // Generate standard values from -4 to 4
+            for (let z = -4; z <= 4; z += 0.1) {
+                points.push({x: z, y: getActivation(z, actKey)});
+            }
+            activationChartInstance.data.datasets[0].data = points;
+            activationChartInstance.update();
+        }
+
+        function updateActivationTrace() {
+            const zVal = parseFloat(document.getElementById('slide-trace-z').value);
+            const yVal = getActivation(zVal, activeActTab);
+
+            document.getElementById('trace-z-val').textContent = zVal.toFixed(2);
+            document.getElementById('trace-y-val').textContent = yVal.toFixed(2);
+            document.getElementById('slider-trace-num').textContent = zVal.toFixed(2);
+
+            if (activationChartInstance) {
+                activationChartInstance.data.datasets[1].data = [{x: zVal, y: yVal}];
+                activationChartInstance.update('none');
+            }
+        }
+
+
+        // --- SECTION 4 LOGIC: LOGIC GATES ---
+        const gateSolutions = {
+            AND: {
+                w1: 1.0, w2: 1.0, b: -1.5,
+                title: "AND 게이트 실습",
+                tip: "<strong>목표:</strong> x₁과 x₂가 모두 1일 때만 1을 출력해야 합니다.<br><strong>추천 설정:</strong> w₁ = 1.0, w₂ = 1.0, b = -1.5 (혹은 이와 유사한 비율)"
+            },
+            OR: {
+                w1: 1.0, w2: 1.0, b: -0.5,
+                title: "OR 게이트 실습",
+                tip: "<strong>목표:</strong> 둘 중 하나만 1이어도 1을 출력해야 합니다.<br><strong>추천 설정:</strong> w₁ = 1.0, w₂ = 1.0, b = -0.5"
+            },
+            NAND: {
+                w1: -1.0, w2: -1.0, b: 1.5,
+                title: "NAND 게이트 실습",
+                tip: "<strong>목표:</strong> AND 게이트의 완전 반대 결과를 출력합니다.<br><strong>추천 설정:</strong> w₁ = -1.0, w₂ = -1.0, b = 1.5"
+            },
+            XOR: {
+                w1: 1.0, w2: 1.0, b: -0.5,
+                title: "XOR 게이트 실습",
+                tip: "<span class='text-rose-600 font-bold'><i class='fa-solid fa-triangle-exclamation mr-1'></i> 단층의 한계:</span> 단층 퍼셉트론으로는 (0,0)과 (1,1)의 그룹과 (1,0)과 (0,1)의 그룹을 선 하나로 가를 수 없습니다. 하지만 <strong>다층 아키텍처(은닉층)</strong>를 선택하면 완벽히 구분하는 마법을 볼 수 있습니다!"
+            }
+        };
+
+        function selectGate(gateKey) {
+            activeGate = gateKey;
+            
+            // Toggle gate active style
+            document.querySelectorAll('.gate-btn').forEach(btn => {
+                btn.className = 'gate-btn py-2 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-slate-100 text-slate-600 border-slate-200';
+            });
+            const activeBtn = document.getElementById('gate-btn-' + gateKey);
+            activeBtn.className = 'gate-btn py-2 px-3 rounded-lg text-xs font-bold border transition duration-150 bg-indigo-600 text-white border-indigo-500';
+
+            // Show Architecture Selector box only when XOR is selected
+            const archBox = document.getElementById('network-architecture-box');
+            if (gateKey === 'XOR') {
+                archBox.classList.remove('hidden');
+                setNetworkType(activeNetworkType); // Maintain last or default
+            } else {
+                archBox.classList.add('hidden');
+                setNetworkType('single');
+            }
+
+            // Custom tips update
+            const data = gateSolutions[gateKey];
+            document.getElementById('gate-title-interactive').innerHTML = `${gateKey} 게이트 수동 학습 시뮬레이터`;
+            document.getElementById('gate-tip-box').innerHTML = data.tip;
+
+            // Load presets to sliders for single-layer
+            document.getElementById('gate-slide-w1').value = data.w1;
+            document.getElementById('gate-slide-w2').value = data.w2;
+            document.getElementById('gate-slide-b').value = data.b;
+
+            updateGateSimulation();
+        }
+
+        function setNetworkType(type) {
+            activeNetworkType = type;
+            const singleBtn = document.getElementById('net-btn-single');
+            const multiBtn = document.getElementById('net-btn-multi');
+            const singleSliders = document.getElementById('single-layer-sliders');
+            const multiSliders = document.getElementById('multi-layer-sliders');
+            const spaceToggleBox = document.getElementById('gate-space-toggle-box');
+
+            if (type === 'single') {
+                singleBtn.className = "flex-1 py-1.5 rounded text-xs font-bold transition bg-indigo-600 text-white border border-indigo-500";
+                multiBtn.className = "flex-1 py-1.5 rounded text-xs font-bold transition bg-slate-100 text-slate-500 border border-slate-200";
+                singleSliders.classList.remove('hidden');
+                multiSliders.classList.add('hidden');
+                spaceToggleBox.classList.add('hidden');
+                document.getElementById('gate-chart-desc').textContent = "빨간점(0)과 초록점(1)을 올바르게 선 하나로 가를 수 있어야 합니다.";
+            } else {
+                singleBtn.className = "flex-1 py-1.5 rounded text-xs font-bold transition bg-slate-100 text-slate-500 border border-slate-200";
+                multiBtn.className = "flex-1 py-1.5 rounded text-xs font-bold transition bg-indigo-600 text-white border-indigo-500";
+                singleSliders.classList.add('hidden');
+                multiSliders.classList.remove('hidden');
+                spaceToggleBox.classList.remove('hidden');
+                setGateChartView(gateChartView); // Ensure active space view styles are updated
+            }
+
+            updateGateSimulation();
+        }
+
+        function setGateChartView(view) {
+            gateChartView = view;
+            const inputBtn = document.getElementById('gate-chart-view-input');
+            const hiddenBtn = document.getElementById('gate-chart-view-hidden');
+
+            if (view === 'input') {
+                inputBtn.className = "px-2.5 py-1 text-xs font-semibold rounded transition bg-indigo-600 text-white";
+                hiddenBtn.className = "px-2.5 py-1 text-xs font-semibold rounded transition text-slate-500 hover:text-slate-800";
+                document.getElementById('gate-chart-desc').textContent = "은닉층 노드 1(NAND)과 노드 2(OR)가 그리는 두 선이 각각 영역을 구분합니다.";
+            } else {
+                inputBtn.className = "px-2.5 py-1 text-xs font-semibold rounded transition text-slate-500 hover:text-slate-800";
+                hiddenBtn.className = "px-2.5 py-1 text-xs font-semibold rounded transition bg-indigo-600 text-white";
+                document.getElementById('gate-chart-desc').textContent = "은닉 노드들($s_1$, $s_2$)의 공간입니다. 이제 데이터가 선형 분리 가능한 좌표계로 이동되었습니다!";
+            }
+
+            updateGateSimulation();
+        }
+
+        function updateGateSimulation() {
+            // Read inputs
+            let inputs = [
+                {x1: 0, x2: 0, target: 0},
+                {x1: 1, x2: 0, target: 0},
+                {x1: 0, x2: 1, target: 0},
+                {x1: 1, x2: 1, target: 0}
+            ];
+
+            if (activeGate === 'AND') {
+                inputs[3].target = 1; // x1=1, x2=1 일 때만 1 출력
+            } else if (activeGate === 'OR') {
+                inputs[1].target = 1; inputs[2].target = 1; inputs[3].target = 1;
+            } else if (activeGate === 'NAND') {
+                inputs[0].target = 1; inputs[1].target = 1; inputs[2].target = 1;
+            } else if (activeGate === 'XOR') {
+                inputs[1].target = 1; inputs[2].target = 1;
+            }
+
+            let allCorrect = true;
+            const table = document.getElementById('gate-truth-table');
+
+            if (activeNetworkType === 'single') {
+                // SINGLE PERCEPTRON SIMULATION
+                const w1 = parseFloat(document.getElementById('gate-slide-w1').value);
+                const w2 = parseFloat(document.getElementById('gate-slide-w2').value);
+                const b = parseFloat(document.getElementById('gate-slide-b').value);
+
+                document.getElementById('gate-w1-val').textContent = w1.toFixed(1);
+                document.getElementById('gate-w2-val').textContent = w2.toFixed(1);
+                document.getElementById('gate-b-val').textContent = b.toFixed(1);
+
+                // Build Table HTML
+                table.innerHTML = `
+                    <thead>
+                        <tr class="border-b border-slate-200 text-xs text-slate-500 bg-slate-100">
+                            <th class="p-3">입력 1 (x₁)</th>
+                            <th class="p-3">입력 2 (x₂)</th>
+                            <th class="p-3">가중합 (z)</th>
+                            <th class="p-3">퍼셉트론 예측 (y)</th>
+                            <th class="p-3">실제 정답 (Target)</th>
+                            <th class="p-3">판정</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-xs sm:text-sm" id="gate-table-body"></tbody>
+                `;
+
+                const tbody = document.getElementById('gate-table-body');
+                inputs.forEach(row => {
+                    const z = (row.x1 * w1) + (row.x2 * w2) + b;
+                    const prediction = z >= 0 ? 1 : 0;
+                    const isCorrect = prediction === row.target;
+                    if (!isCorrect) allCorrect = false;
+
+                    const predBadge = prediction === 1 
+                        ? `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold">1</span>`
+                        : `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20 font-bold">0</span>`;
+
+                    const correctIcon = isCorrect 
+                        ? `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>`
+                        : `<i class="fa-solid fa-circle-xmark text-rose-600 text-lg"></i>`;
+
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-200 hover:bg-slate-100">
+                            <td class="p-3 font-semibold text-indigo-600">${row.x1}</td>
+                            <td class="p-3 font-semibold text-indigo-600">${row.x2}</td>
+                            <td class="p-3 font-mono ${z>=0 ? 'text-emerald-600' : 'text-rose-600'}">${z.toFixed(2)}</td>
+                            <td class="p-3">${predBadge}</td>
+                            <td class="p-3 font-bold text-slate-600">${row.target}</td>
+                            <td class="p-3">${correctIcon}</td>
+                        </tr>
+                    `;
+                });
+
+                // Render Chart Single Line
+                if (gateChartInstance) {
+                    updateGateChartSingle(w1, w2, b, inputs);
+                }
+
+            } else {
+                // MULTI-LAYER PERCEPTRON (MLP) SIMULATION
+                const w11 = parseFloat(document.getElementById('mlp-slide-w11').value);
+                const w12 = parseFloat(document.getElementById('mlp-slide-w12').value);
+                const b1 = parseFloat(document.getElementById('mlp-slide-b1').value);
+
+                const w21 = parseFloat(document.getElementById('mlp-slide-w21').value);
+                const w22 = parseFloat(document.getElementById('mlp-slide-w22').value);
+                const b2 = parseFloat(document.getElementById('mlp-slide-b2').value);
+
+                const v1 = parseFloat(document.getElementById('mlp-slide-v1').value);
+                const v2 = parseFloat(document.getElementById('mlp-slide-v2').value);
+                const b3 = parseFloat(document.getElementById('mlp-slide-b3').value);
+
+                // Update UI text
+                document.getElementById('mlp-w11-val').textContent = w11.toFixed(1);
+                document.getElementById('mlp-w12-val').textContent = w12.toFixed(1);
+                document.getElementById('mlp-b1-val').textContent = b1.toFixed(1);
+                document.getElementById('mlp-w21-val').textContent = w21.toFixed(1);
+                document.getElementById('mlp-w22-val').textContent = w22.toFixed(1);
+                document.getElementById('mlp-b2-val').textContent = b2.toFixed(1);
+                document.getElementById('mlp-v1-val').textContent = v1.toFixed(1);
+                document.getElementById('mlp-v2-val').textContent = v2.toFixed(1);
+                document.getElementById('mlp-b3-val').textContent = b3.toFixed(1);
+
+                // Build MLP Table
+                table.innerHTML = `
+                    <thead>
+                        <tr class="border-b border-slate-200 text-xs text-slate-500 bg-slate-100">
+                            <th class="p-3">입력 (x₁, x₂)</th>
+                            <th class="p-3">은닉 노드 1 (s₁)</th>
+                            <th class="p-3">은닉 노드 2 (s₂)</th>
+                            <th class="p-3">최종 가중합 (z_out)</th>
+                            <th class="p-3">예측 (y)</th>
+                            <th class="p-3">정답 (Target)</th>
+                            <th class="p-3">판정</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-xs sm:text-sm" id="gate-table-body"></tbody>
+                `;
+
+                const tbody = document.getElementById('gate-table-body');
+                let processedInputs = [];
+
+                inputs.forEach(row => {
+                    // Hidden Node 1
+                    const z1 = (row.x1 * w11) + (row.x2 * w12) + b1;
+                    const s1 = z1 >= 0 ? 1 : 0; // step function
+
+                    // Hidden Node 2
+                    const z2 = (row.x1 * w21) + (row.x2 * w22) + b2;
+                    const s2 = z2 >= 0 ? 1 : 0; // step function
+
+                    // Output Node
+                    const z_out = (s1 * v1) + (s2 * v2) + b3;
+                    const prediction = z_out >= 0 ? 1 : 0;
+
+                    const isCorrect = prediction === row.target;
+                    if (!isCorrect) allCorrect = false;
+
+                    processedInputs.push({...row, s1, s2});
+
+                    const predBadge = prediction === 1 
+                        ? `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold">1</span>`
+                        : `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20 font-bold">0</span>`;
+
+                    const correctIcon = isCorrect 
+                        ? `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>`
+                        : `<i class="fa-solid fa-circle-xmark text-rose-600 text-lg"></i>`;
+
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-200 hover:bg-slate-100">
+                            <td class="p-3 font-semibold text-indigo-600">(${row.x1}, ${row.x2})</td>
+                            <td class="p-3">z₁=${z1.toFixed(1)} ➡ <strong class="text-purple-600">${s1}</strong></td>
+                            <td class="p-3">z₂=${z2.toFixed(1)} ➡ <strong class="text-indigo-600">${s2}</strong></td>
+                            <td class="p-3 font-mono ${z_out>=0 ? 'text-emerald-600' : 'text-rose-600'}">${z_out.toFixed(2)}</td>
+                            <td class="p-3">${predBadge}</td>
+                            <td class="p-3 font-bold text-slate-600">${row.target}</td>
+                            <td class="p-3">${correctIcon}</td>
+                        </tr>
+                    `;
+                });
+
+                // Render Chart Multi Line (Inputs vs Hidden Space)
+                if (gateChartInstance) {
+                    if (gateChartView === 'input') {
+                        updateGateChartMultiInput(w11, w12, b1, w21, w22, b2, inputs);
+                    } else {
+                        updateGateChartMultiHidden(v1, v2, b3, processedInputs);
+                    }
+                }
+            }
+
+            // Match Status UI badge update
+            const statusBadge = document.getElementById('gate-match-status');
+            if (allCorrect) {
+                statusBadge.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 shadow-lg shadow-emerald-500/20";
+                statusBadge.innerHTML = `상태: 성공! 정답과 100% 일치 🚀`;
+            } else {
+                statusBadge.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500/10 text-rose-600 border border-rose-500/30";
+                statusBadge.innerHTML = `상태: 불일치 ❌ (수치 조절 요망)`;
+            }
+        }
+
+        // --- CHART UPDATE WRAPPERS ---
+        function initGateChart() {
+            const ctx = document.getElementById('gateChart').getContext('2d');
+            if (gateChartInstance) {
+                gateChartInstance.destroy();
+            }
+
+            gateChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: '결정 경계선',
+                            type: 'line',
+                            data: [],
+                            borderColor: '#db2777',
+                            borderWidth: 2,
+                            showLine: true,
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: '정답 = 0 (Target 0)',
+                            data: [],
+                            backgroundColor: '#ef4444',
+                            pointRadius: 9,
+                            pointStyle: 'rect'
+                        },
+                        {
+                            label: '정답 = 1 (Target 1)',
+                            data: [],
+                            backgroundColor: '#10b981',
+                            pointRadius: 9,
+                            pointStyle: 'circle'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#64748b' } }
+                    },
+                    scales: {
+                        x: {
+                            min: -0.5,
+                            max: 1.5,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' }
+                        },
+                        y: {
+                            min: -0.5,
+                            max: 1.5,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#64748b' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGateChartSingle(w1, w2, b, inputs) {
+            const linePoints = [];
+            if (Math.abs(w2) > 0.001) {
+                const x1Vals = [-0.5, 1.5];
+                x1Vals.forEach(x1 => {
+                    const x2 = (-w1 * x1 - b) / w2;
+                    linePoints.push({x: x1, y: x2});
+                });
+            } else {
+                const x1 = -b / (w1 || 0.0001);
+                linePoints.push({x: x1, y: -0.5});
+                linePoints.push({x: x1, y: 1.5});
+            }
+
+            const class0 = [];
+            const class1 = [];
+            inputs.forEach(row => {
+                if (row.target === 0) class0.push({x: row.x1, y: row.x2});
+                else class1.push({x: row.x1, y: row.x2});
+            });
+
+            // Adjust configuration for single view
+            gateChartInstance.data.datasets = [
+                {
+                    label: '결정 경계선',
+                    type: 'line',
+                    data: linePoints,
+                    borderColor: '#db2777',
+                    borderWidth: 2,
+                    showLine: true,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: '정답 = 0 (Target 0)',
+                    data: class0,
+                    backgroundColor: '#ef4444',
+                    pointRadius: 9,
+                    pointStyle: 'rect'
+                },
+                {
+                    label: '정답 = 1 (Target 1)',
+                    data: class1,
+                    backgroundColor: '#10b981',
+                    pointRadius: 9,
+                    pointStyle: 'circle'
+                }
+            ];
+            
+            gateChartInstance.options.scales.x.title = { display: true, text: '입력 공간 x₁', color: '#64748b' };
+            gateChartInstance.options.scales.y.title = { display: true, text: '입력 공간 x₂', color: '#64748b' };
+            gateChartInstance.options.scales.x.min = -0.5;
+            gateChartInstance.options.scales.x.max = 1.5;
+            gateChartInstance.options.scales.y.min = -0.5;
+            gateChartInstance.options.scales.y.max = 1.5;
+
+            gateChartInstance.update('none');
+        }
+
+        function updateGateChartMultiInput(w11, w12, b1, w21, w22, b2, inputs) {
+            // Decision line 1 (NAND role)
+            const line1Points = [];
+            if (Math.abs(w12) > 0.001) {
+                [-0.5, 1.5].forEach(x => line1Points.push({x, y: (-w11 * x - b1) / w12}));
+            } else {
+                const x = -b1 / (w11 || 0.0001);
+                line1Points.push({x, y: -0.5}, {x, y: 1.5});
+            }
+
+            // Decision line 2 (OR role)
+            const line2Points = [];
+            if (Math.abs(w22) > 0.001) {
+                [-0.5, 1.5].forEach(x => line2Points.push({x, y: (-w21 * x - b2) / w22}));
+            } else {
+                const x = -b2 / (w21 || 0.0001);
+                line2Points.push({x, y: -0.5}, {x, y: 1.5});
+            }
+
+            const class0 = [];
+            const class1 = [];
+            inputs.forEach(row => {
+                if (row.target === 0) class0.push({x: row.x1, y: row.x2});
+                else class1.push({x: row.x1, y: row.x2});
+            });
+
+            gateChartInstance.data.datasets = [
+                {
+                    label: '은닉 노드 1 (NAND)',
+                    type: 'line',
+                    data: line1Points,
+                    borderColor: '#a855f7',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    showLine: true,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: '은닉 노드 2 (OR)',
+                    type: 'line',
+                    data: line2Points,
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    showLine: true,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: '정답 = 0 (Target 0)',
+                    data: class0,
+                    backgroundColor: '#ef4444',
+                    pointRadius: 9,
+                    pointStyle: 'rect'
+                },
+                {
+                    label: '정답 = 1 (Target 1)',
+                    data: class1,
+                    backgroundColor: '#10b981',
+                    pointRadius: 9,
+                    pointStyle: 'circle'
+                }
+            ];
+
+            gateChartInstance.options.scales.x.title = { display: true, text: '입력 공간 x₁', color: '#64748b' };
+            gateChartInstance.options.scales.y.title = { display: true, text: '입력 공간 x₂', color: '#64748b' };
+            gateChartInstance.options.scales.x.min = -0.5;
+            gateChartInstance.options.scales.x.max = 1.5;
+            gateChartInstance.options.scales.y.min = -0.5;
+            gateChartInstance.options.scales.y.max = 1.5;
+
+            gateChartInstance.update('none');
+        }
+
+        function updateGateChartMultiHidden(v1, v2, b3, processedInputs) {
+            // Final decision line (AND role) in Hidden Space (s1, s2)
+            const linePoints = [];
+            if (Math.abs(v2) > 0.001) {
+                [-0.5, 1.5].forEach(s1 => {
+                    const s2 = (-v1 * s1 - b3) / v2;
+                    linePoints.push({x: s1, y: s2});
+                });
+            } else {
+                const s1 = -b3 / (v1 || 0.0001);
+                linePoints.push({x: s1, y: -0.5}, {x: s1, y: 1.5});
+            }
+
+            // Map original inputs to hidden s1, s2 coords
+            const class0 = [];
+            const class1 = [];
+            processedInputs.forEach(row => {
+                // Add tiny jitter to identical points so they can both be seen on chart
+                let jitterX = (Math.random() - 0.5) * 0.05;
+                let jitterY = (Math.random() - 0.5) * 0.05;
+                if (row.target === 0) class0.push({x: row.s1 + jitterX, y: row.s2 + jitterY});
+                else class1.push({x: row.s1 + jitterX, y: row.s2 + jitterY});
+            });
+
+            gateChartInstance.data.datasets = [
+                {
+                    label: '최종 결정 경계선 (AND)',
+                    type: 'line',
+                    data: linePoints,
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    showLine: true,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: '정답 = 0 (은닉 매핑)',
+                    data: class0,
+                    backgroundColor: '#ef4444',
+                    pointRadius: 9,
+                    pointStyle: 'rect'
+                },
+                {
+                    label: '정답 = 1 (은닉 매핑)',
+                    data: class1,
+                    backgroundColor: '#10b981',
+                    pointRadius: 9,
+                    pointStyle: 'circle'
+                }
+            ];
+
+            // Change scale labels
+            gateChartInstance.options.scales.x.title = { display: true, text: '은닉 특성 s₁ (NAND 결과)', color: '#a855f7' };
+            gateChartInstance.options.scales.y.title = { display: true, text: '은닉 특성 s₂ (OR 결과)', color: '#3b82f6' };
+            
+            // Set slight zoom
+            gateChartInstance.options.scales.x.min = -0.2;
+            gateChartInstance.options.scales.x.max = 1.2;
+            gateChartInstance.options.scales.y.min = -0.2;
+            gateChartInstance.options.scales.y.max = 1.2;
+
+            gateChartInstance.update('none');
+        }
+
+    </script>
+</body>
+</html>

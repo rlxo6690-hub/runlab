@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEP 분석 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="BEP 분석 시뮬레이터 — DataForge">
+<meta property="og:description" content="고정비·변동비·판매가를 입력하면 손익분기점과 목표 매출 달성 조건을 자동 계산하는 교육용 시뮬레이터">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Page ── */
+.page{padding:0 24px 80px;}
+
+/* ── Intro ── */
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* ── Layout ── */
+.top-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.cost-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+/* ── Section label ── */
+.sec-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
+
+/* ── Input fields ── */
+.bep-inp{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;font-family:inherit;}
+.bep-inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
+.bep-num{font-family:'Space Mono',monospace;text-align:right;}
+
+/* ── Cost item ── */
+.cost-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cost-title{font-size:13px;font-weight:600;color:var(--text);}
+.cost-item{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.cost-total{text-align:right;font-size:12px;color:var(--dim);margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);font-family:'Noto Sans KR', sans-serif;}
+.cost-total strong{color:var(--text);}
+
+/* ── Pill action buttons (design.md §12) ── */
+.pill-actions{display:flex;gap:6px;margin-bottom:10px;}
+.pill-action-btn{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--border2);border-radius:4px;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.pill-action-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── Del button ── */
+.bep-del{width:26px;height:26px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;}
+.bep-del:hover{border-color:var(--red);color:var(--red);}
+
+/* ── Buttons (design.md §16) ── */
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+
+/* ── Stat boxes (design.md §15) — 결과 지표 ── */
+.stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:0;}
+.stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.stat-val{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--accent);word-break:break-all;}
+.stat-lbl{font-size:11px;color:var(--dim);margin-top:4px;}
+.stat-box.hi{border-color:var(--orange);}
+.stat-box.hi .stat-val{color:var(--orange);}
+.stat-box.ok{border-color:var(--green);}
+.stat-box.ok .stat-val{color:var(--green);}
+.stat-box.ng{border-color:var(--red);}
+.stat-box.ng .stat-val{color:var(--red);}
+
+/* ── Formula box ── */
+.formula-box{background:var(--card2);border:1px solid rgba(37,99,235,.15);border-radius:10px;padding:14px 18px;font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);line-height:2;margin-bottom:16px;}
+.formula-box span{color:var(--orange);font-weight:700;}
+
+/* ── Chart ── */
+.chart-container{position:relative;height:320px;}
+
+/* ── Warn ── */
+.warn{color:var(--red);font-size:13px;padding:8px 0;}
+
+/* ── Responsive (design.md §24) ── */
+@media(max-width:640px){
+  .top-row{grid-template-columns:1fr;}
+  .cost-row{grid-template-columns:1fr;}
+  .stat-grid{grid-template-columns:repeat(3,1fr);}
+  .page{padding:0 14px 60px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .bep-inp,.bep-num{font-size:16px;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">BEP 분석 시뮬레이터</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="save-btn" onclick="downloadHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="pr-open-btn" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:#0d9488;" onclick="exportMD()">⬇️ 마크다운</button>
+    <button class="pr-open-btn" onclick="openPrompt()">🤖 분석 프롬프트</button>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>BEP (Break-Even Point) 분석</strong> — 고정비·변동비·판매가를 입력하면
+    손익분기점 수량·매출액과 목표 매출 달성 조건을 자동 계산합니다.<br>
+    <strong>공헌이익</strong> = 판매가 − 단위 변동비 &nbsp;|&nbsp;
+    <strong>BEP 수량</strong> = 고정비 ÷ 공헌이익
+  </div>
+
+  <!-- 판매가 / 목표매출 -->
+  <div class="a-card" style="margin-top:20px;">
+    <div class="a-card-title">기본 설정</div>
+    <div class="top-row">
+      <div>
+        <div class="sec-label">판매 가격 (원 / 개)</div>
+        <input class="bep-inp bep-num" type="text" inputmode="numeric" id="bep-price" value="50,000"
+          oninput="bepState.price=parseBepNum(this.value);bepUpdateResults()"
+          onblur="this.value=bepFmt(bepState.price)">
+      </div>
+      <div>
+        <div class="sec-label">목표 매출액 (원)</div>
+        <input class="bep-inp bep-num" type="text" inputmode="numeric" id="bep-target" value="10,000,000"
+          oninput="bepState.target=parseBepNum(this.value);bepUpdateResults()"
+          onblur="this.value=bepFmt(bepState.target)">
+      </div>
+    </div>
+  </div>
+
+  <!-- 고정비 / 변동비 -->
+  <div class="a-card">
+    <div class="a-card-title">비용 구조</div>
+    <div class="cost-row">
+      <div>
+        <div class="cost-header">
+          <span class="cost-title">고정비</span>
+          <div class="pill-actions" style="margin-bottom:0;">
+            <button class="pill-action-btn" onclick="bepAddFixed()">+ 항목 추가</button>
+          </div>
+        </div>
+        <div id="bep-fixed-list"></div>
+        <div class="cost-total">합계 : <strong id="bep-fixed-sum">0</strong> 원</div>
+      </div>
+      <div>
+        <div class="cost-header">
+          <span class="cost-title">변동비 (단위당)</span>
+          <div class="pill-actions" style="margin-bottom:0;">
+            <button class="pill-action-btn" onclick="bepAddVar()">+ 항목 추가</button>
+          </div>
+        </div>
+        <div id="bep-var-list"></div>
+        <div class="cost-total">합계 : <strong id="bep-var-sum">0</strong> 원 / 개</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="a-card">
+    <div class="a-card-title">분석 결과</div>
+    <div class="formula-box">
+      공헌이익 = 판매가 − 단위변동비 &nbsp;|&nbsp;
+      공헌이익률 = 공헌이익 ÷ 판매가 × 100<br>
+      <span>BEP 수량</span> = 고정비 ÷ 공헌이익 &nbsp;|&nbsp;
+      <span>BEP 매출</span> = BEP 수량 × 판매가
+    </div>
+    <div id="bep-result-area"></div>
+  </div>
+
+  <!-- 차트 -->
+  <div class="a-card">
+    <div class="a-card-title">손익분기 차트</div>
+    <div class="chart-container">
+      <canvas id="bep-chart"></canvas>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+var bepState = {
+  price: 50000,
+  target: 10000000,
+  fixed: [
+    {name:'임차료', amt:1500000},
+    {name:'인건비', amt:3000000},
+    {name:'감가상각비', amt:500000}
+  ],
+  variable: [
+    {name:'재료비', amt:15000},
+    {name:'포장비', amt:2000},
+    {name:'물류비', amt:3000}
+  ]
+};
+var bepChart = null;
+
+/* ── 숫자 파싱·포맷 ── */
+function parseBepNum(v) {
+  var n = parseFloat(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+function bepFmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+
+/* ── 계산 ── */
+function bepCalc() {
+  var ft = bepState.fixed.reduce(function(a,i){return a+(+i.amt||0);},0);
+  var vu = bepState.variable.reduce(function(a,i){return a+(+i.amt||0);},0);
+  var ci = bepState.price - vu;
+  var mr = bepState.price > 0 ? ci/bepState.price*100 : 0;
+  var bq = ci > 0 ? ft/ci : null;
+  var br = bq !== null ? bq*bepState.price : null;
+  var tq = bepState.price > 0 ? bepState.target/bepState.price : null;
+  var tp = tq !== null ? bepState.target - ft - vu*tq : null;
+  return {ft:ft,vu:vu,ci:ci,mr:mr,bq:bq,br:br,tq:tq,tp:tp};
+}
+
+/* ── 항목 목록 렌더 (리스트만, 결과는 건드리지 않음) ── */
+function bepRenderItems(listId, arr, field) {
+  var el = document.getElementById(listId);
+  if (!el) return;
+  el.innerHTML = arr.map(function(item, i){
+    return '<div class="cost-item">' +
+      '<input class="bep-inp" type="text" value="'+escHtml(item.name)+'" placeholder="항목명" style="flex:1;min-width:0"' +
+        ' oninput="bepState.'+field+'['+i+'].name=this.value">' +
+      '<input class="bep-inp bep-num" type="text" inputmode="numeric" value="'+bepFmt(item.amt)+'" style="width:140px;flex-shrink:0"' +
+        ' oninput="bepState.'+field+'['+i+'].amt=parseBepNum(this.value);bepUpdateResults()"' +
+        ' onblur="this.value=bepFmt(bepState.'+field+'['+i+'].amt)">' +
+      '<span style="font-size:11px;color:var(--dim);flex-shrink:0;">원</span>' +
+      '<button class="bep-del" onclick="bepState.'+field+'.splice('+i+',1);bepRenderLists();bepUpdateResults()">&times;</button>' +
+    '</div>';
+  }).join('');
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── 목록만 새로 그리기 ── */
+function bepRenderLists() {
+  bepRenderItems('bep-fixed-list', bepState.fixed, 'fixed');
+  bepRenderItems('bep-var-list', bepState.variable, 'variable');
+}
+
+/* ── 결과(합계+지표+차트)만 업데이트 ── */
+function bepUpdateResults() {
+  var r = bepCalc();
+
+  var fs = document.getElementById('bep-fixed-sum');
+  var vs = document.getElementById('bep-var-sum');
+  if (fs) fs.textContent = bepFmt(r.ft);
+  if (vs) vs.textContent = bepFmt(r.vu);
+
+  var res = document.getElementById('bep-result-area');
+  if (!res) return;
+
+  if (r.bq === null) {
+    res.innerHTML = '<p class="warn">⚠️ 판매가가 단위 변동비보다 높아야 합니다.</p>';
+    bepRenderChart(r);
+    return;
+  }
+
+  var tOk = r.tp !== null && r.tp >= 0;
+  var tCls = tOk ? 'ok' : 'ng';
+  res.innerHTML =
+    '<div class="stat-grid">' +
+    '<div class="stat-box"><div class="stat-val">'+bepFmt(r.ci)+'원</div><div class="stat-lbl">공헌이익 (단위당)</div></div>' +
+    '<div class="stat-box"><div class="stat-val">'+r.mr.toFixed(1)+'%</div><div class="stat-lbl">공헌이익률</div></div>' +
+    '<div class="stat-box hi"><div class="stat-val">'+bepFmt(r.bq)+'개</div><div class="stat-lbl">BEP 수량</div></div>' +
+    '<div class="stat-box hi"><div class="stat-val">'+bepFmt(r.br)+'원</div><div class="stat-lbl">BEP 매출액</div></div>' +
+    '<div class="stat-box '+tCls+'"><div class="stat-val">'+bepFmt(r.tq)+'개</div><div class="stat-lbl">목표 달성 수량</div></div>' +
+    '<div class="stat-box '+tCls+'"><div class="stat-val">'+(tOk?'+':'')+bepFmt(r.tp)+'원</div><div class="stat-lbl">목표 매출 시 이익</div></div>' +
+    '</div>';
+
+  bepRenderChart(r);
+}
+
+/* ── 전체 초기 렌더 ── */
+function bepRender() {
+  bepRenderLists();
+  bepUpdateResults();
+}
+
+function bepAddFixed() { bepState.fixed.push({name:'항목',amt:0}); bepRenderLists(); bepUpdateResults(); }
+function bepAddVar()   { bepState.variable.push({name:'항목',amt:0}); bepRenderLists(); bepUpdateResults(); }
+
+/* ── 차트 ── */
+function bepRenderChart(r) {
+  if (typeof Chart === 'undefined') return;
+  var canvas = document.getElementById('bep-chart');
+  if (!canvas) return;
+
+  var maxQty = Math.ceil(Math.max(r.bq||0, r.tq||0, 10) * 1.6 / 10) * 10;
+  var n = 80, pts = [];
+  for (var i = 0; i <= n; i++) pts.push(Math.round(maxQty * i / n));
+
+  var revData  = pts.map(function(q){return {x:q,y:q*bepState.price};});
+  var costData = pts.map(function(q){return {x:q,y:r.ft+q*r.vu};});
+  var fixData  = pts.map(function(q){return {x:q,y:r.ft};});
+  var bepPt    = r.bq !== null ? [{x:r.bq,y:r.br}] : [];
+  var targPt   = r.tq !== null ? [{x:r.tq,y:bepState.target}] : [];
+  var tOk      = r.tp !== null && r.tp >= 0;
+
+  if (bepChart) { bepChart.destroy(); bepChart = null; }
+  bepChart = new Chart(canvas, {
+    type:'scatter',
+    data:{datasets:[
+      {label:'매출액', data:revData,  type:'line', borderColor:'#059669', borderWidth:2, fill:false, tension:0, pointRadius:0, order:4},
+      {label:'총비용', data:costData, type:'line', borderColor:'#ea580c', borderWidth:2, fill:false, tension:0, pointRadius:0, order:3},
+      {label:'고정비', data:fixData,  type:'line', borderColor:'#94a3b8', borderWidth:1.5, borderDash:[5,4], fill:false, tension:0, pointRadius:0, order:5},
+      {label:'BEP',   data:bepPt,    type:'scatter', pointRadius:7, pointHoverRadius:9, backgroundColor:'#2563eb', borderColor:'#fff', borderWidth:2, order:1},
+      {label:'목표',  data:targPt,   type:'scatter', pointRadius:7, pointHoverRadius:9, backgroundColor:tOk?'#059669':'#dc2626', borderColor:'#fff', borderWidth:2, order:2}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{type:'linear',title:{display:true,text:'수량 (개)',font:{size:11}},ticks:{font:{size:10}}},
+        y:{title:{display:true,text:'금액 (원)',font:{size:11}},ticks:{font:{size:10},callback:function(v){return (v/10000).toLocaleString('ko-KR')+'만';}}}
+      },
+      plugins:{
+        legend:{labels:{font:{size:11},boxWidth:14}},
+        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+bepFmt(ctx.parsed.y)+'원';}}}
+      }
+    }
+  });
+}
+
+bepRender();
+
+/* ══════════════════════════════════════
+   HTML 내보내기 (html.md 기준)
+══════════════════════════════════════ */
+function downloadHTML() {
+  var r = bepCalc();
+  var date = new Date().toLocaleDateString('ko-KR');
+  var chartImg = (bepChart && bepChart.canvas) ? bepChart.canvas.toDataURL('image/png') : null;
+
+  function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+  function ec(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* 비용 테이블 행 */
+  function costRows(arr) {
+    return arr.map(function(i){
+      return '<tr><td>'+ec(i.name)+'</td>' +
+        '<td style="text-align:right;font-family:\'Noto Sans KR\',sans-serif;font-weight:700;">'+fmt(+i.amt||0)+'</td>' +
+        '<td style="color:var(--dim);font-size:11px;">원</td></tr>';
+    }).join('');
+  }
+
+  /* 요약 카드 행 (html.md §6) */
+  var sumRowHtml = '';
+  if (r.bq !== null) {
+    var tOk = r.tp !== null && r.tp >= 0;
+    var sumCards = [
+      {icon:'📊', v:fmt(r.ft)+'원',              l:'고정비 합계',    bc:'var(--border)',                              bg:'',                               vc:'var(--text)'},
+      {icon:'📈', v:r.mr.toFixed(1)+'%',          l:'공헌이익률',    bc:'rgba(37,99,235,.3)',                         bg:'rgba(37,99,235,.04)',             vc:'var(--accent)'},
+      {icon:'🎯', v:fmt(r.bq)+'개',               l:'BEP 수량',      bc:'rgba(234,88,12,.3)',                         bg:'rgba(234,88,12,.04)',             vc:'var(--orange)'},
+      {icon:'💰', v:fmt(r.br)+'원',               l:'BEP 매출액',    bc:'rgba(234,88,12,.3)',                         bg:'rgba(234,88,12,.04)',             vc:'var(--orange)'},
+      {icon:tOk?'✅':'⚠️', v:tOk?'달성':'미달',  l:'목표 달성 여부', bc:tOk?'rgba(5,150,105,.3)':'rgba(220,38,38,.3)', bg:tOk?'rgba(5,150,105,.04)':'rgba(220,38,38,.04)', vc:tOk?'var(--green)':'var(--red)'}
+    ];
+    sumRowHtml = '<div class="sum-row">\n' +
+      sumCards.map(function(c){
+        return '<div class="sum-c" style="border-color:'+c.bc+';'+(c.bg?'background:'+c.bg+';':'')+'">' +
+          '<div class="sum-icon">'+c.icon+'</div>' +
+          '<div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:'+c.vc+';">'+ec(c.v)+'</div>' +
+          '<div class="sum-l" style="color:'+c.vc+';">'+ec(c.l)+'</div></div></div>';
+      }).join('\n') +
+    '\n</div>\n\n';
+  }
+
+  /* 결과 지표 그리드 */
+  var metricsHtml = '';
+  if (r.bq !== null) {
+    var tOk2 = r.tp !== null && r.tp >= 0;
+    var metrics = [
+      {v:fmt(r.ci)+'원',               l:'공헌이익 (단위당)', bc:'var(--border)',                                   vc:'var(--text)'},
+      {v:r.mr.toFixed(1)+'%',           l:'공헌이익률',        bc:'var(--border)',                                   vc:'var(--text)'},
+      {v:fmt(r.bq)+'개',               l:'BEP 수량',          bc:'rgba(234,88,12,.35)',                             vc:'var(--orange)'},
+      {v:fmt(r.br)+'원',               l:'BEP 매출액',        bc:'rgba(234,88,12,.35)',                             vc:'var(--orange)'},
+      {v:fmt(r.tq)+'개',               l:'목표 달성 수량',    bc:tOk2?'rgba(5,150,105,.35)':'rgba(220,38,38,.35)', vc:tOk2?'var(--green)':'var(--red)'},
+      {v:(tOk2?'+':'')+fmt(r.tp)+'원', l:'목표 매출 시 이익', bc:tOk2?'rgba(5,150,105,.35)':'rgba(220,38,38,.35)', vc:tOk2?'var(--green)':'var(--red)'}
+    ];
+    metricsHtml = '<div class="metric-grid">' +
+      metrics.map(function(m){
+        return '<div style="background:var(--card);border:1px solid '+m.bc+';border-radius:8px;padding:14px 16px;">' +
+          '<div style="font-family:\'Noto Sans KR\',sans-serif;font-size:16px;font-weight:700;color:'+m.vc+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ec(m.v)+'</div>' +
+          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">'+ec(m.l)+'</div></div>';
+      }).join('') + '</div>';
+  } else {
+    metricsHtml = '<div style="color:var(--red);font-size:13px;padding:8px 0;">⚠️ 판매가가 단위 변동비보다 높아야 합니다.</div>';
+  }
+
+  /* CSS (html.md §1+§3~6) */
+  var css = [
+    ':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;}',
+    '*{margin:0;padding:0;box-sizing:border-box;}',
+    "body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}",
+    '.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}',
+    '.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}',
+    '.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}',
+    '.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}',
+    '.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}',
+    '.sum-icon{font-size:22px;opacity:.85;}',
+    ".sum-v{font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+    '.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}',
+    '.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}',
+    '.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}',
+    ".formula{background:var(--card2);border:1px solid rgba(37,99,235,.15);border-radius:var(--r);padding:12px 16px;font-family:'Noto Sans KR',sans-serif;font-size:12px;color:var(--muted);line-height:2;margin-bottom:16px;}",
+    '.formula span{color:var(--orange);font-weight:700;}',
+    '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}',
+    '.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.06);font-size:13px;}',
+    '.info-row:last-child{border-bottom:none;}',
+    ".info-v{font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:12px;}",
+    'table{width:100%;border-collapse:collapse;font-size:12px;}',
+    'th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--card2);border-bottom:1px solid var(--border);}',
+    'td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.06);}',
+    'tr:last-child td{border-bottom:none;}',
+    ".cost-total{text-align:right;font-size:12px;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);font-family:'Noto Sans KR', sans-serif;}",
+    '.cost-total strong{color:var(--text);}',
+    '.metric-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}',
+    '.chart-img{width:100%;border-radius:8px;margin-top:4px;}',
+    '.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}',
+    '@media(max-width:640px){.sum-row{grid-template-columns:repeat(2,1fr);}.grid2{grid-template-columns:1fr;}}'
+  ].join('\n');
+
+  var html = [
+    '<!DOCTYPE html>',
+    '<html lang="ko">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1.0">',
+    '<title>BEP 분석 결과 — '+ec(date)+'</title>',
+    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">',
+    '<style>'+css+'</style>',
+    '</head>',
+    '<body>',
+    '<div class="wrap">',
+    '',
+    '<div class="page-title">📊 BEP 분석 결과</div>',
+    '<div class="meta"><b style="color:var(--muted)">BEP 시뮬레이터</b> &nbsp;·&nbsp; '+ec(date)+' 기준 &nbsp;·&nbsp; DataForge</div>',
+    '',
+    sumRowHtml,
+    '<div class="section-card">',
+    '<div class="section-title">기본 설정</div>',
+    '<div class="grid2">',
+    '<div>',
+    '<div class="info-row"><span>판매 가격</span><span class="info-v">'+fmt(bepState.price)+'원 / 개</span></div>',
+    '<div class="info-row"><span>목표 매출액</span><span class="info-v">'+fmt(bepState.target)+'원</span></div>',
+    '</div>',
+    '<div>',
+    '<div class="info-row"><span>고정비 합계</span><span class="info-v">'+fmt(r.ft)+'원</span></div>',
+    '<div class="info-row"><span>단위 변동비 합계</span><span class="info-v">'+fmt(r.vu)+'원 / 개</span></div>',
+    '</div>',
+    '</div>',
+    '</div>',
+    '',
+    '<div class="section-card">',
+    '<div class="section-title">비용 구조</div>',
+    '<div class="grid2">',
+    '<div>',
+    '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">고정비</div>',
+    '<table><thead><tr><th>항목</th><th style="text-align:right;">금액</th><th></th></tr></thead>',
+    '<tbody>'+costRows(bepState.fixed)+'</tbody></table>',
+    '<div class="cost-total">합계 : <strong>'+fmt(r.ft)+'</strong> 원</div>',
+    '</div>',
+    '<div>',
+    '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">변동비 (단위당)</div>',
+    '<table><thead><tr><th>항목</th><th style="text-align:right;">금액</th><th></th></tr></thead>',
+    '<tbody>'+costRows(bepState.variable)+'</tbody></table>',
+    '<div class="cost-total">합계 : <strong>'+fmt(r.vu)+'</strong> 원 / 개</div>',
+    '</div>',
+    '</div>',
+    '</div>',
+    '',
+    '<div class="section-card">',
+    '<div class="section-title">분석 결과</div>',
+    '<div class="formula">공헌이익 = 판매가 − 단위변동비 &nbsp;|&nbsp; 공헌이익률 = 공헌이익 ÷ 판매가 × 100<br>' +
+      '<span>BEP 수량</span> = 고정비 ÷ 공헌이익 &nbsp;|&nbsp; <span>BEP 매출</span> = BEP 수량 × 판매가</div>',
+    metricsHtml,
+    '</div>',
+    '',
+    chartImg ? '<div class="section-card">\n<div class="section-title">손익분기 차트</div>\n<img class="chart-img" src="'+chartImg+'">\n</div>' : '',
+    '',
+    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(date)+'</div>',
+    '</div>',
+    '</body>',
+    '</html>'
+  ].join('\n');
+
+  var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url;
+  a.download = 'bep-analysis-'+new Date().toISOString().slice(0,10)+'.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+<script>(function(){var k='tf_manage_bep';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+
+<!-- ── AI 분석 프롬프트 팝업 (자동 삽입) ── -->
+<style>
+.pr-open-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:8px;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.pr-open-btn:hover{background:rgba(124,58,237,.18);}
+.pr-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.pr-bg.open{display:flex;}
+.pr-modal{background:var(--card,#fff);border:1px solid var(--border,rgba(0,0,0,.1));border-radius:14px;max-width:720px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.pr-head{padding:16px 20px 12px;border-bottom:1px solid var(--border,rgba(0,0,0,.1));}
+.pr-head h3{font-size:15px;font-weight:800;color:var(--text,#1e293b);}
+.pr-head p{font-size:11.5px;color:var(--muted,#64748b);margin-top:4px;line-height:1.6;}
+.pr-tabs{display:flex;gap:6px;margin-top:10px;}
+.pr-tab{font-size:11px;font-weight:700;padding:5px 12px;border-radius:14px;border:1px solid var(--border2,rgba(0,0,0,.15));background:transparent;color:var(--muted,#64748b);cursor:pointer;font-family:inherit;transition:all .15s;}
+.pr-tab.active{background:#2563eb;border-color:#2563eb;color:#fff;}
+.pr-body{padding:14px 20px;overflow-y:auto;flex:1;}
+.pf-guide{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.pf-step{font-size:11.5px;color:var(--muted,#64748b);line-height:1.6;}
+.pf-step b{color:var(--text,#1e293b);}
+.pf-no{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#2563eb;color:#fff;font-size:10px;font-weight:800;margin-right:6px;}
+.pr-out{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;font-family:inherit;font-size:12px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word;}
+.pf-fill{color:#fbbf24;}
+.pf-sect{color:#67e8f9;font-weight:700;}
+.pf-note{font-size:11px;color:var(--muted,#64748b);margin-top:8px;line-height:1.6;}
+.pr-foot{padding:12px 20px 16px;border-top:1px solid var(--border,rgba(0,0,0,.1));display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.pr-copy{font-size:12px;font-weight:700;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;transition:opacity .15s;}
+.pr-copy:hover{opacity:.88;}
+.pr-copy.ok{background:#059669;}
+.pr-ai-link{font-size:11px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;text-decoration:none;border:1px solid;transition:all .2s;font-family:inherit;}
+.pr-ai-link:hover{opacity:.8;}
+.pr-close{margin-left:auto;font-size:12px;font-weight:600;padding:8px 14px;background:transparent;border:1px solid var(--border2,rgba(0,0,0,.15));color:var(--muted,#64748b);border-radius:7px;cursor:pointer;font-family:inherit;}
+.pr-close:hover{color:var(--text,#1e293b);}
+</style>
+<div class="pr-bg" id="pr-bg" onclick="if(event.target===this)closePrompt()">
+  <div class="pr-modal">
+    <div class="pr-head">
+      <h3>🤖 BEP 분석 프롬프트</h3>
+      <p id="pr-desc"></p>
+      <div class="pr-tabs">
+        <button class="pr-tab" id="pr-tab-tpl" onclick="showPrMode('tpl')">📝 입력값 준비</button>
+        <button class="pr-tab" id="pr-tab-rev" onclick="showPrMode('rev')">🔍 결과 해석</button>
+      </div>
+    </div>
+    <div class="pr-body">
+      <div class="pf-guide" id="pf-guide">
+        <div class="pf-step"><span class="pf-no">1</span><b>역할 지정</b> — AI가 어떤 관점으로 답할지 정합니다</div>
+        <div class="pf-step"><span class="pf-no">2</span><b>배경·숫자</b> — AI는 내 사업의 숫자를 모릅니다. 아는 값은 주고, 모르는 값은 질문하게 하세요</div>
+        <div class="pf-step"><span class="pf-no">3</span><b>작업 요청</b> — 무엇을 만들지(입력값 정리) 또는 무엇을 해석할지 지정합니다</div>
+        <div class="pf-step"><span class="pf-no">4</span><b>조건</b> — 추정 금지 · 모르면 질문 · 확인 방법 요구 같은 안전장치를 겁니다</div>
+      </div>
+      <div class="pr-out" id="pr-out"></div>
+      <div class="pf-note">💡 <span style="color:#b45309;font-weight:700">(예: …)</span> 부분을 내 숫자·상황으로 바꿔서 사용하세요.</div>
+    </div>
+    <div class="pr-foot">
+      <button class="pr-copy" id="pr-copy" onclick="copyPrompt()">📋 프롬프트 복사</button>
+      <a href="https://chatgpt.com" target="_blank" class="pr-ai-link" style="background:rgba(16,163,127,.12);border-color:rgba(16,163,127,.3);color:#0d9668;" onclick="copyPrompt()">ChatGPT</a>
+      <a href="https://claude.ai" target="_blank" class="pr-ai-link" style="background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.3);color:#ea580c;" onclick="copyPrompt()">Claude</a>
+      <a href="https://gemini.google.com" target="_blank" class="pr-ai-link" style="background:rgba(79,142,247,.12);border-color:rgba(79,142,247,.3);color:#2563eb;" onclick="copyPrompt()">Gemini</a>
+      <button class="pr-close" onclick="closePrompt()">닫기</button>
+    </div>
+  </div>
+</div>
+<script>
+var PR_TPL = "당신은 원가·수익성 분석 전문가입니다.\n\n[사업 배경]\n- 업종·아이템: (예: 당일 로스팅 원두 카페)\n- 판매 상품·가격: (예: 아메리카노 평균 4,500원)\n- 규모: (예: 20석 매장, 직원 3명)\n\n[요청]\nBEP(손익분기점) 분석에 필요한 입력값을 함께 정리해 주세요.\n1) 고정비: 임대료·인건비·보험료 등 매달 나가는 비용을 항목별로 질문해서 합계를 구해 주세요.\n2) 단위당 변동비: 재료비·포장비 등 한 개 팔 때마다 드는 비용을 항목별로 질문해 주세요.\n3) 판매 가격: 할인·수수료를 반영한 실제 평균 판매가를 확인해 주세요.\n\n[조건]\n- 한 번에 하나씩 질문해 주세요. 내가 모르는 항목은 임의로 채우지 말고 확인 방법을 알려주세요.\n- 고정비/변동비 구분이 애매한 항목(예: 아르바이트 인건비)은 기준을 설명하고 함께 분류해 주세요.\n- 정리가 끝나면 고정비 합계·단위당 변동비·판매가를 표로 요약해 주세요.";
+var PR_REV = "당신은 원가·수익성 분석 전문가입니다.\n아래는 BEP 분석 시뮬레이터로 계산한 결과입니다.\n\n[내 입력값]\n- 판매 가격: (예: 4,500원)\n- 단위당 변동비: (예: 1,800원)\n- 월 고정비: (예: 8,500,000원)\n\n[계산 결과]\n- 손익분기점 수량: (예: 월 3,148개 / 일 105개)\n- 손익분기점 매출액: (예: 월 14,170,000원)\n- 공헌이익률: (예: 60%)\n\n[요청]\n1. 이 결과가 현실적으로 달성 가능한 수준인지 판단 기준과 함께 해석해 주세요.\n2. BEP를 낮추는 방법을 고정비 절감·변동비 절감·가격 조정 세 방향에서 2가지씩 제안해 주세요.\n3. 각 제안의 부작용(품질 저하·고객 이탈 등)도 함께 알려주세요.\n4. 확실하지 않은 부분은 추정하지 말고 나에게 질문해 주세요.";
+function renderPrompt(text){
+  var esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  esc = esc.replace(/\(예:[^)]*\)/g, function(m){ return '<span class="pf-fill">'+m+'</span>'; });
+  esc = esc.replace(/^\[[^\]]+\]$/gm, function(m){ return '<span class="pf-sect">'+m+'</span>'; });
+  document.getElementById('pr-out').innerHTML = esc;
+}
+function showPrMode(m){
+  renderPrompt(m==='tpl' ? PR_TPL : PR_REV);
+  document.getElementById('pr-tab-tpl').classList.toggle('active', m==='tpl');
+  document.getElementById('pr-tab-rev').classList.toggle('active', m==='rev');
+  document.getElementById('pf-guide').style.display = m==='tpl' ? '' : 'none';
+  document.getElementById('pr-desc').textContent = m==='tpl'
+    ? '분석에 넣을 입력값을 AI와 함께 준비하는 프롬프트입니다. 노란 부분만 내 상황으로 바꾸면 완성됩니다.'
+    : '시뮬레이터 결과를 붙여넣고 AI에게 해석·개선 방향을 묻는 프롬프트입니다. 노란 부분을 내 결과 숫자로 바꾸세요.';
+}
+function openPrompt(){ showPrMode('tpl'); document.getElementById('pr-bg').classList.add('open'); }
+function closePrompt(){ document.getElementById('pr-bg').classList.remove('open'); }
+function copyPrompt(){
+  var text = document.getElementById('pr-out').textContent;
+  navigator.clipboard.writeText(text).then(function(){
+    var b = document.getElementById('pr-copy');
+    b.textContent = '✅ 복사됨'; b.classList.add('ok');
+    setTimeout(function(){ b.textContent = '📋 프롬프트 복사'; b.classList.remove('ok'); }, 1800);
+  });
+}
+</script>
+<script>
+/* ── 마크다운 내보내기 (자동 삽입) ── */
+function dlMD(md, prefix){
+  var today = new Date().toISOString().slice(0,10);
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download = prefix+'-'+today+'.md';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+function safeName(n){ return String(n).replace(/[\\/:*?"<>|#]/g,'').replace(/\s+/g,'-').slice(0,40)||'analysis'; }
+
+function exportMD(){
+  var r = bepCalc();
+  var today = new Date().toISOString().slice(0,10);
+  var md = '# 📊 BEP 분석 결과\n\n' + today + ' · DataForge\n\n';
+  md += '## 기본 설정\n\n| 항목 | 값 |\n|---|---:|\n';
+  md += '| 판매 가격 | ' + bepFmt(bepState.price) + '원 |\n| 목표 매출액 | ' + bepFmt(bepState.target) + '원 |\n\n';
+  md += '## 고정비\n\n| 항목 | 금액 |\n|---|---:|\n';
+  md += bepState.fixed.map(function(i){ return '| ' + i.name + ' | ' + bepFmt(i.amt) + '원 |'; }).join('\n');
+  md += '\n| **합계** | **' + bepFmt(r.ft) + '원** |\n\n';
+  md += '## 변동비 (단위당)\n\n| 항목 | 금액 |\n|---|---:|\n';
+  md += bepState.variable.map(function(i){ return '| ' + i.name + ' | ' + bepFmt(i.amt) + '원 |'; }).join('\n');
+  md += '\n| **합계** | **' + bepFmt(r.vu) + '원/개** |\n\n';
+  md += '## 분석 결과\n\n';
+  if (r.bq === null){
+    md += '⚠️ 판매가가 단위 변동비보다 높아야 합니다.\n';
+  } else {
+    md += '| 지표 | 값 |\n|---|---:|\n';
+    md += '| 공헌이익 (단위당) | ' + bepFmt(r.ci) + '원 |\n';
+    md += '| 공헌이익률 | ' + r.mr.toFixed(1) + '% |\n';
+    md += '| **BEP 수량** | **' + bepFmt(r.bq) + '개** |\n';
+    md += '| **BEP 매출액** | **' + bepFmt(r.br) + '원** |\n';
+    md += '| 목표 달성 수량 | ' + bepFmt(r.tq) + '개 |\n';
+    md += '| 목표 매출 시 이익 | ' + bepFmt(r.tp) + '원 |\n';
+  }
+  dlMD(md, 'bep');
+}
+</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

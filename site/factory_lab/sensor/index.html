@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>센서 모니터링 — DataForge Factory Lab</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#0284c7;--accent2:#ea580c;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:var(--accent2);font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:15px;font-weight:700;color:var(--text);}
+.logo-title span{color:var(--accent);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;font-family:'Noto Sans KR', sans-serif;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);text-decoration:none;}
+
+/* ── Page ── */
+.page{padding:32px 24px 80px;}
+
+/* ── Intro box ── */
+.intro-box{background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Stat chips ── */
+.stat-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.stat-chip{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.stat-chip .sc-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.stat-chip .sc-value{font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--text);}
+.stat-chip .sc-unit{font-size:11px;color:var(--dim);margin-top:2px;}
+.stat-chip.chip-normal .sc-value{color:var(--green);}
+.stat-chip.chip-warning .sc-value{color:var(--amber);}
+.stat-chip.chip-danger  .sc-value{color:var(--red);}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.ds-selector{display:flex;gap:6px;flex-wrap:wrap;}
+.ds-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+.ds-btn:hover{color:var(--text);}
+.ds-btn.active{background:rgba(2,132,199,0.12);border-color:rgba(2,132,199,0.4);color:var(--accent);}
+.refresh-info{font-family:'Noto Sans KR', sans-serif;font-size:11px;color:var(--dim);white-space:nowrap;}
+.refresh-info span{color:var(--accent);}
+
+/* ── Sensor grid ── */
+.sensor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.sensor-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--border);border-radius:var(--r);padding:14px 16px;transition:border-color .3s;}
+.sensor-card.status-normal {border-left-color:#22c55e;}
+.sensor-card.status-warning{border-left-color:#f59e0b;}
+.sensor-card.status-danger {border-left-color:#ef4444;}
+.s-name{font-size:.78rem;color:var(--muted);margin-bottom:2px;}
+.s-location{font-size:.7rem;color:var(--dim);}
+.s-value{font-family:'Space Mono',monospace;font-size:1.9rem;font-weight:700;margin:8px 0 4px;color:var(--text);transition:color .3s;}
+.s-row{display:flex;justify-content:space-between;align-items:center;}
+.s-unit{font-size:.78rem;color:var(--dim);}
+.s-status{font-size:.72rem;font-weight:700;}
+.status-normal  .s-status{color:var(--green);}
+.status-warning .s-status{color:var(--amber);}
+.status-danger  .s-status{color:var(--red);}
+.s-range{font-size:.68rem;color:var(--dim);margin-top:4px;}
+
+@media(max-width:900px){.stat-chips{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.site-header{padding:12px 16px;}.page{padding:20px 16px 60px;}}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/factory_lab/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>센서</span> 모니터링</div>
+  </div>
+  <a href="/factory_lab/" class="header-back">← Factory Lab</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>실습 포인트</strong>
+    WebDriverWait으로 값 갱신 대기 &nbsp;|&nbsp; sensor_code · 수치 · 단위 · 상태(정상/주의/위험) 수집 &nbsp;|&nbsp; 특정 상태 센서만 필터링
+  </div>
+
+  <!-- 상태 요약 -->
+  <div class="a-card">
+    <div class="a-card-title">센서 현황 — 3초마다 자동 갱신</div>
+    <div class="stat-chips">
+      <div class="stat-chip">
+        <div class="sc-label">전체 센서</div>
+        <div class="sc-value" id="count-total">15</div>
+        <div class="sc-unit">개소</div>
+      </div>
+      <div class="stat-chip chip-normal">
+        <div class="sc-label">정상</div>
+        <div class="sc-value" id="count-normal">13</div>
+        <div class="sc-unit">개소</div>
+      </div>
+      <div class="stat-chip chip-warning">
+        <div class="sc-label">주의</div>
+        <div class="sc-value" id="count-warning">2</div>
+        <div class="sc-unit">개소</div>
+      </div>
+      <div class="stat-chip chip-danger">
+        <div class="sc-label">위험</div>
+        <div class="sc-value" id="count-danger">0</div>
+        <div class="sc-unit">개소</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 필터 + 갱신 정보 -->
+  <div class="filter-bar">
+    <div class="ds-selector">
+      <button class="ds-btn active" id="filter-all"     onclick="filterSensors('all')">전체</button>
+      <button class="ds-btn"        id="filter-normal"  onclick="filterSensors('normal')">정상만</button>
+      <button class="ds-btn"        id="filter-warning" onclick="filterSensors('warning')">주의만</button>
+      <button class="ds-btn"        id="filter-danger"  onclick="filterSensors('danger')">위험만</button>
+    </div>
+    <div class="refresh-info">
+      마지막 갱신: <span id="last-updated">-</span>
+      &nbsp;·&nbsp; 다음 갱신 <span id="countdown">3</span>초
+    </div>
+  </div>
+
+  <!-- 센서 카드 그리드 -->
+  <div class="sensor-grid" id="sensor-grid">
+        <div class="sensor-card status-normal"
+         id="sensor-S-T-001"
+         data-code="S-T-001"
+         data-type="온도"
+         data-status="normal">
+      <div class="s-name">1라인 프레스 온도</div>
+      <div class="s-location">1라인 A구역</div>
+      <div class="s-value" id="val-S-T-001">27.0</div>
+      <div class="s-row">
+        <span class="s-unit">°C</span>
+        <span class="s-status" id="status-S-T-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-T-001">
+        정상범위: 20 ~ 45      </div>
+    </div>
+        <div class="sensor-card status-warning"
+         id="sensor-S-T-002"
+         data-code="S-T-002"
+         data-type="온도"
+         data-status="warning">
+      <div class="s-name">2라인 도장 구간 온도</div>
+      <div class="s-location">2라인 B구역</div>
+      <div class="s-value" id="val-S-T-002">51.9</div>
+      <div class="s-row">
+        <span class="s-unit">°C</span>
+        <span class="s-status" id="status-S-T-002">주의</span>
+      </div>
+      <div class="s-range" id="range-S-T-002">
+        정상범위: 20 ~ 40      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-T-003"
+         data-code="S-T-003"
+         data-type="온도"
+         data-status="normal">
+      <div class="s-name">용해로 온도</div>
+      <div class="s-location">3라인 C구역</div>
+      <div class="s-value" id="val-S-T-003">800.0</div>
+      <div class="s-row">
+        <span class="s-unit">°C</span>
+        <span class="s-status" id="status-S-T-003">정상</span>
+      </div>
+      <div class="s-range" id="range-S-T-003">
+        정상범위: 700 ~ 900      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-T-004"
+         data-code="S-T-004"
+         data-type="온도"
+         data-status="normal">
+      <div class="s-name">냉각수 온도</div>
+      <div class="s-location">유틸리티룸</div>
+      <div class="s-value" id="val-S-T-004">11.4</div>
+      <div class="s-row">
+        <span class="s-unit">°C</span>
+        <span class="s-status" id="status-S-T-004">정상</span>
+      </div>
+      <div class="s-range" id="range-S-T-004">
+        정상범위: 5 ~ 20      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-H-001"
+         data-code="S-H-001"
+         data-type="습도"
+         data-status="normal">
+      <div class="s-name">도장 부스 습도</div>
+      <div class="s-location">2라인 도장구역</div>
+      <div class="s-value" id="val-S-H-001">45.5</div>
+      <div class="s-row">
+        <span class="s-unit">%RH</span>
+        <span class="s-status" id="status-S-H-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-H-001">
+        정상범위: 40 ~ 70      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-H-002"
+         data-code="S-H-002"
+         data-type="습도"
+         data-status="normal">
+      <div class="s-name">자재창고 습도</div>
+      <div class="s-location">자재창고</div>
+      <div class="s-value" id="val-S-H-002">38.9</div>
+      <div class="s-row">
+        <span class="s-unit">%RH</span>
+        <span class="s-status" id="status-S-H-002">정상</span>
+      </div>
+      <div class="s-range" id="range-S-H-002">
+        정상범위: 30 ~ 60      </div>
+    </div>
+        <div class="sensor-card status-warning"
+         id="sensor-S-P-001"
+         data-code="S-P-001"
+         data-type="압력"
+         data-status="warning">
+      <div class="s-name">에어 공급 압력</div>
+      <div class="s-location">공압 헤더</div>
+      <div class="s-value" id="val-S-P-001">7.3</div>
+      <div class="s-row">
+        <span class="s-unit">bar</span>
+        <span class="s-status" id="status-S-P-001">주의</span>
+      </div>
+      <div class="s-range" id="range-S-P-001">
+        정상범위: 5.5 ~ 7      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-P-002"
+         data-code="S-P-002"
+         data-type="압력"
+         data-status="normal">
+      <div class="s-name">유압 실린더 압력</div>
+      <div class="s-location">1라인 프레스</div>
+      <div class="s-value" id="val-S-P-002">90.4</div>
+      <div class="s-row">
+        <span class="s-unit">bar</span>
+        <span class="s-status" id="status-S-P-002">정상</span>
+      </div>
+      <div class="s-range" id="range-S-P-002">
+        정상범위: 80 ~ 120      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-V-001"
+         data-code="S-V-001"
+         data-type="진동"
+         data-status="normal">
+      <div class="s-name">1호 컴프레서 진동</div>
+      <div class="s-location">유틸리티룸</div>
+      <div class="s-value" id="val-S-V-001">0.8</div>
+      <div class="s-row">
+        <span class="s-unit">mm/s</span>
+        <span class="s-status" id="status-S-V-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-V-001">
+        정상범위: 0 ~ 4.5      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-V-002"
+         data-code="S-V-002"
+         data-type="진동"
+         data-status="normal">
+      <div class="s-name">2호 펌프 진동</div>
+      <div class="s-location">유틸리티룸</div>
+      <div class="s-value" id="val-S-V-002">1.4</div>
+      <div class="s-row">
+        <span class="s-unit">mm/s</span>
+        <span class="s-status" id="status-S-V-002">정상</span>
+      </div>
+      <div class="s-range" id="range-S-V-002">
+        정상범위: 0 ~ 3.5      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-F-001"
+         data-code="S-F-001"
+         data-type="유량"
+         data-status="normal">
+      <div class="s-name">냉각수 유량</div>
+      <div class="s-location">유틸리티룸</div>
+      <div class="s-value" id="val-S-F-001">40.2</div>
+      <div class="s-row">
+        <span class="s-unit">L/min</span>
+        <span class="s-status" id="status-S-F-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-F-001">
+        정상범위: 20 ~ 50      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-E-001"
+         data-code="S-E-001"
+         data-type="전력"
+         data-status="normal">
+      <div class="s-name">1라인 전력 소비</div>
+      <div class="s-location">1라인 배전반</div>
+      <div class="s-value" id="val-S-E-001">41.9</div>
+      <div class="s-row">
+        <span class="s-unit">kW</span>
+        <span class="s-status" id="status-S-E-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-E-001">
+        정상범위: 0 ~ 80      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-E-002"
+         data-code="S-E-002"
+         data-type="전력"
+         data-status="normal">
+      <div class="s-name">2라인 전력 소비</div>
+      <div class="s-location">2라인 배전반</div>
+      <div class="s-value" id="val-S-E-002">43.9</div>
+      <div class="s-row">
+        <span class="s-unit">kW</span>
+        <span class="s-status" id="status-S-E-002">정상</span>
+      </div>
+      <div class="s-range" id="range-S-E-002">
+        정상범위: 0 ~ 60      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-G-001"
+         data-code="S-G-001"
+         data-type="VOC"
+         data-status="normal">
+      <div class="s-name">도장 부스 VOC</div>
+      <div class="s-location">2라인 도장구역</div>
+      <div class="s-value" id="val-S-G-001">29.8</div>
+      <div class="s-row">
+        <span class="s-unit">ppm</span>
+        <span class="s-status" id="status-S-G-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-G-001">
+        정상범위: 0 ~ 50      </div>
+    </div>
+        <div class="sensor-card status-normal"
+         id="sensor-S-N-001"
+         data-code="S-N-001"
+         data-type="소음"
+         data-status="normal">
+      <div class="s-name">1라인 소음</div>
+      <div class="s-location">1라인 A구역</div>
+      <div class="s-value" id="val-S-N-001">75.9</div>
+      <div class="s-row">
+        <span class="s-unit">dB</span>
+        <span class="s-status" id="status-S-N-001">정상</span>
+      </div>
+      <div class="s-range" id="range-S-N-001">
+        정상범위: 60 ~ 85      </div>
+    </div>
+      </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+let currentFilter = 'all';
+
+function filterSensors(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('#sensor-grid .sensor-card').forEach(card => {
+    card.style.display = (filter === 'all' || card.dataset.status === filter) ? '' : 'none';
+  });
+  ['all','normal','warning','danger'].forEach(f => {
+    document.getElementById('filter-' + f).classList.toggle('active', f === filter);
+  });
+}
+
+function updateSensors() {
+  fetch('/factory_lab/sensor/api.php')
+    .then(r => r.json())
+    .then(data => {
+      const counts = {normal:0, warning:0, danger:0};
+      data.sensors.forEach(s => {
+        const card   = document.getElementById('sensor-' + s.sensor_code);
+        if (!card) return;
+        const valEl  = document.getElementById('val-' + s.sensor_code);
+        const statEl = document.getElementById('status-' + s.sensor_code);
+        const newVal = s.value.toLocaleString('ko-KR', {minimumFractionDigits:1, maximumFractionDigits:1});
+        if (valEl.textContent !== newVal) {
+          valEl.style.color = '#f59e0b';
+          setTimeout(() => { valEl.style.color = ''; }, 600);
+        }
+        valEl.textContent   = newVal;
+        card.className      = 'sensor-card status-' + s.status;
+        card.dataset.status = s.status;
+        statEl.textContent  = {normal:'정상', warning:'주의', danger:'위험'}[s.status] || s.status;
+        counts[s.status]++;
+      });
+      document.getElementById('count-normal').textContent  = counts.normal;
+      document.getElementById('count-warning').textContent = counts.warning;
+      document.getElementById('count-danger').textContent  = counts.danger;
+      document.getElementById('last-updated').textContent  = new Date().toLocaleTimeString('ko-KR');
+      filterSensors(currentFilter);
+    })
+    .catch(err => console.error('센서 데이터 로드 실패:', err));
+}
+
+let countdown = 3;
+setInterval(() => {
+  countdown--;
+  document.getElementById('countdown').textContent = countdown;
+  if (countdown <= 0) { countdown = 3; updateSensors(); }
+}, 1000);
+
+updateSensors();
+</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

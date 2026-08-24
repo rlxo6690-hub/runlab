@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>영역 이미지 저장 확장 프로그램 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="영역 이미지 저장 확장 프로그램 — DataForge">
+  <meta property="og:description" content="웹페이지의 영역이나 요소를 선택해 그 안의 이미지를 원본 파일 그대로 골라 저장하는 크롬 확장 프로그램. 화면 캡처가 아닌 원본 화질 그대로.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    :root{
+      --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+      --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+      --accent:#2563eb;--accent2:#6366f1;
+      --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;
+    }
+    body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+         background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;}
+
+    .site-header{padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:#ea580c;font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+    .page{padding:0 24px 80px;}
+    .intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;
+      padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:16px;}
+    .intro-box strong{color:var(--text);}
+
+    .a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}
+    .a-card:last-child{margin-bottom:0;}
+    .a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+    .dl-hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+    .dl-ic{width:72px;height:72px;border-radius:18px;flex-shrink:0;box-shadow:0 6px 20px rgba(37,99,235,.25);}
+    .dl-body{flex:1;min-width:200px;}
+    .dl-name{font-size:20px;font-weight:700;color:var(--text);}
+    .dl-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+    .dl-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+    .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;background:var(--card2);color:var(--muted);border:1px solid var(--border2);font-family:'Noto Sans KR', sans-serif;}
+    .badge.green{background:rgba(5,150,105,.1);color:var(--green);border-color:rgba(5,150,105,.2);}
+    .dl-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
+      font-size:15px;font-weight:700;padding:14px 26px;border-radius:10px;text-decoration:none;
+      transition:.2s;white-space:nowrap;box-shadow:0 4px 14px rgba(37,99,235,.3);}
+    .dl-btn:hover{background:#1d4ed8;transform:translateY(-1px);}
+
+    .guide-step{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border);}
+    .guide-step:last-child{border-bottom:none;padding-bottom:0;}
+    .guide-num{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#fff;background:var(--accent);
+      width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+    .guide-body{font-size:14px;color:var(--muted);line-height:1.75;min-width:0;}
+    .guide-body strong{color:var(--text);}
+    .kbd{font-family:'Space Mono',monospace;font-size:12px;background:var(--card2);border:1px solid var(--border2);
+      border-radius:5px;padding:2px 8px;color:var(--text);white-space:nowrap;}
+    .warn-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--amber);background:rgba(217,119,6,.1);
+      border:1px solid rgba(217,119,6,.2);border-radius:5px;padding:1px 8px;margin-left:4px;}
+
+    .use-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .use-card{border:1px solid var(--border2);border-radius:10px;padding:14px 16px;background:var(--card2);}
+    .use-ic{font-size:24px;margin-bottom:6px;}
+    .use-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .use-desc{font-size:12px;color:var(--muted);line-height:1.7;}
+
+    .info-block{font-size:13px;color:var(--muted);line-height:1.8;padding:12px 16px;background:rgba(37,99,235,.04);
+      border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+    .info-block strong{color:var(--text);}
+    .info-block + .info-block{margin-top:8px;}
+    .info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.2);}
+    .info-block.ok{background:rgba(5,150,105,.05);border-color:rgba(5,150,105,.2);}
+    ul.tight{margin:0;padding-left:18px;}
+    ul.tight li{margin-bottom:5px;}
+
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .site-header{padding:12px 14px;}
+      .use-grid{grid-template-columns:1fr;}
+      .dl-hero{flex-direction:column;align-items:flex-start;}
+      .dl-btn{width:100%;justify-content:center;}
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">영역 이미지 저장 확장</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      🖼️ <strong>이미지그랩 — 영역 이미지 저장</strong>은 웹페이지에서 <strong>영역이나 요소를 선택해 그 안의 이미지들을 원본 파일 그대로 저장하는</strong> 크롬 확장 프로그램입니다.
+      화면을 캡처하는 방식이 아니라 <strong>페이지가 쓰는 원본 이미지 파일을 그대로 받아오기 때문에 화질 손실이 없고</strong>,
+      찾은 이미지를 썸네일로 확인하며 <strong>원하는 것만 골라 한번에</strong> 저장할 수 있습니다.
+    </div>
+
+    <!-- 다운로드 -->
+    <div class="a-card">
+      <div class="dl-hero">
+        <img class="dl-ic" src="/extension/imagegrab_ext/src/icons/icon128.png" alt="이미지그랩 아이콘">
+        <div class="dl-body">
+          <div class="dl-name">이미지그랩 — 영역 이미지 저장</div>
+          <div class="dl-sub">영역 드래그 · 요소 선택 · 썸네일로 골라 원본 그대로 한번에 저장</div>
+          <div class="dl-meta">
+            <span class="badge green">v1.0.0</span>
+            <span class="badge">Chrome · Edge</span>
+            <span class="badge">약 20KB</span>
+            <span class="badge">원본 화질</span>
+          </div>
+        </div>
+        <a class="dl-btn" href="/extension/imagegrab_ext/dist/imagegrab.zip" download>⬇ 다운로드 (ZIP)</a>
+      </div>
+    </div>
+
+    <!-- 설치 방법 -->
+    <div class="a-card">
+      <div class="a-card-title">🧩 설치 방법 — 한 번만 하면 됩니다</div>
+
+      <div class="guide-step">
+        <div class="guide-num">1</div>
+        <div class="guide-body">
+          위 <strong>다운로드 버튼</strong>을 눌러 ZIP 파일을 받고 <strong>압축을 풉니다.</strong> 압축을 푼 <strong>폴더 위치를 기억</strong>하세요.
+          <br><span class="warn-badge">중요</span> 폴더를 열었을 때 <span class="kbd">manifest.json</span> 파일이 바로 보여야 합니다.
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">2</div>
+        <div class="guide-body">크롬 주소창에 <span class="kbd">chrome://extensions</span> 를 입력해 이동합니다. (엣지는 <span class="kbd">edge://extensions</span>)</div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">3</div>
+        <div class="guide-body">오른쪽 위 <strong>「개발자 모드」 스위치를 켭니다.</strong></div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">4</div>
+        <div class="guide-body"><strong>「압축해제된 확장 프로그램을 로드합니다」</strong>를 클릭하고, <strong>1단계에서 압축을 푼 폴더를 선택</strong>합니다. (<span class="kbd">manifest.json</span>이 든 그 폴더)</div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">5</div>
+        <div class="guide-body">목록에 <strong>「이미지그랩」</strong>이 추가되면 완료입니다. 🎉 툴바 <strong>퍼즐 아이콘(🧩)</strong>에서 📌 핀을 눌러 고정하면 편합니다.</div>
+      </div>
+    </div>
+
+    <!-- 사용 방법 -->
+    <div class="a-card">
+      <div class="a-card-title">🖼️ 사용 방법</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+        이미지를 저장하고 싶은 페이지에서 툴바의 <strong style="color:var(--text);">이미지그랩 아이콘</strong>을 클릭하면 두 가지 모드가 나옵니다.
+      </p>
+      <div class="use-grid">
+        <div class="use-card">
+          <div class="use-ic">⬚</div>
+          <div class="use-name">영역 드래그</div>
+          <div class="use-desc">화면에서 <strong>사각형을 그리면</strong> 그 범위에 걸친 이미지들이 전부 수집됩니다. 갤러리·검색 결과·상품 목록에서 여러 장을 잡을 때 좋습니다.</div>
+        </div>
+        <div class="use-card">
+          <div class="use-ic">🖱️</div>
+          <div class="use-name">요소 선택</div>
+          <div class="use-desc">마우스를 올리면 기사·갤러리 같은 <strong>요소가 파란 테두리로 표시</strong>됩니다. 클릭하면 그 요소 안의 이미지가 전부 수집됩니다.</div>
+        </div>
+      </div>
+      <div class="info-block ok" style="margin-top:12px;">
+        ✅ 수집되면 <strong>오른쪽 아래에 썸네일 목록</strong>이 뜹니다. 썸네일을 클릭해 <strong>원하는 이미지만 선택/해제</strong>하고
+        <strong>⬇ 저장</strong>을 누르면 선택한 이미지가 <strong>다운로드 폴더 안 <span class="kbd" style="background:#fff;">imagegrab</span> 폴더</strong>에 원본 그대로 한번에 저장됩니다.
+        취소하려면 <span class="kbd" style="background:#fff;">ESC</span> 키를 누릅니다.
+      </div>
+    </div>
+
+    <!-- 알아두기 -->
+    <div class="a-card">
+      <div class="a-card-title">💡 알아두면 좋은 점</div>
+      <ul class="tight" style="font-size:13px;color:var(--muted);line-height:1.8;">
+        <li><strong>화면 캡처가 아니라 원본 이미지 파일을 그대로 저장</strong>합니다. 화면에 작게 보여도 원본이 크면 큰 해상도 그대로 받아집니다.</li>
+        <li>화면에 <strong>보이는 부분을 그림으로 캡처</strong>하고 싶다면 자매 도구인 <a href="https://dataforge.ai.kr/extension/capture" style="color:var(--accent);">픽셀샷 — 영역 캡처</a>를 사용하세요.</li>
+        <li>같은 이미지가 여러 번 쓰였으면 <strong>한 번만</strong> 수집됩니다. 파일 이름은 원본 주소의 파일명을 따릅니다.</li>
+        <li><strong>CSS 배경이미지·캔버스에 그려진 그림은 수집되지 않습니다.</strong> 이 도구는 페이지의 <span class="kbd">&lt;img&gt;</span> 이미지를 대상으로 합니다. (배경/캔버스는 픽셀샷으로 캡처)</li>
+        <li><span class="kbd">chrome://</span> 설정 페이지나 일부 보안 프레임(다른 도메인 iframe) 안쪽은 수집할 수 없습니다.</li>
+        <li>저작권이 있는 이미지는 <strong>개인 학습·자료 정리 용도로만</strong> 사용하세요.</li>
+      </ul>
+      <div class="info-block warn" style="margin-top:12px;">
+        ⚠️ 설치 후 크롬을 켤 때마다 <strong>「개발자 모드 확장 프로그램을 사용 중지하세요」</strong> 안내가 뜰 수 있습니다.
+        개발자 모드로 직접 설치한 확장에 크롬이 항상 보여주는 <strong>정상 안내</strong>이며, <strong>「확장 프로그램 유지」</strong>를 누르면 계속 사용할 수 있습니다.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>(function(){
+  var k='tf_extension_imagegrab';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=extension&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

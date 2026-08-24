@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>방위산업 영상 프롬프트 생성기 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="방위산업 영상 프롬프트 생성기 — DataForge">
+<meta property="og:description" content="방위산업·무인체계·감시정찰 영상 생성용 프롬프트를 항목 선택만으로 완성하세요. 한글·영문 전환, 복사 한 번으로 바로 활용.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626; --orange:#ea580c;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  font-size:14px;line-height:1.6;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+.page{padding:0 24px 80px;}
+
+/* ── HEADER ── */
+.site-header{
+  padding:14px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* ── INTRO ── */
+.intro-box{
+  background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+  border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);
+  line-height:1.7;margin-top:20px;
+}
+.intro-box strong{color:var(--text);}
+
+/* ── CARD ── */
+.a-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 18px;margin-bottom:16px;
+}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{
+  font-size:10px;font-weight:700;color:var(--muted);
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.toolbar-label{font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.seg{display:inline-flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;}
+.seg button{
+  padding:6px 16px;font-size:12px;font-weight:700;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;transition:.15s;font-family:'Noto Sans KR',sans-serif;
+}
+.seg button.active{background:var(--accent);color:#fff;}
+.preset-btn{
+  font-size:11px;font-weight:700;padding:6px 12px;
+  border:1px solid var(--border2);border-radius:6px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:.15s;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.preset-btn:hover{color:var(--accent);border-color:rgba(37,99,235,.4);}
+.toolbar-spacer{flex:1;}
+.mini-btn{
+  font-size:10px;font-weight:700;padding:4px 10px;
+  border:1px solid var(--border2);border-radius:4px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:.15s;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.mini-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.mini-btn.danger:hover{color:var(--red);border-color:rgba(220,38,38,.4);}
+
+/* ── LAYOUT ── */
+.gen-grid{
+  display:grid;grid-template-columns:minmax(0,1fr) 400px;
+  gap:16px;align-items:start;margin-top:16px;
+}
+.side{position:sticky;top:76px;}
+
+/* ── BLOCK CARD ── */
+.blk{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 18px;margin-bottom:12px;}
+.blk-head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.blk-icon{font-size:16px;flex-shrink:0;}
+.blk-tag{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;}
+.blk-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;}
+.blk-q{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.blk-count{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
+  color:var(--dim);border:1px solid var(--border2);border-radius:10px;
+  padding:1px 8px;white-space:nowrap;transition:.15s;}
+.blk-count.on{color:var(--accent);border-color:rgba(37,99,235,.4);background:rgba(37,99,235,.07);}
+.blk-arrow{font-size:10px;color:var(--dim);transition:transform .2s;}
+.blk.closed .blk-arrow{transform:rotate(-90deg);}
+.blk-body{margin-top:12px;}
+.blk.closed .blk-body{display:none;}
+.grp-label{font-size:10px;font-weight:700;color:var(--dim);
+  letter-spacing:.06em;text-transform:uppercase;margin:10px 0 7px;}
+.grp-label:first-child{margin-top:0;}
+
+/* ── TERM PILLS ── */
+.pill-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.term-pill{
+  padding:5px 11px;border:1px solid var(--border2);border-radius:6px;
+  cursor:pointer;font-size:12px;user-select:none;transition:all .15s;
+  color:var(--muted);background:transparent;font-family:'Noto Sans KR',sans-serif;
+}
+.term-pill:hover{border-color:rgba(37,99,235,.4);color:var(--text);}
+.term-pill.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.term-pill.custom{border-style:dashed;}
+.term-pill.custom.selected{border-style:solid;}
+
+/* ── CUSTOM INPUT ── */
+.custom-row{display:flex;gap:6px;margin-top:10px;}
+.custom-inp{
+  flex:1;min-width:0;background:var(--card2);border:1px solid var(--border2);
+  border-radius:6px;color:var(--text);font-size:12px;padding:6px 10px;
+  outline:none;font-family:'Noto Sans KR',sans-serif;
+}
+.custom-inp:focus{border-color:var(--accent);}
+.custom-add{
+  font-size:11px;font-weight:700;padding:6px 12px;border:1px solid var(--border2);
+  border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;
+  transition:.15s;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;
+}
+.custom-add:hover{color:var(--accent);border-color:rgba(37,99,235,.4);}
+
+/* ── PREVIEW ── */
+.preview-card{margin-bottom:0;}
+.sel-count{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--accent);}
+.prompt-view{
+  background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;max-height:calc(100vh - 320px);min-height:180px;overflow:auto;
+}
+.pv-empty{font-size:12px;color:var(--dim);text-align:center;padding:40px 10px;line-height:1.8;}
+.pv-block{margin-bottom:14px;}
+.pv-block:last-child{margin-bottom:0;}
+.pv-tag{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.pv-text{font-size:12.5px;color:var(--text);line-height:1.7;word-break:keep-all;}
+.btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+  font-family:'Noto Sans KR',sans-serif;border:none;border-radius:8px;
+  cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+.preview-hint{font-size:11px;color:var(--dim);margin-top:10px;line-height:1.7;}
+
+/* ── MOBILE FAB ── */
+.fab{
+  display:none;position:fixed;right:16px;bottom:16px;z-index:110;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--accent);color:#fff;font-size:20px;
+  box-shadow:0 4px 14px rgba(37,99,235,.35);
+}
+.copied-toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:#fff;font-size:12px;font-weight:700;
+  padding:9px 22px;border-radius:20px;opacity:0;pointer-events:none;
+  transition:all .25s;z-index:200;
+}
+.copied-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:1024px){
+  .gen-grid{grid-template-columns:1fr;}
+  .side{position:static;}
+  .prompt-view{max-height:400px;}
+  .fab{display:block;}
+}
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:12px 14px;}
+  .blk-q{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">방위산업 영상 프롬프트 생성기</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      <strong>방위산업·무인체계·감시정찰 영상 생성용 프롬프트를 항목 선택만으로 완성합니다.</strong>
+      [Subject]부터 [Constraints]까지 13개 항목에서 표현을 고르면 오른쪽에 최종 프롬프트가 실시간으로 조합됩니다.
+      한글·영문을 전환할 수 있고, 완성된 프롬프트는 복사 한 번으로 Veo·Sora·Runway 등 영상 생성 AI에 바로 붙여넣어 사용하세요.
+      이미지용 프롬프트는 <a href="/builder/defense_image" style="color:var(--accent);">방위산업 이미지 프롬프트 생성기</a>를 이용하세요.
+    </div>
+
+    <div class="a-card" style="margin-top:16px;margin-bottom:0;">
+      <div class="toolbar">
+        <span class="toolbar-label">출력 언어</span>
+        <div class="seg" id="langSeg">
+          <button data-lang="ko" class="active">한글</button>
+          <button data-lang="en">English</button>
+        </div>
+        <span class="toolbar-label">예시 불러오기</span>
+        <button class="preset-btn" data-preset="drone">🛩️ 무인 정찰 드론</button>
+        <button class="preset-btn" data-preset="ugv">🚙 무인지상차량</button>
+        <button class="preset-btn" data-preset="c2">🖥️ 지휘통제센터</button>
+        <span class="toolbar-spacer"></span>
+        <button class="mini-btn" id="foldAll">모두 접기</button>
+        <button class="mini-btn" id="openAll">모두 펼치기</button>
+        <button class="mini-btn danger" id="resetAll">전체 초기화</button>
+      </div>
+    </div>
+
+    <div class="gen-grid">
+      <div id="blocks"></div>
+
+      <div class="side">
+        <div class="a-card preview-card">
+          <div class="a-card-title">
+            <span>완성 프롬프트</span>
+            <span class="sel-count" id="totalCount">0 selected</span>
+          </div>
+          <div class="prompt-view" id="promptView"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="copyBtn">📋 프롬프트 복사</button>
+            <button class="btn btn-outline" id="dlBtn">⬇ TXT 저장</button>
+          </div>
+          <div class="preview-hint">
+            선택하지 않은 항목은 자동으로 제외됩니다 · 직접 입력한 표현은 언어 전환과 무관하게 그대로 출력됩니다
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="fab" id="fabBtn" title="완성 프롬프트로 이동">📋</button>
+<div class="copied-toast" id="toast">✓ 프롬프트가 복사되었습니다</div>
+
+<script>
+/* ── 용어 데이터 (uploads/defense_industry_video_prompt_terms.md에서 자동 추출) ── */
+const TERMS = {"subject":[{"e":"Unmanned aerial vehicle (UAV)","k":"무인항공기 / 드론"},{"e":"Unmanned ground vehicle (UGV)","k":"무인지상차량"},{"e":"Unmanned surface vehicle (USV)","k":"무인수상정"},{"e":"Autonomous reconnaissance drone","k":"자율 정찰 드론"},{"e":"Tactical reconnaissance drone","k":"전술 정찰 드론"},{"e":"Fixed-wing drone","k":"고정익 드론"},{"e":"Rotary-wing drone","k":"회전익 드론"},{"e":"Loitering surveillance drone","k":"체공형 감시 드론"},{"e":"Armored vehicle","k":"장갑차"},{"e":"Main battle tank","k":"주력전차"},{"e":"Infantry fighting vehicle","k":"보병전투차"},{"e":"Command vehicle","k":"지휘 차량"},{"e":"Radar vehicle","k":"레이더 차량"},{"e":"Electronic warfare vehicle","k":"전자전 차량"},{"e":"Mobile command post","k":"이동형 지휘소"},{"e":"Air-defense system","k":"방공 체계"},{"e":"Surveillance system","k":"감시 체계"},{"e":"Reconnaissance system","k":"정찰 체계"},{"e":"Ground radar system","k":"지상 레이더 체계"},{"e":"Coastal surveillance system","k":"해안 감시 체계"},{"e":"Satellite ground station","k":"위성 지상국"},{"e":"Military transport aircraft","k":"군용 수송기"},{"e":"Fighter aircraft","k":"전투기"},{"e":"Surveillance aircraft","k":"감시 항공기"},{"e":"Naval patrol vessel","k":"해상 초계함"},{"e":"Defense satellite","k":"국방 위성"},{"e":"Integrated command-and-control system","k":"통합 지휘통제체계"}],"mission":[{"e":"Intelligence, surveillance and reconnaissance (ISR)","k":"정보·감시·정찰"},{"e":"Battlefield surveillance","k":"전장 감시"},{"e":"Tactical reconnaissance","k":"전술 정찰"},{"e":"Border surveillance","k":"국경 감시"},{"e":"Coastal surveillance","k":"해안 감시"},{"e":"Target detection","k":"표적 탐지"},{"e":"Target tracking","k":"표적 추적"},{"e":"Situation awareness","k":"상황 인식"},{"e":"Area monitoring","k":"지역 감시"},{"e":"Communications relay","k":"통신 중계"},{"e":"Battlefield communications","k":"전장 통신"},{"e":"Command and control","k":"지휘통제"},{"e":"Search and rescue support","k":"탐색·구조 지원"},{"e":"Convoy monitoring","k":"호송대 감시"},{"e":"Infrastructure protection","k":"주요 시설 방호"},{"e":"Perimeter security","k":"경계 보안"},{"e":"Early warning","k":"조기경보"},{"e":"Airspace monitoring","k":"공역 감시"},{"e":"Maritime domain awareness","k":"해양 상황 인식"},{"e":"Electronic surveillance","k":"전자 감시"},{"e":"Sensor fusion","k":"센서 융합"},{"e":"Autonomous navigation","k":"자율 항법"},{"e":"Mission coordination","k":"임무 협조 / 임무 조정"}],"action":[{"e":"Flying over the terrain","k":"지형 상공을 비행하는"},{"e":"Patrolling the border","k":"국경 지역을 순찰하는"},{"e":"Scanning the terrain","k":"지형을 탐색하는"},{"e":"Monitoring a wide area","k":"광범위한 지역을 감시하는"},{"e":"Tracking a moving object","k":"이동 대상을 추적하는"},{"e":"Relaying communications","k":"통신을 중계하는"},{"e":"Maintaining a surveillance orbit","k":"감시 선회 비행을 유지하는"},{"e":"Moving through rough terrain","k":"험지를 주행하는"},{"e":"Crossing a mountain pass","k":"산악 고개를 통과하는"},{"e":"Conducting autonomous navigation","k":"자율 주행 / 자율 항법을 수행하는"},{"e":"Deploying sensors","k":"센서를 전개하는"},{"e":"Rotating the sensor turret","k":"센서 터렛을 회전시키는"},{"e":"Raising the radar mast","k":"레이더 마스트를 전개하는"},{"e":"Establishing a communication link","k":"통신 링크를 구축하는"},{"e":"Coordinating multiple platforms","k":"다수 플랫폼을 협조 운용하는"},{"e":"Detecting objects in the distance","k":"원거리 대상을 탐지하는"},{"e":"Transmitting battlefield data","k":"전장 데이터를 전송하는"},{"e":"Operating in formation","k":"편대 / 대형을 이루어 운용하는"},{"e":"Entering a defensive position","k":"방어 위치로 이동하는"},{"e":"Performing a system self-check","k":"시스템 자체 점검을 수행하는"}],"environment":[{"e":"Mountainous border region","k":"산악 국경 지역"},{"e":"Rugged mountain terrain","k":"험준한 산악 지형"},{"e":"Desert battlefield","k":"사막 전장"},{"e":"Coastal defense zone","k":"해안 방어 지역"},{"e":"Forested terrain","k":"산림 지형"},{"e":"Arctic environment","k":"극지 환경"},{"e":"Urban combat environment","k":"도시 전투 환경"},{"e":"Urban operations area","k":"도시 작전 지역"},{"e":"Remote military outpost","k":"외딴 군사 전초기지"},{"e":"Forward operating base","k":"전방 작전기지"},{"e":"Military airfield","k":"군 비행장"},{"e":"Naval base","k":"해군 기지"},{"e":"Training range","k":"군사 훈련장"},{"e":"Battlefield command center","k":"전장 지휘소"},{"e":"Radar station","k":"레이더 기지"},{"e":"Mountain valley","k":"산악 계곡"},{"e":"Rocky terrain","k":"암석 지형"},{"e":"Open desert plain","k":"개활 사막 평원"},{"e":"Coastal waters","k":"연안 해역"},{"e":"Open ocean","k":"외해"},{"e":"High-altitude airspace","k":"고고도 공역"},{"e":"Nighttime battlefield","k":"야간 전장 환경"},{"e":"Low-visibility environment","k":"저시정 환경"},{"e":"Foggy mountain terrain","k":"안개 낀 산악 지형"},{"e":"Rainy operational environment","k":"우천 작전 환경"}],"system":[{"e":"EO/IR sensor turret","k":"EO/IR 전자광학·적외선 센서 터렛"},{"e":"Electro-optical camera","k":"전자광학 카메라"},{"e":"Infrared camera","k":"적외선 카메라"},{"e":"Thermal imaging sensor","k":"열영상 센서"},{"e":"Phased-array radar","k":"위상배열 레이더"},{"e":"AESA radar","k":"능동위상배열 레이더"},{"e":"Surveillance radar","k":"감시 레이더"},{"e":"Radar mast","k":"레이더 마스트"},{"e":"Communication antenna","k":"통신 안테나"},{"e":"Satellite communication antenna","k":"위성통신 안테나"},{"e":"Data-link antenna","k":"데이터링크 안테나"},{"e":"GPS navigation module","k":"GPS 항법 모듈"},{"e":"Inertial navigation system (INS)","k":"관성항법장치"},{"e":"Autonomous flight controller","k":"자동 비행 제어 모듈"},{"e":"Autonomous driving module","k":"자율 주행 모듈"},{"e":"Mission computer","k":"임무 컴퓨터"},{"e":"Sensor fusion module","k":"센서 융합 모듈"},{"e":"Remote weapon station","k":"원격사격통제체계 / 원격무장스테이션"},{"e":"Stabilized sensor platform","k":"안정화 센서 플랫폼"},{"e":"Folding wings","k":"접이식 날개"},{"e":"Low-noise propeller","k":"저소음 프로펠러"},{"e":"Retractable landing gear","k":"수납식 랜딩기어"},{"e":"Armored hull","k":"장갑 차체"},{"e":"Modular armor panels","k":"모듈형 장갑 패널"},{"e":"Ruggedized electronics","k":"군용 규격 전자장비"},{"e":"Communication relay module","k":"통신 중계 모듈"},{"e":"Electronic support measures (ESM) antenna","k":"전자지원수단 안테나"},{"e":"Command-and-control console","k":"지휘통제 콘솔"},{"e":"Multi-function display","k":"다기능 디스플레이"}],"platform":[{"e":"Military-grade design","k":"군용 규격 디자인"},{"e":"Ruggedized structure","k":"견고한 군용 구조"},{"e":"Stealth-inspired design","k":"스텔스 감성이 반영된 디자인"},{"e":"Low-observable shape","k":"저피탐 형상"},{"e":"Angular body panels","k":"각진 차체 패널"},{"e":"Modular architecture","k":"모듈형 구조"},{"e":"Compact tactical design","k":"소형 전술형 디자인"},{"e":"Heavy-duty chassis","k":"중장비용 견고한 섀시"},{"e":"Reinforced suspension","k":"강화 서스펜션"},{"e":"Low-profile silhouette","k":"낮은 실루엣"},{"e":"Aerodynamic fuselage","k":"공기역학적 동체"},{"e":"Blended wing body","k":"윙-바디 일체형 형상"},{"e":"Sensor-integrated body","k":"센서 통합형 차체"},{"e":"Mission-configurable platform","k":"임무 구성 변경이 가능한 플랫폼"},{"e":"Field-maintainable design","k":"야전 정비를 고려한 설계"},{"e":"All-weather configuration","k":"전천후 운용 구성"},{"e":"Survivability-focused design","k":"생존성 중심 설계"},{"e":"Professional defense-industry aesthetic","k":"전문적인 방위산업 디자인"}],"camera_shot":[{"e":"Extreme close-up","k":"극단적 클로즈업"},{"e":"Close-up","k":"클로즈업"},{"e":"Medium shot","k":"중간 거리 촬영"},{"e":"Full shot","k":"전체 형상 촬영"},{"e":"Wide shot","k":"와이드 샷"},{"e":"Extreme wide shot","k":"초광각 장면"},{"e":"Establishing shot","k":"작전 환경 전체를 보여주는 설정 샷"},{"e":"Hero shot","k":"장비를 강조하는 대표 장면"},{"e":"Detail shot","k":"세부 장비 중심 촬영"},{"e":"Aerial establishing shot","k":"항공 시점의 설정 샷"}],"camera_angle":[{"e":"Front view","k":"정면 시점"},{"e":"Rear view","k":"후면 시점"},{"e":"Side view","k":"측면 시점"},{"e":"Front three-quarter view","k":"전면 3/4 시점"},{"e":"Rear three-quarter view","k":"후면 3/4 시점"},{"e":"Low-angle shot","k":"아래에서 올려다보는 시점"},{"e":"High-angle shot","k":"위에서 내려다보는 시점"},{"e":"Top-down view","k":"수직 하향 시점"},{"e":"Bird's-eye view","k":"조감도 시점"},{"e":"Ground-level view","k":"지면 높이 시점"},{"e":"Aerial view","k":"항공 시점"},{"e":"Cockpit view","k":"조종석 시점"},{"e":"Operator POV","k":"운용자 1인칭 시점"},{"e":"Over-the-shoulder view","k":"운용자 어깨 너머 시점"}],"camera_move":[{"e":"Tracking shot","k":"대상을 따라가는 촬영"},{"e":"Aerial tracking shot","k":"항공 추적 촬영"},{"e":"Side tracking shot","k":"측면 추적 촬영"},{"e":"Dolly in","k":"카메라가 대상 쪽으로 이동"},{"e":"Dolly out","k":"카메라가 대상에서 멀어짐"},{"e":"Slow push-in","k":"천천히 대상에 접근"},{"e":"Pull-back shot","k":"뒤로 빠지며 촬영"},{"e":"Orbit shot","k":"대상을 중심으로 회전 촬영"},{"e":"Crane shot","k":"상하 이동 촬영"},{"e":"Pan","k":"좌우 회전 촬영"},{"e":"Tilt","k":"상하 회전 촬영"},{"e":"Fly-by shot","k":"대상 옆을 스쳐 지나가는 촬영"},{"e":"Chase-camera shot","k":"추격 카메라 시점"},{"e":"Static observation shot","k":"고정 감시 카메라 촬영"},{"e":"Smooth stabilized camera movement","k":"안정화된 부드러운 카메라 이동"},{"e":"Subtle handheld movement","k":"미세한 핸드헬드 움직임"}],"composition":[{"e":"Centered composition","k":"중앙 배치"},{"e":"Symmetrical composition","k":"대칭 구성"},{"e":"Rule of thirds","k":"3분할 구도"},{"e":"Platform in the foreground","k":"플랫폼을 전경에 배치"},{"e":"Operational environment in the background","k":"작전 환경을 배경에 배치"},{"e":"Sensor in sharp focus","k":"센서에 선명하게 초점"},{"e":"Shallow depth of field","k":"얕은 심도"},{"e":"Deep depth of field","k":"깊은 심도"},{"e":"Layered battlefield composition","k":"전경·중경·배경이 구분된 전장 구성"},{"e":"Wide tactical overview","k":"넓은 전술 상황 조망"},{"e":"Strong leading lines","k":"강한 시선 유도선"},{"e":"Dominant hero composition","k":"장비를 강하게 강조하는 구도"},{"e":"Low-profile silhouette composition","k":"낮은 실루엣을 강조하는 구도"}],"lighting":[{"e":"Natural daylight","k":"자연광"},{"e":"Golden-hour sunlight","k":"골든아워 햇빛"},{"e":"Cold morning light","k":"차가운 아침빛"},{"e":"Dramatic sunset lighting","k":"극적인 일몰 조명"},{"e":"Cinematic lighting","k":"영화 같은 조명"},{"e":"Hard directional light","k":"강한 방향성 조명"},{"e":"Soft diffused light","k":"부드러운 확산광"},{"e":"Rim lighting","k":"윤곽 조명"},{"e":"Backlighting","k":"역광"},{"e":"Low-key lighting","k":"어두운 분위기의 조명"},{"e":"High-contrast lighting","k":"강한 명암 대비"},{"e":"Volumetric lighting","k":"볼류메트릭 조명"},{"e":"Atmospheric light rays","k":"대기 중 빛줄기"},{"e":"Night-vision lighting","k":"야간투시 느낌의 조명"},{"e":"Infrared imaging look","k":"적외선 영상 느낌"},{"e":"Tactical low-light environment","k":"전술적 저조도 환경"}],"style":[{"e":"Photorealistic","k":"실사형"},{"e":"Hyper-realistic","k":"극사실적"},{"e":"Cinematic","k":"영화 같은"},{"e":"Military cinematic","k":"군사 영화 스타일"},{"e":"Defense-industry promotional film","k":"방위산업 홍보 영상 스타일"},{"e":"Aerospace promotional film","k":"항공우주 홍보 영상 스타일"},{"e":"Documentary style","k":"다큐멘터리 스타일"},{"e":"Tactical documentary","k":"전술 다큐멘터리 스타일"},{"e":"Technical demonstration video","k":"기술 시연 영상"},{"e":"Product showcase video","k":"제품 소개 영상"},{"e":"Premium industrial commercial","k":"고급 산업 광고 스타일"},{"e":"Futuristic military","k":"미래형 군사 스타일"},{"e":"Advanced defense technology","k":"첨단 방위기술 스타일"},{"e":"Rugged and professional","k":"견고하고 전문적인"},{"e":"Stealth-inspired aesthetic","k":"스텔스 감성의 디자인"},{"e":"Realistic field-operation footage","k":"실제 야전 운용 영상 느낌"},{"e":"Command-center visualization","k":"지휘통제센터 시각화 스타일"},{"e":"High-end engineering visualization","k":"고급 엔지니어링 시각화"}],"motion":[{"e":"Stable aerodynamic flight","k":"안정적인 공기역학적 비행"},{"e":"Smooth autonomous movement","k":"부드러운 자율 이동"},{"e":"Realistic vehicle suspension movement","k":"사실적인 차량 서스펜션 움직임"},{"e":"Slow tactical movement","k":"느리고 신중한 전술 이동"},{"e":"High-speed maneuvering","k":"고속 기동"},{"e":"Controlled banking turn","k":"안정적인 선회 비행"},{"e":"Hovering steadily","k":"안정적으로 제자리 비행"},{"e":"Sensor turret rotation","k":"센서 터렛 회전"},{"e":"Radar scanning motion","k":"레이더 탐색 움직임"},{"e":"Antenna deployment","k":"안테나 전개"},{"e":"Folding-wing deployment","k":"접이식 날개 전개"},{"e":"Mechanical actuator movement","k":"기계식 액추에이터 동작"},{"e":"Realistic propeller rotation","k":"사실적인 프로펠러 회전"},{"e":"Subtle vibration","k":"미세한 진동"},{"e":"Realistic physics","k":"사실적인 물리 움직임"},{"e":"Dust displaced by vehicle movement","k":"차량 이동에 의해 먼지가 흩날리는"},{"e":"Rotor wash effect","k":"회전익 하향풍 효과"},{"e":"Smooth stabilized motion","k":"안정화된 부드러운 움직임"}],"audio":[{"e":"Low-frequency engine sound","k":"저주파 엔진음"},{"e":"Turbine engine sound","k":"터빈 엔진음"},{"e":"Propeller sound","k":"프로펠러 소리"},{"e":"Rotor sound","k":"로터 소리"},{"e":"Electric motor sound","k":"전기 모터 소리"},{"e":"Mechanical actuator sound","k":"기계 구동음"},{"e":"Hydraulic system sound","k":"유압 작동음"},{"e":"Radar electronic ambience","k":"레이더 전자음"},{"e":"Communication radio chatter","k":"무전 교신음"},{"e":"Data-link tone","k":"데이터링크 신호음"},{"e":"Wind noise","k":"바람 소리"},{"e":"High-altitude wind","k":"고고도 바람 소리"},{"e":"Battlefield ambience","k":"전장 환경음"},{"e":"Command-center ambience","k":"지휘통제실 환경음"},{"e":"Operator keyboard sounds","k":"운용자 키보드 조작음"},{"e":"Subtle warning tones","k":"은은한 경고음"},{"e":"Servo motor sound","k":"서보 모터 작동음"},{"e":"Distant aircraft ambience","k":"멀리서 들리는 항공기 소리"}],"details":[{"e":"Detailed armor panels","k":"세밀한 장갑 패널"},{"e":"Surface panel lines","k":"표면 패널 라인"},{"e":"Sensor lenses","k":"센서 렌즈"},{"e":"Radar antenna elements","k":"레이더 안테나 소자"},{"e":"Antenna joints","k":"안테나 연결부"},{"e":"Mechanical hinges","k":"기계식 힌지"},{"e":"Wing joints","k":"날개 접합부"},{"e":"Suspension components","k":"서스펜션 구성품"},{"e":"Track details","k":"궤도 세부 표현"},{"e":"Rugged tires","k":"군용 견고 타이어"},{"e":"Cooling vents","k":"냉각구"},{"e":"Access panels","k":"정비용 액세스 패널"},{"e":"Bolts and fasteners","k":"볼트 및 체결부"},{"e":"Cable connections","k":"케이블 연결부"},{"e":"Weathered paint","k":"사용감이 있는 도장"},{"e":"Subtle surface wear","k":"미세한 표면 마모"},{"e":"Dust and mud accumulation","k":"먼지와 진흙 흔적"},{"e":"Realistic metallic texture","k":"사실적인 금속 질감"},{"e":"Matte military coating","k":"무광 군용 도장"},{"e":"Identification markings","k":"식별 마킹"},{"e":"Warning labels","k":"경고 라벨"},{"e":"Maintenance markings","k":"정비용 표시"},{"e":"Heat discoloration","k":"열에 의한 변색"},{"e":"Glass reflections","k":"유리 반사"},{"e":"Realistic sensor glass","k":"사실적인 센서 유리"},{"e":"Atmospheric haze","k":"대기 중 옅은 안개"},{"e":"Heat haze","k":"열 아지랑이"},{"e":"Dust particles","k":"공기 중 먼지 입자"},{"e":"Ground-contact marks","k":"지면 접촉 흔적"}],"c2":[{"e":"Tactical command center","k":"전술 지휘통제센터"},{"e":"Mission-control room","k":"임무통제실"},{"e":"Large tactical display","k":"대형 전술 상황판"},{"e":"Multi-screen operator console","k":"다중 화면 운용자 콘솔"},{"e":"Real-time sensor feed","k":"실시간 센서 영상"},{"e":"Digital battlefield map","k":"디지털 전장 지도"},{"e":"Sensor fusion display","k":"센서 융합 화면"},{"e":"Tracking overlay","k":"추적 정보 오버레이"},{"e":"Friendly-force indicators","k":"아군 위치 표시"},{"e":"Mission status panel","k":"임무 상태 패널"},{"e":"Communication network visualization","k":"통신 네트워크 시각화"},{"e":"Satellite-link visualization","k":"위성 링크 시각화"},{"e":"Real-time telemetry","k":"실시간 텔레메트리"},{"e":"Tactical data-link display","k":"전술 데이터링크 화면"},{"e":"Operator interaction","k":"운용자 조작 장면"},{"e":"Minimal military UI","k":"간결한 군용 UI"},{"e":"Professional command-and-control interface","k":"전문적인 지휘통제 인터페이스"}],"tone":[{"e":"Advanced","k":"첨단적인"},{"e":"Rugged","k":"견고한"},{"e":"Professional","k":"전문적인"},{"e":"Tactical","k":"전술적인"},{"e":"High-tech","k":"첨단 기술 느낌"},{"e":"Stealthy","k":"은밀하고 스텔스적인"},{"e":"Serious","k":"진중한"},{"e":"Precise","k":"정밀한"},{"e":"Controlled","k":"절제되고 통제된"},{"e":"Reliable","k":"신뢰감 있는"},{"e":"Powerful","k":"강인한"},{"e":"Industrial","k":"산업적인"},{"e":"Mission-focused","k":"임무 중심적인"},{"e":"Operational","k":"실제 운용 느낌의"},{"e":"Field-ready","k":"야전 운용 준비가 된"},{"e":"Futuristic","k":"미래적인"},{"e":"Sophisticated","k":"정교하고 세련된"},{"e":"Technically credible","k":"기술적으로 설득력 있는"}],"constraints":[{"e":"No cartoon style","k":"만화 스타일 제외"},{"e":"No anime style","k":"애니메이션 스타일 제외"},{"e":"No toy-like appearance","k":"장난감 같은 외형 제외"},{"e":"No unrealistic proportions","k":"비현실적인 비율 제외"},{"e":"No floating components","k":"공중에 떠 있는 부품 제외"},{"e":"No distorted geometry","k":"형상 왜곡 제외"},{"e":"No duplicated components","k":"부품 중복 생성 제외"},{"e":"No unrealistic aircraft movement","k":"비현실적인 항공기 움직임 제외"},{"e":"No unrealistic vehicle physics","k":"비현실적인 차량 물리 움직임 제외"},{"e":"No excessive camera shake","k":"과도한 카메라 흔들림 제외"},{"e":"No excessive motion blur","k":"과도한 모션 블러 제외"},{"e":"No excessive lens flare","k":"과도한 렌즈 플레어 제외"},{"e":"No text distortion","k":"글자 왜곡 제외"},{"e":"No random markings","k":"임의의 이상한 마킹 제외"},{"e":"No sci-fi laser effects","k":"과도한 SF 레이저 효과 제외"},{"e":"No fantasy elements","k":"판타지 요소 제외"},{"e":"No exaggerated explosions","k":"과장된 폭발 표현 제외"},{"e":"No impossible mechanical structures","k":"불가능한 기계 구조 제외"},{"e":"No unrealistic sensor placement","k":"비현실적인 센서 배치 제외"},{"e":"Maintain realistic military engineering proportions","k":"현실적인 군용 공학 비율 유지"}]};
+
+/* ── 프롬프트 블록 구성 (실사형 고급 구성 13블록) ── */
+const BLOCKS = [
+  {key:'subject',     tag:'Subject',             name:'주요 대상',      icon:'🎯', q:'무엇을 보여줄 것인가?',                 groups:[['','subject']]},
+  {key:'mission',     tag:'Mission',             name:'임무',           icon:'🛰️', q:'어떤 임무를 수행하는가?',               groups:[['','mission']]},
+  {key:'action',      tag:'Action',              name:'작전·행동',      icon:'⚙️', q:'실제로 무엇을 하고 있는가?',            groups:[['','action']]},
+  {key:'environment', tag:'Environment',         name:'작전 환경',      icon:'🏔️', q:'어디에서 운용되는가?',                  groups:[['','environment']]},
+  {key:'system',      tag:'System / Components', name:'탑재 장비',      icon:'📡', q:'어떤 장비가 탑재되어 있는가?',          groups:[['탑재 장비·구성요소','system'],['지휘통제·인터페이스','c2']]},
+  {key:'camera',      tag:'Camera',              name:'카메라',         icon:'🎥', q:'어떤 시점과 움직임으로 촬영하는가?',    groups:[['촬영 거리','camera_shot'],['카메라 각도','camera_angle'],['카메라 움직임','camera_move']]},
+  {key:'composition', tag:'Composition',         name:'화면 구성',      icon:'🖼️', q:'화면을 어떻게 구성하는가?',             groups:[['','composition']]},
+  {key:'lighting',    tag:'Lighting',            name:'조명',           icon:'💡', q:'어떤 빛과 시간대로 표현하는가?',        groups:[['','lighting']]},
+  {key:'style',       tag:'Style',               name:'영상 스타일',    icon:'🎬', q:'전체 영상의 시각적 스타일은 무엇인가?', groups:[['영상 스타일','style'],['분위기·톤','tone']]},
+  {key:'motion',      tag:'Motion',              name:'움직임',         icon:'🌀', q:'플랫폼과 장비가 어떻게 움직이는가?',    groups:[['','motion']]},
+  {key:'audio',       tag:'Audio',               name:'음향',           icon:'🔊', q:'어떤 환경음과 기계음이 필요한가?',      groups:[['','audio']]},
+  {key:'details',     tag:'Details',             name:'세부 표현',      icon:'🔩', q:'어떤 세부 요소를 강조할 것인가?',       groups:[['세부 표현','details'],['플랫폼 디자인','platform']]},
+  {key:'constraints', tag:'Constraints',         name:'제외·제약',      icon:'🚫', q:'어떤 표현을 제외할 것인가?',            groups:[['','constraints']]},
+];
+
+/* ── 예시 프리셋 — 원문 md의 조합 예시 3종을 목록 용어로 재구성 ── */
+const PRESETS = {
+  drone: [
+    'Autonomous reconnaissance drone','Fixed-wing drone',
+    'Intelligence, surveillance and reconnaissance (ISR)','Target detection','Communications relay',
+    'Flying over the terrain','Scanning the terrain',
+    'Mountainous border region','Foggy mountain terrain',
+    'EO/IR sensor turret','Phased-array radar','Communication antenna','GPS navigation module','Autonomous flight controller','Folding wings','Low-noise propeller',
+    'Front three-quarter view','Aerial tracking shot','Slow push-in',
+    'Platform in the foreground',
+    'Cold morning light','Atmospheric light rays',
+    'Photorealistic','Military cinematic','Advanced','Rugged','Professional','Stealthy',
+    'Stable aerodynamic flight','Realistic propeller rotation','Subtle vibration',
+    'High-altitude wind','Low-frequency engine sound','Propeller sound',
+    'Surface panel lines','Sensor lenses','Antenna joints','Wing joints','Realistic metallic texture','Identification markings',
+    'No cartoon style','No toy-like appearance','No unrealistic aircraft movement','No distorted geometry'
+  ],
+  ugv: [
+    'Unmanned ground vehicle (UGV)',
+    'Tactical reconnaissance','Perimeter security','Communications relay',
+    'Moving through rough terrain','Rotating the sensor turret',
+    'Rocky terrain','Mountain valley',
+    'EO/IR sensor turret','Surveillance radar','Communication antenna','Autonomous driving module',
+    'Low-angle shot','Front three-quarter view','Tracking shot',
+    'Natural daylight','Soft diffused light',
+    'Photorealistic','Defense-industry promotional film','Rugged','Tactical','Professional',
+    'Realistic vehicle suspension movement','Slow tactical movement','Sensor turret rotation','Dust displaced by vehicle movement',
+    'Electric motor sound','Mechanical actuator sound','Wind noise',
+    'Detailed armor panels','Mechanical hinges','Sensor lenses','Rugged tires','Subtle surface wear','Identification markings',
+    'Reinforced suspension','Heavy-duty chassis',
+    'No toy-like appearance','No unrealistic vehicle physics','No fantasy elements','No excessive camera shake'
+  ],
+  c2: [
+    'Integrated command-and-control system',
+    'Battlefield surveillance','Sensor fusion','Command and control','Mission coordination',
+    'Coordinating multiple platforms','Transmitting battlefield data',
+    'Battlefield command center',
+    'Multi-screen operator console','Real-time sensor feed','Tactical data-link display','Digital battlefield map','Communication network visualization','Minimal military UI','Professional command-and-control interface',
+    'Medium shot','Over-the-shoulder view','Dolly in',
+    'Wide tactical overview',
+    'Low-key lighting',
+    'Photorealistic','Command-center visualization','Advanced defense technology','Professional','Controlled',
+    'Smooth stabilized motion',
+    'Command-center ambience','Operator keyboard sounds','Communication radio chatter','Data-link tone','Subtle warning tones',
+    'Cable connections','Realistic sensor glass',
+    'No sci-fi laser effects','No fantasy elements','No text distortion','No random markings'
+  ]
+};
+
+/* ── 상태 ── */
+const STORE = 'df_defvid_v1';
+let sel = new Set();          // 'section|index'
+let custom = {};              // blockKey -> [string]
+let lang = 'ko';
+
+function save(){
+  try{ localStorage.setItem(STORE, JSON.stringify({sel:[...sel], custom, lang})); }catch(e){}
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(STORE));
+    if(!d) return;
+    sel = new Set(Array.isArray(d.sel)?d.sel:[]);
+    custom = d.custom && typeof d.custom==='object' ? d.custom : {};
+    if(d.lang==='en'||d.lang==='ko') lang = d.lang;
+  }catch(e){}
+}
+
+/* ── 렌더 ── */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function buildBlocks(){
+  const wrap = document.getElementById('blocks');
+  wrap.innerHTML = BLOCKS.map(b => {
+    const groups = b.groups.map(([gname, sec]) => {
+      const pills = TERMS[sec].map((t,i) =>
+        `<button class="term-pill" data-id="${sec}|${i}" title="${esc(lang==='ko'?t.e:t.k)}">${esc(lang==='ko'?t.k:t.e)}</button>`
+      ).join('');
+      return (gname?`<div class="grp-label">${esc(gname)}</div>`:'') + `<div class="pill-grid">${pills}</div>`;
+    }).join('');
+    return `
+    <div class="blk" id="blk-${b.key}">
+      <div class="blk-head" data-blk="${b.key}">
+        <span class="blk-icon">${b.icon}</span>
+        <span class="blk-tag">[${esc(b.tag)}]</span>
+        <span class="blk-name">${esc(b.name)}</span>
+        <span class="blk-q">${esc(b.q)}</span>
+        <span class="blk-count" id="cnt-${b.key}">0</span>
+        <span class="blk-arrow">▼</span>
+      </div>
+      <div class="blk-body">
+        ${groups}
+        <div class="pill-grid" id="custom-${b.key}" style="margin-top:8px;"></div>
+        <div class="custom-row">
+          <input class="custom-inp" id="inp-${b.key}" placeholder="직접 입력 후 추가 (예: 야간 열영상 화면)" maxlength="120">
+          <button class="custom-add" data-add="${b.key}">+ 추가</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function relabelPills(){
+  BLOCKS.forEach(b => b.groups.forEach(([,sec]) => {
+    TERMS[sec].forEach((t,i) => {
+      const el = document.querySelector(`.term-pill[data-id="${sec}|${i}"]`);
+      if(el){ el.textContent = lang==='ko'?t.k:t.e; el.title = lang==='ko'?t.e:t.k; }
+    });
+  }));
+}
+
+function renderCustom(bk){
+  const box = document.getElementById('custom-'+bk);
+  const list = custom[bk]||[];
+  box.innerHTML = list.map((s,i) =>
+    `<button class="term-pill custom selected" data-custom="${bk}|${i}" title="클릭하여 제거">✕ ${esc(s)}</button>`
+  ).join('');
+  box.style.display = list.length ? '' : 'none';
+}
+
+function syncPills(){
+  document.querySelectorAll('.term-pill[data-id]').forEach(el =>
+    el.classList.toggle('selected', sel.has(el.dataset.id)));
+  BLOCKS.forEach(b => renderCustom(b.key));
+}
+
+/* ── 조합 ── */
+function blockTerms(b){
+  const out = [];
+  b.groups.forEach(([,sec]) => TERMS[sec].forEach((t,i) => {
+    if(sel.has(sec+'|'+i)) out.push(lang==='ko'?t.k:t.e);
+  }));
+  (custom[b.key]||[]).forEach(s => out.push(s));
+  return out;
+}
+
+function composeText(){
+  return BLOCKS.map(b => {
+    const t = blockTerms(b);
+    return t.length ? `[${b.tag}]\n${t.join(', ')}` : null;
+  }).filter(Boolean).join('\n\n');
+}
+
+function updatePreview(){
+  let total = 0;
+  const view = document.getElementById('promptView');
+  const parts = BLOCKS.map(b => {
+    const t = blockTerms(b);
+    const cnt = document.getElementById('cnt-'+b.key);
+    cnt.textContent = t.length;
+    cnt.classList.toggle('on', t.length>0);
+    total += t.length;
+    return t.length ? `<div class="pv-block"><div class="pv-tag">[${esc(b.tag)}]</div><div class="pv-text">${esc(t.join(', '))}</div></div>` : '';
+  }).join('');
+  view.innerHTML = parts || `<div class="pv-empty">아래 항목에서 표현을 선택하면<br>프롬프트가 여기에 조합됩니다.<br><br>🛩️ 예시 불러오기로 빠르게 시작해 보세요.</div>`;
+  document.getElementById('totalCount').textContent = total + ' selected';
+  document.getElementById('copyBtn').disabled = total===0;
+  document.getElementById('dlBtn').disabled = total===0;
+}
+
+function refresh(){ syncPills(); updatePreview(); save(); }
+
+/* ── 이벤트 ── */
+document.addEventListener('click', e => {
+  const pill = e.target.closest('.term-pill[data-id]');
+  if(pill){
+    const id = pill.dataset.id;
+    sel.has(id) ? sel.delete(id) : sel.add(id);
+    pill.classList.toggle('selected', sel.has(id));
+    updatePreview(); save();
+    return;
+  }
+  const cpill = e.target.closest('.term-pill[data-custom]');
+  if(cpill){
+    const [bk,i] = cpill.dataset.custom.split('|');
+    (custom[bk]||[]).splice(+i,1);
+    renderCustom(bk); updatePreview(); save();
+    return;
+  }
+  const add = e.target.closest('[data-add]');
+  if(add){ addCustom(add.dataset.add); return; }
+  const head = e.target.closest('.blk-head');
+  if(head){ document.getElementById('blk-'+head.dataset.blk).classList.toggle('closed'); return; }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter' && e.target.classList.contains('custom-inp')){
+    e.preventDefault();
+    addCustom(e.target.id.replace('inp-',''));
+  }
+});
+
+function addCustom(bk){
+  const inp = document.getElementById('inp-'+bk);
+  const v = inp.value.trim();
+  if(!v) return;
+  custom[bk] = custom[bk]||[];
+  if(!custom[bk].includes(v)) custom[bk].push(v);
+  inp.value = '';
+  renderCustom(bk); updatePreview(); save();
+}
+
+/* 언어 전환 */
+document.getElementById('langSeg').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if(!btn || btn.dataset.lang===lang) return;
+  lang = btn.dataset.lang;
+  document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+  relabelPills(); updatePreview(); save();
+});
+
+/* 프리셋 */
+document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', () => {
+  const list = PRESETS[btn.dataset.preset];
+  if(!list) return;
+  sel = new Set(); custom = {};
+  const index = {};
+  Object.keys(TERMS).forEach(sec => TERMS[sec].forEach((t,i) => {
+    (index[t.e] = index[t.e]||[]).push(sec+'|'+i);
+  }));
+  list.forEach(en => (index[en]||[]).forEach(id => sel.add(id)));
+  refresh();
+}));
+
+/* 접기/펼치기/초기화 */
+document.getElementById('foldAll').onclick = () => document.querySelectorAll('.blk').forEach(el => el.classList.add('closed'));
+document.getElementById('openAll').onclick = () => document.querySelectorAll('.blk').forEach(el => el.classList.remove('closed'));
+document.getElementById('resetAll').onclick = () => {
+  if(!confirm('선택한 항목과 직접 입력을 모두 초기화할까요?')) return;
+  sel = new Set(); custom = {};
+  refresh();
+};
+
+/* 복사 · 저장 */
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = composeText();
+  if(!text) return;
+  const done = () => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+});
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done(); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+document.getElementById('dlBtn').addEventListener('click', () => {
+  const text = composeText();
+  if(!text) return;
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'defense_video_prompt.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('fabBtn').addEventListener('click', () =>
+  document.querySelector('.preview-card').scrollIntoView({behavior:'smooth'}));
+
+/* ── 초기화 ── */
+load();
+document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+buildBlocks();
+refresh();
+</script>
+<script>(function(){
+  var k='tf_builder_defvideo';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=builder&page='+encodeURIComponent(location.pathname)});
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

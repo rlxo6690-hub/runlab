@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>소개·문의 | DataForge</title>
+  <meta name="description" content="DataForge는 설치 없이 브라우저에서 바로 실습하는 AI·데이터 실무 훈련장입니다. 데이터 생성부터 전처리, 분석, 머신러닝·딥러닝 시뮬레이션, 바이브 코딩까지 한곳에서 제공합니다.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.7; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 32px 20px 64px; }
+    .doc {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 28px 22px;
+    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 14px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 28px 0 10px; padding-top: 18px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 10px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    a { color: var(--accent); }
+    b { font-weight: 700; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tool-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 14px 0 4px; }
+    .tool-cell {
+      background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; font-size: 13px;
+    }
+    .tool-cell b { display: block; margin-bottom: 3px; font-size: 13px; }
+    .tool-cell span { color: var(--muted); }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 8px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) {
+      .doc { padding: 36px 40px; }
+      .tool-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="doc">
+      <h1>DataForge 소개</h1>
+      <p class="lead">설치 없이 브라우저에서 바로 실습하는 AI·데이터 실무 훈련장입니다.</p>
+      <p>DataForge는 데이터 분석과 AI 활용을 <b>직접 만져보며</b> 배우도록 만든 교육 실습 플랫폼입니다.
+      실습에 필요한 데이터를 원하는 조건으로 만들어내는 생성기부터, 전처리·통계 분석·머신러닝·딥러닝의
+      동작 원리를 눈으로 확인하는 시뮬레이터, 그리고 나만의 앱을 만드는 바이브 코딩 빌더까지 —
+      데이터 업무의 전체 흐름을 한곳에서 실습할 수 있습니다.</p>
+
+      <h2>무엇을 할 수 있나요</h2>
+      <div class="tool-grid">
+        <div class="tool-cell"><b>🏭 데이터 생성</b><span>제조·경영·광고·텍스트 도메인의 실습용 데이터를 조건에 맞게 생성</span></div>
+        <div class="tool-cell"><b>🧹 데이터 전처리</b><span>결측치·이상치 처리, 보간, 데이터 편집을 단계별로 실습</span></div>
+        <div class="tool-cell"><b>📊 분석 시뮬레이션</b><span>차트·통계 분석·텍스트 분석·시계열을 브라우저에서 바로 실행</span></div>
+        <div class="tool-cell"><b>🤖 머신러닝·🧠 딥러닝</b><span>K-Means부터 XGBoost, 신경망 구조와 과적합까지 값을 바꿔가며 원리 관찰</span></div>
+        <div class="tool-cell"><b>🛠 빌더</b><span>HTML·차트·프롬프트 빌더로 결과물을 직접 제작</span></div>
+        <div class="tool-cell"><b>⚡ 업무 생산성</b><span>마크다운 변환, PDF 분할·생성·압축 등 실무 도구 모음</span></div>
+        <div class="tool-cell"><b>🧩 브라우저 확장</b><span>영역 캡처·텍스트 추출·이미지 저장 크롬 확장 프로그램</span></div>
+        <div class="tool-cell"><b>🚀 바이브 코딩</b><span>PWA·Firestore 앱·웹 푸시·텔레그램 봇을 만드는 빌더</span></div>
+      </div>
+      <p>모든 도구는 회원가입 없이 무료로 사용할 수 있으며, 모바일에서도 동작합니다.</p>
+
+      <h2>누구를 위한 서비스인가요</h2>
+      <ul>
+        <li>데이터 분석·AI를 처음 배우는 <b>입문자</b> — 코드를 몰라도 클릭만으로 원리를 체험할 수 있습니다.</li>
+        <li>실습 데이터가 필요한 <b>교육 담당자·강사</b> — 원하는 조건의 데이터를 즉시 만들어 수업에 활용할 수 있습니다.</li>
+        <li>기업·공공기관 <b>AI 실무 교육 과정의 교육생</b> — 교육 커리큘럼(LMS)과 연계해 단계별로 실습합니다.</li>
+      </ul>
+
+      <h2>운영</h2>
+      <p>DataForge는 기업·공공기관 대상 AI 실무 교육을 진행하는 <b>BuildUp Lab</b>이 만들고 운영합니다.
+      사이트의 도구들은 실제 교육 현장에서 실습 교보재로 사용되고 있습니다.</p>
+      <p>맞춤 교육 커리큘럼이나 견적이 궁금하시면 아래로 문의해 주세요.</p>
+      <a class="cta" href="https://builduplab.co.kr/?inquiry=1&utm_source=dataforge&utm_medium=about&utm_campaign=tools" target="_blank" rel="noopener">🎓 교육 문의하기 →</a>
+
+      <h2>사이트 이용 문의·피드백</h2>
+      <ul>
+        <li>각 도구의 자세한 사용법과 데이터 분석 개념 글은 <a href="/guide/">가이드·아티클</a>에서 볼 수 있습니다.</li>
+        <li>도구 사용 중 불편한 점이나 제안은 각 페이지 좌하단 <b>💡 의견</b> 버튼으로 보내주세요. 회신용 연락처를 남기시면 답변드립니다.</li>
+        <li>개인정보 처리에 관한 내용은 <a href="/privacy">개인정보처리방침</a>을 확인해 주세요.</li>
+      </ul>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

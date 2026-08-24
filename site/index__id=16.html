@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataForge | 데이터 분석·AI 실습 플랫폼</title>
+  <meta name="description" content="데이터 생성·전처리·분석, 머신러닝·딥러닝, 업무 자동화, 바이브 코딩까지 — 브라우저에서 바로 실습하는 AI 실무 훈련장." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <link rel="apple-touch-icon" href="/img/mfg.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://dataforge.ai.kr/">
+  <meta property="og:title"       content="DataForge | 데이터 분석·AI 실습 플랫폼">
+  <meta property="og:description" content="데이터 생성·전처리·분석, 머신러닝·딥러닝, 업무 자동화, 바이브 코딩까지 — 브라우저에서 바로 실습하는 AI 실무 훈련장.">
+  <meta property="og:image"       content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:image:width"  content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale"      content="ko_KR">
+  <meta property="og:site_name"   content="DataForge">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="DataForge | 데이터 분석·AI 실습 플랫폼">
+  <meta name="twitter:description" content="데이터 생성부터 ML·DL, 업무 자동화, 바이브 코딩까지 — 브라우저에서 바로 실습.">
+  <meta name="twitter:image"       content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #cbd5e1;
+      --accent: #0284c7;
+      --accent2: #ea580c;
+      --accent3: #16a34a;
+      --sim: #ca8a04;
+      --text: #1e293b;
+      --text-dim: #64748b;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(2,132,199,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(22,163,74,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      padding: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1248px;
+      margin: 0 auto;
+      padding: 24px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    .logo span { color: var(--accent2); }
+
+    .logo-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ── 헤더 우측 버튼 ── */
+    .header-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .ha-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 12px; font-weight: 700; color: var(--text-dim);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 14px; min-height: 38px;
+      cursor: pointer; text-decoration: none; transition: .15s; white-space: nowrap;
+    }
+    .ha-btn:hover, .ha-btn:active { color: var(--accent); border-color: var(--accent); }
+    .ha-btn.ha-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .ha-btn.ha-primary:hover, .ha-btn.ha-primary:active { opacity: .88; color: #fff; }
+    @media (max-width: 640px) {
+      .header-inner { padding: 16px; }
+      .ha-btn { padding: 9px 11px; justify-content: center; min-width: 42px; }
+      .ha-btn .ha-label { display: none; }
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 24px 80px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+
+    .headline {
+      text-align: center;
+      margin-bottom: 0;
+    }
+
+    .headline h1 {
+      font-size: clamp(26px, 4.5vw, 44px);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.35;
+    }
+
+    .headline h1 span { color: var(--accent); }
+
+    .headline p {
+      margin-top: 16px;
+      font-size: 15px;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    /* ── 플로우 래퍼 ─────────────────────────────── */
+    .flow {
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── 섹션 헤더 ───────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 48px 0 20px;
+      scroll-margin-top: 16px;
+    }
+
+    /* ── 섹션 바로가기 ─────────────────────────── */
+    .quick-nav {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      /* 칩 11개 → 6열이면 6+5로 고르게 떨어진다 (5열이면 마지막 줄에 1개만 남음) */
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 28px auto 4px;
+      max-width: 1000px;
+      padding: 0 16px;
+    }
+    .quick-nav a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      transition: .15s;
+      white-space: nowrap;
+    }
+    .quick-nav a:hover,
+    .quick-nav a:active { color: var(--accent); border-color: var(--accent); }
+    @media (max-width: 768px) {
+      /* main이 flex column(align-items:center)이라 폭을 명시하지 않으면
+         fit-content(860px)로 커져 페이지 가로 스크롤을 만든다 */
+      .quick-nav { grid-template-columns: repeat(2, 1fr); width: 100%; }
+      .quick-nav a { min-height: 44px; }
+    }
+
+    /* ── 교육 후기 티커 ─────────────────────────── */
+    .review-strip {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 1000px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+    }
+    .review-ticker {
+      flex: 1;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      padding: 9px 0;
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+      mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+    }
+    .review-track {
+      display: inline-flex;
+      gap: 36px;
+      white-space: nowrap;
+      will-change: transform;
+      animation: review-scroll 40s linear infinite;
+      padding-left: 24px;
+    }
+    .review-ticker:hover .review-track { animation-play-state: paused; }
+    @keyframes review-scroll { to { transform: translateX(-50%); } }
+    .review-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text-dim);
+    }
+    .review-item b { color: var(--text); font-weight: 600; }
+    .review-item .rv-who { font-size: 11px; color: var(--text-dim); }
+    .review-empty {
+      flex: 1;
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--text-dim);
+      border: 1px dashed var(--border);
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: var(--surface);
+    }
+    .review-write-btn {
+      flex-shrink: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: .15s;
+      white-space: nowrap;
+    }
+    .review-write-btn:hover, .review-write-btn:active { background: rgba(2,132,199,0.08); }
+
+    /* 후기 작성 모달 */
+    .rv-modal-bg {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(15,23,42,0.45);
+      align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .rv-modal-bg.open { display: flex; }
+    .rv-modal {
+      width: 100%; max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 20px 60px rgba(15,23,42,0.2);
+    }
+    .rv-modal h3 { font-size: 16px; margin-bottom: 4px; color: var(--text); }
+    .rv-modal p  { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; }
+    .rv-modal label { display: block; font-size: 11px; font-weight: 700; color: var(--text-dim); margin: 10px 0 4px; }
+    .rv-modal input, .rv-modal textarea {
+      width: 100%;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 16px;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    .rv-modal input:focus, .rv-modal textarea:focus { border-color: var(--accent); }
+    .rv-modal textarea { resize: vertical; min-height: 88px; }
+    .rv-modal .rv-cnt { text-align: right; font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+    .rv-modal .rv-btns { display: flex; gap: 8px; margin-top: 16px; }
+    .rv-modal .rv-btns button {
+      flex: 1;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px; font-weight: 700;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      min-height: 44px;
+    }
+    .rv-modal .rv-btns .rv-submit { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .rv-modal .rv-msg { font-size: 12px; margin-top: 10px; display: none; }
+    @media (max-width: 640px) {
+      .review-strip { flex-direction: column; }
+      .review-ticker, .review-empty, .review-write-btn { width: 100%; }
+    }
+
+    .cat-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 4px 12px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .cat-badge.generate {
+      background: rgba(2,132,199,0.12);
+      border: 1px solid rgba(2,132,199,0.4);
+      color: var(--accent);
+    }
+
+    .cat-badge.simulate {
+      background: rgba(202,138,4,0.12);
+      border: 1px solid rgba(202,138,4,0.4);
+      color: var(--sim);
+    }
+
+    .cat-badge.ai {
+      background: rgba(22,163,74,0.10);
+      border: 1px solid rgba(22,163,74,0.35);
+      color: var(--accent3);
+    }
+
+    .cat-badge.preprocess {
+      background: rgba(99,102,241,0.10);
+      border: 1px solid rgba(99,102,241,0.35);
+      color: #6366f1;
+    }
+
+    .cat-badge.builder {
+      background: rgba(244,63,94,0.10);
+      border: 1px solid rgba(244,63,94,0.35);
+      color: #f43f5e;
+    }
+
+    .cat-badge.plan {
+      background: rgba(8,145,178,0.10);
+      border: 1px solid rgba(8,145,178,0.35);
+      color: #0891b2;
+    }
+
+    .cat-badge.biz {
+      background: rgba(234,88,12,0.10);
+      border: 1px solid rgba(234,88,12,0.35);
+      color: #ea580c;
+    }
+
+    .cat-badge.productivity {
+      background: rgba(13,148,136,0.10);
+      border: 1px solid rgba(13,148,136,0.35);
+      color: #0d9488;
+    }
+
+    .cat-badge.extension {
+      background: rgba(37,99,235,0.10);
+      border: 1px solid rgba(37,99,235,0.35);
+      color: #2563eb;
+    }
+
+    .cat-badge.vibe {
+      background: rgba(139,92,246,0.10);
+      border: 1px solid rgba(139,92,246,0.35);
+      color: #8b5cf6;
+    }
+
+    .cat-badge.prompt {
+      background: rgba(99,102,241,0.10);
+      border: 1px solid rgba(99,102,241,0.35);
+      color: #6366f1;
+    }
+
+    .cat-badge.ml {
+      background: rgba(225,29,72,0.10);
+      border: 1px solid rgba(225,29,72,0.35);
+      color: #e11d48;
+    }
+
+    .cat-badge.dl {
+      background: rgba(124,58,237,0.10);
+      border: 1px solid rgba(124,58,237,0.35);
+      color: #7c3aed;
+    }
+
+    @media (max-width: 640px) {
+      .cat-badge { letter-spacing: 1px; padding: 4px 8px; }
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── 카드 그리드 ─────────────────────────────── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      /* 카드 번호는 섹션마다 1번부터 다시 시작 (CSS 카운터 = 자동 채번) */
+      counter-reset: cardno;
+    }
+
+    .cards.sim-cards {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      counter-increment: cardno;
+    }
+
+    /* 카드 번호 배지 — 교육생이 "WORK 9번" 처럼 찾을 수 있도록.
+       HTML에 번호를 박지 않으므로 카드를 추가·삭제·이동해도 자동으로 다시 매겨진다. */
+    .card::after {
+      content: counter(cardno);
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      min-width: 22px;
+      padding: 4px 6px;
+      text-align: center;
+      border-radius: 4px;
+      color: var(--card-color);
+      background: var(--surface);
+      border: 1px solid var(--card-color);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .card:hover::after { opacity: 1; }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover { transform: translateY(-3px); }
+    .card.active:hover { border-color: var(--card-color); box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px var(--card-color); }
+    .card.active:hover::before { background: radial-gradient(ellipse at top, color-mix(in srgb, var(--card-color) 8%, transparent), transparent 70%); opacity: 1; }
+
+    .card-icon { font-size: 28px; }
+
+    .card-title {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--card-color);
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      flex: 1;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-family: 'Noto Sans KR', sans-serif;
+      padding: 3px 8px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-cta {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--card-color);
+    }
+
+    .card-status {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .status-live {
+      background: rgba(22,163,74,0.1);
+      border: 1px solid rgba(22,163,74,0.4);
+      color: var(--accent3);
+    }
+
+    .status-soon {
+      background: rgba(100,116,139,0.1);
+      border: 1px solid rgba(100,116,139,0.3);
+      color: #94a3b8;
+    }
+
+    .card.dim {
+      opacity: 0.55;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    /* ── Footer ──────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: 'Space Mono', monospace;
+      border-top: 1px solid var(--border);
+    }
+    footer .foot-links { margin-bottom: 8px; }
+    footer .foot-links a {
+      display: inline-block;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 12px;
+      margin: 0 6px;
+      padding: 6px 4px;
+    }
+    footer .foot-links a:hover,
+    footer .foot-links a:active {
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    /* ── Responsive ──────────────────────────────── */
+    @media (max-width: 900px) {
+      .cards.sim-cards { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+
+    @media (max-width: 960px) {
+      .cards[style*="repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+
+    @media (max-width: 860px) {
+      .cards { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .header-inner { padding: 16px 16px; }
+      main { padding: 40px 16px 60px; }
+      .cards { grid-template-columns: 1fr !important; }
+      .cards[style] { grid-template-columns: 1fr !important; }
+      .cards.sim-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div>
+        <div class="logo">DATA<span>FORGE</span></div>
+        <div class="logo-sub">dataforge.ai.kr</div>
+      </div>
+      <div class="header-actions">
+        <a class="ha-btn" href="/lms/" title="교육생 LMS">🎓<span class="ha-label">LMS</span></a>
+        <button class="ha-btn" type="button" onclick="openFeedback()" title="개선 의견 남기기">💡<span class="ha-label">의견 남기기</span></button>
+        <button class="ha-btn ha-primary" type="button" onclick="rvOpen()" title="교육 후기 작성">✍️<span class="ha-label">후기 작성</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="badge">AI Practice Platform</div>
+    <div class="headline">
+      <h1>데이터 <span>분석</span>에서 <span>나만의 앱</span>까지,<br class="h1-br"> AI 활용의 모든 것</h1>
+      <p>데이터 생성·전처리·분석, 머신러닝·딥러닝, 업무 자동화, 바이브 코딩까지 —<br />설치 없이 브라우저에서 바로 실습하는 AI 실무 훈련장입니다.</p>
+    </div>
+
+    <!-- ── 교육 후기 티커 ── -->
+    <div class="review-strip" id="review-strip">
+      <div class="review-ticker" id="rv-ticker" style="display:none">
+        <div class="review-track" id="rv-track"></div>
+      </div>
+      <div class="review-empty" id="rv-empty" style="display:none">🎓 아직 후기가 없습니다 — 첫 후기의 주인공이 되어주세요!</div>
+      <button class="review-write-btn" onclick="rvOpen()">✍️ 후기 남기기</button>
+    </div>
+
+    <!-- 후기 작성 모달 -->
+    <div class="rv-modal-bg" id="rv-modal-bg" onclick="if(event.target===this)rvClose()">
+      <div class="rv-modal">
+        <h3>✍️ 교육 후기 남기기</h3>
+        <p>남겨주신 후기는 검토 후 이 자리에 게시됩니다.</p>
+        <label>이름 (또는 닉네임) *</label>
+        <input id="rv-name" maxlength="20" placeholder="홍길동">
+        <label>소속 · 과정 <span style="font-weight:400">(선택)</span></label>
+        <input id="rv-org" maxlength="30" placeholder="OO기업 데이터분석 과정">
+        <label>후기 * <span style="font-weight:400">(10~200자)</span></label>
+        <textarea id="rv-text" maxlength="200" oninput="document.getElementById('rv-cnt').textContent=this.value.length+'/200'"></textarea>
+        <div class="rv-cnt" id="rv-cnt">0/200</div>
+        <input id="rv-website" style="display:none" tabindex="-1" autocomplete="off">
+        <div class="rv-msg" id="rv-msg"></div>
+        <div class="rv-btns">
+          <button onclick="rvClose()">닫기</button>
+          <button class="rv-submit" id="rv-submit" onclick="rvSubmit()">등록</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 섹션 바로가기 ── -->
+    <nav class="quick-nav">
+      <a href="#sec-prompt">💬 프롬프트</a>
+      <a href="#sec-gen">🏭 데이터 생성</a>
+      <a href="#sec-prep">🧹 데이터 전처리</a>
+      <a href="#sec-sim">📊 분석 시뮬레이션</a>
+      <a href="#sec-ml">🤖 머신러닝</a>
+      <a href="#sec-dl">🧠 딥러닝</a>
+      <a href="#sec-builder">🛠️ 빌더</a>
+      <a href="#sec-plan">📋 사업계획</a>
+      <a href="#sec-biz">📈 경영 전략</a>
+      <a href="#sec-work">⚡ 업무 생산성</a>
+      <a href="#sec-ext">🧩 확장 프로그램</a>
+      <a href="#sec-vibe">🚀 바이브 코딩</a>
+    </nav>
+
+    <div class="flow">
+
+      <!-- ── AI: AI 사전 진단 (hidden) ────── -->
+      <div class="section-header" style="display:none;">
+        <div class="cat-badge ai">AI</div>
+        <div class="section-title">AI 진단 · 프롬프트 — 무엇을 만들지 먼저 설계하세요</div>
+        <div class="section-line"></div>
+      </div>
+      <div class="cards" style="display:none;">
+        <!-- AI 진단 테스트 (hidden) -->
+        <a href="/sim/aitest" class="card active" style="--card-color: #c084fc;">
+          <div class="card-icon">🔬</div>
+          <div class="card-title">AI · 진단 테스트</div>
+          <div class="card-desc">
+            업로드한 데이터 또는 생성한 데이터를 AI가 자동 진단합니다. 품질 이슈·분포 이상·결측치·이상치를 즉시 탐지하고 개선 방향을 제시합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">자동진단</span>
+            <span class="tag">품질검사</span>
+            <span class="tag">이상치탐지</span>
+            <span class="tag">AI리포트</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">진단 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+      </div>
+
+<!-- ── PROMPT: 프롬프트 ───────────────────── -->
+      <div class="section-header" id="sec-prompt">
+        <div class="cat-badge prompt">PROMPT</div>
+        <div class="section-title">프롬프트 — 복사 한 번으로 바로 활용하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <!-- 카테고리 카드는 관리자 페이지에 등록된 카테고리 수만큼 JS가 자동 추가 (HIDDEN_CATS에 든 카테고리는 제외) -->
+      <div class="cards" id="prompt-cards" style="grid-template-columns: repeat(4, 1fr);">
+
+        <a href="/builder/prompt_lib" class="card active" style="--card-color:#6366f1;">
+          <div class="card-icon">💬</div>
+          <div class="card-title">프롬프트 모음</div>
+          <div class="card-desc">
+            카테고리별로 정리된 AI 프롬프트 컬렉션. 복사 한 번으로 ChatGPT·Claude·Gemini에 바로 붙여넣어 활용하세요. 관리자가 직접 등록·관리합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">프롬프트</span>
+            <span class="tag">ChatGPT</span>
+            <span class="tag">Claude</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">모음 보기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/builder/defense_video" class="card active" style="--card-color:#4d7c0f;">
+          <div class="card-icon">🎬</div>
+          <div class="card-title">방위산업 영상 프롬프트 생성기</div>
+          <div class="card-desc">
+            피사체·임무·환경·카메라·조명 등 13개 항목에서 표현을 선택하면 방위산업 영상 생성용 프롬프트가 완성됩니다. 한글·영문 전환과 복사 한 번으로 바로 활용하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">영상 생성</span>
+            <span class="tag">방위산업</span>
+            <span class="tag">프롬프트</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">프롬프트 만들기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/builder/defense_image" class="card active" style="--card-color:#0f766e;">
+          <div class="card-icon">📷</div>
+          <div class="card-title">방위산업 이미지 프롬프트 생성기</div>
+          <div class="card-desc">
+            대상 시스템·임무·형상·배경·시점·스타일 6개 항목에서 표현을 선택하면 방산 장비 이미지 생성용 프롬프트가 완성됩니다. 한 줄형·블록형과 한글·영문 전환을 지원합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">이미지 생성</span>
+            <span class="tag">방위산업</span>
+            <span class="tag">프롬프트</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">프롬프트 만들기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+<!-- ── GENERATE: 데이터 생성 ───────────────── -->
+      <div class="section-header" id="sec-gen">
+        <div class="cat-badge generate">GENERATE</div>
+        <div class="section-title">데이터 생성 — 도메인을 선택하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+        <!-- 제조 -->
+        <a href="/mfg" class="card active" style="--card-color: #0284c7;">
+          <div class="card-icon">🏭</div>
+          <div class="card-title">MFG · 제조</div>
+          <div class="card-desc">
+            센서/공정, 품질 검사, 설비 유지보수, 생산 KPI, IoT 스트리밍 데이터를 생성합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">센서/공정</span>
+            <span class="tag">품질검사</span>
+            <span class="tag">설비유지보수</span>
+            <span class="tag">KPI</span>
+            <span class="tag">스트리밍</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">데이터 생성 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 경영 -->
+        <a href="/biz" class="card active" style="--card-color: #ea580c;">
+          <div class="card-icon">📊</div>
+          <div class="card-title">BIZ · 경영</div>
+          <div class="card-desc">
+            수요 예측, 재무 P&L, 고객 RFM·이탈률, 공급망, HR 데이터를 생성합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">수요예측</span>
+            <span class="tag">재무P&L</span>
+            <span class="tag">고객분석</span>
+            <span class="tag">공급망</span>
+            <span class="tag">HR</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">데이터 생성 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 광고 -->
+        <a href="/ads" class="card active" style="--card-color: #a855f7;">
+          <div class="card-icon">📣</div>
+          <div class="card-title">ADS · 광고</div>
+          <div class="card-desc">
+            캠페인 성과, CTR·ROAS·CPA, 소재별 A/B 테스트, 시간대별 전환 데이터를 생성합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">캠페인</span>
+            <span class="tag">CTR/ROAS</span>
+            <span class="tag">A/B테스트</span>
+            <span class="tag">전환분석</span>
+            <span class="tag">멀티채널</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">데이터 생성 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 텍스트 -->
+        <a href="/text" class="card active" style="--card-color: #f59e0b;">
+          <div class="card-icon">✍️</div>
+          <div class="card-title">TXT · 텍스트</div>
+          <div class="card-desc">
+            상품 리뷰, 고객 문의, 뉴스 요약 등 NLP 학습용 텍스트 데이터를 생성합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">상품리뷰</span>
+            <span class="tag">고객문의</span>
+            <span class="tag">NLP</span>
+            <span class="tag">텍스트분류</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">데이터 생성 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- ── 연결 화살표 ─────────────────────────── -->
+
+<!-- ── PREP: 데이터 전처리 ───────────────── -->
+      <div class="section-header" id="sec-prep">
+        <div class="cat-badge preprocess">PREP</div>
+        <div class="section-title">데이터 전처리 — 데이터를 간단하게 전처리하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards sim-cards" style="grid-template-columns: repeat(4, 1fr);">
+        <!-- 결측치·이상치 분석 -->
+        <a href="/prep/missing" class="card sim active" style="--card-color: #dc2626;">
+          <div class="card-icon">🔍</div>
+          <div class="card-title">결측치 이상치 분석</div>
+          <div class="card-desc">
+            결측치 패턴 탐지·히트맵 시각화, Z-Score·IQR 이상치 탐지, 6가지 보간 방법 비교를 실습합니다. CSV 파일 업로드 후 직접 분석할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">결측치탐지</span>
+            <span class="tag">이상치탐지</span>
+            <span class="tag">보간</span>
+            <span class="tag">Z-Score</span>
+            <span class="tag">IQR</span>
+            <span class="tag">CSV업로드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">전처리 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 정규화 · 표준화 -->
+        <a href="/prep/normalize" class="card sim active" style="--card-color: #059669;">
+          <div class="card-icon">📐</div>
+          <div class="card-title">정규화 표준화</div>
+          <div class="card-desc">
+            Min-Max 정규화, Z-Score·Robust 표준화를 같은 데이터에 직접 적용해 비교합니다. 이상치 추가 토글로 각 방법의 민감도 차이를 확인할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">Min-Max</span>
+            <span class="tag">Z-Score</span>
+            <span class="tag">Robust</span>
+            <span class="tag">이상치</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">전처리 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 보간 · 병합 -->
+        <a href="/prep/interpolate" class="card sim active" style="--card-color: #6366f1;">
+          <div class="card-icon">🔧</div>
+          <div class="card-title">CSV 보간 병합</div>
+          <div class="card-desc">
+            CSV를 업로드하고 결측값이 있는 컬럼을 여러 개 선택해 한 번에 보간합니다. 선형·스플라인·다항식·이동평균 등 8가지 알고리즘을 선택하고, 여러 파일을 세로 결합·조인으로 합칩니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">결측치보간</span>
+            <span class="tag">멀티컬럼</span>
+            <span class="tag">선형보간</span>
+            <span class="tag">파일병합</span>
+            <span class="tag">Join</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">전처리 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- CSV 편집 도구 -->
+        <a href="/prep/edit" class="card sim active" style="--card-color: #db2777;">
+          <div class="card-icon">✏️</div>
+          <div class="card-title">CSV 편집 도구</div>
+          <div class="card-desc">
+            빈 행 삭제·값 필터·날짜 분리·차분·중복 제거를 한곳에서 처리합니다. 파일 내 중복 행 제거는 물론, 두 파일을 올려 공통 행을 제외한 나머지만 남기는 비교 정리도 지원합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">빈행삭제</span>
+            <span class="tag">값필터</span>
+            <span class="tag">날짜분리</span>
+            <span class="tag">차분</span>
+            <span class="tag">중복제거</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">전처리 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 원-핫 인코딩 -->
+        <a href="/prep/onehot" class="card sim active" style="--card-color: #d97706;">
+          <div class="card-icon">🔢</div>
+          <div class="card-title">원-핫 인코딩</div>
+          <div class="card-desc">
+            범주형 변수를 이진(0/1) 열로 변환하는 원-핫 인코딩을 직접 체험합니다. 레이블 인코딩과 비교하고, CSV 업로드 후 선택한 열만 변환·저장할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">One-Hot</span>
+            <span class="tag">Label Encoding</span>
+            <span class="tag">범주형</span>
+            <span class="tag">CSV변환</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">전처리 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 데이터 품질 체크 -->
+        <a href="/prep/quality_check" class="card sim active" style="--card-color: #2563eb;">
+          <div class="card-icon">✅</div>
+          <div class="card-title">품질 체크리스트</div>
+          <div class="card-desc">
+            CSV를 업로드하면 완전성·유일성·유효성·일관성·정확성·무결성 6가지 품질 지표를 자동 계산합니다. 컬럼별 결측·이상치·타입 불일치를 한눈에 확인합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">완전성</span>
+            <span class="tag">유일성</span>
+            <span class="tag">유효성</span>
+            <span class="tag">이상치</span>
+            <span class="tag">CSV업로드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">품질 검사 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 타입 변환 (로그 변환) -->
+        <a href="/prep/type_convert" class="card sim active" style="--card-color: #0891b2;">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">타입 변환</div>
+          <div class="card-desc">
+            로그 변환으로 우편향 분포를 대칭에 가깝게 만듭니다. ln(x)·log₁₀(x)·log(1+x) 세 방법을 직접 비교하고 CSV로 저장하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">로그변환</span>
+            <span class="tag">왜도감소</span>
+            <span class="tag">CSV업로드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">전처리 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+
+        <!-- 데이터 분할 -->
+        <a href="/prep/split" class="card sim active" style="--card-color: #0f766e;">
+          <div class="card-icon">✂️</div>
+          <div class="card-title">데이터 분할</div>
+          <div class="card-desc">
+            CSV를 Train / Validation / Test 세트로 분할합니다. 비율 설정, 층화 추출, 셔플, 시드 고정을 지원하며 분할된 파일을 개별 또는 ZIP으로 저장합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">Train/Val/Test</span>
+            <span class="tag">층화추출</span>
+            <span class="tag">셔플</span>
+            <span class="tag">ZIP저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분할 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+      </div>
+
+<!-- ── ANALYZE: 분석 시뮬레이션 ───────────── -->
+      <div class="section-header" id="sec-sim">
+        <div class="cat-badge simulate">ANALYZE</div>
+        <div class="section-title">분석 시뮬레이션 — 데이터를 탐색하고 시각화하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards sim-cards" style="grid-template-columns: repeat(4, 1fr);">
+        <!-- 차트 분석 -->
+        <a href="/sim/chart" class="card sim active" style="--card-color: #0891b2;">
+          <div class="card-icon">📊</div>
+          <div class="card-title">차트 분석</div>
+          <div class="card-desc">
+            8가지 차트 유형의 사용 목적·장단점을 학습합니다. 같은 데이터를 여러 차트로 비교하고, 인터랙티브 빌더로 최적 차트를 직접 선택해보세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">차트가이드</span>
+            <span class="tag">유형비교</span>
+            <span class="tag">시각화</span>
+            <span class="tag">인터랙티브</span>
+            <span class="tag">빌더</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 통계 분석 -->
+        <a href="/sim/basicstat" class="card sim active" style="--card-color: #0ea5e9;">
+          <div class="card-icon">🧮</div>
+          <div class="card-title">기초 통계</div>
+          <div class="card-desc">
+            평균·중앙값·분산·표준편차·사분위수·분포 모양·p-값 — 점을 직접 끌어보며 숫자의 의미를 눈으로 익히는 개념 시뮬레이터입니다. 통계 분석에 들어가기 전 첫걸음.
+          </div>
+          <div class="card-tags">
+            <span class="tag">평균·중앙값</span>
+            <span class="tag">표준편차</span>
+            <span class="tag">사분위수</span>
+            <span class="tag">분포모양</span>
+            <span class="tag">p-값</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">시뮬레이션 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 통계 분석 -->
+        <a href="/sim/stat" class="card sim active" style="--card-color: #059669;">
+          <div class="card-icon">📊</div>
+          <div class="card-title">통계 분석</div>
+          <div class="card-desc">
+            생성한 데이터를 기술통계·분포 분석으로 탐색합니다. 상관분석·회귀·로지스틱·T-검정·가설검정 시뮬레이션을 브라우저에서 바로 실습하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">기술통계</span>
+            <span class="tag">상관분석</span>
+            <span class="tag">회귀분석</span>
+            <span class="tag">T-검정</span>
+            <span class="tag">가설검정</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 시계열 분석 -->
+        <a href="/sim/timeseries" class="card sim active" style="--card-color: #ca8a04;">
+          <div class="card-icon">📈</div>
+          <div class="card-title">시계열 분석</div>
+          <div class="card-desc">
+            생성한 데이터를 바로 시각화하고 분석합니다. 시계열 트렌드·계절성·이상치 탐지, 이동평균, 상관관계 분석 등 다양한 분석을 실습하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">시계열</span>
+            <span class="tag">트렌드분석</span>
+            <span class="tag">이상치탐지</span>
+            <span class="tag">이동평균</span>
+            <span class="tag">시각화</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 위치 분석 -->
+        <a href="/sim/geo" class="card sim active" style="--card-color: #0891b2;">
+          <div class="card-icon">🗺️</div>
+          <div class="card-title">위치 분석</div>
+          <div class="card-desc">
+            GeoJSON 파일을 지도 위에 시각화합니다. 위도·경도가 포함된 CSV·Excel을 업로드하면 각 행이 지도의 점으로 표시됩니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">GeoJSON</span>
+            <span class="tag">위도/경도</span>
+            <span class="tag">CSV매핑</span>
+            <span class="tag">지도시각화</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 텍스트 분석 -->
+        <a href="/sim/text" class="card sim active" style="--card-color: #a78bfa;">
+          <div class="card-icon">📝</div>
+          <div class="card-title">텍스트 분석</div>
+          <div class="card-desc">
+            엑셀·CSV 파일을 업로드하여 텍스트를 분석합니다. 한국어 토크나이저로 명사를 추출하고, 빈도 분석과 워드클라우드 시각화를 브라우저에서 바로 실습하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">텍스트마이닝</span>
+            <span class="tag">한국어NLP</span>
+            <span class="tag">명사추출</span>
+            <span class="tag">빈도분석</span>
+            <span class="tag">워드클라우드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 네트워크 분석 -->
+        <a href="/sim/network" class="card sim active" style="--card-color: #6366f1;">
+          <div class="card-icon">🕸️</div>
+          <div class="card-title">네트워크 분석</div>
+          <div class="card-desc">
+            한 행에 쉼표로 나열된 IPC 특허분류·키워드가 함께 등장한 관계를 네트워크로 그립니다. 허브 코드와 기술 클러스터를 노드·엣지·중심성으로 탐색하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">동시출현</span>
+            <span class="tag">IPC분류</span>
+            <span class="tag">중심성</span>
+            <span class="tag">엣지리스트</span>
+            <span class="tag">그래프</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 크롤링 실습 -->
+        <a href="/factory_lab" class="card sim active" style="--card-color: #16a34a;">
+          <div class="card-icon">🕷️</div>
+          <div class="card-title">크롤링 실습</div>
+          <div class="card-desc">
+            스마트 팩토리 포털을 대상으로 웹 크롤링을 실습합니다. 뉴스·제품 카탈로그·센서 데이터·생산 현황 등 실제 구조의 HTML을 Selenium·BeautifulSoup으로 탐색하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">Selenium</span>
+            <span class="tag">BeautifulSoup</span>
+            <span class="tag">HTML파싱</span>
+            <span class="tag">크롤링</span>
+            <span class="tag">실습포털</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">실습 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 구글 시트 크롤링 -->
+        <a href="/sheet" class="card sim active" style="--card-color: #0f9d58;">
+          <div class="card-icon">📗</div>
+          <div class="card-title">구글 시트 크롤링</div>
+          <div class="card-desc">
+            파이썬도 설치도 필요 없습니다. 구글 계정 하나로 웹페이지의 데이터를 표로 가져오는 4단계 실습 — IMPORTHTML·IMPORTXML 수식부터 Apps Script, API 수집까지 채점 미션과 함께 배웁니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">구글시트</span>
+            <span class="tag">IMPORTXML</span>
+            <span class="tag">AppsScript</span>
+            <span class="tag">노코드</span>
+            <span class="tag">API수집</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">실습 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+
+      </div>
+
+<!-- ── ML: 머신러닝 랩 ───────────── -->
+      <div class="section-header" id="sec-ml">
+        <div class="cat-badge ml">ML</div>
+        <div class="section-title">머신러닝 시뮬레이션 — 알고리즘의 원리를 눈으로 익히세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards sim-cards" style="grid-template-columns: repeat(4, 1fr);">
+        <a href="/sim/ml#kmeans" class="card sim active" style="--card-color: #0891b2;">
+          <div class="card-icon">🔵</div>
+          <div class="card-title">K-Means</div>
+          <div class="card-desc">레이블 없이 데이터를 K개 군집으로 묶는 비지도 학습 — 중심점이 이동하며 수렴하는 과정을 눈으로 봅니다.</div>
+          <div class="card-tags"><span class="tag">비지도</span><span class="tag">군집</span><span class="tag">중심점 이동</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#knn" class="card sim active" style="--card-color: #a855f7;">
+          <div class="card-icon">🟣</div>
+          <div class="card-title">KNN</div>
+          <div class="card-desc">가장 가까운 이웃 K명의 다수결로 분류합니다 — K와 거리 척도를 바꾸면 결과가 뒤집히는 순간을 봅니다.</div>
+          <div class="card-tags"><span class="tag">분류</span><span class="tag">다수결</span><span class="tag">거리 척도</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#linear" class="card sim active" style="--card-color: #d97706;">
+          <div class="card-icon">📈</div>
+          <div class="card-title">선형회귀</div>
+          <div class="card-desc">경사하강이 한 걸음씩 내려가며 최적 회귀선을 찾는 과정 — 학습률(보폭)의 의미를 체험합니다.</div>
+          <div class="card-tags"><span class="tag">회귀</span><span class="tag">경사하강</span><span class="tag">학습률</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#logistic" class="card sim active" style="--card-color: #db2777;">
+          <div class="card-icon">🔀</div>
+          <div class="card-title">로지스틱 회귀</div>
+          <div class="card-desc">시그모이드로 확률을 만들고 결정 경계가 회전하며 자리 잡는 과정을 봅니다.</div>
+          <div class="card-tags"><span class="tag">분류</span><span class="tag">시그모이드</span><span class="tag">결정 경계</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#dtree" class="card sim active" style="--card-color: #16a34a;">
+          <div class="card-icon">🌿</div>
+          <div class="card-title">결정트리</div>
+          <div class="card-desc">불순도를 가장 줄이는 질문을 골라 재귀로 가지를 뻗습니다 — 과적합과 깊이 제한도 실험합니다.</div>
+          <div class="card-tags"><span class="tag">분류</span><span class="tag">지니 불순도</span><span class="tag">재귀 분할</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#rforest" class="card sim active" style="--card-color: #059669;">
+          <div class="card-icon">🌲</div>
+          <div class="card-title">랜덤포레스트</div>
+          <div class="card-desc">서로 다른 약한 나무들의 다수결 — 배깅과 집단지성이 왜 강한지 확인합니다.</div>
+          <div class="card-tags"><span class="tag">앙상블</span><span class="tag">배깅</span><span class="tag">다수결</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#xgboost" class="card sim active" style="--card-color: #ea580c;">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">XGBoost</div>
+          <div class="card-desc">이전 나무가 남긴 잔차를 다음 나무가 순차로 메우는 부스팅 — 학습률·규제의 역할을 봅니다.</div>
+          <div class="card-tags"><span class="tag">앙상블</span><span class="tag">부스팅</span><span class="tag">잔차 학습</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#lightgbm" class="card sim active" style="--card-color: #ca8a04;">
+          <div class="card-icon">🌗</div>
+          <div class="card-title">LightGBM</div>
+          <div class="card-desc">GOSS·EFB로 데이터를 덜 보고도 정확도를 지키는 고속 부스팅의 원리를 봅니다.</div>
+          <div class="card-tags"><span class="tag">부스팅</span><span class="tag">GOSS</span><span class="tag">EFB</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/ml#metrics" class="card sim active" style="--card-color: #64748b;">
+          <div class="card-icon">📊</div>
+          <div class="card-title">평가지표</div>
+          <div class="card-desc">정확도의 함정부터 정밀도·재현율·F1·ROC/AUC까지 — 상황별 지표 선택법을 익힙니다.</div>
+          <div class="card-tags"><span class="tag">혼동행렬</span><span class="tag">F1</span><span class="tag">ROC/AUC</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+      </div>
+
+<!-- ── DL: 딥러닝 랩 ───────────── -->
+      <div class="section-header" id="sec-dl">
+        <div class="cat-badge dl">DL</div>
+        <div class="section-title">딥러닝 시뮬레이션 — 신경망의 학습 원리를 체험하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards sim-cards" style="grid-template-columns: repeat(4, 1fr);">
+        <a href="/sim/deep#neuron" class="card sim active" style="--card-color: #0284c7;">
+          <div class="card-icon">🔵</div>
+          <div class="card-title">뉴런</div>
+          <div class="card-desc">퍼셉트론 하나가 가중치·편향·활성화 함수로 판단을 내리는 과정을 뜯어봅니다.</div>
+          <div class="card-tags"><span class="tag">퍼셉트론</span><span class="tag">가중치</span><span class="tag">활성화 함수</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/deep#arch" class="card sim active" style="--card-color: #6366f1;">
+          <div class="card-icon">🧠</div>
+          <div class="card-title">신경망 구조</div>
+          <div class="card-desc">층과 노드를 직접 조립하며 입력층→은닉층→출력층 구조를 이해합니다.</div>
+          <div class="card-tags"><span class="tag">은닉층</span><span class="tag">노드</span><span class="tag">구조 설계</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/deep#learn" class="card sim active" style="--card-color: #e11d48;">
+          <div class="card-icon">📉</div>
+          <div class="card-title">학습의 원리</div>
+          <div class="card-desc">경사하강과 역전파로 손실이 줄어드는 과정 — 훈련 시뮬레이터로 손실 곡선을 실험합니다.</div>
+          <div class="card-tags"><span class="tag">경사하강</span><span class="tag">역전파</span><span class="tag">손실 곡선</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/deep#hp" class="card sim active" style="--card-color: #d97706;">
+          <div class="card-icon">🎛️</div>
+          <div class="card-title">하이퍼파라미터</div>
+          <div class="card-desc">학습률·배치·에폭·옵티마이저를 바꿔가며 수렴이 달라지는 것을 봅니다.</div>
+          <div class="card-tags"><span class="tag">학습률</span><span class="tag">배치</span><span class="tag">옵티마이저</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+        <a href="/sim/deep#overfit" class="card sim active" style="--card-color: #16a34a;">
+          <div class="card-icon">🎯</div>
+          <div class="card-title">과적합</div>
+          <div class="card-desc">훈련만 잘하는 모델의 함정 — 과적합 진단과 드롭아웃·조기 종료로 막는 법을 봅니다.</div>
+          <div class="card-tags"><span class="tag">과적합</span><span class="tag">드롭아웃</span><span class="tag">조기 종료</span></div>
+          <div class="card-footer">
+            <span class="card-cta">랩 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+      </div>
+
+<!-- ── BUILD: HTML 빌더 ───────────────── -->
+      <div class="section-header" id="sec-builder">
+        <div class="cat-badge builder">BUILD</div>
+        <div class="section-title">다양한 빌더를 활용하여 원하는 기능을 구현하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+        <!-- 프롬프트 빌더 -->
+        <a href="/builder/prompt" class="card active" style="--card-color: #16a34a;">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">프롬프트 빌더</div>
+          <div class="card-desc">
+            Claude AI와 대화하며 원하는 데이터 구조를 설계합니다. 분석 목적·변수·조건을 프롬프트로 정의하고 최적의 데이터 생성 전략을 잡아보세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">Claude AI</span>
+            <span class="tag">프롬프트엔지니어링</span>
+            <span class="tag">데이터설계</span>
+            <span class="tag">대화형</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- HTML 빌더 -->
+        <a href="/builder/html" class="card active" style="--card-color: #f43f5e;">
+          <div class="card-icon">🛠️</div>
+          <div class="card-title">HTML 빌더</div>
+          <div class="card-desc">
+            HTML 파일을 업로드하고 코드 에디터와 실시간 미리보기로 텍스트·색상·간격을 직접 수정합니다. 완성된 HTML을 다운로드해 바로 사용하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">HTML편집</span>
+            <span class="tag">코드에디터</span>
+            <span class="tag">실시간미리보기</span>
+            <span class="tag">찾기/바꾸기</span>
+            <span class="tag">다운로드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 시각화 빌더 -->
+        <a href="/builder/chart" class="card sim active" style="--card-color: #7c3aed;">
+          <div class="card-icon">🎨</div>
+          <div class="card-title">시각화 빌더</div>
+          <div class="card-desc">
+            CSV·Excel 파일을 업로드하고 차트 유형·색상·간격을 직접 조정하세요. 완성된 시각화를 독립 HTML로 다운로드해 로컬에서 바로 사용할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">CSV/Excel</span>
+            <span class="tag">차트커스텀</span>
+            <span class="tag">색상조정</span>
+            <span class="tag">HTML다운로드</span>
+            <span class="tag">오프라인지원</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 대시보드 빌더 -->
+        <a href="/manage/dashboard" class="card active" style="--card-color: #0ea5e9;">
+          <div class="card-icon">🗂️</div>
+          <div class="card-title">대시보드 빌더</div>
+          <div class="card-desc">
+            CSV를 업로드하고 막대·선·파이·산점도 위젯을 자유롭게 배치하세요. 위젯 크기 조절·데이터 집계 방식 선택 후 완성된 대시보드를 HTML로 저장할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">CSV업로드</span>
+            <span class="tag">위젯</span>
+            <span class="tag">차트선택</span>
+            <span class="tag">크기조절</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 링크 빌더 -->
+        <a href="/builder/link" class="card active" style="--card-color: #0d9488;">
+          <div class="card-icon">🔗</div>
+          <div class="card-title">링크 빌더</div>
+          <div class="card-desc">
+            여러 HTML 파일을 업로드하고 카드형 허브 페이지를 자동 생성하세요. 제목·설명·아이콘·색상을 설정하고 완성된 허브를 HTML로 다운로드할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">HTML업로드</span>
+            <span class="tag">허브생성</span>
+            <span class="tag">카드UI</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- JSON 빌더 -->
+        <div class="card" style="--card-color: #ea580c;">
+          <div class="card-icon">{ }</div>
+          <div class="card-title">JSON 빌더</div>
+          <div class="card-desc">
+            CSV 파일을 업로드하고 JSON·배열 형식으로 즉시 변환합니다. 키 이름 수정, 타입 지정, 중첩 구조 생성 후 JSON 파일로 다운로드하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">CSV→JSON</span>
+            <span class="tag">타입변환</span>
+            <span class="tag">다운로드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">준비 중</span>
+            <span class="card-status" style="color:#94a3b8;">○ SOON</span>
+          </div>
+        </div>
+
+        <!-- 위치 정보 빌더 -->
+        <a href="/builder/location" class="card active" style="--card-color:#0891b2;">
+          <div class="card-icon">📍</div>
+          <div class="card-title">위치 정보 빌더</div>
+          <div class="card-desc">
+            주소 검색 또는 구글 맵 URL로 위도·경도를 즉시 추출합니다. 지도에서 직접 클릭해도 좌표를 얻을 수 있으며, 여러 위치를 CSV·JSON으로 내보낼 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">위도·경도</span>
+            <span class="tag">주소검색</span>
+            <span class="tag">지도</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 경계 드로잉 도구 -->
+        <a href="/builder/boundary" class="card active" style="--card-color: #be185d;">
+          <div class="card-icon">📑</div>
+          <div class="card-title">경계 드로잉 도구</div>
+          <div class="card-desc">
+            한국 행정구역(시도·시군구) 경계 위에 폴리곤·사각형으로 연구 영역을 직접 그립니다. 완성된 영역은 이름을 지정해 GeoJSON으로 내보내거나 불러올 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">행정구역경계</span>
+            <span class="tag">폴리곤그리기</span>
+            <span class="tag">GeoJSON</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- ── PLAN: 사업계획 ──────────── -->
+
+      <div class="section-header" id="sec-plan">
+        <div class="cat-badge plan">PLAN</div>
+        <div class="section-title">사업계획 — 아이디어를 사업으로 정리하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+
+        <!-- 원페이지 아이디어 기획서 -->
+        <a href="/manage/onepager" class="card active" style="--card-color:#059669;">
+          <div class="card-icon">💡</div>
+          <div class="card-title">원페이지 기획서</div>
+          <div class="card-desc">
+            아이디어를 한 장으로 정리합니다. 문제·해결·고객·수익 모델 네 가지만 채우면 기획서가 완성되고, 링크 하나로 바로 공유할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">아이디어 정리</span>
+            <span class="tag">수익모델</span>
+            <span class="tag">링크 공유</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">기획서 쓰기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 비즈니스 모델 캔버스 -->
+        <a href="/manage/bmc" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">🧩</div>
+          <div class="card-title">비즈니스 모델 캔버스</div>
+          <div class="card-desc">
+            사업의 뼈대를 9개 블록 한 장으로 도식화합니다. 고객 세그먼트부터 비용 구조까지 권장 순서대로 작성하고, 완성된 캔버스를 HTML로 저장해 공유하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">9블록 캔버스</span>
+            <span class="tag">사업모델 설계</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">캔버스 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 비즈니스 모델 도식화 -->
+        <a href="/manage/bizmodel" class="card active" style="--card-color:#ea580c;">
+          <div class="card-icon">🔗</div>
+          <div class="card-title">비즈니스 모델 도식화</div>
+          <div class="card-desc">
+            사업의 주체와 돈·가치의 흐름을 화살표로 도식화합니다. 구조 템플릿을 고르고 이름과 문구만 채우면 완성 — 제안서에 넣을 PNG·SVG로 저장하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">주체·흐름도</span>
+            <span class="tag">템플릿</span>
+            <span class="tag">SVG·PNG</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도식 그리기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 페르소나 시뮬레이터 -->
+        <a href="/manage/persona" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">🧑‍🤝‍🧑</div>
+          <div class="card-title">페르소나 시뮬레이터</div>
+          <div class="card-desc">
+            타겟 고객의 기본 정보·목표·고충·행동 패턴을 입력해 전문적인 페르소나 카드를 실시간으로 생성합니다. 완성된 카드를 HTML로 저장해 팀에 공유하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">페르소나</span>
+            <span class="tag">타겟고객</span>
+            <span class="tag">고충분석</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">카드 생성 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 고객 여정 맵 -->
+        <a href="/manage/journey" class="card active" style="--card-color:#db2777;">
+          <div class="card-icon">📍</div>
+          <div class="card-title">고객 여정 분석 시뮬레이터</div>
+          <div class="card-desc">
+            단계별 고객 행동·생각·감정·접점·페인포인트·개선기회를 매핑합니다. 감정 곡선으로 병목 구간을 시각화하고 완성된 저니맵을 HTML로 저장하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">저니맵</span>
+            <span class="tag">감정곡선</span>
+            <span class="tag">페인포인트</span>
+            <span class="tag">접점분석</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">맵 작성 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- TAM SAM SOM 시장 규모 -->
+        <a href="/manage/market" class="card active" style="--card-color:#0284c7;">
+          <div class="card-icon">📐</div>
+          <div class="card-title">TAM SAM SOM 시장 규모</div>
+          <div class="card-desc">
+            전체 시장·유효 시장·수익 시장을 하향식·상향식 두 방식으로 계산해 깔때기로 그립니다. 두 방식을 교차 검증하고, SOM을 "하루 신규 고객 몇 명"으로 바꿔 현실성까지 점검하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">시장규모</span>
+            <span class="tag">깔때기</span>
+            <span class="tag">교차검증</span>
+            <span class="tag">링크 공유</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">시장 규모 산정 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- ── BIZ: 경영 데이터 분석 ──────────── -->
+
+<div class="section-header" id="sec-biz">
+        <div class="cat-badge biz">BIZ</div>
+        <div class="section-title">경영 전략 수립 — 손익분기점·수익성을 시뮬레이션하세요</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+
+        <!-- 원페이지 아이디어 기획서 -->
+        <a href="/manage/bep" class="card active" style="--card-color:#ea580c;">
+          <div class="card-icon">📊</div>
+          <div class="card-title">BEP 분석 시뮬레이터</div>
+          <div class="card-desc">
+            고정비·변동비·판매가를 입력해 손익분기점 수량·매출액을 자동 계산합니다.
+            목표 매출 달성 조건과 공헌이익률도 함께 확인하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">BEP</span>
+            <span class="tag">공헌이익</span>
+            <span class="tag">손익분기점</span>
+            <span class="tag">수익성분석</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">시뮬레이션 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/manage/scenario" class="card active" style="--card-color:#0284c7;">
+          <div class="card-icon">🎯</div>
+          <div class="card-title">시나리오 분석 시뮬레이터</div>
+          <div class="card-desc">
+            최선·기준·최악 3가지 시나리오를 동시 비교. 매출·영업이익·BEP·안전한계율·영업레버리지도를 한눈에 확인합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">시나리오</span>
+            <span class="tag">BEP비교</span>
+            <span class="tag">안전한계</span>
+            <span class="tag">DOL</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 탄력성 분석 시뮬레이터 -->
+        <a href="/manage/elasticity" class="card active" style="--card-color:#0284c7;">
+          <div class="card-icon">📉</div>
+          <div class="card-title">탄력성 분석 시뮬레이터</div>
+          <div class="card-desc">
+            가격대별 수요량을 입력하면 구간별 가격탄력성(PED)을 중점 공식으로 계산합니다. 수요 곡선·TR 곡선으로 매출 최대화 가격을 시각적으로 찾아보세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PED</span>
+            <span class="tag">수요곡선</span>
+            <span class="tag">TR최대화</span>
+            <span class="tag">가격전략</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/manage/npv" class="card active" style="--card-color:#0284c7;">
+          <div class="card-icon">💹</div>
+          <div class="card-title">NPV · IRR 분석 시뮬레이터</div>
+          <div class="card-desc">
+            연도별 현금흐름을 입력하면 순현재가치(NPV)·내부수익률(IRR)·투자회수기간·수익성지수(PI)를 자동 계산합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">NPV</span>
+            <span class="tag">IRR</span>
+            <span class="tag">투자타당성</span>
+            <span class="tag">할인율</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">시뮬레이션 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/manage/financial" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">🏦</div>
+          <div class="card-title">재무비율 분석 시뮬레이터</div>
+          <div class="card-desc">
+            재무상태표·손익계산서 핵심 항목을 입력하면 수익성·안정성·활동성 비율을 자동 계산하고 레이더 차트로 시각화합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">ROE</span>
+            <span class="tag">부채비율</span>
+            <span class="tag">유동비율</span>
+            <span class="tag">재무비율</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/manage/kpi" class="card active" style="--card-color:#16a34a;">
+          <div class="card-icon">📋</div>
+          <div class="card-title">KPI 대시보드 시뮬레이터</div>
+          <div class="card-desc">
+            KPI를 자유롭게 입력·편집하고 달성률·카테고리별 카드·차트 대시보드를 실시간으로 확인. HTML 파일로 저장 가능합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">KPI</span>
+            <span class="tag">달성률</span>
+            <span class="tag">대시보드</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">대시보드 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- PEST 분석 -->
+        <a href="/manage/pest" class="card active" style="--card-color:#0d9488;">
+          <div class="card-icon">🌐</div>
+          <div class="card-title">PEST 분석</div>
+          <div class="card-desc">
+            정치·경제·사회·기술 4가지 거시환경 요인을 한 장에 정리합니다. 요인마다 기회(+)·위협(-)을 표시하고 전략 시사점까지 도출해 HTML로 저장하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PEST</span>
+            <span class="tag">거시환경</span>
+            <span class="tag">기회·위협</span>
+            <span class="tag">AI프롬프트</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- SWOT 분석 -->
+        <a href="/manage/swot" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">⚖️</div>
+          <div class="card-title">SWOT 분석</div>
+          <div class="card-desc">
+            강점·약점·기회·위협 4분면을 한 장에 정리하고, SO·WO·ST·WT 교차전략(TOWS)까지 도출합니다. 작성 내용은 브라우저에 자동 저장되고 HTML로 내보낼 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">SWOT</span>
+            <span class="tag">교차전략</span>
+            <span class="tag">내부·외부</span>
+            <span class="tag">AI프롬프트</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 문제 분석 -->
+        <a href="/manage/problem" class="card active" style="--card-color:#d97706;">
+          <div class="card-icon">🔎</div>
+          <div class="card-title">문제 분석</div>
+          <div class="card-desc">
+            As-Is/To-Be 갭으로 문제를 정의하고, 원인을 카테고리로 분해한 뒤 5 Whys로 근본 원인까지 파고듭니다. 대책은 즉시 실행·중장기로 나눠 정리합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">문제정의</span>
+            <span class="tag">5 Whys</span>
+            <span class="tag">피쉬본</span>
+            <span class="tag">AI프롬프트</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 3C 분석 -->
+        <a href="/manage/3c" class="card active" style="--card-color:#0891b2;">
+          <div class="card-icon">🔺</div>
+          <div class="card-title">3C 분석</div>
+          <div class="card-desc">
+            고객·경쟁사·자사 세 관점을 한 장에 정리하고, 세 원이 겹치는 지점에서 KSF(핵심 성공 요인)를 도출합니다. 작성 내용으로 AI 분석 프롬프트도 자동 생성합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">3C</span>
+            <span class="tag">KSF</span>
+            <span class="tag">AI프롬프트</span>
+            <span class="tag">HTML저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분석 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- ── WORK: 업무 생산성 향상 ──────────── -->
+
+<div class="section-header" id="sec-work">
+        <div class="cat-badge productivity">WORK</div>
+        <div class="section-title">업무 생산성 향상 — 실무에 바로 쓰는 도구 모음</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+
+        <a href="/work/markdown" class="card active" style="--card-color:#0284c7;">
+          <div class="card-icon">📝</div>
+          <div class="card-title">마크다운 변환기</div>
+          <div class="card-desc">
+            AI가 생성한 마크다운 텍스트를 한글(HWP) 문서에 서식 그대로 붙여넣을 수 있도록 변환합니다. 제목·표·목록·코드 블록을 완벽하게 변환하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">마크다운</span>
+            <span class="tag">HWP변환</span>
+            <span class="tag">AI활용</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">변환기 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/pdf_splitter" class="card active" style="--card-color:#dc2626;">
+          <div class="card-icon">📄</div>
+          <div class="card-title">PDF 분할</div>
+          <div class="card-desc">
+            서버 업로드 없이 브라우저에서 직접 PDF를 분할합니다. 원하는 페이지를 클릭 선택하거나 범위를 입력하고, 전체 분리 시 ZIP으로 다운로드하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PDF</span>
+            <span class="tag">페이지분할</span>
+            <span class="tag">로컬처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/pdf_maker" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">🖼️</div>
+          <div class="card-title">PDF 생성</div>
+          <div class="card-desc">
+            여러 이미지를 하나의 PDF로 합칩니다. 반대로 PDF를 페이지별 이미지로 저장할 수도 있습니다. 모든 처리는 브라우저에서 직접 이루어집니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">이미지→PDF</span>
+            <span class="tag">PDF→이미지</span>
+            <span class="tag">로컬처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/proposal" class="card active" style="--card-color:#059669;">
+          <div class="card-icon">📋</div>
+          <div class="card-title">문서 작성기</div>
+          <div class="card-desc">
+            제안서·타임테이블을 양식에 맞게 작성하고 PDF로 저장합니다. 디자인 파일을 업로드하면 그 위에 텍스트를 자유롭게 배치할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">제안서</span>
+            <span class="tag">타임테이블</span>
+            <span class="tag">디자인 업로드</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/pdf_compress" class="card active" style="--card-color:#ea580c;">
+          <div class="card-icon">🗜️</div>
+          <div class="card-title">PDF 용량 축소</div>
+          <div class="card-desc">
+            서버 업로드 없이 브라우저에서 직접 PDF 파일 크기를 줄입니다. 품질 프리셋(최대 압축·균형·고화질)을 선택하면 각 페이지를 최적화하여 재압축합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PDF압축</span>
+            <span class="tag">용량축소</span>
+            <span class="tag">로컬처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/ppt_font" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">🎨</div>
+          <div class="card-title">PPT 폰트 변경</div>
+          <div class="card-desc">
+            PPTX 파일을 업로드하면 모든 슬라이드의 폰트를 한 번에 변경합니다. 맑은 고딕·나눔고딕 등 9가지 프리셋 또는 직접 입력으로 일괄 적용합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PPT</span>
+            <span class="tag">폰트변경</span>
+            <span class="tag">서버처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/youtube_dl" class="card active" style="--card-color:#dc2626;">
+          <div class="card-icon">▶️</div>
+          <div class="card-title">유튜브 다운로드</div>
+          <div class="card-desc">
+            YouTube URL을 입력하면 MP4 최고화질·720p 또는 MP3 오디오로 다운로드합니다. 서버에서 직접 처리하여 브라우저로 저장합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">YouTube</span>
+            <span class="tag">MP4·MP3</span>
+            <span class="tag">서버처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/pdf_ppt" class="card active" style="--card-color:#7c3aed;">
+          <div class="card-icon">📊</div>
+          <div class="card-title">PDF → PPT 변환</div>
+          <div class="card-desc">
+            PDF 파일을 슬라이드 하나씩 PowerPoint(PPTX)로 변환합니다. 서버 업로드 없이 브라우저에서 직접 처리하며 16:9·4:3 비율과 화질을 선택할 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PDF→PPT</span>
+            <span class="tag">PPTX</span>
+            <span class="tag">로컬처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/image_resize" class="card active" style="--card-color:#0891b2;">
+          <div class="card-icon">🏞️</div>
+          <div class="card-title">이미지 크기·형식 변환</div>
+          <div class="card-desc">
+            여러 이미지를 한 번에 올려 크기를 바꾸고 JPG·PNG·WEBP로 변환합니다. 파일별 저장·ZIP 저장은 물론, 한 장의 이미지로 이어붙여 받을 수 있습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">일괄 리사이즈</span>
+            <span class="tag">형식변환</span>
+            <span class="tag">이미지합치기</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/char_count" class="card active" style="--card-color:#0d9488;">
+          <div class="card-icon">🔠</div>
+          <div class="card-title">글자수 세기</div>
+          <div class="card-desc">
+            띄어쓰기를 포함한 글자수와 제외한 글자수를 실시간으로 각각 보여 줍니다. 바이트 수·단어 수·원고지 매수까지 확인하고 목표 분량에 맞춰 작성하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">글자수</span>
+            <span class="tag">공백포함·제외</span>
+            <span class="tag">자기소개서</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/pdf_unlock" class="card active" style="--card-color:#e11d48;">
+          <div class="card-icon">🔓</div>
+          <div class="card-title">PDF 암호 제거</div>
+          <div class="card-desc">
+            암호가 걸린 PDF에서 열기 암호와 인쇄·복사·편집 제한을 없앱니다. 서버에 올리지 않고 브라우저 안에서 처리하며, 이미지로 바꾸지 않아 텍스트·서식·화질이 그대로 남습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">암호해제</span>
+            <span class="tag">인쇄제한</span>
+            <span class="tag">원본유지</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/ppt_pdf" class="card active" style="--card-color:#b91c1c;">
+          <div class="card-icon">📕</div>
+          <div class="card-title">PPT → PDF 변환</div>
+          <div class="card-desc">
+            파워포인트를 원본 폰트 그대로 PDF로 만듭니다. 슬라이드를 다시 그리는 방식이라 레이아웃·도형·차트가 유지되고, 파일에 포함된 임베드 폰트까지 반영해 한글이 깨지지 않습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">폰트유지</span>
+            <span class="tag">한글깨짐없음</span>
+            <span class="tag">발표자노트</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">변환기 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <a href="/work/ocr" class="card active" style="--card-color:#0e7490;">
+          <div class="card-icon">📷</div>
+          <div class="card-title">사진 텍스트 추출 (OCR)</div>
+          <div class="card-desc">
+            사진·스크린샷 속 글자를 텍스트로 추출합니다. 한글·영문·숫자를 인식하고 줄별 신뢰도를 함께 보여줘 문서 사진·안내문·명함 디지털화에 쓰기 좋습니다. 이미지는 인식 후 즉시 삭제됩니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">한글인식</span>
+            <span class="tag">붙여넣기지원</span>
+            <span class="tag">즉시삭제</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">도구 열기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- ── EXTENSION: 브라우저 확장 프로그램 ──────────── -->
+
+<div class="section-header" id="sec-ext">
+        <div class="cat-badge extension">EXTENSION</div>
+        <div class="section-title">브라우저 확장 프로그램 — 크롬에 설치해 쓰는 도구</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+
+        <!-- 영역 캡처 확장 프로그램 -->
+        <a href="/extension/capture" class="card active" style="--card-color:#2563eb;">
+          <div class="card-icon">🎯</div>
+          <div class="card-title">영역 캡처</div>
+          <div class="card-desc">
+            웹페이지의 요소(div)나 원하는 영역을 골라 보이는 그대로 이미지로 저장하는 크롬 확장 프로그램. 다운로드 후 개발자 모드로 3분 만에 설치하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">크롬확장</span>
+            <span class="tag">영역캡처</span>
+            <span class="tag">이미지저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">받기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 영역 텍스트 추출 확장 프로그램 -->
+        <a href="/extension/textgrab" class="card active" style="--card-color:#2563eb;">
+          <div class="card-icon">🔤</div>
+          <div class="card-title">영역 텍스트 추출</div>
+          <div class="card-desc">
+            웹페이지의 영역이나 요소를 선택해 그 안의 텍스트를 그대로 추출·복사·저장하는 크롬 확장 프로그램. 이미지가 아닌 실제 글자라 100% 정확하고 오프라인으로 동작합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">크롬확장</span>
+            <span class="tag">텍스트추출</span>
+            <span class="tag">복사·저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">받기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 영역 이미지 저장 확장 프로그램 -->
+        <a href="/extension/imagegrab" class="card active" style="--card-color:#2563eb;">
+          <div class="card-icon">🖼️</div>
+          <div class="card-title">영역 이미지 저장</div>
+          <div class="card-desc">
+            웹페이지의 영역이나 요소를 선택해 그 안의 이미지들을 원본 파일 그대로 골라 저장하는 크롬 확장 프로그램. 화면 캡처가 아니라 원본 화질 그대로 한번에 받습니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">크롬확장</span>
+            <span class="tag">이미지수집</span>
+            <span class="tag">원본저장</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">받기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- ── VIBE: 바이브 코딩 ──────────── -->
+
+<div class="section-header" id="sec-vibe">
+        <div class="cat-badge vibe">VIBE</div>
+        <div class="section-title">바이브 코딩 — AI와 함께 나만의 앱을 만들어 배포까지</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+
+        <!-- PWA 빌더 -->
+        <a href="/vibe/pwa" class="card active" style="--card-color:#0ea5e9;">
+          <div class="card-icon">📱</div>
+          <div class="card-title">PWA 빌더</div>
+          <div class="card-desc">
+            내 웹사이트를 스마트폰·PC에 설치되는 앱으로 만듭니다. manifest·서비스 워커·아이콘 세트를 자동 생성하고, GitHub Pages·Vercel 배포에 바로 적용하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">PWA</span>
+            <span class="tag">홈화면 설치</span>
+            <span class="tag">로컬처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- Firestore 앱 빌더 -->
+        <a href="/vibe/firestore" class="card active" style="--card-color:#f59e0b;">
+          <div class="card-icon">🔥</div>
+          <div class="card-title">Firestore 앱 빌더</div>
+          <div class="card-desc">
+            저장할 항목만 입력하면 AI 코드 생성 프롬프트·Firestore 보안 규칙·배포 가이드를 자동 생성합니다. 정보 수집 폼·방명록·설문조사를 만들어 Vercel에 배포하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">Firestore</span>
+            <span class="tag">AI 프롬프트</span>
+            <span class="tag">보안규칙</span>
+            <span class="tag">Vercel배포</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 푸시 빌더 -->
+        <a href="/vibe/push" class="card active" style="--card-color:#0ea5e9;">
+          <div class="card-icon">🔔</div>
+          <div class="card-title">푸시 빌더</div>
+          <div class="card-desc">
+            텔레그램 없이 앱을 닫아도 받는 나만의 웹푸시 앱을 만듭니다. 수신 PWA·서버리스 함수·VAPID 키가 든 완결 프로젝트를 내려받아 Vercel에 배포하고, 다른 웹앱과 연동하세요.
+          </div>
+          <div class="card-tags">
+            <span class="tag">웹푸시</span>
+            <span class="tag">PWA</span>
+            <span class="tag">서버리스</span>
+            <span class="tag">Vercel배포</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">빌더 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- HTML 파일 분리기 -->
+        <a href="/vibe/split" class="card active" style="--card-color:#8b5cf6;">
+          <div class="card-icon">✂️</div>
+          <div class="card-title">HTML 파일 분리기</div>
+          <div class="card-desc">
+            AI가 한 파일에 합쳐 준 HTML을 업로드하면 index.html·style.css·app.js·config.js로 자동 분리합니다. firebaseConfig 추출과 연결 태그까지 브라우저에서 바로 처리합니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">HTML분리</span>
+            <span class="tag">firebaseConfig</span>
+            <span class="tag">로컬처리</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">분리하기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+        <!-- 텔레그램 봇 연결 도우미 -->
+        <a href="/vibe/telegram" class="card active" style="--card-color:#0ea5e9;">
+          <div class="card-icon">✈️</div>
+          <div class="card-title">텔레그램 봇 연결</div>
+          <div class="card-desc">
+            봇파더 토큰 검증부터 chat_id 자동 감지, 테스트 발송, 활용 코드 생성까지 5단계 마법사로 안내합니다. 토큰은 서버로 전송되지 않고 브라우저에서만 사용됩니다.
+          </div>
+          <div class="card-tags">
+            <span class="tag">텔레그램</span>
+            <span class="tag">chat_id 자동감지</span>
+            <span class="tag">코드생성</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">연결 시작 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드·아티클</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+<script>
+// ── 프롬프트 카테고리 카드 — 관리자 페이지에 등록된 카테고리 수만큼 자동 추가 ──
+(function(){
+  const escP = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const colors = ['#0284c7','#059669','#d97706','#7c3aed','#dc2626','#0d9488','#ea580c','#2563eb'];
+  // 허브에 노출하지 않을 카테고리 (프롬프트 모음 페이지에는 그대로 유지)
+  const HIDDEN_CATS = ['이메일','공공기관','시장조사','취업준비','보고서 작성'];
+  fetch('/mfg/api/prompt_lib.php?action=categories').then(r=>r.json()).then(d=>{
+    if(!d.ok || !Array.isArray(d.categories)) return;
+    const cats = d.categories.filter(c => !HIDDEN_CATS.includes(String(c.name||'').trim()));
+    if(!cats.length) return;
+    const wrap = document.getElementById('prompt-cards');
+    wrap.insertAdjacentHTML('beforeend', cats.map((c,i)=>`
+        <a href="/builder/prompt_lib?cat=${encodeURIComponent(c.id)}" class="card active" style="--card-color:${colors[i%colors.length]};">
+          <div class="card-icon">${escP(c.icon)||'💡'}</div>
+          <div class="card-title">${escP(c.name)}</div>
+          <div class="card-desc">${escP(c.description)||escP(c.name)+' 카테고리의 프롬프트를 모아 놓았습니다. 복사 한 번으로 바로 활용하세요.'}</div>
+          <div class="card-tags">
+            <span class="tag">프롬프트 ${+c.prompt_count||0}개</span>
+            <span class="tag">복사 활용</span>
+          </div>
+          <div class="card-footer">
+            <span class="card-cta">모음 보기 →</span>
+            <span class="card-status status-live">● LIVE</span>
+          </div>
+        </a>`).join(''));
+  }).catch(()=>{});
+})();
+
+// ── 교육 후기 티커 ──
+(function(){
+  const escRv = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  fetch('/mfg/api/reviews.php').then(r=>r.json()).then(items=>{
+    if(!Array.isArray(items) || !items.length){
+      document.getElementById('rv-empty').style.display='';
+      return;
+    }
+    // 이어 붙여도 빈틈이 없도록 최소 6개까지 반복한 뒤 2배 복제 (translateX -50% 무한 루프)
+    let list = items.slice();
+    while(list.length < 6) list = list.concat(items);
+    const html = list.map(it =>
+      `<span class="review-item">💬 <b>${escRv(it.text)}</b><span class="rv-who">— ${escRv(it.name)}${it.org?' · '+escRv(it.org):''}</span></span>`
+    ).join('');
+    const track = document.getElementById('rv-track');
+    track.innerHTML = html + html;
+    track.style.animationDuration = Math.max(30, list.length * 7) + 's';
+    document.getElementById('rv-ticker').style.display='';
+  }).catch(()=>{ document.getElementById('rv-empty').style.display=''; });
+})();
+function rvOpen(){ document.getElementById('rv-modal-bg').classList.add('open'); }
+// 개선 의견 모달 열기 — promo.js(지연 로드)가 만든 dffb 모달 재사용
+function openFeedback(tries){
+  const bg = document.getElementById('dffb-bg');
+  if (bg) { bg.classList.add('open'); return; }
+  if ((tries||0) < 10) setTimeout(() => openFeedback((tries||0)+1), 300);
+}
+function rvClose(){ document.getElementById('rv-modal-bg').classList.remove('open'); }
+function rvSubmit(){
+  const name=document.getElementById('rv-name').value.trim();
+  const text=document.getElementById('rv-text').value.trim();
+  const org=document.getElementById('rv-org').value.trim();
+  const msg=document.getElementById('rv-msg');
+  const show=(t,ok)=>{ msg.style.display='block'; msg.style.color=ok?'#059669':'#dc2626'; msg.textContent=t; };
+  if(!name){ show('이름을 입력해주세요',false); return; }
+  if(text.length<10){ show('후기를 10자 이상 적어주세요',false); return; }
+  const btn=document.getElementById('rv-submit'); btn.disabled=true;
+  fetch('/mfg/api/reviews.php',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name, org, text, website:document.getElementById('rv-website').value})
+  }).then(r=>r.json()).then(d=>{
+    btn.disabled=false;
+    if(!d.ok){ show(d.msg||'등록 실패',false); return; }
+    show(d.msg,true);
+    setTimeout(()=>{ rvClose(); msg.style.display='none';
+      document.getElementById('rv-name').value=''; document.getElementById('rv-org').value='';
+      document.getElementById('rv-text').value=''; document.getElementById('rv-cnt').textContent='0/200';
+    }, 1800);
+  }).catch(()=>{ btn.disabled=false; show('요청 실패 — 잠시 후 다시 시도해주세요',false); });
+}
+</script>
+<script>(function(){var k='tf_hub';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=hub&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부품 카탈로그 — DataForge Factory Lab</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#0284c7;--accent2:#ea580c;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:var(--accent2);font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:15px;font-weight:700;color:var(--text);}
+.logo-title span{color:var(--accent);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;font-family:'Noto Sans KR', sans-serif;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);text-decoration:none;}
+
+/* ── Page ── */
+.page{padding:32px 24px 80px;}
+
+/* ── Intro box ── */
+.intro-box{background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Search ── */
+.search-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.search-input{border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);background:var(--card2);font-family:'Noto Sans KR',sans-serif;outline:none;width:280px;}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(2,132,199,.1);}
+.btn-search{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:background .15s;}
+.btn-search:hover{background:#0369a1;}
+.btn-reset{background:var(--card2);color:var(--muted);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;text-decoration:none;transition:.15s;}
+.btn-reset:hover{border-color:var(--accent);color:var(--text);text-decoration:none;}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.ds-selector{display:flex;gap:6px;flex-wrap:wrap;}
+.ds-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;}
+.ds-btn:hover{color:var(--text);text-decoration:none;}
+.ds-btn.active{background:rgba(2,132,199,0.12);border-color:rgba(2,132,199,0.4);color:var(--accent);}
+.filter-count{font-size:12px;color:var(--muted);white-space:nowrap;}
+.filter-count strong{color:var(--text);}
+
+/* ── Catalog grid ── */
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.catalog-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s,transform .2s,box-shadow .2s;text-decoration:none;}
+.catalog-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.07);text-decoration:none;}
+.cc-category{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.cc-name{font-size:.95rem;font-weight:700;color:var(--text);line-height:1.4;}
+.cc-maker{font-size:.75rem;color:var(--dim);}
+.cc-price{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);}
+.cc-stock{font-size:.75rem;font-weight:600;}
+.cc-stock.in{color:var(--green);}
+.cc-stock.out{color:var(--red);}
+.empty-msg{grid-column:1/-1;padding:40px;text-align:center;color:var(--dim);font-size:13px;}
+
+/* ── Pagination ── */
+.pagination{display:flex;gap:4px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:6px;border:1px solid var(--border);font-size:13px;color:var(--muted);background:var(--card);text-decoration:none;}
+.pagination a:hover{background:var(--card2);text-decoration:none;}
+.pagination .current{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+@media(max-width:600px){.site-header{padding:12px 16px;}.page{padding:20px 16px 60px;}.search-input{width:100%;}}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/factory_lab/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>부품</span> 카탈로그</div>
+  </div>
+  <a href="/factory_lab/" class="header-back">← Factory Lab</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>실습 포인트</strong>
+    검색어 입력 → 결과 수집 &nbsp;|&nbsp; 카테고리 필터 → 목록 파싱 &nbsp;|&nbsp; 항목 클릭 → 스펙 테이블 수집 &nbsp;|&nbsp; 페이지네이션 순회
+  </div>
+
+  <!-- 검색 -->
+  <div class="a-card">
+    <div class="a-card-title">검색</div>
+    <form method="get" id="search-form" class="search-row">
+      <input type="text" name="q" id="search-input" class="search-input"
+             value="" placeholder="부품명, 제조사, 모델번호 검색...">
+      <input type="hidden" name="category" value="환경설비">
+      <button type="submit" class="btn-search">검색</button>
+            <a href="/factory_lab/catalog/" class="btn-reset">초기화</a>
+          </form>
+  </div>
+
+  <!-- 카테고리 필터 -->
+  <div class="filter-bar">
+    <div class="ds-selector">
+      <a href="/factory_lab/catalog/"
+         class="ds-btn ">전체</a>
+            <a href="/factory_lab/catalog/?category=IT%EA%B8%B0%EA%B8%B0"
+         class="ds-btn ">IT기기</a>
+            <a href="/factory_lab/catalog/?category=%EA%B2%80%EC%82%AC%EC%9E%A5%EB%B9%84"
+         class="ds-btn ">검사장비</a>
+            <a href="/factory_lab/catalog/?category=%EA%B3%B5%EA%B5%AC%EB%A5%98"
+         class="ds-btn ">공구류</a>
+            <a href="/factory_lab/catalog/?category=%EA%B3%B5%EC%95%95%EA%B8%B0%EA%B8%B0"
+         class="ds-btn ">공압기기</a>
+            <a href="/factory_lab/catalog/?category=%EA%B5%AC%EB%8F%99%EA%B8%B0%EA%B8%B0"
+         class="ds-btn ">구동기기</a>
+            <a href="/factory_lab/catalog/?category=%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC"
+         class="ds-btn ">네트워크</a>
+            <a href="/factory_lab/catalog/?category=%EB%AC%BC%EB%A5%98%EC%9E%A5%EB%B9%84"
+         class="ds-btn ">물류장비</a>
+            <a href="/factory_lab/catalog/?category=%EC%84%BC%EC%84%9C%EB%A5%98"
+         class="ds-btn ">센서류</a>
+            <a href="/factory_lab/catalog/?category=%EC%8B%9D%EB%B3%84%2F%ED%8A%B8%EB%9E%98%ED%82%B9"
+         class="ds-btn ">식별/트래킹</a>
+            <a href="/factory_lab/catalog/?category=%EC%95%88%EC%A0%84%EC%9E%A5%EC%B9%98"
+         class="ds-btn ">안전장치</a>
+            <a href="/factory_lab/catalog/?category=%EC%A0%9C%EC%96%B4%EA%B8%B0%EA%B8%B0"
+         class="ds-btn ">제어기기</a>
+            <a href="/factory_lab/catalog/?category=%ED%99%98%EA%B2%BD%EC%84%A4%EB%B9%84"
+         class="ds-btn active">환경설비</a>
+          </div>
+    <span class="filter-count">총 <strong>2</strong>개 품목</span>
+  </div>
+
+  <!-- 카탈로그 그리드 -->
+  <div class="catalog-grid" id="catalog-grid">
+        <a href="/factory_lab/catalog/detail.php?id=24" class="catalog-card"
+       data-id="24" data-name="산업용 공기청정기">
+      <div class="cc-category">환경설비</div>
+      <div class="cc-name">산업용 공기청정기</div>
+      <div class="cc-maker">(주)공조테크 · IAC-500-F</div>
+      <div class="cc-price">1,200,000원</div>
+      <div class="cc-stock in">
+        재고 4개      </div>
+    </a>
+        <a href="/factory_lab/catalog/detail.php?id=25" class="catalog-card"
+       data-id="25" data-name="오일 미스트 집진기">
+      <div class="cc-category">환경설비</div>
+      <div class="cc-name">오일 미스트 집진기</div>
+      <div class="cc-maker">(주)공조테크 · OC-300-M</div>
+      <div class="cc-price">980,000원</div>
+      <div class="cc-stock in">
+        재고 6개      </div>
+    </a>
+          </div>
+
+  
+</div>
+</div>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

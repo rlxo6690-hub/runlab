@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스마트 팩토리 포털 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="스마트 팩토리 포털 — DataForge">
+<meta property="og:description" content="Python Selenium·BeautifulSoup 크롤링 실습을 위한 가상 스마트 팩토리 포털">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#0284c7;--accent2:#ea580c;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:var(--accent2);font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:15px;font-weight:700;color:var(--text);}
+.logo-title span{color:var(--accent);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;font-family:'Noto Sans KR', sans-serif;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);text-decoration:none;}
+
+/* ── Page ── */
+.page{padding:32px 24px 80px;}
+
+/* ── Intro box ── */
+.intro-box{background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Stat chips ── */
+.stat-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.stat-chip{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.stat-chip .sc-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.stat-chip .sc-value{font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--text);}
+.stat-chip .sc-unit{font-size:11px;color:var(--dim);margin-top:2px;}
+
+/* ── CTA bar ── */
+.cta-card{background:rgba(2,132,199,0.05);border:1px solid rgba(2,132,199,0.2);border-radius:var(--r);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;}
+.cta-text strong{display:block;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.cta-text span{font-size:12px;color:var(--muted);}
+.cta-btn{font-family:'Noto Sans KR', sans-serif;font-size:12px;font-weight:700;letter-spacing:.5px;background:var(--accent);color:#fff;padding:9px 20px;border-radius:8px;text-decoration:none;white-space:nowrap;transition:background .15s;flex-shrink:0;}
+.cta-btn:hover{background:#0369a1;text-decoration:none;color:#fff;}
+
+/* ── Section cards ── */
+.section-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-decoration:none;display:block;position:relative;}
+.section-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.06);text-decoration:none;}
+.sc-icon{font-size:26px;margin-bottom:10px;}
+.sc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.sc-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.sc-badge{display:inline-block;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:3px 9px;border-radius:3px;margin-top:10px;letter-spacing:.04em;background:rgba(2,132,199,.1);border:1px solid rgba(2,132,199,.25);color:var(--accent);}
+
+/* ── News rows ── */
+.news-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.news-row:last-child{border-bottom:none;}
+.news-title a{color:var(--text);font-weight:500;}
+.news-title a:hover{color:var(--accent);text-decoration:none;}
+.news-date{margin-left:auto;flex-shrink:0;font-family:'Space Mono',monospace;font-size:11px;color:var(--dim);}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600;flex-shrink:0;}
+.badge-안전{background:#fef2f2;color:#dc2626;}
+.badge-생산{background:#f0fdf4;color:#16a34a;}
+.badge-설비{background:#eff6ff;color:#2563eb;}
+.badge-HR  {background:#fdf4ff;color:#9333ea;}
+
+@media(max-width:900px){.stat-chips{grid-template-columns:repeat(2,1fr);}.section-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.section-grid{grid-template-columns:1fr;}.cta-card{flex-direction:column;align-items:flex-start;}}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>스마트 팩토리</span> 포털</div>
+  </div>
+  <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>🕷 Python 크롤링 실습 포털</strong>
+    Selenium·BeautifulSoup 웹 크롤링 실습을 위한 가상 스마트 팩토리 포털입니다.
+    공지사항·부품 카탈로그·센서 모니터링·생산 실적·설비 점검 등 제조 현장의 실제 HTML 구조를 직접 크롤링해보세요.
+  </div>
+
+  <!-- 사이트 현황 -->
+  <div class="a-card">
+    <div class="a-card-title">사이트 현황</div>
+    <div class="stat-chips">
+      <div class="stat-chip">
+        <div class="sc-label">공지사항</div>
+        <div class="sc-value">30</div>
+        <div class="sc-unit">건</div>
+      </div>
+      <div class="stat-chip">
+        <div class="sc-label">부품 카탈로그</div>
+        <div class="sc-value">30</div>
+        <div class="sc-unit">개 품목</div>
+      </div>
+      <div class="stat-chip">
+        <div class="sc-label">모니터링 센서</div>
+        <div class="sc-value">15</div>
+        <div class="sc-unit">개소</div>
+      </div>
+      <div class="stat-chip">
+        <div class="sc-label">설비 점검 이력</div>
+        <div class="sc-value">50</div>
+        <div class="sc-unit">건</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 크롤링 실습 랩 CTA -->
+  <div class="cta-card">
+    <div class="cta-text">
+      <strong>🕷 크롤링 실습 랩</strong>
+      <span>CSS 셀렉터로 요소를 직접 선택하고, Python BeautifulSoup 코드를 자동 생성합니다. 다중 크롤링 및 CSV 저장도 가능합니다.</span>
+    </div>
+    <a href="/factory_lab/crawl_lab.php" class="cta-btn">실습 시작 →</a>
+  </div>
+
+  <!-- 실습 섹션 -->
+  <div class="a-card">
+    <div class="a-card-title">실습 섹션</div>
+    <div class="section-grid">
+
+      <a href="/factory_lab/news/" class="section-card">
+        <div class="sc-icon">📰</div>
+        <div class="sc-name">공지사항 / 뉴스</div>
+        <div class="sc-desc">카테고리 필터, 페이지네이션, 상세 페이지 링크 추적</div>
+        <span class="sc-badge">STEP 1~2</span>
+      </a>
+
+      <a href="/factory_lab/catalog/" class="section-card">
+        <div class="sc-icon">📦</div>
+        <div class="sc-name">부품 카탈로그</div>
+        <div class="sc-desc">검색, 카테고리 필터, 페이지네이션, 스펙 테이블 파싱</div>
+        <span class="sc-badge">STEP 2~3</span>
+      </a>
+
+      <a href="/factory_lab/sensor/" class="section-card">
+        <div class="sc-icon">🔌</div>
+        <div class="sc-name">센서 모니터링</div>
+        <div class="sc-desc">실시간 데이터 갱신, WebDriverWait, 상태값 수집</div>
+        <span class="sc-badge">STEP 3~4</span>
+      </a>
+
+      <a href="/factory_lab/production/" class="section-card">
+        <div class="sc-icon">📊</div>
+        <div class="sc-name">생산 실적</div>
+        <div class="sc-desc">탭 전환(일간/주간/월간), 날짜 입력, 테이블 수집</div>
+        <span class="sc-badge">STEP 3~4</span>
+      </a>
+
+      <a href="/factory_lab/maintenance/" class="section-card">
+        <div class="sc-icon">🔧</div>
+        <div class="sc-name">설비 점검 이력</div>
+        <div class="sc-desc">더보기(AJAX 로딩), 모달 팝업 상세 내용 수집</div>
+        <span class="sc-badge">STEP 4~5</span>
+      </a>
+
+      <a href="/factory_lab/login.php" class="section-card">
+        <div class="sc-icon">🔒</div>
+        <div class="sc-name">로그인 / 마이페이지</div>
+        <div class="sc-desc">폼 입력, 세션 유지, 로그인 후 전용 데이터 수집</div>
+        <span class="sc-badge">STEP 5~6</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- 최근 공지 -->
+    <div class="a-card">
+    <div class="a-card-title">최근 공지사항</div>
+        <div class="news-row">
+      <span class="badge badge-생산">생산</span>
+      <div class="news-title flex-1">
+        <a href="/factory_lab/news/detail.php?id=2">3월 생산 목표 달성률 현황 보고</a>
+      </div>
+      <div class="news-date">2026-03-21</div>
+    </div>
+        <div class="news-row">
+      <span class="badge badge-안전">안전</span>
+      <div class="news-title flex-1">
+        <a href="/factory_lab/news/detail.php?id=1">[필독] 2026년 상반기 안전교육 일정 안내</a>
+      </div>
+      <div class="news-date">2026-03-20</div>
+    </div>
+        <div class="news-row">
+      <span class="badge badge-안전">안전</span>
+      <div class="news-title flex-1">
+        <a href="/factory_lab/news/detail.php?id=3">화재 대피 훈련 실시 안내</a>
+      </div>
+      <div class="news-date">2026-03-19</div>
+    </div>
+        <div style="margin-top:12px;font-size:12px;">
+      <a href="/factory_lab/news/" style="color:var(--accent)">전체 공지사항 보기 →</a>
+    </div>
+  </div>
+  
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML 파일 분리기 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="HTML 파일 분리기 — DataForge">
+  <meta property="og:description" content="AI가 한 파일로 합쳐 준 HTML을 업로드하면 index.html·style.css·app.js·config.js로 분리해 다운로드합니다. 서버 업로드 없이 브라우저에서 처리.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    :root{
+      --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+      --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+      --accent:#2563eb;--accent2:#6366f1;
+      --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;
+    }
+    body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+         background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;}
+
+    .site-header{padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:#ea580c;font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+    .page{padding:0 24px 80px;}
+    .intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;
+      padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:16px;}
+    .intro-box strong{color:var(--text);}
+
+    .a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+    .a-card:last-child{margin-bottom:0;}
+    .a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+      display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+    .upload-zone{border:2px dashed rgba(37,99,235,.3);border-radius:10px;padding:28px 18px;
+      text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.03);position:relative;}
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{font-size:32px;margin-bottom:8px;}
+    .upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .upload-sub{font-size:11px;color:var(--muted);}
+    .file-info{display:none;padding:12px 16px;background:rgba(5,150,105,.07);
+      border:1px solid rgba(5,150,105,.25);border-radius:8px;
+      font-size:12px;color:#065f46;margin-top:12px;line-height:1.8;}
+    .file-info.show{display:block;}
+
+    .paste-toggle{font-size:11px;color:var(--dim);text-align:center;margin-top:10px;cursor:pointer;user-select:none;}
+    .paste-toggle:hover{color:var(--accent);}
+    .paste-area{display:none;margin-top:10px;}
+    .paste-area.show{display:block;}
+    .paste-ta{width:100%;height:180px;resize:vertical;border:1px solid var(--border2);border-radius:8px;
+      padding:10px 12px;font-family:'Noto Sans KR', sans-serif;font-size:11px;line-height:1.5;color:var(--text);
+      background:var(--card2);outline:none;}
+    .paste-ta:focus{border-color:var(--accent);background:#fff;}
+
+    .col-pill{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border2);border-radius:6px;
+      cursor:pointer;font-size:12px;user-select:none;transition:all .2s;color:var(--muted);}
+    .col-pill:hover{border-color:rgba(37,99,235,.4);color:var(--text);}
+    .col-pill.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+    .col-pill-check{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;}
+    .col-pill.selected .col-pill-check::after{content:'✓';}
+
+    .btn{display:inline-block;padding:9px 20px;font-size:12px;font-weight:700;
+      font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{background:#1d4ed8;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+    .btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#047857;}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+
+    .stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+    .stat-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+    .stat-val{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);}
+    .stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;}
+
+    .merge-file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+    .merge-file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);
+      border:1px solid var(--border);border-radius:8px;font-size:12px;flex-wrap:wrap;}
+    .merge-file-order{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);
+      width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .merge-file-name{font-weight:700;color:var(--text);flex:1;min-width:120px;font-family:'Space Mono',monospace;}
+    .merge-file-meta{color:var(--muted);font-size:11px;white-space:nowrap;font-family:'Space Mono',monospace;}
+    .mini-btn{font-size:10px;font-weight:700;padding:4px 12px;border:1px solid var(--border2);border-radius:4px;
+      background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+    .mini-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+    .mini-btn.dl{color:var(--green);border-color:rgba(5,150,105,.3);}
+    .mini-btn.dl:hover{background:rgba(5,150,105,.08);}
+    .file-preview{display:none;width:100%;margin-top:8px;}
+    .file-preview.show{display:block;}
+    .file-preview pre{max-height:240px;overflow:auto;background:#0f172a;color:#e2e8f0;border-radius:8px;
+      padding:12px 14px;font-family:'Space Mono',monospace;font-size:10.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;}
+
+    .info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;
+      background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+    .info-block strong{color:var(--text);}
+    .info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.2);}
+    ul.tight{margin:0;padding-left:18px;}
+    ul.tight li{margin-bottom:4px;}
+    .opt-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+    .opt-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+    .name-inp{width:120px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;
+      color:var(--text);font-size:13px;padding:6px 10px;outline:none;font-family:'Space Mono',monospace;}
+    .name-inp:focus{border-color:var(--accent);background:#fff;}
+    .opt-hint{font-size:11px;color:var(--dim);font-family:'Space Mono',monospace;}
+    .preset-chips{display:flex;gap:6px;flex-wrap:wrap;}
+    .err-box{display:none;font-size:12px;color:var(--red);background:rgba(220,38,38,.06);
+      border:1px solid rgba(220,38,38,.2);border-radius:8px;padding:10px 14px;margin-top:12px;line-height:1.6;}
+    .err-box.show{display:block;}
+    #resultCard{display:none;}
+    #resultCard.show{display:block;}
+
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .site-header{padding:12px 14px;}
+      .stat-grid-4{grid-template-columns:repeat(2,1fr);}
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">HTML 파일 분리기</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      ✂️ <strong>HTML 파일 분리기</strong> — AI가 CSS·JS를 <strong>한 파일에 합쳐서</strong> 만들어 줬을 때,
+      업로드 한 번으로 <strong>index.html / style.css / app.js</strong>(+ firebaseConfig가 있으면 <strong>config.js</strong>)로 분리해 줍니다.
+      <strong>파일 이름을 바꾸면</strong> 관리자 페이지(<code>admin.html·admin.js</code>)나 설문 결과 페이지(<code>results.*</code>) 구성도 똑같이 만들 수 있습니다.
+      연결 태그(<code>&lt;link&gt;</code>·<code>&lt;script src&gt;</code>)까지 자동으로 들어가며, 모든 처리는 <strong>브라우저 안에서만</strong> 이루어집니다.
+    </div>
+
+    <!-- 업로드 -->
+    <div class="a-card">
+      <div class="a-card-title">📄 HTML 업로드</div>
+      <div class="upload-zone" id="zone">
+        <input type="file" id="fileInput" accept=".html,.htm,text/html">
+        <div class="upload-icon">📄</div>
+        <div class="upload-main">HTML 파일을 끌어다 놓거나 클릭해서 선택</div>
+        <div class="upload-sub">.html · .htm — 서버에 업로드되지 않고 브라우저에서만 처리됩니다</div>
+      </div>
+      <div class="file-info" id="fileInfo"></div>
+      <div class="paste-toggle" id="pasteToggle">또는 HTML 코드를 직접 붙여넣기 ▾</div>
+      <div class="paste-area" id="pasteArea">
+        <textarea class="paste-ta" id="pasteTa" spellcheck="false" placeholder="<!DOCTYPE html> ... 전체 HTML을 붙여넣으세요"></textarea>
+      </div>
+
+      <div class="opt-row">
+        <span class="opt-label">파일 이름</span>
+        <input class="name-inp" id="baseName" value="index" spellcheck="false" placeholder="index">
+        <span class="opt-hint" id="nameHint"></span>
+        <span class="preset-chips">
+          <button class="mini-btn" data-preset="index" title="index.html · style.css · app.js">기본</button>
+          <button class="mini-btn" data-preset="admin" title="admin.html · admin.js (CSS 인라인 유지)">관리자 페이지</button>
+          <button class="mini-btn" data-preset="results" title="results.html · results.css · results.js">결과 페이지</button>
+        </span>
+      </div>
+      <div class="btn-row">
+        <span class="col-pill selected" id="cssPill" title="<style> 블록을 별도 CSS 파일로 분리. 끄면 HTML 안에 그대로 둠">
+          <span class="col-pill-check"></span> CSS 분리
+        </span>
+        <span class="col-pill selected" id="cfgPill" title="const firebaseConfig = {...} 를 config.js로 분리">
+          <span class="col-pill-check"></span> firebaseConfig를 config.js로 분리
+        </span>
+        <button class="btn btn-primary" id="runBtn">분리 실행 ▶</button>
+      </div>
+      <div class="err-box" id="errBox"></div>
+    </div>
+
+    <!-- 결과 -->
+    <div class="a-card" id="resultCard">
+      <div class="a-card-title">✂️ 분리 결과
+        <button class="btn btn-green" id="zipBtn" style="padding:7px 16px;">⬇ 전체 ZIP 다운로드</button>
+      </div>
+      <div class="stat-grid-4" id="statGrid"></div>
+      <div class="merge-file-list" id="fileList"></div>
+      <div class="info-block" id="resultNote"></div>
+    </div>
+
+    <!-- 알아두기 -->
+    <div class="a-card">
+      <div class="a-card-title">💡 알아두면 좋은 점</div>
+      <ul class="tight" style="font-size:13px;color:var(--muted);line-height:1.8;">
+        <li><strong>&lt;style&gt; 블록 전부 → CSS 파일</strong>, <strong>인라인 &lt;script&gt; 전부 → JS 파일</strong>로 모아 원래 위치에 연결 태그를 넣습니다. 파일 이름은 위 입력값을 따릅니다 (index → <code>style.css·app.js</code>, 그 외 → <code>이름.css·이름.js</code>).</li>
+        <li><strong>관리자 페이지 프리셋</strong>은 Firestore 빌더의 조회 페이지 규격(<code>admin.html + admin.js</code>, CSS는 HTML 안 유지)에 맞춰 CSS 분리를 자동으로 끕니다.</li>
+        <li><code>src</code>가 있는 외부 스크립트(CDN 등)와 외부 CSS <code>&lt;link&gt;</code>는 <strong>그대로 유지</strong>됩니다.</li>
+        <li><strong>firebaseConfig 분리</strong>를 켜면 <code>const firebaseConfig = {...}</code>를 config.js로 빼고, module 스크립트면 <code>export/import</code>를 자동으로 연결합니다 — <a href="/vibe/firestore" style="color:var(--accent);">Firestore 앱 빌더</a>의 4파일 구성과 동일해집니다.</li>
+        <li>JSON·importmap 등 <strong>자바스크립트가 아닌 &lt;script&gt; 타입은 건드리지 않습니다.</strong></li>
+        <li>분리 후에는 반드시 <strong>브라우저에서 열어 동작 확인</strong>을 하세요. 아주 특수한 구조(주석 속 태그 등)에서는 수동 확인이 필요할 수 있습니다.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════ 상태 ═══════ */
+let srcHtml = '';
+let srcName = 'index.html';
+let outFiles = [];   // [{name, content}]
+
+const $ = (id) => document.getElementById(id);
+const fmtSize = (n) => n >= 1024 ? (n/1024).toFixed(1) + ' KB' : n + ' B';
+const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ═══════ 입력 ═══════ */
+const zone = $('zone'), fileInput = $('fileInput'), fileInfo = $('fileInfo');
+zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', (e) => {
+  e.preventDefault(); zone.classList.remove('drag');
+  if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) readFile(fileInput.files[0]); });
+
+function readFile(f) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    srcHtml = String(rd.result);
+    srcName = f.name;
+    fileInfo.innerHTML = '✅ <strong>' + esc(f.name) + '</strong> (' + fmtSize(f.size) + ') 읽음 — 아래 <strong>분리 실행</strong>을 누르세요';
+    fileInfo.classList.add('show');
+    $('pasteTa').value = '';
+  };
+  rd.readAsText(f, 'utf-8');
+}
+
+$('pasteToggle').addEventListener('click', () => $('pasteArea').classList.toggle('show'));
+$('cfgPill').addEventListener('click', () => $('cfgPill').classList.toggle('selected'));
+$('cssPill').addEventListener('click', () => { $('cssPill').classList.toggle('selected'); updateHint(); });
+
+/* ═══════ 파일 이름 프리셋 ═══════ */
+function namesFor(base) {
+  base = String(base || 'index').trim().replace(/\.(html?|htm)$/i, '').replace(/[^\w\-]/g, '') || 'index';
+  return base === 'index'
+    ? { base, html: 'index.html', css: 'style.css', js: 'app.js' }
+    : { base, html: base + '.html', css: base + '.css', js: base + '.js' };
+}
+function updateHint() {
+  const n = namesFor($('baseName').value);
+  const splitCss = $('cssPill').classList.contains('selected');
+  $('nameHint').textContent = '→ ' + n.html + (splitCss ? ' · ' + n.css : '') + ' · ' + n.js;
+}
+$('baseName').addEventListener('input', updateHint);
+document.querySelectorAll('[data-preset]').forEach((b) => {
+  b.addEventListener('click', () => {
+    $('baseName').value = b.dataset.preset;
+    // 관리자 페이지 프리셋: Firestore 빌더 규격(admin.html + admin.js, CSS 인라인)에 맞춰 CSS 분리 끔
+    $('cssPill').classList.toggle('selected', b.dataset.preset !== 'admin');
+    updateHint();
+  });
+});
+updateHint();
+
+/* ═══════ 분리 로직 ═══════ */
+function dedent(s) {
+  const lines = s.split('\n');
+  let min = Infinity;
+  for (const l of lines) {
+    if (!l.trim()) continue;
+    const ind = l.match(/^[ \t]*/)[0].length;
+    if (ind < min) min = ind;
+  }
+  if (!isFinite(min) || min === 0) return s;
+  return lines.map((l) => l.slice(min)).join('\n');
+}
+
+function splitHtml(src, opts) {
+  const { wantConfig, splitCss, names } = opts;
+  const notes = [];
+
+  // 1) <style> → {names.css} (CSS 분리 켠 경우만)
+  const styles = [];
+  let html = src;
+  if (splitCss) {
+    html = html.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (m, css) => {
+      if (css.trim()) styles.push(dedent(css).trim());
+      return '@@DF_STYLE_PH@@';
+    });
+    let firstStyle = true;
+    html = html.replace(/[ \t]*@@DF_STYLE_PH@@\n?/g, () => {
+      if (firstStyle && styles.length) { firstStyle = false; return '  <link rel="stylesheet" href="' + names.css + '">\n'; }
+      return '';
+    });
+  } else {
+    notes.push('CSS 분리를 꺼서 &lt;style&gt; 블록은 ' + names.html + ' 안에 그대로 두었습니다.');
+  }
+
+  // 2) 인라인 <script> → app.js (src 있는 것·JS 아닌 타입은 유지)
+  const scripts = [];
+  let isModule = false;
+  html = html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi, (m, attrs, body) => {
+    if (/\bsrc\s*=/i.test(attrs)) return m;
+    const tm = attrs.match(/\btype\s*=\s*["']?([^"'\s>]+)/i);
+    const type = tm ? tm[1].toLowerCase() : '';
+    if (type && type !== 'module' && type !== 'text/javascript' && type !== 'application/javascript') return m;
+    if (!body.trim()) return '';
+    if (type === 'module') isModule = true;
+    scripts.push(dedent(body).trim());
+    return '@@DF_SCRIPT_PH@@';
+  });
+
+  let js = scripts.join('\n\n');
+  const files = [];
+
+  // 3) firebaseConfig → config.js
+  let configJs = null;
+  if (wantConfig && js) {
+    const m = js.match(/(?:const|let|var)\s+firebaseConfig\s*=\s*\{[\s\S]*?\}\s*;?/);
+    if (m) {
+      const obj = m[0].slice(m[0].indexOf('{'), m[0].lastIndexOf('}') + 1);
+      if (isModule) {
+        configJs = 'export const firebaseConfig = ' + obj + ';\n';
+        js = js.replace(m[0], '').replace(/\n{3,}/g, '\n\n').trim();
+        const imports = js.match(/^[ \t]*import[\s\S]*?["'];[ \t]*$/gm);
+        const importLine = 'import { firebaseConfig } from "./config.js";';
+        if (imports && imports.length) {
+          const last = imports[imports.length - 1];
+          js = js.replace(last, last + '\n' + importLine);
+        } else {
+          js = importLine + '\n\n' + js;
+        }
+        notes.push('firebaseConfig를 config.js로 분리하고 ' + names.js + '에 <strong>import</strong>를 추가했습니다.');
+      } else {
+        configJs = 'const firebaseConfig = ' + obj + ';\n';
+        js = js.replace(m[0], '').replace(/\n{3,}/g, '\n\n').trim();
+        notes.push('firebaseConfig를 config.js로 분리했습니다. (일반 스크립트라 ' + names.html + '에서 ' + names.js + '보다 먼저 로드)');
+      }
+    } else {
+      notes.push('firebaseConfig 선언을 찾지 못해 config.js는 만들지 않았습니다.');
+    }
+  }
+
+  // 4) 스크립트 자리 → 연결 태그
+  let firstScript = true;
+  const tagParts = [];
+  if (configJs && !isModule) tagParts.push('  <script src="config.js"><\/script>');
+  tagParts.push(isModule ? '  <script type="module" src="' + names.js + '"><\/script>' : '  <script src="' + names.js + '"><\/script>');
+  html = html.replace(/[ \t]*@@DF_SCRIPT_PH@@\n?/g, () => {
+    if (firstScript && js) { firstScript = false; return tagParts.join('\n') + '\n'; }
+    return '';
+  });
+
+  files.push({ name: names.html, content: html });
+  if (styles.length) files.push({ name: names.css, content: styles.join('\n\n/* ── 다음 style 블록 ── */\n\n') + '\n' });
+  if (configJs) files.push({ name: 'config.js', content: configJs });
+  if (js) files.push({ name: names.js, content: js + '\n' });
+
+  if (splitCss && !styles.length) notes.push('&lt;style&gt; 블록이 없어 ' + names.css + '는 만들지 않았습니다.');
+  if (!js) notes.push('인라인 &lt;script&gt;가 없어 ' + names.js + '는 만들지 않았습니다.');
+  if (styles.length > 1) notes.push('&lt;style&gt; 블록 ' + styles.length + '개를 ' + names.css + ' 하나로 합쳤습니다.');
+  if (scripts.length > 1) notes.push('인라인 &lt;script&gt; ' + scripts.length + '개를 ' + names.js + ' 하나로 합쳤습니다.');
+  return { files, notes };
+}
+
+/* ═══════ 실행·렌더 ═══════ */
+$('runBtn').addEventListener('click', () => {
+  const pasted = $('pasteTa').value.trim();
+  const src = pasted || srcHtml;
+  const err = $('errBox');
+  err.classList.remove('show');
+  if (!src) { err.textContent = 'HTML 파일을 업로드하거나 코드를 붙여넣어 주세요.'; err.classList.add('show'); return; }
+  if (!/<html[\s>]|<!doctype/i.test(src)) { err.textContent = 'HTML 문서가 아닌 것 같습니다. 전체 HTML(<!DOCTYPE html> 포함)을 넣어주세요.'; err.classList.add('show'); return; }
+
+  const { files, notes } = splitHtml(src, {
+    wantConfig: $('cfgPill').classList.contains('selected'),
+    splitCss: $('cssPill').classList.contains('selected'),
+    names: namesFor($('baseName').value)
+  });
+  outFiles = files;
+
+  const total = src.length;
+  $('statGrid').innerHTML =
+    '<div class="stat-box"><div class="stat-val">' + files.length + '</div><div class="stat-lbl">생성 파일</div></div>' +
+    files.slice(0, 3).map((f) =>
+      '<div class="stat-box"><div class="stat-val" style="font-size:15px;padding-top:5px;">' + fmtSize(f.content.length) + '</div><div class="stat-lbl">' + esc(f.name) + '</div></div>'
+    ).join('');
+
+  $('fileList').innerHTML = files.map((f, i) =>
+    '<div class="merge-file-item">' +
+      '<div class="merge-file-order">' + (i + 1) + '</div>' +
+      '<div class="merge-file-name">' + esc(f.name) + '</div>' +
+      '<div class="merge-file-meta">' + fmtSize(f.content.length) + '</div>' +
+      '<button class="mini-btn" onclick="togglePrev(' + i + ')">미리보기</button>' +
+      '<button class="mini-btn dl" onclick="dlOne(' + i + ')">⬇ 다운로드</button>' +
+      '<div class="file-preview" id="prev' + i + '"><pre>' + esc(f.content.slice(0, 20000)) + (f.content.length > 20000 ? '\n… (미리보기 생략)' : '') + '</pre></div>' +
+    '</div>'
+  ).join('');
+
+  $('resultNote').innerHTML = '📝 ' + notes.join('<br>📝 ') +
+    '<br>✅ 새 폴더에 파일들을 저장한 뒤 index.html을 브라우저로 열어 <strong>동작을 확인</strong>하세요.';
+  $('resultCard').classList.add('show');
+  $('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+function dlBlob(name, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+  a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+window.dlOne = (i) => dlBlob(outFiles[i].name, outFiles[i].content);
+window.togglePrev = (i) => $('prev' + i).classList.toggle('show');
+
+$('zipBtn').addEventListener('click', async () => {
+  if (!outFiles.length) return;
+  const zip = new JSZip();
+  outFiles.forEach((f) => zip.file(f.name, f.content));
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const base = srcName.replace(/\.(html?|htm)$/i, '') || 'split';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = base + '_split.zip';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+});
+</script>
+
+<script>(function(){
+  var k='tf_vibe_split';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=vibe&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

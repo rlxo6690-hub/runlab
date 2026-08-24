@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>개인정보처리방침 | DataForge</title>
+  <meta name="description" content="DataForge(dataforge.ai.kr)의 개인정보 수집 항목, 이용 목적, 보유 기간, 쿠키 사용에 대한 안내입니다.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.7; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 32px 20px 64px; }
+    .doc {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 28px 22px;
+    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .doc-date { font-size: 12px; color: var(--dim); margin-bottom: 20px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 28px 0 10px; padding-top: 18px; border-top: 1px solid var(--border); }
+    h2:first-of-type { border-top: none; padding-top: 0; margin-top: 18px; }
+    p { margin-bottom: 10px; color: var(--text); }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 6px; }
+    .note { font-size: 13px; color: var(--muted); background: var(--card2); border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+    a { color: var(--accent); }
+    .tbl-wrap { overflow-x: auto; margin: 10px 0 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--card2); font-weight: 700; white-space: nowrap; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="doc">
+      <h1>개인정보처리방침</h1>
+      <div class="doc-date">시행일: 2026년 7월 26일</div>
+
+      <p>DataForge(dataforge.ai.kr, 이하 "사이트")는 교육 실습용 데이터·AI 도구를 제공하는 웹 서비스입니다.
+      사이트는 회원가입 없이 이용할 수 있으며, 개인정보 수집을 최소화하는 것을 원칙으로 합니다.
+      본 방침은 사이트가 어떤 정보를 언제, 왜 수집하고 어떻게 처리하는지 알리기 위한 것입니다.</p>
+
+      <h2>1. 수집하는 정보와 수집 시점</h2>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>수집 시점</th><th>수집 항목</th><th>수집 목적</th></tr>
+          <tr>
+            <td>교육 후기 작성 시</td>
+            <td>작성자가 입력한 표시 이름·후기 내용, IP 주소</td>
+            <td>후기 게시(운영자 승인 후 노출), 스팸·도배 방지</td>
+          </tr>
+          <tr>
+            <td>개선 의견 보내기 이용 시</td>
+            <td>의견 내용, 회신용 연락처(선택 입력), 의견을 보낸 페이지 경로</td>
+            <td>서비스 개선, 문의 회신(연락처를 남긴 경우)</td>
+          </tr>
+          <tr>
+            <td>사이트 접속 시</td>
+            <td>접속 일시, 접속 페이지, IP 주소, 브라우저 정보 등 통상적인 접속 기록</td>
+            <td>트래픽 통계, 서비스 안정 운영, 부정 이용 방지</td>
+          </tr>
+        </table>
+      </div>
+      <p class="note">그 외 데이터 생성기·시뮬레이터 등 도구 이용 과정에서 별도의 개인정보를 요구하지 않습니다.
+      교육 과정(LMS) 열람에 필요한 정보는 교육 운영 목적으로만 사용됩니다.</p>
+
+      <h2>2. 쿠키·로컬 저장소</h2>
+      <ul>
+        <li><b>쿠키</b>: 운영자(관리자) 로그인 세션 유지에 사용됩니다. 일반 방문자에게 식별용 쿠키를 발급하지 않습니다.</li>
+        <li><b>localStorage</b>: 안내 배너 표시 여부, 도구 사용 설정 등 편의 정보를 방문자의 브라우저에만 저장하며 서버로 전송하지 않습니다.</li>
+        <li><b>웹 폰트</b>: 화면 표시를 위해 Google Fonts를 불러오며, 이 과정에서 브라우저가 Google 서버에 접속합니다(Google의 개인정보처리방침 적용).</li>
+      </ul>
+
+      <h2>3. 광고 게재에 관한 안내</h2>
+      <p>사이트는 운영비 충당을 위해 Google AdSense 등 제3자 광고를 게재할 수 있습니다.
+      광고가 게재되는 경우 다음 사항이 적용됩니다.</p>
+      <ul>
+        <li>Google을 포함한 제3자 광고 사업자는 쿠키를 사용하여 방문자의 이전 방문 기록을 바탕으로 광고를 게재할 수 있습니다.</li>
+        <li>Google은 광고 쿠키를 사용해 사용자에게 관심 기반 광고를 제공합니다. 사용자는
+          <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google 광고 설정</a>에서 맞춤 광고를 해제할 수 있습니다.</li>
+        <li>제3자 광고 쿠키 사용에 대한 자세한 내용은
+          <a href="https://policies.google.com/technologies/ads?hl=ko" target="_blank" rel="noopener">Google 광고 정책</a>을 참고하세요.</li>
+      </ul>
+
+      <h2>4. 보유 기간과 파기</h2>
+      <ul>
+        <li>교육 후기·개선 의견: 게시·처리 목적 달성 시까지 보관하며, 작성자가 삭제를 요청하면 지체 없이 삭제합니다.</li>
+        <li>접속 기록: 통계 목적 달성 후 파기합니다.</li>
+        <li>파기 시 전자적 파일은 복구할 수 없는 방법으로 삭제합니다.</li>
+      </ul>
+
+      <h2>5. 제3자 제공 및 처리 위탁</h2>
+      <ul>
+        <li>수집한 정보를 이용자의 동의 없이 제3자에게 제공하거나 판매하지 않습니다.</li>
+        <li>사이트는 카페24(주)의 웹 호스팅 인프라에서 운영되며, 서버 운영 과정에서 통상적인 접속 로그가 호스팅 사업자의 시스템에 기록될 수 있습니다.</li>
+        <li>법령에 따라 수사기관 등이 적법한 절차로 요청하는 경우는 예외로 합니다.</li>
+      </ul>
+
+      <h2>6. 이용자의 권리</h2>
+      <p>이용자는 본인이 작성한 후기·의견 등에 대해 열람, 정정, 삭제를 요청할 수 있습니다.
+      요청은 아래 문의 채널로 접수해 주시면 지체 없이 처리합니다.</p>
+
+      <h2>7. 문의처</h2>
+      <ul>
+        <li>사이트 내 문의: 각 페이지 좌하단 <b>💡 의견</b> 버튼 (회신용 연락처를 함께 남겨주세요)</li>
+        <li>운영: BuildUp Lab — <a href="https://builduplab.co.kr/" target="_blank" rel="noopener">builduplab.co.kr</a> 문의 폼</li>
+      </ul>
+
+      <h2>8. 방침의 변경</h2>
+      <p>본 방침이 변경되는 경우 이 페이지에 변경 사항과 시행일을 고지합니다.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

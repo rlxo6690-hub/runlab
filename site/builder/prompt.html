@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프롬프트 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="AI 프롬프트 시뮬레이터 — DataForge">
+<meta property="og:description" content="Claude AI와 대화하며 데이터 구조를 설계하는 프롬프트 시뮬레이션 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;
+  --teal:#0d9488;--coral:#ea580c;--pink:#db2777;
+  --r:10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.7;
+  font-size: 14px;
+}
+body::before {
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+
+/* ── PAGE WRAP ── */
+.page-wrap { max-width:1400px; margin:0 auto; position:relative; }
+
+/* ── HEADER ── */
+.site-header {
+  padding:14px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-brand {
+  font-family:'Space Mono',monospace;
+  font-size:18px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-decoration:none;
+}
+.logo-brand em { color:var(--orange);font-style:normal; }
+.logo-sep { width:1px;height:16px;background:var(--border2);flex-shrink:0; }
+.logo-title { font-size:14px;font-weight:600;color:var(--text); }
+.header-back {
+  font-size:12px;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border2);padding:5px 14px;
+  border-radius:8px;transition:.2s;
+}
+.header-back:hover { color:var(--text);border-color:rgba(0,0,0,.3); }
+
+/* ── LAYOUT ── */
+.page { padding:0 24px 80px; }
+.section { padding: 48px 0 0; }
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 24px;
+}
+.section-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  color: var(--accent);
+  background: rgba(37,99,235,.08);
+  border: 1px solid rgba(37,99,235,.2);
+  padding: 4px 10px; border-radius: 6px;
+  letter-spacing: .06em;
+}
+.section-title { font-size: 19px; font-weight: 700; color: var(--text); }
+.divider { border: none; border-top: 1px solid var(--border); margin: 48px 0 0; }
+
+/* ── CARD ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 20px 22px;
+}
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* ── INTERACTIVE PROMPT LAB ── */
+.lab-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 16px;
+}
+.lab-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+  background: var(--card2);
+}
+.lab-tabs::-webkit-scrollbar { display: none; }
+.lab-tab {
+  padding: 12px 18px; font-size: 12px; font-weight: 600;
+  color: var(--muted); cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent; transition: all .15s;
+  background: none; border-top: none; border-left: none; border-right: none;
+  font-family: inherit;
+}
+.lab-tab:hover { color: var(--text); }
+.lab-tab.active { color: var(--accent); border-bottom-color: var(--accent); background:var(--card); }
+.lab-panel { display: none; padding: 20px 22px; }
+.lab-panel.active { display: block; }
+
+.lab-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.lab-col-label {
+  font-size: 11px; font-weight: 600; letter-spacing: .06em;
+  color: var(--muted); margin-bottom: 8px; text-transform: uppercase;
+}
+.lab-bad-box, .lab-good-box {
+  border-radius: 10px; padding: 12px 14px;
+  font-size: 12px; line-height: 1.7; min-height: 120px;
+  white-space: pre-wrap; word-break: break-all;
+}
+.lab-bad-box  { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.25);  color: #991b1b; }
+.lab-good-box { background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.25); color: #065f46; }
+.lab-result-box {
+  background: rgba(79,142,247,0.07); border: 1px solid rgba(79,142,247,0.2);
+  border-radius: 10px; padding: 14px 16px; margin-top: 12px;
+  font-size: 13px; line-height: 1.75; color: var(--text); min-height: 80px;
+  white-space: pre-wrap; word-break: break-all;
+}
+.lab-result-label {
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  letter-spacing: .06em; margin-bottom: 8px; text-transform: uppercase;
+}
+.lab-tip {
+  background: rgba(217,119,6,0.08); border-left: 2px solid var(--amber);
+  padding: 8px 12px; border-radius: 0 8px 8px 0; margin-top: 10px;
+  font-size: 12px; color: #92400e; line-height: 1.6;
+}
+
+/* Prompt builder */
+.builder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.builder-field label {
+  display: block; font-size: 11px; font-weight: 600; color: var(--muted);
+  letter-spacing: .05em; margin-bottom: 5px; text-transform: uppercase;
+}
+.builder-field input,
+.builder-field select,
+.builder-field textarea {
+  width: 100%; background: rgba(0,0,0,0.03);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: inherit;
+  font-size: 12px; padding: 8px 10px; outline: none;
+  transition: border-color .2s; resize: vertical;
+}
+.builder-field input:focus,
+.builder-field select:focus,
+.builder-field textarea:focus { border-color: var(--accent); }
+.builder-field select option { background: #f8fafc; color: #1e293b; }
+.builder-output-pre {
+  background: rgba(0,0,0,0.03); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: #1e40af; line-height: 1.8; white-space: pre-wrap; word-break: break-all;
+  min-height: 110px; margin-bottom: 10px;
+}
+.copy-btn {
+  font-size: 11px; font-weight: 600; padding: 6px 14px;
+  background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3);
+  color: var(--accent); border-radius: 6px; cursor: pointer;
+  transition: all .2s; font-family: inherit;
+}
+.copy-btn:hover { background: rgba(79,142,247,0.25); }
+
+/* Score meter */
+.score-bar-wrap { margin-top: 10px; }
+.score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.score-lbl { font-size: 11px; color: var(--muted); width: 80px; flex-shrink: 0; }
+.score-track { flex: 1; height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+.score-val { font-size: 11px; font-weight: 700; width: 30px; text-align: right; flex-shrink: 0; }
+
+/* Preset buttons */
+.sim-preset-btn {
+  font-size: 11px; font-weight: 600; padding: 6px 12px;
+  border-radius: 6px; cursor: pointer; transition: all .2s;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-family: inherit;
+}
+.sim-preset-btn:hover { border-color: var(--border2); color: var(--text); }
+.sim-preset-btn.active {
+  background: rgba(79,142,247,0.15);
+  border-color: rgba(79,142,247,0.4);
+  color: var(--accent);
+}
+
+/* ── HYPERPARAMETER SIMULATOR ── */
+.sim-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 24px; margin-bottom: 16px;
+}
+.sim-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; margin-bottom: 20px; }
+.sim-ctrl-row { display: flex; flex-direction: column; gap: 6px; }
+.sim-ctrl-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sim-ctrl-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.sim-ctrl-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+  color: var(--amber); background: rgba(251,191,36,0.1);
+  padding: 1px 8px; border-radius: 4px; min-width: 44px; text-align: center;
+}
+.sim-ctrl-desc { font-size: 11px; color: var(--muted); }
+input[type=range].sim-range {
+  width: 100%; height: 4px; background: rgba(0,0,0,0.1);
+  border-radius: 2px; outline: none; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+input[type=range].sim-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--accent);
+  cursor: pointer; border: 2px solid var(--bg);
+}
+.sim-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.sim-output { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sim-out-box {
+  background: rgba(0,0,0,0.03); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+}
+.sim-out-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  margin-bottom: 10px; text-transform: uppercase;
+}
+.token-prob-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tok-word { font-family: 'JetBrains Mono', monospace; font-size: 11px; width: 110px; flex-shrink: 0; }
+.tok-prob-bar { flex: 1; height: 14px; background: rgba(0,0,0,0.07); border-radius: 3px; overflow: hidden; }
+.tok-prob-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+.tok-prob-pct { font-size: 10px; font-weight: 700; width: 30px; text-align: right; flex-shrink: 0; }
+.sim-text-output { font-size: 12px; line-height: 1.8; color: var(--text); min-height: 70px; }
+.sim-text-output .tok-hi  { color: var(--amber); }
+.sim-text-output .tok-mid { color: var(--teal); }
+.sim-text-output .tok-lo  { color: var(--muted); }
+.sim-meter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+.meter-card {
+  background: rgba(0,0,0,0.03); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; text-align: center;
+}
+.meter-name { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+.meter-val { font-size: 18px; font-weight: 700; }
+.meter-bar-wrap { width: 100%; height: 3px; background: rgba(0,0,0,0.08); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.meter-bar { height: 100%; border-radius: 2px; transition: width .4s ease; }
+
+/* ── SYSTEM PROMPT TAB ── */
+.sp-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.sp-sys-box {
+  background: rgba(124,58,237,0.07); border: 1px solid rgba(124,58,237,0.2);
+  border-radius: 10px; padding: 12px 14px; font-size: 12px; line-height: 1.7;
+  color: #5b21b6; white-space: pre-wrap; word-break: break-all; margin-bottom: 14px;
+  min-height: 60px;
+}
+.sp-question-box {
+  background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.2);
+  border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #92400e;
+  margin-bottom: 14px;
+}
+.sp-output-box {
+  background: rgba(79,142,247,0.07); border: 1px solid rgba(79,142,247,0.2);
+  border-radius: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.75;
+  color: var(--text); min-height: 100px; white-space: pre-wrap; word-break: break-all;
+}
+.sp-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  margin-bottom: 6px; text-transform: uppercase;
+}
+.sp-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.sp-col { display: flex; flex-direction: column; gap: 0; }
+
+/* ── AI LINKS ── */
+.ai-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.ai-link-btn {
+  font-size: 11px; font-weight: 600; padding: 5px 12px;
+  border-radius: 6px; cursor: pointer; text-decoration: none;
+  border: 1px solid; transition: all .2s; font-family: inherit;
+}
+.ai-link-btn:hover { opacity: .8; }
+
+/* ── PARAM WARNING ── */
+.param-warning {
+  display: none; background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3); border-radius: 8px;
+  padding: 8px 12px; font-size: 12px; color: #fca5a5;
+  margin-bottom: 12px;
+}
+.param-warning.show { display: block; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes blink  { 0%,100%{opacity:1} 50%{opacity:0} }
+.cursor { display: inline-block; width: 2px; height: 12px; background: var(--accent); margin-left: 1px; animation: blink .8s infinite; vertical-align: text-bottom; }
+.anim-up { animation: fadeUp .4s ease both; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .page { padding: 0 16px 60px; }
+  .site-header { padding: 10px 16px; }
+  .lab-split { grid-template-columns: 1fr; }
+  .sim-controls { grid-template-columns: 1fr; }
+  .sp-grid { grid-template-columns: 1fr; }
+  .sim-output { grid-template-columns: 1fr; }
+  .builder-grid { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .sim-meter { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .page { padding: 0 12px 50px; }
+  .site-header { padding: 10px 12px; }
+  .logo-sep, .logo-title { display: none; }
+  .lab-tab { padding: 10px 12px; font-size: 11px; }
+  .lab-panel { padding: 14px 14px; }
+  input, select, textarea { font-size: 16px; }
+  .sim-meter { grid-template-columns: 1fr; }
+  .section { margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">AI 프롬프트 시뮬레이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+
+  <!-- ══════════════════════════════════════════
+       SECTION 1. 인터랙티브 프롬프트 체험
+  ═══════════════════════════════════════════ -->
+  <div class="section anim-up">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">인터랙티브 프롬프트 체험</span>
+    </div>
+
+    <div class="lab-wrap">
+      <div class="lab-tabs">
+        <button class="lab-tab active" onclick="showTab('compare')">나쁜 vs 좋은 비교</button>
+        <button class="lab-tab" onclick="showTab('builder')">프롬프트 빌더</button>
+        <button class="lab-tab" onclick="showTab('sysprompt')">시스템 프롬프트</button>
+        <button class="lab-tab" onclick="showTab('cot')">Chain-of-Thought</button>
+        <button class="lab-tab" onclick="showTab('fewshot')">Few-shot</button>
+      </div>
+
+      <!-- TAB 1: 비교 -->
+      <div class="lab-panel active" id="tab-compare">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="compare-btns">
+          <button onclick="loadCompare(0)" class="sim-preset-btn active">이메일 작성</button>
+          <button onclick="loadCompare(1)" class="sim-preset-btn">보고서 요청</button>
+          <button onclick="loadCompare(2)" class="sim-preset-btn">사업 분석</button>
+          <button onclick="loadCompare(3)" class="sim-preset-btn">콘텐츠 제작</button>
+          <button onclick="loadCompare(4)" class="sim-preset-btn">코드 요청</button>
+          <button onclick="loadCompare(5)" class="sim-preset-btn">데이터 분석</button>
+          <button onclick="loadCompare(6)" class="sim-preset-btn">번역 요청</button>
+        </div>
+        <div class="lab-split">
+          <div>
+            <div class="lab-col-label" style="color:#f87171">❌ 나쁜 프롬프트</div>
+            <div class="lab-bad-box" id="cmp-bad"></div>
+            <div style="margin-top:10px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">예상 AI 출력</div>
+              <div class="lab-result-box" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2);color:#fca5a5;font-size:12px" id="cmp-bad-out"></div>
+            </div>
+          </div>
+          <div>
+            <div class="lab-col-label" style="color:#6ee7b7">✓ 좋은 프롬프트</div>
+            <div class="lab-good-box" id="cmp-good"></div>
+            <div style="margin-top:10px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">예상 AI 출력</div>
+              <div class="lab-result-box" id="cmp-good-out"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-tip" id="cmp-tip"></div>
+        <div style="margin-top:16px;background:rgba(255,255,255,0.02);border-radius:10px;padding:14px 16px;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase">프롬프트 품질 비교</div>
+          <div class="score-bar-wrap" id="score-bars"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: 빌더 -->
+      <div class="lab-panel" id="tab-builder">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          아래 항목을 채우면 자동으로 완성된 프롬프트가 생성됩니다. 빈 항목은 생략됩니다.
+        </div>
+        <div class="builder-grid" style="margin-bottom:10px">
+          <div class="builder-field" style="grid-column:1/-1">
+            <label>시스템 프롬프트 <span style="color:var(--accent2);font-size:10px;text-transform:none;font-weight:400">(선택) AI의 성격·제약을 미리 설정</span></label>
+            <textarea id="b-sys" rows="2" placeholder="예: 당신은 제조업 전문 컨설턴트입니다. 답변은 항상 한국어로, 3문장 이내로 작성하세요." oninput="buildPrompt()"></textarea>
+          </div>
+        </div>
+        <div class="builder-grid">
+          <div class="builder-field">
+            <label>역할 (Role)</label>
+            <input type="text" id="b-role" placeholder="예: 마케팅 전문가" oninput="buildPrompt()">
+          </div>
+          <div class="builder-field">
+            <label>대상 독자</label>
+            <input type="text" id="b-audience" placeholder="예: 50대 중소기업 대표" oninput="buildPrompt()">
+          </div>
+          <div class="builder-field" style="grid-column:1/-1">
+            <label>작업 지시</label>
+            <input type="text" id="b-task" placeholder="예: AI 도입 제안 이메일을 작성해줘" oninput="buildPrompt()">
+          </div>
+          <div class="builder-field">
+            <label>출력 형식</label>
+            <select id="b-format" onchange="buildPrompt()">
+              <option value="">선택 안 함</option>
+              <option value="bullet 목록 형식으로">Bullet 목록</option>
+              <option value="번호 매긴 단계별 형식으로">번호 매긴 단계</option>
+              <option value="표 형식으로">표 형식</option>
+              <option value="한 단락 산문 형식으로">산문 단락</option>
+              <option value="JSON 형식으로">JSON</option>
+            </select>
+          </div>
+          <div class="builder-field">
+            <label>분량 제한</label>
+            <select id="b-length" onchange="buildPrompt()">
+              <option value="">선택 안 함</option>
+              <option value="100자 이내로">100자 이내</option>
+              <option value="300자 이내로">300자 이내</option>
+              <option value="A4 1장 이내로">A4 1장</option>
+              <option value="A4 2장 이내로">A4 2장</option>
+              <option value="5문장으로">5문장</option>
+            </select>
+          </div>
+          <div class="builder-field">
+            <label>어조</label>
+            <select id="b-tone" onchange="buildPrompt()">
+              <option value="">선택 안 함</option>
+              <option value="정중하고 격식 있는 어조로">정중·격식</option>
+              <option value="친근하고 쉬운 어조로">친근·쉬운</option>
+              <option value="전문적이고 분석적인 어조로">전문·분석적</option>
+              <option value="간결하고 직관적인 어조로">간결·직관적</option>
+            </select>
+          </div>
+          <div class="builder-field">
+            <label>제외 조건</label>
+            <input type="text" id="b-exclude" placeholder="예: 기술 용어, 영어 약어" oninput="buildPrompt()">
+          </div>
+          <div class="builder-field" style="grid-column:1/-1">
+            <label>추가 맥락 / 배경</label>
+            <textarea id="b-context" rows="2" placeholder="예: 우리 회사는 제조업 중소기업으로, AI 도입 경험이 없습니다." oninput="buildPrompt()"></textarea>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;margin-bottom:6px;text-transform:uppercase">생성된 프롬프트</div>
+        <div class="builder-output-pre" id="builder-out">항목을 입력하면 여기에 프롬프트가 자동 생성됩니다.</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="copy-btn" onclick="copyPrompt()">클립보드 복사</button>
+          <span id="copy-msg" style="font-size:11px;color:var(--teal);display:none">복사되었습니다!</span>
+          <span id="builder-score" style="font-size:12px;color:var(--muted);margin-left:auto"></span>
+        </div>
+        <div class="ai-links">
+          <span style="font-size:11px;color:var(--muted);align-self:center">복사 후 바로가기:</span>
+          <a href="https://chatgpt.com" target="_blank" class="ai-link-btn" style="background:rgba(16,163,127,0.12);border-color:rgba(16,163,127,0.3);color:#34d399" onclick="copyPrompt()">ChatGPT</a>
+          <a href="https://claude.ai" target="_blank" class="ai-link-btn" style="background:rgba(249,115,22,0.12);border-color:rgba(249,115,22,0.3);color:#fb923c" onclick="copyPrompt()">Claude</a>
+          <a href="https://gemini.google.com" target="_blank" class="ai-link-btn" style="background:rgba(79,142,247,0.12);border-color:rgba(79,142,247,0.3);color:#93c5fd" onclick="copyPrompt()">Gemini</a>
+        </div>
+      </div>
+
+      <!-- TAB 3: 시스템 프롬프트 -->
+      <div class="lab-panel" id="tab-sysprompt">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          같은 질문이라도 <strong style="color:var(--accent2)">시스템 프롬프트</strong>에 따라 AI의 성격, 어조, 출력 구조가 완전히 달라집니다.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="sp-btns">
+          <button onclick="loadSp(0)" class="sim-preset-btn active">시스템 프롬프트 없음</button>
+          <button onclick="loadSp(1)" class="sim-preset-btn">전문가 페르소나</button>
+          <button onclick="loadSp(2)" class="sim-preset-btn">출력 형식 제약</button>
+          <button onclick="loadSp(3)" class="sim-preset-btn">도메인 한정</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="sp-label" style="color:var(--accent2)">시스템 프롬프트</div>
+          <div class="sp-sys-box" id="sp-sys-box">없음 (기본 상태)</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="sp-label" style="color:var(--amber)">사용자 질문 (동일)</div>
+          <div class="sp-question-box">우리 공장에 AI를 도입하면 어떤 점이 좋아질까요?</div>
+        </div>
+        <div>
+          <div class="sp-label" style="color:var(--teal)">AI 출력</div>
+          <div class="sp-output-box" id="sp-output-box"></div>
+        </div>
+        <div class="lab-tip" id="sp-tip"></div>
+      </div>
+
+      <!-- TAB 4: CoT -->
+      <div class="lab-panel" id="tab-cot">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          같은 문제를 "바로 답해줘"와 "단계별로 생각해줘"로 비교해보세요.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button onclick="loadCot(0)" class="sim-preset-btn active">수학 문제</button>
+          <button onclick="loadCot(1)" class="sim-preset-btn">논리 추론</button>
+          <button onclick="loadCot(2)" class="sim-preset-btn">의사결정</button>
+        </div>
+        <div class="lab-split">
+          <div>
+            <div class="lab-col-label" style="color:#f87171">Without CoT</div>
+            <div class="lab-bad-box" id="cot-bad-prompt" style="margin-bottom:8px;min-height:60px"></div>
+            <div class="lab-result-box" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2);color:#fca5a5;font-size:12px" id="cot-bad-out"></div>
+          </div>
+          <div>
+            <div class="lab-col-label" style="color:#6ee7b7">With Chain-of-Thought</div>
+            <div class="lab-good-box" id="cot-good-prompt" style="margin-bottom:8px;min-height:60px"></div>
+            <div class="lab-result-box" id="cot-good-out" style="font-size:12px"></div>
+          </div>
+        </div>
+        <div class="lab-tip" id="cot-tip"></div>
+      </div>
+
+      <!-- TAB 4: Few-shot -->
+      <div class="lab-panel" id="tab-fewshot">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          예시(shot) 개수에 따라 AI 출력이 얼마나 달라지는지 확인해보세요.
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button onclick="loadShot(0)" class="sim-preset-btn active">0-shot</button>
+          <button onclick="loadShot(1)" class="sim-preset-btn">1-shot</button>
+          <button onclick="loadShot(2)" class="sim-preset-btn">3-shot</button>
+        </div>
+        <div>
+          <div class="lab-col-label">프롬프트</div>
+          <div class="lab-good-box" id="shot-prompt" style="margin-bottom:12px;min-height:80px"></div>
+          <div class="lab-result-label">AI 출력 예시</div>
+          <div class="lab-result-box" id="shot-out"></div>
+        </div>
+        <div class="lab-tip" id="shot-tip"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════
+       SECTION 2. 하이퍼파라미터 실시간 시뮬레이터
+  ═══════════════════════════════════════════ -->
+  <div class="section anim-up" style="animation-delay:.1s">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <span class="section-title">하이퍼파라미터 실시간 시뮬레이터</span>
+    </div>
+
+    <div class="sim-wrap">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase">용도별 프리셋</div>
+      <div class="sim-presets">
+        <button class="sim-preset-btn" onclick="applyPreset('accurate')">정확한 답변</button>
+        <button class="sim-preset-btn active" onclick="applyPreset('general')">일반 대화</button>
+        <button class="sim-preset-btn" onclick="applyPreset('creative')">창의적 글쓰기</button>
+        <button class="sim-preset-btn" onclick="applyPreset('code')">코드 생성</button>
+        <button class="sim-preset-btn" onclick="applyPreset('translate')">번역·요약</button>
+      </div>
+
+      <div class="sim-controls">
+        <div class="sim-ctrl-row">
+          <div class="sim-ctrl-head">
+            <span class="sim-ctrl-name">Temperature</span>
+            <span class="sim-ctrl-val" id="val-temp">0.7</span>
+          </div>
+          <input type="range" class="sim-range" id="sl-temp" min="0" max="20" step="1" value="7" oninput="simUpdate()">
+          <div class="sim-ctrl-desc">창의성·무작위성 (0 = 고정, 2.0 = 최대 랜덤)</div>
+        </div>
+        <div class="sim-ctrl-row">
+          <div class="sim-ctrl-head">
+            <span class="sim-ctrl-name">Top-p</span>
+            <span class="sim-ctrl-val" id="val-topp">0.9</span>
+          </div>
+          <input type="range" class="sim-range" id="sl-topp" min="1" max="10" step="1" value="9" oninput="simUpdate()">
+          <div class="sim-ctrl-desc">후보 토큰 풀 크기 (0.1 = 매우 좁음, 1.0 = 전체)</div>
+        </div>
+        <div class="sim-ctrl-row">
+          <div class="sim-ctrl-head">
+            <span class="sim-ctrl-name">Max tokens</span>
+            <span class="sim-ctrl-val" id="val-maxt">500</span>
+          </div>
+          <input type="range" class="sim-range" id="sl-maxt" min="1" max="40" step="1" value="10" oninput="simUpdate()">
+          <div class="sim-ctrl-desc">최대 생성 토큰 수 (비용·속도 직결)</div>
+        </div>
+        <div class="sim-ctrl-row">
+          <div class="sim-ctrl-head">
+            <span class="sim-ctrl-name">Frequency penalty</span>
+            <span class="sim-ctrl-val" id="val-freq">0.0</span>
+          </div>
+          <input type="range" class="sim-range" id="sl-freq" min="0" max="20" step="1" value="0" oninput="simUpdate()">
+          <div class="sim-ctrl-desc">같은 단어 반복 억제 — 등장 횟수에 비례해 감소</div>
+        </div>
+        <div class="sim-ctrl-row">
+          <div class="sim-ctrl-head">
+            <span class="sim-ctrl-name">Presence penalty</span>
+            <span class="sim-ctrl-val" id="val-pres">0.0</span>
+          </div>
+          <input type="range" class="sim-range" id="sl-pres" min="0" max="20" step="1" value="0" oninput="simUpdate()">
+          <div class="sim-ctrl-desc">새 주제 유도 — 한 번이라도 나온 단어면 일괄 억제</div>
+        </div>
+      </div>
+      <div class="param-warning" id="param-warn">
+        ⚠ Temperature와 Top-p가 모두 높습니다. 출력이 지나치게 무작위해져 품질이 저하될 수 있습니다. 둘 중 하나만 높게 설정하세요.
+      </div>
+
+      <div class="sim-output">
+        <div class="sim-out-box">
+          <div class="sim-out-title" style="color:var(--teal)">다음 토큰 확률 분포</div>
+          <div id="tok-dist"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5">
+            Temperature가 낮으면 상위 토큰에 확률이 집중됩니다.<br>
+            높으면 다양한 토큰이 선택될 기회를 얻습니다.
+          </div>
+        </div>
+        <div class="sim-out-box">
+          <div class="sim-out-title" style="color:var(--amber)">출력 특성 시뮬레이션</div>
+          <div class="sim-text-output" id="sim-text-out"></div>
+          <div style="font-size:11px;color:var(--accent);margin-top:10px;padding:8px 10px;background:rgba(79,142,247,0.07);border-radius:6px" id="sim-advice"></div>
+        </div>
+      </div>
+
+      <div class="sim-meter">
+        <div class="meter-card">
+          <div class="meter-name">일관성</div>
+          <div class="meter-val" id="m-consistency" style="color:#4f8ef7">85</div>
+          <div class="meter-bar-wrap"><div class="meter-bar" id="mb-consistency" style="background:#4f8ef7"></div></div>
+        </div>
+        <div class="meter-card">
+          <div class="meter-name">창의성</div>
+          <div class="meter-val" id="m-creativity" style="color:#f97316">42</div>
+          <div class="meter-bar-wrap"><div class="meter-bar" id="mb-creativity" style="background:#f97316"></div></div>
+        </div>
+        <div class="meter-card">
+          <div class="meter-name">다양성</div>
+          <div class="meter-val" id="m-diversity" style="color:#2dd4bf">38</div>
+          <div class="meter-bar-wrap"><div class="meter-bar" id="mb-diversity" style="background:#2dd4bf"></div></div>
+        </div>
+        <div class="meter-card">
+          <div class="meter-name">안전성</div>
+          <div class="meter-val" id="m-safety" style="color:#34d399">90</div>
+          <div class="meter-bar-wrap"><div class="meter-bar" id="mb-safety" style="background:#34d399"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 용도별 권장 프리셋 -->
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;letter-spacing:.04em">용도별 권장 설정 프리셋</div>
+      <div class="grid-3">
+        <div style="text-align:center;padding:14px;background:rgba(79,142,247,0.08);border-radius:10px;border:1px solid rgba(79,142,247,0.2)">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">정확한 답변</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">Temp 0.1 · Top-p 0.5</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">코드 · 사실 확인 · 번역</div>
+        </div>
+        <div style="text-align:center;padding:14px;background:rgba(45,212,191,0.08);border-radius:10px;border:1px solid rgba(45,212,191,0.2)">
+          <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:4px">일반 대화</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">Temp 0.7 · Top-p 0.9</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">요약 · 이메일 · Q&A</div>
+        </div>
+        <div style="text-align:center;padding:14px;background:rgba(251,191,36,0.08);border-radius:10px;border:1px solid rgba(251,191,36,0.2)">
+          <div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px">창의적 글쓰기</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">Temp 1.2 · Top-p 0.95</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">카피 · 스토리 · 아이디어</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+/* ═══════════════════════════════════════
+   PROMPT LAB — TAB SYSTEM
+═══════════════════════════════════════ */
+function showTab(id) {
+  document.querySelectorAll('.lab-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.lab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ═══════════════════════════════════════
+   TAB 1 — COMPARE: 나쁜 vs 좋은
+═══════════════════════════════════════ */
+const compareData = [
+  {
+    label: '이메일 작성',
+    bad: '이메일 써줘',
+    good: '당신은 비즈니스 커뮤니케이션 전문가입니다.\n수신자: 처음 연락하는 50대 중소기업 대표\n목적: AI 교육 프로그램 도입 제안\n어조: 정중하고 간결하게\n분량: 5문장 이내\n\n위 조건에 맞게 제안 이메일을 작성해 주세요.',
+    badOut: '안녕하세요. 저희 서비스에 대해 말씀드리고 싶습니다. 좋은 서비스입니다. 연락 주세요.\n\n→ 맥락 없이 흐릿한 출력. 누구에게 무엇을 쓰는지 AI가 추측해야 합니다.',
+    goodOut: '안녕하세요, 대표님.\n\n귀사의 업무 효율화를 위한 AI 교육 프로그램을 소개드리고자 연락드립니다. 비개발자도 즉시 활용 가능한 실무 중심 커리큘럼으로, 1일 과정으로 구성되어 있습니다. 참가 기업 평균 업무 처리 시간이 30% 단축되었다는 성과가 있습니다.\n\n간단한 미팅을 통해 자세한 내용을 공유드릴 수 있을까요?',
+    tip: '역할 + 수신자 + 목적 + 어조 + 분량, 5가지를 지정하는 것만으로 출력 품질이 크게 달라집니다.',
+    scores: { 명확성: [15, 92], 관련성: [20, 95], 형식적합성: [10, 88], 재사용가능성: [5, 85] }
+  },
+  {
+    label: '보고서 요청',
+    bad: '보고서 써줘',
+    good: '당신은 경영 컨설턴트입니다.\n대상: AI 도입 경험이 없는 중소기업 대표\n주제: 2025년 국내 중소기업 AI 도입 현황\n형식: 요약 → 현황 분석 → 실천 제언 순서\n분량: A4 2장 이내\n용어: 비전공자도 이해 가능한 쉬운 표현 사용\n\n위 조건에 맞게 보고서를 작성해 주세요.',
+    badOut: '보고서\n\nAI는 현재 많은 기업에서 사용되고 있습니다. 앞으로도 더 많이 사용될 것입니다...\n\n→ 구조도, 대상도, 깊이도 없는 공허한 출력.',
+    goodOut: '【요약】\n국내 중소기업의 AI 도입률은 2024년 기준 18%로, 대기업(72%) 대비 크게 낮습니다.\n\n【현황 분석】\n• 도입 장벽 1위: 초기 비용 부담 (응답자 64%)\n• 도입 성공 업종: 제조(공정 최적화), 유통(재고 관리)\n\n【실천 제언】\n1. 소규모 파일럿 먼저 시작 (예산 500만원 이내)\n2. 기존 업무 자동화부터 도전\n3. 직원 역량 교육 병행',
+    tip: '구조(순서)를 명시하면 AI는 그 틀에 맞게 내용을 채웁니다. "요약→현황→제언"처럼 목차를 직접 지정하세요.',
+    scores: { 명확성: [10, 90], 구조적합성: [5, 95], 전문성: [20, 85], 실용성: [15, 88] }
+  },
+  {
+    label: '사업 분석',
+    bad: '이 사업 성공할까?',
+    good: '다음 사업 아이디어의 성공 가능성을 분석해 주세요.\n아이디어: 중소기업 대상 AI 구축 대행 서비스\n\n아래 순서로 단계별로 분석해 주세요:\n1. 시장 규모 추정\n2. 경쟁 강도 평가 (주요 경쟁사 3곳 포함)\n3. 핵심 리스크 3가지\n4. 종합 판단 및 제언 (긍정/부정 각 1가지)',
+    badOut: '성공 가능성은 여러 요인에 달려 있습니다. 시장 조사를 해보시고 경쟁사도 분석해 보세요. 열심히 하면 될 것 같습니다.\n\n→ 근거 없는 일반론. 의사결정에 도움이 안 됩니다.',
+    goodOut: '1. 시장 규모: 국내 SMB AI 전환 시장 약 2.3조원(2025), 연 28% 성장 예상\n\n2. 경쟁 강도: 중간\n   - LG CNS (대기업 대상), 카카오엔터프라이즈 (플랫폼 중심)\n   - 중소기업 특화 플레이어 부재 → 블루오션 가능성\n\n3. 핵심 리스크:\n   • 초기 영업 비용 높음 (신뢰 구축 평균 6개월)\n   • 기술 인력 확보 어려움\n   • 고객사 AI 이해도 낮아 기대치 조율 필요\n\n4. 종합: 긍정 - 타이밍 좋음 / 부정 - 초기 현금 소모 위험',
+    tip: '"단계별로 분석해줘" + 각 단계 명시 = Chain-of-Thought 기법. 복잡한 분석일수록 AI가 스스로 논리를 세울 수 있게 단계를 지정하세요.',
+    scores: { 구체성: [5, 93], 논리성: [10, 90], 실용성: [8, 87], 깊이: [5, 91] }
+  },
+  {
+    label: '콘텐츠 제작',
+    bad: '광고 문구 써줘',
+    good: '당신은 카피라이터입니다.\n제품: 중소기업용 AI 업무 자동화 솔루션\n타깃: 반복 업무에 지친 30~40대 중소기업 팀장\n핵심 메시지: 하루 2시간 절약\n어조: 공감하고 위로하는 따뜻한 톤\n\n위 조건으로 SNS 광고 카피 3가지 버전을 작성해 주세요.\n각 버전은 30자 이내로.',
+    badOut: '최고의 AI 솔루션! 지금 바로 도입하세요. 효율이 올라갑니다.\n\n→ 브랜드도, 타깃도, 차별점도 없는 무의미한 카피.',
+    goodOut: 'ver.1 (공감형)\n"오늘도 야근이요? AI가 그 2시간을 돌려드립니다."\n\nver.2 (수치형)\n"팀장님 하루 2시간 — AI에게 맡겨도 됩니다."\n\nver.3 (질문형)\n"반복 업무, 혼자 하고 계신가요?"',
+    tip: '타깃·어조·분량·버전 수를 함께 지정하면 바로 쓸 수 있는 결과물이 나옵니다. 광고 카피처럼 창의성이 필요한 작업도 조건이 많을수록 좋아집니다.',
+    scores: { 타깃적합성: [10, 92], 창의성: [30, 85], 활용가능성: [15, 90], 브랜드일관성: [5, 80] }
+  },
+  {
+    label: '코드 요청',
+    bad: '파이썬 코드 짜줘',
+    good: '파이썬으로 CSV 파일을 읽어서 특정 컬럼의 평균값을 계산하는 함수를 작성해 주세요.\n\n조건:\n- pandas 사용\n- 함수명: calc_column_mean(filepath, column_name)\n- 파일이 없거나 컬럼이 없으면 None 반환\n- 각 줄에 한국어 주석 포함\n- 사용 예시(docstring)도 포함',
+    badOut: 'import pandas as pd\ndf = pd.read_csv("file.csv")\nprint(df.mean())\n\n→ 함수도, 오류 처리도, 주석도 없는 반쪽짜리 코드.',
+    goodOut: 'import pandas as pd\n\ndef calc_column_mean(filepath: str, column_name: str):\n    """\n    CSV 파일에서 특정 컬럼의 평균값을 계산합니다.\n    사용예: calc_column_mean("data.csv", "sales")\n    """\n    try:\n        df = pd.read_csv(filepath)  # CSV 파일 읽기\n        if column_name not in df.columns:  # 컬럼 존재 확인\n            return None\n        return df[column_name].mean()  # 평균 계산\n    except FileNotFoundError:\n        return None  # 파일 없으면 None 반환',
+    tip: '코드 요청 시 함수명·파라미터·예외처리·주석 여부를 명시하면 바로 실무에 쓸 수 있는 코드가 나옵니다.',
+    scores: { 명확성: [10, 95], 오류처리: [0, 90], 주석품질: [0, 88], 재사용성: [20, 93] }
+  },
+  {
+    label: '데이터 분석',
+    bad: '데이터 분석해줘',
+    good: '아래 판매 데이터를 분석해 주세요.\n\n데이터: 1월 120건, 2월 98건, 3월 145건, 4월 89건, 5월 160건\n\n분석 항목:\n1. 월별 증감률 계산\n2. 최고/최저 월 및 원인 추정\n3. 다음 달 예측 (추세 기반)\n4. 실무 개선 제언 1가지\n\n결과는 표와 요약 문장으로 작성해주세요.',
+    badOut: '데이터를 보면 1월에 120, 2월에 98, 3월에 145... 전반적으로 증가와 감소가 반복되는 패턴입니다.\n\n→ 무엇을 원하는지 몰라 단순 나열. 인사이트가 없습니다.',
+    goodOut: '【월별 증감률】\n1→2월: -18.3% | 2→3월: +48.0% | 3→4월: -38.6% | 4→5월: +79.8%\n\n【최고/최저】\n최고: 5월 160건 (프로모션 효과 추정)\n최저: 4월 89건 (연휴 기간 수요 감소 추정)\n\n【예측】\n6월 예측: 약 148건 (3개월 이동평균 기준)\n\n【제언】\n4월 저조 구간 대비 사전 프로모션 준비 권장',
+    tip: '분석할 데이터를 직접 붙여넣고 "분석 항목"을 번호로 명시하면 AI는 각 항목을 빠짐없이 처리합니다.',
+    scores: { 구체성: [5, 94], 항목완성도: [10, 96], 재현가능성: [8, 90], 실용성: [10, 88] }
+  },
+  {
+    label: '번역 요청',
+    bad: '이거 번역해줘',
+    good: '아래 텍스트를 영어로 번역해 주세요.\n\n원문: "당사는 AI 기반 품질 검사 시스템을 도입하여 불량률을 기존 대비 35% 줄였습니다."\n\n조건:\n- 대상 독자: 해외 바이어 (비전문가)\n- 어조: 공식적이고 신뢰감 있는\n- 수치와 고유명사는 그대로 유지\n- 번역문 아래에 어색한 표현이 있다면 대안도 제시해주세요.',
+    badOut: 'Our company introduced an AI-based quality inspection system and reduced the defect rate by 35% compared to before.\n\n→ 번역은 됐지만 어조, 독자, 검토 요청은 무시됩니다.',
+    goodOut: '【번역문】\n"Our company has implemented an AI-powered quality inspection system, achieving a 35% reduction in defect rates compared to our previous performance."\n\n【표현 검토】\n• "achieving a 35% reduction" → 능동적·성과 중심 표현으로 바이어에게 신뢰감 줌\n• 대안: "resulting in a 35% decrease" (더 중립적)\n\n【권장】\n바이어 대상이라면 번역문 그대로 사용 권장',
+    tip: '번역 시 독자·어조·수치 처리 방식을 명시하면 단순 직역을 넘어 검수까지 한 번에 받을 수 있습니다.',
+    scores: { 정확성: [70, 96], 맥락적합성: [20, 92], 추가가치: [0, 88], 활용가능성: [50, 95] }
+  }
+];
+
+let currentCompare = 0;
+function loadCompare(i) {
+  currentCompare = i;
+  document.querySelectorAll('#compare-btns .sim-preset-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  const d = compareData[i];
+  document.getElementById('cmp-bad').innerText = d.bad;
+  document.getElementById('cmp-good').innerText = d.good;
+  document.getElementById('cmp-bad-out').innerText = d.badOut;
+  document.getElementById('cmp-good-out').innerText = d.goodOut;
+  document.getElementById('cmp-tip').innerText = '핵심 포인트: ' + d.tip;
+  const bars = document.getElementById('score-bars');
+  bars.innerHTML = Object.entries(d.scores).map(([k, [bad, good]]) => `
+    <div class="score-row">
+      <span class="score-lbl">${k}</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="score-track" style="flex:1"><div class="score-fill" style="width:${bad}%;background:#ef4444"></div></div>
+          <span class="score-val" style="color:#f87171">${bad}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="score-track" style="flex:1"><div class="score-fill" style="width:${good}%;background:#34d399"></div></div>
+          <span class="score-val" style="color:#6ee7b7">${good}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+loadCompare(0);
+
+/* ═══════════════════════════════════════
+   TAB 2 — PROMPT BUILDER
+═══════════════════════════════════════ */
+function buildPrompt() {
+  const sys      = document.getElementById('b-sys').value.trim();
+  const role     = document.getElementById('b-role').value.trim();
+  const audience = document.getElementById('b-audience').value.trim();
+  const task     = document.getElementById('b-task').value.trim();
+  const format   = document.getElementById('b-format').value;
+  const length   = document.getElementById('b-length').value;
+  const tone     = document.getElementById('b-tone').value;
+  const exclude  = document.getElementById('b-exclude').value.trim();
+  const context  = document.getElementById('b-context').value.trim();
+
+  let sections = [];
+  if (sys) sections.push('[시스템 프롬프트]\n' + sys + '\n\n' + '─'.repeat(30));
+
+  let parts = [];
+  if (role)     parts.push('당신은 ' + role + '입니다.');
+  if (context)  parts.push('\n[배경 정보]\n' + context);
+  if (audience) parts.push('\n대상: ' + audience);
+  if (task)     parts.push('\n작업: ' + task);
+  let conditions = [];
+  if (format)   conditions.push(format);
+  if (length)   conditions.push(length);
+  if (tone)     conditions.push(tone);
+  if (exclude)  conditions.push('다음 내용은 제외: ' + exclude);
+  if (conditions.length) parts.push('\n\n조건:\n- ' + conditions.join('\n- '));
+
+  if (parts.length) sections.push(parts.join(''));
+  const result = sections.length ? sections.join('\n') : '항목을 입력하면 여기에 프롬프트가 자동 생성됩니다.';
+  document.getElementById('builder-out').innerText = result;
+
+  const filled = [sys, role, audience, task, format, length, tone, exclude, context].filter(Boolean).length;
+  const pct = Math.min(100, Math.round(filled / 9 * 100));
+  const colors = pct < 30 ? '#ef4444' : pct < 60 ? '#fbbf24' : '#34d399';
+  document.getElementById('builder-score').innerHTML = `프롬프트 완성도: <span style="color:${colors};font-weight:700">${pct}%</span>`;
+}
+
+function copyPrompt() {
+  const text = document.getElementById('builder-out').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('copy-msg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 2000);
+  });
+}
+
+/* ═══════════════════════════════════════
+   TAB 3 — CoT
+═══════════════════════════════════════ */
+const cotData = [
+  {
+    badPrompt: '닭과 토끼가 합쳐서 10마리, 다리가 총 28개일 때, 닭은 몇 마리?',
+    badOut: '닭: 6마리\n\n→ 답이 맞을 수도 있지만, 근거 없이 바로 나온 숫자라 신뢰하기 어렵습니다.',
+    goodPrompt: '닭과 토끼가 합쳐서 10마리, 다리가 총 28개일 때, 닭은 몇 마리인지 단계별로 풀어줘.',
+    goodOut: '1단계: 변수 설정\n   닭 = x, 토끼 = y\n\n2단계: 연립방정식 세우기\n   x + y = 10  …①\n   2x + 4y = 28  …②\n\n3단계: ②에서 ①×2 빼기\n   2y = 8  →  y = 4\n\n4단계: ①에 대입\n   x = 10 - 4 = 6\n\n✓ 닭: 6마리, 토끼: 4마리',
+    tip: '수학 문제는 "단계별로 풀어줘"를 추가하면 검산이 가능하고 오답률이 크게 줄어듭니다.'
+  },
+  {
+    badPrompt: '모든 A는 B, 모든 B는 C, 어떤 A는 D가 아니다. 어떤 A는 C인가?',
+    badOut: '예.\n\n→ 맞지만 왜 그런지 알 수 없습니다. 틀릴 경우 수정할 방법이 없습니다.',
+    goodPrompt: '논리 추론 문제를 단계별로 풀어줘.\n전제 1: 모든 A는 B이다.\n전제 2: 모든 B는 C이다.\n전제 3: 어떤 A는 D가 아니다.\n결론: 어떤 A는 C인가?',
+    goodOut: '1단계: 전제 1 분석\n   모든 A → B (A면 반드시 B)\n\n2단계: 전제 2 분석\n   모든 B → C (B면 반드시 C)\n\n3단계: 삼단논법 적용\n   A → B → C\n   따라서 모든 A는 C이다.\n\n4단계: 전제 3 확인\n   "어떤 A는 D가 아님"은 C 여부와 무관.\n\n결론: 모든 A는 C이다. (참)',
+    tip: '논리 추론 문제는 전제를 번호로 나눠 제시하고 단계별 분석을 요청하면 오류를 쉽게 발견할 수 있습니다.'
+  },
+  {
+    badPrompt: '지방 발령 갈까요, 서울에 남을까요?',
+    badOut: '개인 상황에 따라 다릅니다. 가족과 상의해 보세요.\n\n→ 아무런 도움이 되지 않는 원론적 답변.',
+    goodPrompt: '지방 발령 vs 서울 잔류 결정을 도와줘. 아래 기준으로 단계별로 분석해줘.\n1. 커리어 성장 관점\n2. 경제적 관점 (연봉·생활비)\n3. 라이프스타일 관점\n4. 리스크와 기회 요인\n5. 최종 의사결정 프레임워크',
+    goodOut: '1. 커리어: 지방 → 핵심 사업 현장 경험, 빠른 승진 가능\n   서울 → 본사 네트워크, 이직 기회 많음\n\n2. 경제: 지방 → 이전 수당 + 생활비 절약 가능\n   서울 → 기회비용 발생\n\n3. 라이프스타일: 개인 상황(가족 유무 등)에 따라 극명하게 갈림\n\n4. 리스크/기회:\n   지방: 고립감 리스크 / 지역 전문성 기회\n   서울: 현상 유지 리스크 / 다양한 선택지 유지\n\n5. 의사결정 프레임:\n   "5년 뒤 어떤 모습이고 싶은가?"를 먼저 정의 →\n   그 목표에 가까운 선택지를 고르세요.',
+    tip: '의사결정 문제는 분석 기준을 번호로 나열하면 AI가 각 기준별로 균형 잡힌 분석을 제공합니다.'
+  }
+];
+
+function loadCot(i) {
+  document.querySelectorAll('#tab-cot .sim-preset-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  const d = cotData[i];
+  document.getElementById('cot-bad-prompt').innerText = d.badPrompt;
+  document.getElementById('cot-bad-out').innerText = d.badOut;
+  document.getElementById('cot-good-prompt').innerText = d.goodPrompt;
+  document.getElementById('cot-good-out').innerText = d.goodOut;
+  document.getElementById('cot-tip').innerText = '핵심 포인트: ' + d.tip;
+}
+loadCot(0);
+
+/* ═══════════════════════════════════════
+   TAB 4 — FEW-SHOT
+═══════════════════════════════════════ */
+const shotData = [
+  {
+    prompt: '다음 단어의 반의어를 알려줘.\n단어: 행복',
+    out: '불행\n\n→ 맞는 답이지만, 형식이 일정하지 않고 스타일 제어가 어렵습니다.',
+    tip: '예시가 없으면 AI는 가장 일반적인 형태로 답합니다. 원하는 형식이 있다면 반드시 예시를 제공하세요.'
+  },
+  {
+    prompt: '다음 단어의 반의어를 알려줘.\n\n[예시]\n단어: 빠르다\n반의어: 느리다\n\n[질문]\n단어: 행복',
+    out: '반의어: 불행\n\n→ 예시 1개만으로 출력 형식("반의어: ___")이 통일됩니다.',
+    tip: '예시 1개로도 형식을 통일할 수 있습니다. "반의어: ___" 형태가 필요하다면 1-shot으로 충분합니다.'
+  },
+  {
+    prompt: '다음 단어의 반의어를 알려줘. 반드시 동일한 형식으로.\n\n[예시 1]\n단어: 빠르다 → 반의어: 느리다 (속도 대비)\n\n[예시 2]\n단어: 밝다 → 반의어: 어둡다 (조도 대비)\n\n[예시 3]\n단어: 강하다 → 반의어: 약하다 (강도 대비)\n\n[질문]\n단어: 행복',
+    out: '단어: 행복 → 반의어: 불행 (감정 상태 대비)\n\n→ 형식과 부연 설명 패턴까지 완전히 학습했습니다.\n같은 방식으로 어떤 단어든 처리 가능합니다.',
+    tip: '3개 예시를 주면 형식뿐 아니라 부연 설명의 패턴까지 학습합니다. 반복적인 데이터 변환 작업에서 특히 강력합니다.'
+  }
+];
+
+function loadShot(i) {
+  document.querySelectorAll('#tab-fewshot .sim-preset-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  document.getElementById('shot-prompt').innerText = shotData[i].prompt;
+  document.getElementById('shot-out').innerText = shotData[i].out;
+  document.getElementById('shot-tip').innerText = '핵심 포인트: ' + shotData[i].tip;
+}
+loadShot(0);
+
+/* ═══════════════════════════════════════
+   TAB 3 — SYSTEM PROMPT
+═══════════════════════════════════════ */
+const spData = [
+  {
+    sys: '없음 (기본 상태)',
+    out: 'AI를 도입하면 여러 면에서 도움이 될 수 있습니다. 품질 관리, 예측 유지보수, 생산 최적화 등에 활용할 수 있습니다. 도입 전 비용과 효과를 검토해보세요.',
+    tip: '시스템 프롬프트 없이는 AI가 일반적인 답변을 생성합니다. 구체성이 낮고 어조가 중립적입니다.'
+  },
+  {
+    sys: '당신은 스마트팩토리 구축 전문 컨설턴트입니다. 항상 ROI 수치와 실제 사례를 포함해 답변하고, 리스크도 반드시 언급하세요.',
+    out: '공장 AI 도입 시 기대 효과:\n\n• 예측 유지보수: 설비 고장 예측 정확도 85% → 비계획 다운타임 40% 감소 (도요타 사례)\n• 품질 검사 자동화: 육안 검사 대비 불량 검출률 99.7%\n• ROI: 평균 18개월 내 투자 회수\n\n⚠ 리스크: 기존 인력 재배치, 데이터 품질 확보, 초기 비용 부담\n\n권장: 1개 공정 파일럿으로 시작하세요.',
+    tip: '전문가 페르소나 + 포함 요소(ROI, 사례, 리스크) 지정 → 실무에 바로 쓸 수 있는 구체적 답변이 나옵니다.'
+  },
+  {
+    sys: '반드시 다음 형식으로만 답하세요:\n장점: (한 줄)\n단점: (한 줄)\n권고사항: (한 줄)\n답변은 총 3줄을 초과하지 마세요.',
+    out: '장점: 반복 공정 자동화로 생산성 향상 및 불량률 감소\n단점: 초기 구축 비용과 직원 재교육 시간 필요\n권고사항: 데이터가 가장 많은 공정 1개부터 파일럿 적용 후 확대',
+    tip: '출력 형식을 시스템 프롬프트로 고정하면 매번 프롬프트에 형식을 지정하지 않아도 일관된 구조를 보장합니다. 자동화·파싱에 필수.'
+  },
+  {
+    sys: '당신은 제조업 AI 도입 도우미입니다. 반드시 제조업 관련 내용만 다루세요. 재무, 법률, 의료 등 다른 분야 질문은 정중히 거절하세요. 답변은 친근하고 쉬운 말로.',
+    out: '공장에 AI 도입하면 이런 점이 좋아져요! 😊\n\n1. 기계가 고장나기 전에 미리 알 수 있어요 (예측 유지보수)\n2. 제품 불량을 카메라로 자동 검사해요\n3. 생산 일정을 AI가 최적으로 짜줘요\n\n딱 한 가지만 먼저 시작하고 싶다면 품질 검사 자동화를 추천드려요!',
+    tip: '도메인 한정 + 어조 지정 → AI가 범위를 벗어난 질문은 거절하고, 허용된 주제는 설정한 어조로만 답합니다. 서비스 배포 시 필수 설정.'
+  }
+];
+
+function loadSp(i) {
+  document.querySelectorAll('#sp-btns .sim-preset-btn').forEach((b,j) => b.classList.toggle('active', i===j));
+  document.getElementById('sp-sys-box').innerText = spData[i].sys;
+  document.getElementById('sp-output-box').innerText = spData[i].out;
+  document.getElementById('sp-tip').innerText = '핵심 포인트: ' + spData[i].tip;
+}
+loadSp(0);
+
+/* ═══════════════════════════════════════
+   HYPERPARAMETER SIMULATOR
+═══════════════════════════════════════ */
+const tokenCandidates = [
+  { word: '분석했습니다', base: 40 },
+  { word: '살펴봤습니다', base: 28 },
+  { word: '검토했습니다', base: 18 },
+  { word: '조사했습니다', base: 9 },
+  { word: '탐구했습니다', base: 3 },
+  { word: '쓸어봤습니다', base: 1 },
+  { word: '뒤졌습니다',   base: 1 }
+];
+
+const simTexts = {
+  lo: {
+    texts: ['이 문서는 세 가지 핵심 사항을 다루고 있습니다. 첫째, 현황 분석입니다. 둘째, 개선 방안입니다. 셋째, 결론입니다.'],
+    advice: 'Temperature 낮음: 예측 가능하고 일관된 출력. 코드 생성·사실 확인에 최적.'
+  },
+  mid: {
+    texts: ['이 문서를 검토한 결과, 몇 가지 중요한 시사점이 발견되었습니다. 특히 두 번째 항목은 현재 상황과 밀접하게 연관되어 있어 추가적인 논의가 필요해 보입니다.'],
+    advice: 'Temperature 중간: 자연스럽고 읽기 좋은 출력. 이메일·요약·보고서에 권장.'
+  },
+  hi: {
+    texts: [
+      '어두운 바다 위에 떠오른 언어의 섬처럼, 이 문서는 우리에게 새로운 지평을 열어줍니다. 단어들이 춤을 추듯 연결되며 예상치 못한 인사이트가 솟아오릅니다.',
+      '문서 속에 숨겨진 패턴들이 마치 별자리처럼 빛을 발하고 있습니다. 평범한 분석을 넘어서, 창의적 도약이 필요한 순간입니다!',
+      '이 흥미로운 텍스트가 던지는 질문들, 어쩌면 그것이 진짜 답일지도... 기존의 틀을 깨는 발상이 여기서 시작됩니다.'
+    ],
+    advice: 'Temperature 높음: 창의적·실험적 출력. 브레인스토밍·카피라이팅에 효과적. 일관성은 낮아짐.'
+  }
+};
+
+function softmax(logits, temp) {
+  const scaled = logits.map(v => v / Math.max(temp, 0.01));
+  const maxV = Math.max(...scaled);
+  const exps = scaled.map(v => Math.exp(v - maxV));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(v => v / sum);
+}
+
+function simUpdate() {
+  const temp = parseFloat(document.getElementById('sl-temp').value) / 10;
+  const topp = parseFloat(document.getElementById('sl-topp').value) / 10;
+  const maxt = parseInt(document.getElementById('sl-maxt').value) * 50;
+  const freq = parseFloat(document.getElementById('sl-freq').value) / 10;
+  const pres = parseFloat(document.getElementById('sl-pres').value) / 10;
+
+  document.getElementById('val-temp').textContent = temp.toFixed(1);
+  document.getElementById('val-topp').textContent = topp.toFixed(1);
+  document.getElementById('val-maxt').textContent = maxt;
+  document.getElementById('val-freq').textContent = freq.toFixed(1);
+  document.getElementById('val-pres').textContent = pres.toFixed(1);
+
+  // 파라미터 충돌 경고
+  const warn = document.getElementById('param-warn');
+  warn.classList.toggle('show', temp > 1.0 && topp > 0.8);
+
+  const logits = tokenCandidates.map(t => t.base);
+  const probs = softmax(logits, temp);
+
+  let cumulative = 0;
+  const sorted = probs.map((p, i) => ({p, i})).sort((a, b) => b.p - a.p);
+  const included = new Set();
+  for (const {p, i} of sorted) {
+    included.add(i);
+    cumulative += p;
+    if (cumulative >= topp) break;
+  }
+
+  const colors = ['#4f8ef7','#2dd4bf','#fbbf24','#f97316','#ef4444','#a855f7','#ec4899'];
+  document.getElementById('tok-dist').innerHTML = tokenCandidates.map((t, i) => {
+    const p = probs[i];
+    const pct = Math.round(p * 100);
+    const active = included.has(i);
+    const color = active ? colors[i] : '#3a4555';
+    return `<div class="token-prob-row" style="opacity:${active ? 1 : 0.35}">
+      <span class="tok-word" style="color:${color};font-weight:${active?'600':'400'}">${t.word}</span>
+      <div class="tok-prob-bar"><div class="tok-prob-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="tok-prob-pct" style="color:${color}">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  const bucket = temp <= 0.3 ? 'lo' : temp <= 1.0 ? 'mid' : 'hi';
+  const texts = simTexts[bucket].texts;
+  const chosen = texts[Math.floor(Math.random() * texts.length)];
+  const words = chosen.split('');
+  const limit = Math.max(20, Math.min(words.length, Math.round(maxt / 2)));
+  const truncated = words.slice(0, limit).join('') + (limit < words.length ? '...' : '');
+
+  let colored = truncated;
+  if (bucket === 'hi') {
+    ['섬처럼','춤을','별자리','도약','틀을'].forEach(w => {
+      colored = colored.replace(w, `<span class="tok-hi">${w}</span>`);
+    });
+  } else if (bucket === 'mid') {
+    ['중요한','논의가','연관'].forEach(w => {
+      colored = colored.replace(w, `<span class="tok-mid">${w}</span>`);
+    });
+  }
+  document.getElementById('sim-text-out').innerHTML = colored + '<span class="cursor"></span>';
+  document.getElementById('sim-advice').innerText = simTexts[bucket].advice;
+
+  const consistency = Math.max(5,  Math.round(95 - temp * 35 - freq * 3));
+  const creativity  = Math.min(98, Math.round(10 + temp * 55 + (topp - 0.5) * 20));
+  const diversity   = Math.min(98, Math.round(5  + temp * 45 + (topp - 0.5) * 25));
+  const safety      = Math.max(10, Math.round(98 - temp * 30));
+
+  setMeter('consistency', consistency, '#4f8ef7');
+  setMeter('creativity',  creativity,  '#f97316');
+  setMeter('diversity',   diversity,   '#2dd4bf');
+  setMeter('safety',      safety,      '#34d399');
+}
+
+function setMeter(name, val, color) {
+  document.getElementById('m-'  + name).textContent = val;
+  document.getElementById('mb-' + name).style.width = val + '%';
+  document.getElementById('mb-' + name).style.background = color;
+}
+
+const presets = {
+  accurate:  { temp: 1,  topp: 5,  maxt: 6,  freq: 0, pres: 0 },
+  general:   { temp: 7,  topp: 9,  maxt: 10, freq: 0, pres: 0 },
+  creative:  { temp: 12, topp: 10, maxt: 20, freq: 4, pres: 6 },
+  code:      { temp: 2,  topp: 6,  maxt: 16, freq: 0, pres: 0 },
+  translate: { temp: 3,  topp: 7,  maxt: 6,  freq: 2, pres: 2 }
+};
+
+function applyPreset(name) {
+  document.querySelectorAll('.sim-presets .sim-preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const p = presets[name];
+  document.getElementById('sl-temp').value = p.temp;
+  document.getElementById('sl-topp').value = p.topp;
+  document.getElementById('sl-maxt').value = p.maxt;
+  document.getElementById('sl-freq').value = p.freq;
+  document.getElementById('sl-pres').value = p.pres;
+  simUpdate();
+}
+
+simUpdate();
+buildPrompt();
+</script>
+<script>(function(){var k='tf_sim';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=sim&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

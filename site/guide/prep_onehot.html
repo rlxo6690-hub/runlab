@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>원-핫 인코딩 사용법 — 문자 데이터를 모델이 읽는 숫자로 | DataForge 가이드</title>
+  <meta name="description" content="색상·지역 같은 문자(범주) 데이터를 머신러닝 모델이 읽을 수 있는 0/1 숫자 열로 바꾸는 원-핫 인코딩 시뮬레이터 사용법. 레이블 인코딩과의 차이, 컬럼 수 폭발 주의점까지 단계별로 안내합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/prep_onehot">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="원-핫 인코딩 사용법 | DataForge 가이드">
+  <meta property="og:description" content="문자(범주) 데이터를 모델이 읽는 0/1 숫자 열로 바꾸는 원-핫 인코딩을 직접 만들어보며 익히는 시뮬레이터 사용법 안내.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/prep_onehot">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">dataforge.ai.kr/prep/onehot</div>
+      <h1>원-핫 인코딩 사용법 — 문자 데이터를 모델이 읽는 숫자로</h1>
+      <p class="lead">색상·지역 같은 범주값을 입력하면 0/1 행렬이 즉시 만들어지고, 레이블 인코딩과 나란히 비교하며 차이를 익히는 도구입니다.</p>
+      <div class="tabs-line">탭: 📊 시뮬레이터 · 📂 CSV 변환 · 저장</div>
+
+      <h2>어떤 상황에서 쓰는 도구인가요</h2>
+      <p>머신러닝 모델은 숫자만 계산할 수 있습니다. 그런데 실무 데이터에는 '서울/부산/대전' 같은
+      <b>문자(범주) 데이터</b>가 반드시 섞여 있습니다. 가장 쉬운 해결책은 서울=1, 부산=2, 대전=3처럼
+      번호를 붙이는 것인데, 여기에 함정이 있습니다 — 모델은 이 숫자를 <b>크기와 순서가 있는 값</b>으로
+      읽습니다. '대전(3)은 서울(1)의 3배', '부산(2)은 서울과 대전의 중간'이라는, 존재하지 않는 관계를
+      학습해 버리는 것이지요.</p>
+      <p>도시 이름 사이에는 원래 순서가 없습니다. 이렇게 순서가 없는 범주를 숫자로 바꿀 때 쓰는 표준
+      방법이 <b>원-핫 인코딩</b>입니다 — 범주마다 열을 하나씩 만들고, 해당하면 1, 아니면 0을 채웁니다.
+      서울은 [1,0,0], 부산은 [0,1,0]이 되어 어떤 범주도 다른 범주보다 크지 않게 됩니다.
+      이 시뮬레이터는 그 변환 과정을 직접 값을 넣어보며 눈으로 확인하는 도구입니다.</p>
+
+      <h2>이 도구는 무엇을 하나요</h2>
+      <p>범주값을 입력하면 <b>원-핫 인코딩 행렬</b>(열 이름 = 범주값)이 즉시 그려지고, 바로 아래에서
+      같은 데이터를 <b>레이블 인코딩</b>(범주에 정수 부여)으로 바꾼 결과와 비교할 수 있습니다.
+      고유 카테고리가 많아지면 차원의 저주 경고가 뜨고, 하단 가이드 카드에는 원-핫·레이블·더미 변수
+      함정까지 세 가지 관점이 정리되어 있습니다. 📂 CSV 변환·저장 탭에서는 내 CSV 파일의 범주형 열에
+      원-핫 인코딩을 실제로 적용해 새 파일로 저장합니다.</p>
+
+      <h2>단계별 사용법</h2>
+      <ol class="steps">
+        <li><b>데이터 넣기</b> — 프리셋(🎨 색상 · 🌤 날씨 · 👕 사이즈 · 📝 등급 · 🗺 지역) 중 하나를
+        누르거나, 입력창에 쉼표 또는 줄바꿈으로 구분한 범주값을 직접 입력하고 <b>인코딩 ▶</b> 버튼을
+        누릅니다. 대소문자는 구분되고 공백은 자동으로 제거됩니다.</li>
+        <li><b>인코딩 결과 행렬 읽기</b> — 고유 범주 하나가 열 하나가 됩니다. 각 행에는 해당 범주 자리에만
+        1이 있고 나머지는 전부 0입니다. 행마다 1이 정확히 하나(one-hot)라는 것이 이 방식의 이름이 된
+        이유입니다.</li>
+        <li><b>레이블 인코딩과 비교하기</b> — 아래 '레이블 인코딩 비교' 표에서 같은 데이터에 정수를 부여한
+        결과를 봅니다. 빠르고 열이 늘지 않지만, 모델이 0→1→2를 순서로 잘못 해석할 수 있다는 주의 문구를
+        함께 확인하세요.</li>
+        <li><b>가이드 카드 확인</b> — '언제 어떤 인코딩을 쓸까?' 카드 세 장에 정리되어 있습니다.
+        순서가 없는 명목형 범주(색상·도시)는 원-핫, 순서가 있는 순서형 범주(사이즈·등급)와 트리 기반
+        모델(랜덤포레스트·XGBoost)은 레이블 인코딩, 그리고 선형 모델에서는 k개 범주 중 한 열을 빼는
+        더미 변수 함정(drop_first)까지 다룹니다.</li>
+        <li><b>내 파일에 적용하기</b> — 📂 CSV 변환·저장 탭에서 CSV 파일을 업로드(UTF-8/EUC-KR 지원,
+        최대 10MB)하고, 인코딩할 <b>문자형(범주형) 열</b>을 클릭해 선택합니다. 옵션으로 <b>원본 열 유지</b>
+        여부와 <b>최대 카디널리티</b>(기본 20 — 고유값이 이보다 많은 열은 건너뜀)를 정한 뒤
+        <b>인코딩 적용 ▶</b>을 누릅니다.</li>
+        <li><b>미리보고 저장하기</b> — 미리보기에서 파란색으로 표시된 열이 새로 생성된 0/1 이진 열입니다.
+        숫자형 열은 그대로 유지된 것을 확인하고 <b>CSV 저장 ↓</b>으로 내려받으면 됩니다.</li>
+      </ol>
+      <div class="tip">💡 주소 뒤에 <b>#csv</b>를 붙이면 CSV 변환·저장 탭이 바로 열립니다.
+      실습에서 파일 인코딩 단계로 곧장 안내할 때 유용합니다.</div>
+
+      <h2>결과를 읽는 법 — 컬럼 수 폭발에 주의하세요</h2>
+      <p>원-핫 인코딩의 대가는 <b>열 개수</b>입니다. 고유 범주가 k개면 열이 k개 생깁니다.
+      색상 3종이면 3열로 끝나지만, 고객 ID나 상세 주소처럼 고유값이 수백 개인 열을 원-핫 하면
+      데이터가 옆으로 폭발하고, 대부분 0으로 채워진 희소한 표가 됩니다. 열이 많아질수록 모델이
+      일반화하기 어려워지는 <b>차원의 저주</b>가 시작되는 지점입니다. 시뮬레이터도 고유 카테고리가
+      많아지면 경고를 띄우고, 이런 열에는 Embedding이나 Target Encoding 같은 대안을 권합니다.</p>
+      <p>CSV 탭의 <b>최대 카디널리티</b> 옵션이 바로 이 안전장치입니다. 고유값이 상한(기본 20)을 넘는
+      열은 자동으로 건너뛰므로, 실수로 ID 열을 인코딩해 수백 개의 열을 만드는 사고를 막아 줍니다.
+      또 하나 — 선형회귀·로지스틱회귀에서는 k개 열을 전부 쓰면 완전 다중공선성이 생기므로 한 열을
+      빼고(k−1) 쓰는 것이 관례입니다. 트리 모델에는 해당하지 않으니 걱정하지 않아도 됩니다.</p>
+
+      <div class="think">🤔 <b>생각해볼 점</b> — 고유값이 50개인 '거래처' 열을 원-핫 인코딩하면 열이 몇 개
+      생길까요? 그리고 S·M·L·XL처럼 순서가 분명한 사이즈는 원-핫과 레이블 중 어느 쪽이 정보를 덜
+      잃을까요? 프리셋의 👕 사이즈와 🗺 지역을 번갈아 넣어보며 비교해 보세요.</div>
+
+      <a class="cta" href="/prep/onehot" target="_blank" rel="noopener">🔢 시뮬레이터 열기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/prep_normalize">정규화·표준화 사용법 — 스케일이 다른 변수를 같은 눈금으로</a>
+        <a href="/guide/prep_edit">CSV 편집 도구 사용법 — 빈 행 삭제·값 필터·날짜 분리·차분</a>
+        <a href="/guide/sim_ml">머신러닝 시뮬레이터 사용법 — 인코딩된 데이터가 모델에 들어가는 과정 보기</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>

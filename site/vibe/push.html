@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>푸시 빌더 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="푸시 빌더 — DataForge">
+<meta property="og:description" content="텔레그램 없이 앱을 닫아도 받는 나만의 웹푸시 앱을 만든다 — 수신 PWA·서버리스 함수·VAPID까지 완결 프로젝트를 생성해 Vercel에 배포">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;z-index:1;}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-top:20px;margin-bottom:16px;}
+.intro-box strong{color:var(--text);}
+
+.flow-strip{display:flex;gap:6px;flex-wrap:wrap;}
+.flow-chip{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;}
+.flow-chip b{font-family:'Space Mono',monospace;color:var(--accent);font-size:10px;}
+.flow-arrow{color:var(--dim);font-size:11px;align-self:center;}
+
+.two-col{display:grid;grid-template-columns:1fr 1.15fr;gap:16px;align-items:start;}
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+.form-row{margin-bottom:12px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.form-label small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim);}
+.txt-inp{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:16px;padding:9px 12px;outline:none;font-family:inherit;transition:.2s;}
+.txt-inp:focus{border-color:var(--accent);background:#fff;}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.color-row{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;}
+.color-row input[type=color]{width:32px;height:32px;border:none;background:none;padding:0;cursor:pointer;}
+.color-row .color-val{font-family:'Space Mono',monospace;font-size:12px;color:var(--text);}
+
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(37,99,235,.04);border-radius:8px;border:1px solid rgba(37,99,235,.1);}
+.info-block strong{color:var(--text);}
+.info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.2);}
+.info-block.danger{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.25);}
+.info-block + .info-block{margin-top:8px;}
+
+.stat-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px;overflow-x:auto;}
+.stat-tab{padding:11px 16px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;min-height:44px;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;}
+.stat-panel.active{display:block;}
+
+.code-wrap{position:relative;}
+.code-pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:14px;font-family:'Space Mono',monospace;font-size:11px;line-height:1.65;overflow-x:auto;max-height:340px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+.copy-btn{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:6px 12px;border:1px solid rgba(255,255,255,.25);border-radius:5px;background:rgba(255,255,255,.08);color:#cbd5e1;cursor:pointer;transition:.15s;font-family:inherit;min-height:28px;}
+.copy-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;font-size:14px;font-weight:700;font-family:inherit;border:none;border-radius:9px;cursor:pointer;transition:all .2s;min-height:44px;}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.3);}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-block{width:100%;}
+.btn.done{background:var(--green)!important;}
+
+.key-badge{font-family:'Noto Sans KR', sans-serif;font-size:10px;color:var(--green);background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);border-radius:5px;padding:2px 8px;}
+
+.guide-step{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--border);}
+.guide-step:last-child{border-bottom:none;padding-bottom:0;}
+.guide-num{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.guide-body{font-size:13px;color:var(--muted);line-height:1.75;min-width:0;}
+.guide-body strong{color:var(--text);}
+.guide-body a{color:var(--accent);word-break:break-all;}
+.guide-body code{font-family:'Noto Sans KR', sans-serif;font-size:11px;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;word-break:break-all;}
+
+@media(max-width:900px){ .two-col{grid-template-columns:1fr;} }
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:12px 14px;}
+  .form-grid-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">푸시 빌더</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      🔔 <strong>푸시 빌더</strong> — 텔레그램 없이, <strong>앱을 닫아도 알림을 받는 "나만의 푸시 앱"</strong>을 만듭니다.
+      앱 정보만 입력하면 <strong>수신 PWA · 서버리스 발송 함수 · VAPID 키</strong>가 든 완결 프로젝트를 통째로 내려받아 <strong>Vercel에 무료로 배포</strong>할 수 있고,
+      내가 만든 다른 웹앱들이 이 앱으로 알림을 쏘도록 <strong>연동</strong>할 수 있습니다. 서버는 필요 없습니다(Vercel 서버리스 + Firestore).
+    </div>
+
+    <div class="a-card" style="margin-bottom:16px;">
+      <div class="flow-strip">
+        <span class="flow-chip"><b>1</b> 앱 정보 입력</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>2</b> 프로젝트 ZIP 받기</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>3</b> Vercel 배포 + 환경변수</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>4</b> 폰에 설치 → 알림 켜기</span><span class="flow-arrow">→</span>
+        <span class="flow-chip"><b>5</b> 다른 앱에서 발송 연동</span>
+      </div>
+    </div>
+
+    <div class="two-col">
+
+      <!-- LEFT : 입력 -->
+      <div>
+        <div class="a-card">
+          <div class="a-card-title">① 내 푸시 앱 정보</div>
+          <div class="form-row">
+            <label class="form-label">앱 이름 <small>— 폰 홈 화면·알림에 표시</small></label>
+            <input type="text" class="txt-inp" id="inpName" value="나의 알림" maxlength="30">
+          </div>
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label class="form-label">테마 색상 <small>— 아이콘 배경</small></label>
+              <div class="color-row">
+                <input type="color" id="inpTheme" value="#2563eb">
+                <span class="color-val" id="themeVal">#2563eb</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">연락 이메일 <small>— VAPID 식별용</small></label>
+              <input type="email" class="txt-inp" id="inpEmail" value="" placeholder="you@example.com">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:0;">
+            <label class="form-label">배포 주소 <small>— 나중에 채워도 됨 (연동 코드에 반영)</small></label>
+            <input type="text" class="txt-inp" id="inpUrl" value="" placeholder="my-push-app.vercel.app">
+          </div>
+        </div>
+
+        <div class="a-card">
+          <div class="a-card-title">② 보안 키 <span class="key-badge" id="keyState">생성됨</span></div>
+          <div class="info-block" style="margin-bottom:10px;">
+            🔑 이 앱 전용 <strong>VAPID 키</strong>와 <strong>발송 키(APP_KEY)</strong>가 이 브라우저에서 자동 생성되었습니다.
+            공개키는 앱에 자동 포함되고, <strong>비공개키·발송키는 오른쪽 「환경변수」 탭</strong>에서 Vercel에 넣습니다.
+          </div>
+          <button class="btn btn-outline btn-block" id="btnRegen">🔄 키 새로 생성 (기존 배포와 호환 안 됨)</button>
+        </div>
+
+        <div class="a-card">
+          <div class="a-card-title">③ 프로젝트 내려받기</div>
+          <div class="info-block" style="margin-bottom:12px;">
+            📦 수신 PWA + 서버리스 함수 + 아이콘까지 든 <strong>완성 프로젝트 ZIP</strong>을 받습니다. 압축을 풀어 그대로 Vercel에 올리면 됩니다.
+          </div>
+          <button class="btn btn-primary btn-block" id="btnZip">⬇ 프로젝트 ZIP 다운로드</button>
+        </div>
+      </div>
+
+      <!-- RIGHT : 산출물 -->
+      <div>
+        <div class="a-card">
+          <div class="a-card-title">생성 결과</div>
+          <div class="stat-tabs">
+            <button class="stat-tab active" data-tab="env" onclick="switchTab('env')">🔐 환경변수</button>
+            <button class="stat-tab" data-tab="connect" onclick="switchTab('connect')">🔗 연동 코드</button>
+            <button class="stat-tab" data-tab="guide" onclick="switchTab('guide')">🚀 배포 가이드</button>
+          </div>
+
+          <div id="panel-env" class="stat-panel active">
+            <div class="info-block warn" style="margin-bottom:10px;">
+              Vercel <strong>프로젝트 → Settings → Environment Variables</strong>에 아래 5개를 등록하세요.
+              <strong>FIREBASE_SERVICE_ACCOUNT</strong>만 Firebase에서 받은 JSON(한 줄)이고, 나머지는 아래 값을 그대로 씁니다.
+              🔒 비공개키·발송키는 <strong>남에게 공개하거나 깃에 올리지 마세요.</strong>
+            </div>
+            <div class="code-wrap">
+              <pre class="code-pre" id="outEnv"></pre>
+              <button class="copy-btn" onclick="copyText(document.getElementById('outEnv').textContent,this)">복사</button>
+            </div>
+          </div>
+
+          <div id="panel-connect" class="stat-panel">
+            <div class="info-block" style="margin-bottom:10px;">
+              🔗 내가 만든 <strong>다른 웹앱</strong>에서 이 코드를 실행하면 내 폰으로 알림이 옵니다. (텔레그램 봇에 메시지 보내듯)
+              <br>⚠️ 발송 키가 들어있으니, 공개 사이트의 프론트에 그대로 넣으면 남이 내 채널로 알림을 보낼 수 있습니다(내 채널 스팸 수준). 걱정되면 「환경변수」의 APP_KEY를 바꿔 재배포하세요.
+            </div>
+            <div class="code-wrap">
+              <pre class="code-pre" id="outConnect"></pre>
+              <button class="copy-btn" onclick="copyText(document.getElementById('outConnect').textContent,this)">복사</button>
+            </div>
+          </div>
+
+          <div id="panel-guide" class="stat-panel">
+            <div id="outGuide"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 파일 템플릿 (생성 소스) ═══════════ -->
+<script type="text/plain" id="tpl-index">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="__THEME__">
+<title>__APP_NAME__</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <div class="icon">🔔</div>
+  <h1>__APP_NAME__</h1>
+  <p class="desc">아래 버튼을 눌러 알림을 켜면, 이 앱을 닫아도 알림을 받을 수 있습니다.</p>
+  <button id="btnEnable">알림 켜기</button>
+  <p id="status" class="status">알림이 아직 켜지지 않았습니다.</p>
+  <p class="hint">📱 아이폰(iOS 16.4+)은 이 페이지를 <b>홈 화면에 추가(설치)</b>한 뒤 열어야 알림을 받을 수 있습니다.</p>
+</main>
+<script src="app.js">__ENDSCRIPT__
+</body>
+</html>
+</script>
+
+<script type="text/plain" id="tpl-style">
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+main{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:32px 26px;max-width:380px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.06);}
+.icon{width:76px;height:76px;margin:0 auto 16px;border-radius:20px;background:__THEME__;display:flex;align-items:center;justify-content:center;font-size:40px;}
+h1{font-size:22px;margin-bottom:8px;}
+.desc{font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px;}
+button{width:100%;background:__THEME__;color:#fff;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;min-height:52px;transition:.15s;}
+button:hover{filter:brightness(.94);}
+.status{font-size:13px;color:#64748b;margin-top:16px;line-height:1.6;padding:10px;border-radius:8px;background:#f1f5f9;}
+.status.ok{color:#065f46;background:rgba(5,150,105,.08);}
+.hint{font-size:12px;color:#94a3b8;line-height:1.6;margin-top:16px;border-top:1px solid #eef2f7;padding-top:14px;}
+</script>
+
+<script type="text/plain" id="tpl-manifest">
+{
+  "name": "__APP_NAME__",
+  "short_name": "__APP_NAME__",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "__THEME__",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
+</script>
+
+<script type="text/plain" id="tpl-appjs">
+'use strict';
+const VAPID_PUBLIC_KEY = '__VAPID_PUBLIC__';
+
+function setStatus(msg, ok) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (ok ? ' ok' : '');
+}
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+async function enablePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    setStatus('이 브라우저는 웹 푸시를 지원하지 않습니다.'); return;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { setStatus('알림 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.'); return; }
+    const reg = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub)
+    });
+    if (res.ok) setStatus('✅ 알림 구독 완료! 이제 이 기기로 알림을 받을 수 있습니다.', true);
+    else setStatus('구독 저장에 실패했습니다 (HTTP ' + res.status + ').');
+  } catch (e) {
+    setStatus('오류가 발생했습니다: ' + e.message);
+  }
+}
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function(){}); }
+document.getElementById('btnEnable').addEventListener('click', enablePush);
+</script>
+
+<script type="text/plain" id="tpl-swjs">
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; }
+  catch (e) { data = { title: '__APP_NAME__', body: event.data ? event.data.text() : '' }; }
+  const title = data.title || '__APP_NAME__';
+  const options = { body: data.body || '', icon: 'icon-192.png', badge: 'icon-192.png', data: { url: data.url || '/' } };
+  if (data.tag) options.tag = data.tag;
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })
+  );
+});
+</script>
+
+<script type="text/plain" id="tpl-subscribe">
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { createHash } from 'crypto';
+
+function db() {
+  if (!getApps().length) {
+    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+  }
+  return getFirestore();
+}
+function cors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+export default async function handler(req, res) {
+  cors(res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  const sub = req.body;
+  if (!sub || !sub.endpoint) return res.status(400).json({ error: 'invalid subscription' });
+  const id = createHash('sha256').update(sub.endpoint).digest('hex');
+  await db().collection('push_subscriptions').doc(id).set({
+    endpoint: sub.endpoint,
+    keys: sub.keys || null,
+    createdAt: FieldValue.serverTimestamp(),
+    userAgent: req.headers['user-agent'] || null
+  });
+  return res.status(201).json({ ok: true });
+}
+</script>
+
+<script type="text/plain" id="tpl-sendjs">
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import webpush from 'web-push';
+
+function db() {
+  if (!getApps().length) {
+    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+  }
+  return getFirestore();
+}
+function cors(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
+}
+export default async function handler(req, res) {
+  cors(res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+  if (req.headers['x-app-key'] !== process.env.APP_KEY) return res.status(401).json({ error: 'unauthorized' });
+  const { title, body, url, tag } = req.body || {};
+  if (!title) return res.status(400).json({ error: 'title is required' });
+
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT, process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+  const payload = JSON.stringify({ title, body: body || '', url: url || '/', tag: tag || null });
+
+  const snap = await db().collection('push_subscriptions').get();
+  let sent = 0, removed = 0;
+  await Promise.all(snap.docs.map(async (doc) => {
+    const s = doc.data();
+    try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload); sent++; }
+    catch (e) { if (e.statusCode === 404 || e.statusCode === 410) { await doc.ref.delete(); removed++; } }
+  }));
+  return res.status(200).json({ ok: true, sent, removed, total: snap.size });
+}
+</script>
+
+<script type="text/plain" id="tpl-package">
+{
+  "name": "__APP_SLUG__",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "web-push": "^3.6.7"
+  }
+}
+</script>
+
+<script type="text/plain" id="tpl-env">
+# 이 파일은 참고용입니다. 실제 값은 Vercel의 Environment Variables에 등록하세요.
+# (푸시 빌더 페이지의 "환경변수" 탭 값을 그대로 복사)
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:you@example.com
+APP_KEY=
+# FIREBASE_SERVICE_ACCOUNT 는 Firebase 서비스 계정 JSON을 "한 줄"로 붙여넣습니다.
+FIREBASE_SERVICE_ACCOUNT=
+</script>
+
+<script type="text/plain" id="tpl-readme">
+# __APP_NAME__ — 나만의 웹푸시 앱
+
+DataForge 푸시 빌더로 생성된 프로젝트입니다. 텔레그램 없이, 앱을 닫아도 웹 푸시 알림을 받습니다.
+
+## 구성
+- index.html / app.js / sw.js / style.css / manifest.json / icon-*.png — 수신 PWA (정적)
+- api/subscribe.js — 브라우저 구독 정보를 Firestore에 저장 (서버리스)
+- api/send.js — Firestore의 구독들에게 웹 푸시 발송 (서버리스, VAPID)
+
+## 배포 순서
+1. Firebase 프로젝트 생성 → Firestore Database 만들기(프로덕션 모드, 규칙은 기본 잠금 그대로).
+   프로젝트 설정 → 서비스 계정 → "새 비공개 키 생성" → JSON 다운로드.
+2. 이 폴더를 GitHub에 올리고 Vercel에서 Import → Deploy.
+3. Vercel > Settings > Environment Variables 에 5개 등록:
+   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, APP_KEY (빌더 "환경변수" 탭 값)
+   FIREBASE_SERVICE_ACCOUNT (위 JSON을 한 줄로)
+4. Redeploy.
+5. 폰에서 배포 주소 접속 → (아이폰은) 홈 화면에 추가 → 열고 "알림 켜기".
+
+## 다른 앱에서 알림 보내기
+POST https://<배포주소>/api/send
+  헤더: x-app-key: <APP_KEY>
+  본문(JSON): { "title": "제목", "body": "내용", "url": "/" }
+
+DataForge · https://dataforge.ai.kr/vibe/push
+</script>
+
+<script>
+'use strict';
+/* ───────── 상태 ───────── */
+const state = { vapidPub:'', vapidPriv:'', appKey:'' };
+
+function tpl(id){ return document.getElementById('tpl-'+id).textContent.replace(/^\n/, ''); }
+function cfg(){
+  const name = (document.getElementById('inpName').value.trim() || '나의 알림');
+  const theme = document.getElementById('inpTheme').value;
+  const email = document.getElementById('inpEmail').value.trim();
+  let url = document.getElementById('inpUrl').value.trim().replace(/^https?:\/\//,'').replace(/\/+$/,'');
+  const slug = (name.toLowerCase().replace(/[^a-z0-9가-힣]+/g,'-').replace(/^-+|-+$/g,'') || 'my-push-app').slice(0,40);
+  return { name, theme, email, url: url || 'my-push-app.vercel.app', slug };
+}
+
+/* ───────── 키 생성 (Web Crypto) ───────── */
+function b64url(bytes){
+  let s = btoa(String.fromCharCode.apply(null, bytes));
+  return s.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function randKey(n){
+  const a = new Uint8Array(n); crypto.getRandomValues(a); return b64url(a);
+}
+async function genVapid(){
+  const kp = await crypto.subtle.generateKey({name:'ECDSA', namedCurve:'P-256'}, true, ['sign','verify']);
+  const pubRaw = await crypto.subtle.exportKey('raw', kp.publicKey);   // 65바이트 uncompressed point
+  const jwk = await crypto.subtle.exportKey('jwk', kp.privateKey);      // d = base64url(32바이트)
+  state.vapidPub = b64url(new Uint8Array(pubRaw));
+  state.vapidPriv = jwk.d;
+  state.appKey = randKey(24);
+}
+
+/* ───────── 출력 렌더 ───────── */
+function esc(s){ return String(s); }
+function renderEnv(){
+  const c = cfg();
+  document.getElementById('outEnv').textContent =
+    'VAPID_PUBLIC_KEY=' + state.vapidPub + '\n' +
+    'VAPID_PRIVATE_KEY=' + state.vapidPriv + '\n' +
+    'VAPID_SUBJECT=mailto:' + (c.email || 'you@example.com') + '\n' +
+    'APP_KEY=' + state.appKey + '\n' +
+    'FIREBASE_SERVICE_ACCOUNT=(Firebase 서비스 계정 JSON을 한 줄로 붙여넣기)';
+}
+function renderConnect(){
+  const c = cfg();
+  document.getElementById('outConnect').textContent =
+    "// 내가 만든 다른 웹앱에서 이 앱으로 알림 보내기\n" +
+    "fetch('https://" + c.url + "/api/send', {\n" +
+    "  method: 'POST',\n" +
+    "  headers: {\n" +
+    "    'Content-Type': 'application/json',\n" +
+    "    'x-app-key': '" + state.appKey + "'\n" +
+    "  },\n" +
+    "  body: JSON.stringify({\n" +
+    "    title: '주문이 완료됐어요',\n" +
+    "    body: '주문 #1234 배송이 시작되었습니다.',\n" +
+    "    url: '/'\n" +
+    "  })\n" +
+    "});";
+}
+function renderGuide(){
+  const c = cfg();
+  const steps = [
+    ['프로젝트 ZIP 받기','왼쪽 <strong>③ 프로젝트 ZIP 다운로드</strong>를 눌러 받고 압축을 풉니다.'],
+    ['Firebase 준비','<a href="https://console.firebase.google.com" target="_blank" rel="noopener">Firebase 콘솔</a> → 프로젝트 생성 → <strong>Firestore Database 만들기</strong>(프로덕션 모드, 규칙은 기본 잠금 그대로 — 서버가 관리자 권한으로 접근합니다).<br>이어서 <strong>⚙️ 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성</strong>으로 <strong>JSON 파일</strong>을 받아둡니다.'],
+    ['Vercel에 배포','<a href="https://github.com" target="_blank" rel="noopener">GitHub</a>에 폴더를 올리고 <a href="https://vercel.com" target="_blank" rel="noopener">Vercel</a>에서 <strong>Import → Deploy</strong>. 배포되면 <code>' + c.url + '</code> 같은 주소가 생깁니다.'],
+    ['환경변수 5개 등록','Vercel <strong>Settings → Environment Variables</strong>에 「🔐 환경변수」 탭의 값 4개 + <code>FIREBASE_SERVICE_ACCOUNT</code>(위 JSON을 <strong>한 줄로</strong>)를 넣고 <strong>Redeploy</strong>합니다. (이걸 빼먹으면 발송이 안 됩니다)'],
+    ['폰에 설치 → 알림 켜기','폰에서 배포 주소를 엽니다. <strong>아이폰은 공유 → 홈 화면에 추가(설치)</strong> 후 그 아이콘으로 열어야 합니다(iOS 16.4+). 안드로이드·PC는 바로 됩니다. <strong>「알림 켜기」</strong>를 눌러 권한을 허용하면 구독 완료.'],
+    ['다른 앱과 연동','「🔗 연동 코드」 탭을 내 다른 웹앱에 붙여넣으면, 그 앱에서 이벤트가 생길 때 내 폰으로 알림이 옵니다. 테스트는 브라우저 콘솔에 연동 코드를 붙여 실행해 보세요.']
+  ];
+  document.getElementById('outGuide').innerHTML = steps.map((s,i)=>
+    '<div class="guide-step"><div class="guide-num">'+(i+1)+'</div><div class="guide-body"><strong>'+s[0]+'</strong><br>'+s[1]+'</div></div>'
+  ).join('');
+}
+function renderAll(){ renderEnv(); renderConnect(); renderGuide(); }
+
+/* ───────── 아이콘 (canvas) ───────── */
+function makeIcon(size, theme){
+  return new Promise((resolve)=>{
+    const cv = document.createElement('canvas'); cv.width = cv.height = size;
+    const x = cv.getContext('2d');
+    x.fillStyle = theme; x.fillRect(0,0,size,size);
+    x.font = Math.round(size*0.58)+'px serif';
+    x.textAlign='center'; x.textBaseline='middle';
+    x.fillText('🔔', size/2, size*0.54);
+    cv.toBlob((b)=>resolve(b), 'image/png');
+  });
+}
+
+/* ───────── ZIP 생성 ───────── */
+async function buildZip(btn){
+  const c = cfg();
+  const rep = (t)=> t
+    .replace(/__APP_NAME__/g, c.name)
+    .replace(/__THEME__/g, c.theme)
+    .replace(/__VAPID_PUBLIC__/g, state.vapidPub)
+    .replace(/__APP_SLUG__/g, c.slug)
+    .replace(/__ENDSCRIPT__/g, '</'+'script>');
+  const zip = new JSZip();
+  zip.file('index.html', rep(tpl('index')));
+  zip.file('style.css', rep(tpl('style')));
+  zip.file('app.js', rep(tpl('appjs')));
+  zip.file('sw.js', rep(tpl('swjs')));
+  zip.file('manifest.json', rep(tpl('manifest')));
+  zip.file('package.json', rep(tpl('package')));
+  zip.file('.env.example', rep(tpl('env')));
+  zip.file('README.md', rep(tpl('readme')));
+  const api = zip.folder('api');
+  api.file('subscribe.js', tpl('subscribe'));
+  api.file('send.js', tpl('sendjs'));
+  zip.file('icon-192.png', await makeIcon(192, c.theme));
+  zip.file('icon-512.png', await makeIcon(512, c.theme));
+  const blob = await zip.generateAsync({ type:'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = c.slug + '-push-app.zip';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  const orig = btn.textContent; btn.textContent = '✓ 다운로드됨'; btn.classList.add('done');
+  setTimeout(()=>{ btn.textContent = orig; btn.classList.remove('done'); }, 1800);
+}
+
+/* ───────── 복사 / 탭 ───────── */
+function copyText(text, btn){
+  const done = ()=>{ const o=btn.textContent; btn.textContent='✓ 복사됨'; setTimeout(()=>btn.textContent=o,1500); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallback(text,done));
+  } else fallback(text,done);
+}
+function fallback(text, done){
+  const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');done();}catch(e){} document.body.removeChild(ta);
+}
+function switchTab(name){
+  document.querySelectorAll('.stat-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.stat-panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+name));
+}
+
+/* ───────── 초기화 ───────── */
+document.getElementById('inpTheme').addEventListener('input', function(){
+  document.getElementById('themeVal').textContent = this.value; renderAll();
+});
+['inpName','inpEmail','inpUrl'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderAll);
+});
+document.getElementById('btnZip').addEventListener('click', function(){ buildZip(this); });
+document.getElementById('btnRegen').addEventListener('click', async function(){
+  if(!confirm('키를 새로 생성하면 이미 배포·설치한 앱과 호환되지 않습니다. 계속할까요?')) return;
+  await genVapid(); renderAll();
+  document.getElementById('keyState').textContent = '새로 생성됨';
+});
+
+(async function init(){
+  await genVapid();
+  renderAll();
+})();
+</script>
+
+<script>(function(){
+  var k='tf_vibe_push';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=vibe&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

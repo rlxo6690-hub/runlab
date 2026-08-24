@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAM SAM SOM 시장 규모 빌더 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta name="description" content="TAM·SAM·SOM 시장 규모를 하향식·상향식 두 방식으로 계산하고 깔때기 그림으로 정리하는 도구. 근거·출처까지 담아 링크로 공유하고 HTML로 저장하세요.">
+<meta property="og:title" content="TAM SAM SOM 시장 규모 빌더 — DataForge">
+<meta property="og:description" content="전체 시장·유효 시장·수익 시장을 계산하고 깔때기로 정리합니다. 상향식 교차 검증과 현실 점검까지.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1; --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --purple:#7c3aed; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;min-width:0;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;white-space:nowrap;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.logo-title span{color:var(--green);}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+/* 헤더 HTML 저장 버튼 — manage_PHP 공통 규격 (scenario.php와 동일) */
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+/* 헤더 마크다운 저장 버튼 — bep.php와 동일 규격 */
+.md-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:8px;color:#0d9488;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.md-btn:hover{background:rgba(13,148,136,.18);}
+
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.16);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin:20px 0 16px;}
+.intro-box strong{color:var(--text);}
+
+.shared-banner{display:none;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.22);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin:20px 0 0;}
+.shared-banner.show{display:block;}
+.shared-banner strong{color:var(--accent);}
+
+/* 위: 입력 영역 / 아래: 완성된 리포트 (원페이지 기획서와 같은 구성) */
+.layout{display:grid;grid-template-columns:1fr;gap:16px;}
+.edit-row{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;margin-bottom:16px;}
+.top-row{display:grid;grid-template-columns:1fr;gap:16px;}
+.col-stack{display:flex;flex-direction:column;gap:16px;}
+.col-stack>.a-card:last-child{flex:1;}
+.edit-row>.a-card,.top-row>.a-card,.col-stack>.a-card{margin-bottom:0;}
+
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.a-card-title b{font-family:'Space Mono',monospace;color:var(--green);letter-spacing:0;}
+/* 한글이 들어가는 배지는 Space Mono를 쓰지 않는다 (한글 글리프 없음 — design.md) */
+.mode-tag{font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:700;color:var(--green);letter-spacing:0;text-transform:none;}
+.btn.btn-sm{padding:8px 12px;min-height:36px;font-size:11px;letter-spacing:0;}
+@media (max-width:640px){ .btn.btn-sm{min-height:44px;flex:1;} }
+
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.field-label .req{font-size:10px;color:var(--red);}
+.opt{font-size:10px;color:var(--dim);font-weight:400;}
+.field-hint{font-size:11px;color:var(--dim);margin-bottom:6px;line-height:1.5;}
+.inp{width:100%;padding:10px 12px;font-size:16px;font-family:inherit;border:1px solid var(--border2);border-radius:8px;background:var(--card);color:var(--text);min-height:44px;line-height:1.6;}
+.inp:focus{outline:none;border-color:var(--green);}
+.inp::placeholder{color:var(--dim);font-size:13px;}
+textarea.inp{resize:vertical;min-height:88px;}
+/* 숫자 칸은 전체 폭을 쓰므로 안쪽에서 자동으로 나눠 담는다 (짧은 입력이라 여러 열이 읽기 좋다) */
+/* 줄 간격은 반드시 grid gap으로 준다 — .field의 margin-bottom을 쓰면
+   :last-child만 margin이 0이라 그 칸의 박스가 더 커지고, 바닥 정렬된 입력창이 혼자 내려앉는다 */
+.num-grid{display:grid;grid-template-columns:1fr;gap:14px 18px;align-items:stretch;}
+/* 라벨·설명 줄 수가 칸마다 달라도 입력 상자는 같은 높이에 오도록 바닥으로 밀어 붙인다 */
+.num-grid .field{display:flex;flex-direction:column;margin-bottom:0;}
+.num-grid .field .num-row{margin-top:auto;}
+.growth-row{margin-top:16px;padding-top:16px;border-top:1px dashed var(--border);}
+.growth-row .field{margin-bottom:0;max-width:420px;}
+/* 근거·출처는 항상 1열 — 전체 폭으로 넓게 작성한다 */
+#srcFields .field{margin-bottom:18px;}
+#srcFields .field:last-child{margin-bottom:0;}
+input.num{font-family:'Space Mono',monospace;font-weight:700;}
+/* 숫자 입력 — 값과 단위를 한 상자로 묶는다. 단위 칸 폭이 모두 같아
+   여러 칸이 나란히 놓여도 입력 상자의 좌우 끝이 정확히 줄맞춤된다 */
+.num-row{display:flex;align-items:stretch;border:1px solid var(--border2);border-radius:8px;
+         background:var(--card);overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+.num-row:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(5,150,105,.10);}
+.num-row .inp{flex:1;min-width:0;border:none;border-radius:0;background:transparent;text-align:right;}
+.num-row .inp:focus{outline:none;box-shadow:none;}
+.num-row .unit,.num-row .suffix{flex:0 0 84px;}
+.num-row .unit{border:none;border-left:1px solid var(--border);border-radius:0;text-align:center;
+               background:var(--card2);padding:0 6px;font-family:inherit;font-weight:400;color:var(--muted);}
+.num-row .suffix{display:flex;align-items:center;justify-content:center;background:var(--card2);
+                 border-left:1px solid var(--border);font-size:13px;color:var(--muted);white-space:nowrap;}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{padding:8px 13px;border:1.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--muted);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:.2s;min-height:38px;}
+.chip:hover{border-color:rgba(5,150,105,.4);}
+.chip.on{background:rgba(5,150,105,.1);border-color:var(--green);color:var(--green);}
+
+.prog-bg{height:7px;background:var(--card2);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-top:4px;}
+.prog-bar{height:100%;background:var(--green);border-radius:4px;transition:width .25s;width:0%;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;font-size:12px;font-weight:700;min-height:44px;font-family:inherit;border:none;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{opacity:.88;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.info-block{font-size:12px;color:var(--muted);line-height:1.7;padding:10px 14px;background:rgba(5,150,105,.04);border-radius:8px;border:1px solid rgba(5,150,105,.1);}
+.info-block strong{color:var(--text);}
+.info-block + .info-block{margin-top:10px;}
+.info-block.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.18);}
+.info-block.warn strong{color:var(--amber);}
+.live-hint{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px;padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;}
+.live-hint b{font-family:'Space Mono',monospace;color:var(--text);}
+
+/* ── 산출물(리포트) — html.md 규격. 내보낸 HTML과 같은 마크업·같은 값을 쓴다 ── */
+.doc{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:26px 24px 22px;}
+.doc .page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.35;word-break:keep-all;}
+.doc .lead{font-size:15px;font-weight:700;color:var(--green);line-height:1.6;margin-bottom:6px;word-break:keep-all;}
+.doc .meta{font-size:12px;color:var(--dim);margin-bottom:24px;}
+.doc .sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.doc .sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}
+.doc .sum-icon{font-size:22px;opacity:.85;}
+.doc .sum-v{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;line-height:1;}
+.doc .sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}
+.doc .sum-sub{font-size:11px;color:var(--dim);margin-top:3px;}
+.doc .card-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+.doc .section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:0;}
+.doc .section-card.wide{grid-column:1/-1;}
+.doc .section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.doc .sec-body{font-size:13px;color:var(--text);line-height:1.75;word-break:keep-all;white-space:pre-wrap;}
+.doc .sec-body.empty{color:var(--dim);font-style:italic;}
+.doc .funnel svg{width:100%;height:auto;display:block;}
+.doc .funnel-note{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.6;word-break:keep-all;}
+/* 짝으로 놓이는 카드(현실 점검 · 3년 전망)는 높이를 맞추고 아래 설명을 바닥에 붙인다 */
+.doc .section-card.pair{display:flex;flex-direction:column;}
+.doc .section-card.pair .funnel-note{margin-top:auto;padding-top:10px;}
+.doc .mono{font-family:'Space Mono',monospace;font-weight:700;color:var(--text);}
+.doc .calc-row{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--border);font-size:13px;line-height:1.75;word-break:keep-all;}
+.doc .calc-row:last-child{border-bottom:none;}
+.doc .calc-k{font-family:'Space Mono',monospace;font-weight:700;font-size:12px;flex:0 0 40px;}
+.doc .mini-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.doc .mini{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:11px 10px;text-align:center;}
+.doc .mini-v{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;color:var(--text);line-height:1.2;}
+.doc .mini-l{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4;word-break:keep-all;}
+.doc .chk{font-size:12.5px;line-height:1.7;padding:9px 12px;border-radius:8px;margin-bottom:8px;border:1px solid;color:var(--muted);word-break:keep-all;}
+.doc .chk:last-child{margin-bottom:0;}
+.doc .chk b{color:var(--text);}
+.doc .chk.ok{background:rgba(5,150,105,.05);border-color:rgba(5,150,105,.2);}
+.doc .chk.ok b{color:var(--green);}
+.doc .chk.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.22);}
+.doc .chk.warn b{color:var(--amber);}
+.doc .chk.bad{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.22);}
+.doc .chk.bad b{color:var(--red);}
+.doc .empty-state{font-size:13px;color:var(--dim);line-height:1.8;padding:28px 0;text-align:center;word-break:keep-all;}
+@media (max-width:640px){ .doc .sum-row{grid-template-columns:1fr;} .doc .mini-row{grid-template-columns:1fr;} }
+
+/* 기본 칸: 사업명·시장 정의는 한 줄 전체, 짧은 작성자·기준 연도만 2열로 나눈다 */
+@media (min-width:600px){
+  /* 여기도 같은 이유로 줄 간격은 gap이 맡는다 (.field margin은 last-child만 0이라 칸 높이가 어긋난다) */
+  #baseFields{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  #baseFields .field{margin-bottom:0;}
+  #baseFields .field:nth-child(1),#baseFields .field:nth-child(2){grid-column:1/-1;}
+}
+@media (min-width:600px){
+  /* 240px 기준 → 넓은 화면에서 5칸: 상향식 5개가 계산 순서대로 한 줄에 놓인다 */
+  .num-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+}
+@media (min-width:1024px){
+  .top-row{grid-template-columns:1fr 1fr;}
+  .doc .card-grid{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:640px){
+  .page{padding:0 14px 60px;}
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .btn-row .btn{flex:1;}
+  .doc{padding:20px 18px 18px;}
+  .save-btn{font-size:12px;padding:6px 10px;}
+  .save-btn svg{display:none;}
+  .md-btn{font-size:11px;padding:6px 9px;}
+}
+@media print{
+  body::before,.site-header,.intro-box,.shared-banner,#editCol,.no-print{display:none!important;}
+  body{background:#fff;}
+  .page{padding:0;}
+  .layout{grid-template-columns:1fr;gap:0;}
+  .edit-row{display:none!important;}
+  .a-card{border:none;padding:0;margin:0;}
+  .a-card-title{display:none;}
+  .doc{border:none;padding:0;}
+  .doc .card-grid{grid-template-columns:1fr 1fr;}
+  .doc .section-card{break-inside:avoid;}
+  @page{size:A4;margin:14mm;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>TAM SAM SOM 빌더</span></div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="saveHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="shared-banner" id="sharedBanner">
+    <strong>공유받은 시장 규모 분석입니다.</strong>
+    아래가 원본 내용이에요. 그대로 읽어도 되고, 위쪽에서 <strong>숫자를 고쳐 다시 볼 수도</strong> 있습니다.
+    고친 내용은 <strong>이 브라우저에만 저장</strong>되고 원본 링크는 그대로 남습니다.
+  </div>
+
+  <div class="intro-box">
+    시장 규모를 <strong>TAM(전체) → SAM(유효) → SOM(수익)</strong> 세 단계로 좁혀 갑니다.
+    <strong>하향식</strong>(시장 보고서 숫자에서 줄이기)과 <strong>상향식</strong>(고객 수 × 객단가로 쌓기) 두 방식을 모두 계산해
+    <strong>서로 얼마나 맞는지 교차 검증</strong>합니다. 작성한 내용은 이 브라우저에만 저장되고 서버로 보내지 않으며,
+    완성된 리포트는 오른쪽 위 <strong>HTML로 저장</strong>으로 파일 하나로 받을 수 있습니다.
+  </div>
+
+  <div class="layout">
+
+    <!-- ══════ 위: 입력 영역 — 짧은 항목만 윗줄 2열, 작성 칸은 전체 폭 1열 ══════ -->
+    <div id="editCol">
+      <div class="edit-row">
+
+        <!-- 윗줄: 기본 | 계산 방식 · 공유 -->
+        <div class="top-row">
+          <div class="a-card">
+            <div class="a-card-title"><span>✏️ 기본</span><b id="progTxt">0 / 6</b></div>
+            <div class="prog-bg" style="margin-bottom:14px;"><div class="prog-bar" id="progBar"></div></div>
+            <div id="baseFields"></div>
+          </div>
+
+          <div class="col-stack">
+            <div class="a-card">
+              <div class="a-card-title">🧮 계산 방식</div>
+              <div class="chips" id="modeChips"></div>
+              <div class="info-block" id="modeHelp" style="margin-top:12px;"></div>
+            </div>
+
+            <div class="a-card no-print">
+              <div class="a-card-title">🎨 그림 형태</div>
+              <div class="chips" id="vizChips"></div>
+              <div class="info-block" style="margin-top:12px;">
+                아래 리포트의 <strong>시장 규모 그림</strong> 모양을 바꿉니다. 고른 형태 그대로
+                <strong>HTML 저장·인쇄</strong>에 반영됩니다.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── 전체 폭: 숫자 입력 ── -->
+        <div class="a-card">
+          <div class="a-card-title"><span>📊 숫자 입력</span><span class="mode-tag" id="modeTag"></span></div>
+
+          <div id="panelTop">
+            <div class="num-grid">
+
+              <div class="field">
+                <label class="field-label" for="f-tamAmt">TAM · 전체 시장 규모 <span class="req">필수</span></label>
+                <div class="field-hint">보고서·통계에 나온 시장 전체 크기. 아래 근거 칸에 출처를 꼭 남기세요.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-tamAmt" type="text" inputmode="decimal" placeholder="예) 7,296" oninput="setV('tamAmt',this.value)">
+                  <select class="inp unit" id="f-tamUnit" onchange="setV('tamUnit',this.value)">
+                    <option>억원</option><option>조원</option><option>만원</option><option>원</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="f-samPct">SAM · TAM 중 비율 <span class="req">필수</span></label>
+                <div class="field-hint">지역·연령·채널 등으로 좁힌 범위. 예) 국내 전체 중 수도권만 → 13%</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-samPct" type="text" inputmode="decimal" placeholder="예) 13" oninput="setV('samPct',this.value)">
+                  <div class="suffix">%</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="f-somPctT">SOM · 목표 점유율 <span class="req">필수</span></label>
+                <div class="field-hint">SAM 중 3년 안에 실제로 우리가 먹을 몫. 신규 사업이면 대개 한 자릿수입니다.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-somPctT" type="text" inputmode="decimal" placeholder="예) 3" oninput="setV('somPct',this.value)">
+                  <div class="suffix">%</div>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+
+          <div id="panelBot">
+            <div class="num-grid">
+
+              <div class="field">
+                <label class="field-label" for="f-custTotal">전체 잠재 고객 수 <span class="req">필수</span></label>
+                <div class="field-hint">이 제품을 쓸 수 있는 사람(또는 회사) 전체. 통계청·업종 통계에서 가져오세요.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-custTotal" type="text" inputmode="decimal" placeholder="예) 3,200,000" oninput="setV('custTotal',this.value)">
+                  <div class="suffix">명</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="f-custReach">도달 가능 고객 수 <span class="req">필수</span></label>
+                <div class="field-hint">우리 채널·지역·가격대로 실제 닿을 수 있는 사람. 전체보다 반드시 작습니다.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-custReach" type="text" inputmode="decimal" placeholder="예) 420,000" oninput="setV('custReach',this.value)">
+                  <div class="suffix">명</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="f-price">1회 구매 단가 <span class="req">필수</span></label>
+                <div class="field-hint">고객이 한 번 결제할 때 내는 금액. 월 구독이면 월 구독료를 넣으세요.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-price" type="text" inputmode="decimal" placeholder="예) 19,000" oninput="setV('price',this.value)">
+                  <div class="suffix">원</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="f-freq">연간 구매 횟수 <span class="req">필수</span></label>
+                <div class="field-hint">월 구독이면 12, 연 1회 계약이면 1.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-freq" type="text" inputmode="decimal" placeholder="예) 12" oninput="setV('freq',this.value)">
+                  <div class="suffix">회</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="f-somPctB">SOM · 목표 점유율 <span class="req">필수</span></label>
+                <div class="field-hint">도달 가능 고객 중 3년 안에 우리 고객이 될 비율. 신규 사업이면 대개 한 자릿수입니다.</div>
+                <div class="num-row">
+                  <input class="inp num" id="f-somPctB" type="text" inputmode="decimal" placeholder="예) 3" oninput="setV('somPct',this.value)">
+                  <div class="suffix">%</div>
+                </div>
+              </div>
+
+            </div>
+            <div class="live-hint" id="botLive">숫자를 채우면 여기에 연 객단가가 계산됩니다.</div>
+          </div>
+
+          <div class="growth-row">
+            <div class="field">
+              <label class="field-label" for="f-cagr">🌱 연평균 성장률 (CAGR) <span class="opt">선택</span></label>
+              <div class="field-hint">넣으면 3년 뒤 시장 전망을 함께 계산합니다. 비워 두면 표시하지 않습니다.</div>
+              <div class="num-row">
+                <input class="inp num" id="f-cagr" type="text" inputmode="decimal" placeholder="예) 8" oninput="setV('cagr',this.value)">
+                <div class="suffix">%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 전체 폭: 근거·출처 (1열 — 넓게 작성) ── -->
+        <div class="a-card">
+          <div class="a-card-title">
+            <span>📝 근거 · 출처</span>
+            <div class="btn-row no-print">
+              <button class="btn btn-outline btn-sm" onclick="importBMC()">🧩 BMC에서 가져오기</button>
+              <button class="btn btn-outline btn-sm" onclick="loadSample()">✨ 예시 채우기</button>
+              <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 전체 지우기</button>
+            </div>
+          </div>
+          <div class="info-block" style="margin-bottom:16px;">
+            <strong>숫자보다 근거가 먼저 검증됩니다.</strong> 어디서 가져온 수치인지, 어떻게 좁혔는지를 한 줄씩만 적어도
+            분석의 신뢰도가 완전히 달라집니다.
+          </div>
+          <div id="srcFields"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════ 아래: 완성된 리포트 ══════ -->
+    <div>
+      <div class="a-card">
+        <div class="a-card-title no-print">📄 완성된 시장 규모 분석</div>
+        <div class="doc" id="doc"></div>
+      </div>
+
+      <div class="a-card no-print">
+        <div class="a-card-title">💡 잘 쓰는 요령</div>
+        <div class="info-block">
+          <strong>TAM은 크게 잡을수록 불리합니다.</strong> "국내 커피 시장 8조원"처럼 넓게 잡으면
+          SOM이 0.01%가 되어 오히려 근거 없는 숫자로 보입니다. <strong>우리 제품을 실제로 살 사람</strong>까지만 세세요.
+        </div>
+        <div class="info-block">
+          <strong>상향식을 반드시 한 번 더 계산하세요.</strong> 하향식만 있으면 "희망 사항"으로 읽힙니다.
+          <strong>고객 수 × 단가 × 횟수</strong>로 쌓아 올린 값이 하향식과 비슷하게 나오면 그때 숫자가 믿을 만해집니다.
+        </div>
+        <div class="info-block">
+          <strong>SOM은 영업 계획으로 바꿔 보세요.</strong> "SOM 29억원"은 감이 안 오지만
+          "3년간 매일 신규 고객 12명"은 가능한지 바로 판단됩니다. 아래 <strong>현실 점검</strong> 칸이 그 계산입니다.
+        </div>
+        <div class="info-block">
+          다음 단계로 이어집니다 →
+          <a href="/manage/persona" style="color:var(--green);font-weight:700;">페르소나</a>(SOM 고객이 누구인지) ·
+          <a href="/manage/bep" style="color:var(--green);font-weight:700;">BEP 분석</a>(그만큼 팔면 남는지) ·
+          <a href="/manage/scenario" style="color:var(--green);font-weight:700;">시나리오 분석</a>(최선·최악)
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   필드 정의
+   ══════════════════════════════════════════ */
+var BASE=[
+  {k:'bizName', label:'사업 · 제품명', req:true, type:'input',
+   ph:'예) 이웃 로스터리 구독',
+   hint:''},
+  {k:'market',  label:'시장 정의',     req:true, type:'input',
+   ph:'예) 수도권 아파트 단지 홈카페 이용자를 위한 원두 정기배송 시장',
+   hint:'"누구에게 무엇을 파는 시장인지" 한 줄로. 이 문장이 TAM의 범위를 결정합니다.'},
+  {k:'author',  label:'작성자 · 팀',   req:false, type:'input', ph:'예) 창업 1팀 이지형', hint:''},
+  {k:'baseYear',label:'기준 연도',     req:false, type:'input', ph:'예) 2026', hint:''}
+];
+
+var SRC=[
+  {k:'tamSrc', label:'TAM 근거 · 출처', icon:'🌍', req:true,
+   ph:'예) 통계청 가계동향조사(2025) 커피 지출 항목\naT 커피류 시장보고서(2025) 원두 소매 규모',
+   hint:'보고서명·연도·표 번호까지 적어 두면 나중에 다시 찾기 쉽습니다.'},
+  {k:'samSrc', label:'SAM 근거 · 어떻게 좁혔나', icon:'🎯', req:false,
+   ph:'예) 수도권 아파트 거주 + 주 3회 이상 홈카페 이용자로 한정\n배송 가능 반경 1km 단지 기준',
+   hint:'"왜 이 비율인지"를 적으세요. 좁힌 기준이 곧 우리 사업의 경계입니다.'},
+  {k:'somSrc', label:'SOM 근거 · 왜 달성 가능한가', icon:'🏆', req:false,
+   ph:'예) 1개 단지 시범 운영에서 가입률 4.2% 확인\n영업 인력 2명 · 월 신규 350명 확보 계획',
+   hint:'점유율 숫자를 뒷받침할 근거(시범 결과·경쟁사 사례·영업 계획)를 적으세요.'}
+];
+
+var UNITS={'원':1,'만원':1e4,'억원':1e8,'조원':1e12};
+var KEYS=['bizName','market','author','baseYear','tamAmt','tamUnit','samPct','somPct',
+          'custTotal','custReach','price','freq','cagr','tamSrc','samSrc','somSrc'];
+
+var LS_KEY='df_tamsamsom_v1';
+var data={mode:'top', viz:'funnel'}, saveTimer=null, isShared=false;
+
+/* ══════════════════════════════════════════
+   유틸
+   ══════════════════════════════════════════ */
+function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function v(k){ return String(data[k]==null?'':data[k]).trim(); }
+function num(k){
+  var n=parseFloat(String(data[k]==null?'':data[k]).replace(/[,\s]/g,''));
+  return isFinite(n)&&n>0 ? n : 0;
+}
+function cnt(n){ return Math.round(n).toLocaleString('ko-KR'); }
+function dec(x){
+  if(!isFinite(x)) return '0';
+  var r = Math.abs(x)>=100 ? Math.round(x) : Math.round(x*10)/10;
+  return r.toLocaleString('ko-KR');
+}
+/* 금액 표기 — 조/억/만원으로 자동 환산 */
+function money(n){
+  if(!isFinite(n)||n<=0) return '0원';
+  if(n>=1e12) return dec(n/1e12)+'조원';
+  if(n>=1e8)  return dec(n/1e8)+'억원';
+  if(n>=1e4)  return dec(n/1e4)+'만원';
+  return cnt(n)+'원';
+}
+function pct(part,whole){
+  if(!(whole>0)) return '—';
+  var r=part/whole*100;
+  if(r>0 && r<0.01) return '0.01% 미만';
+  return (r>=10?Math.round(r*10)/10:Math.round(r*100)/100).toLocaleString('ko-KR')+'%';
+}
+function ratio(part,whole){ return whole>0 ? part/whole : 0; }
+
+/* ══════════════════════════════════════════
+   계산 — 두 방식을 항상 각각 계산해 둔다 (교차 검증용)
+   ══════════════════════════════════════════ */
+function calcTop(){
+  var tam=num('tamAmt')*(UNITS[v('tamUnit')||'억원']||1e8);
+  var sam=tam*num('samPct')/100;
+  var som=sam*num('somPct')/100;
+  /* 하향식엔 객단가 칸이 없다. 상향식 칸(단가 × 횟수)이 채워져 있으면 그 값을 빌려
+     현실 점검을 계산한다 — 객단가는 산정 방식이 아니라 사업 자체의 성질이므로 섞어 써도 된다 */
+  return {mode:'top', tam:tam, sam:sam, som:som, arpu:num('price')*num('freq')};
+}
+function calcBot(){
+  var arpu=num('price')*num('freq');
+  var tam=num('custTotal')*arpu;
+  var sam=num('custReach')*arpu;
+  var som=sam*num('somPct')/100;
+  return {mode:'bot', tam:tam, sam:sam, som:som, arpu:arpu};
+}
+function calc(){ return data.mode==='bot' ? calcBot() : calcTop(); }
+
+/* ══════════════════════════════════════════
+   렌더 — 입력
+   ══════════════════════════════════════════ */
+function renderFields(){
+  document.getElementById('baseFields').innerHTML = BASE.map(function(f){
+    return '<div class="field">'
+      + '<label class="field-label" for="f-'+f.k+'">'+f.label+(f.req?' <span class="req">필수</span>':'')+'</label>'
+      + (f.hint?'<div class="field-hint">'+f.hint+'</div>':'')
+      + '<input class="inp" id="f-'+f.k+'" placeholder="'+xe(f.ph)+'" oninput="setV(\''+f.k+'\',this.value)">'
+      + '</div>';
+  }).join('');
+
+  document.getElementById('srcFields').innerHTML = SRC.map(function(f){
+    return '<div class="field">'
+      + '<label class="field-label" for="f-'+f.k+'">'+f.icon+' '+f.label+(f.req?' <span class="req">필수</span>':' <span class="opt">선택</span>')+'</label>'
+      + (f.hint?'<div class="field-hint">'+f.hint+'</div>':'')
+      + '<textarea class="inp" id="f-'+f.k+'" rows="3" placeholder="'+xe(f.ph)+'" oninput="setV(\''+f.k+'\',this.value)"></textarea>'
+      + '</div>';
+  }).join('');
+
+  renderMode(); renderViz();
+}
+
+var MODES=[
+  {k:'top', label:'📉 하향식 (Top-down)',
+   help:'<strong>시장 보고서의 큰 숫자에서 출발해</strong> 비율로 좁혀 갑니다. 빠르게 규모감을 잡을 때 좋지만, '
+       +'비율의 근거가 약하면 "희망 사항"으로 읽힙니다. <strong>상향식으로 한 번 더 계산해 교차 검증</strong>하세요.'},
+  {k:'bot', label:'📈 상향식 (Bottom-up)',
+   help:'<strong>고객 수 × 단가 × 구매 횟수</strong>로 직접 쌓아 올립니다. 계산 과정이 그대로 드러나 설득력이 높고, '
+       +'그대로 영업 목표로 바꿀 수 있습니다. 심사·투자 검토에서 먼저 보는 방식입니다.'}
+];
+
+function renderMode(){
+  document.getElementById('modeChips').innerHTML = MODES.map(function(m){
+    return '<button class="chip'+(data.mode===m.k?' on':'')+'" onclick="setMode(\''+m.k+'\')">'+m.label+'</button>';
+  }).join('');
+  var cur=MODES.filter(function(m){return m.k===data.mode;})[0]||MODES[0];
+  document.getElementById('modeHelp').innerHTML=cur.help;
+  document.getElementById('panelTop').style.display = data.mode==='bot' ? 'none' : '';
+  document.getElementById('panelBot').style.display = data.mode==='bot' ? '' : 'none';
+  /* 패널 제목을 없앴으므로 지금 어느 방식인지를 숫자 카드 제목줄에 표시한다 */
+  document.getElementById('modeTag').textContent = data.mode==='bot'
+    ? '📈 상향식 — 고객 수 × 객단가로 쌓기'
+    : '📉 하향식 — 시장 규모에서 줄여 나가기';
+}
+
+function setMode(k){ data.mode=k; renderMode(); onEdit(); }
+
+function renderViz(){
+  document.getElementById('vizChips').innerHTML = VIZ.map(function(x){
+    return '<button class="chip'+(data.viz===x.k?' on':'')+'" onclick="setViz(\''+x.k+'\')">'+x.label+'</button>';
+  }).join('');
+}
+function setViz(k){ data.viz=k; renderViz(); onEdit(); }
+
+function syncInputs(){
+  KEYS.forEach(function(k){
+    var el=document.getElementById('f-'+k);
+    if(el) el.value = data[k]==null ? '' : data[k];
+  });
+  /* somPct는 두 패널이 공유하므로 양쪽 입력칸을 함께 맞춘다 */
+  ['f-somPctT','f-somPctB'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.value = data.somPct==null ? '' : data.somPct;
+  });
+  var u=document.getElementById('f-tamUnit');
+  if(u) u.value = data.tamUnit || '억원';
+  renderMode(); renderViz();
+}
+
+function setV(k,val){
+  data[k]=val;
+  if(k==='somPct'){
+    ['f-somPctT','f-somPctB'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && el.value!==val) el.value=val;
+    });
+  }
+  onEdit();
+}
+
+/* ══════════════════════════════════════════
+   시장 규모 그림 (SVG) — 네 가지 형태 중 골라 쓴다
+   내보낸 HTML·인쇄에서도 그대로 보이도록 색은 CSS 변수 대신 리터럴을 쓴다
+   ══════════════════════════════════════════ */
+var VIZ=[
+  {k:'funnel', label:'🔻 깔때기'},
+  {k:'circle', label:'🎯 동심원'},
+  {k:'nested', label:'🌗 겹친 원'},
+  {k:'cards',  label:'🗂 카드형'}
+];
+var TIER=[
+  {k:'TAM', col:'#2563eb', bg:'#dbeafe', ko:'전체 시장', en:'Total Addressable Market',
+   desc:'닿을 수 있는 최대치'},
+  {k:'SAM', col:'#d97706', bg:'#fef3c7', ko:'유효 시장', en:'Serviceable Available Market',
+   desc:'실제로 닿는 범위'},
+  {k:'SOM', col:'#059669', bg:'#d1fae5', ko:'수익 시장', en:'Serviceable Obtainable Market',
+   desc:'3년 내 확보 목표'}
+];
+
+/* 표시 비율 — 실제 비율을 √로 눌러 표시한다(선형이면 SOM이 사라진다).
+   더해서 최소 간격을 둬 띠·원이 붙어 글자가 겹치는 것을 막는다. 실제 %는 항상 숫자로 따로 적는다 */
+function bandFractions(c,opt){
+  opt=opt||{};
+  var gap=opt.gap||0.16, lo=opt.lo||0.12, loB=opt.loB||0.30, hiB=opt.hiB||0.80;
+  var f=function(r){ r=Math.max(0,Math.min(1,r)); return 0.18+0.82*Math.sqrt(r); };
+  var b=Math.max(loB, Math.min(hiB, f(ratio(c.sam,c.tam))));
+  var d=Math.max(lo, Math.min(f(ratio(c.som,c.tam)), b-gap));
+  return [1,b,d];
+}
+function tierVals(c){ return [c.tam,c.sam,c.som]; }
+function tierRatio(c,i){ return i===0 ? '기준 (TAM의 100%)' : 'TAM의 '+pct(tierVals(c)[i],c.tam); }
+
+/* 그림 안 글자는 전부 Noto Sans KR — 이 SVG는 화면과 저장 HTML에 그대로 함께 들어간다.
+   금액에 "7,296억원"처럼 한글 단위가 붙는데 Space Mono엔 한글 글리프가 없어
+   숫자와 단위가 서로 다른 서체로 갈라진다 (design.md) */
+function svgTxt(x,y,size,fill,txt,opt){
+  opt=opt||{};
+  return '<text x="'+x+'" y="'+y+'"'
+    + (opt.anchor?' text-anchor="'+opt.anchor+'"':'')
+    + ' font-family="Noto Sans KR, sans-serif"'
+    + ' font-size="'+size+'"'+(opt.bold?' font-weight="700"':'')
+    + ' fill="'+fill+'">'+xe(txt)+'</text>';
+}
+/* 오른쪽 설명 블록 (깔때기·동심원·겹친 원 공용) */
+function sideLabel(c,i,x,y){
+  var t=TIER[i];
+  return svgTxt(x,y-11,12.5,'#64748b',t.ko)
+       + svgTxt(x,y+12,18,t.col,money(tierVals(c)[i]),{mono:true,bold:true})
+       + svgTxt(x,y+29,11,'#94a3b8',tierRatio(c,i));
+}
+/* 점선 연결선 — 끝은 가로로 꺾어 화살촉을 단다 */
+function connector(x1,y1,x2,y2){
+  return '<polyline points="'+x1+','+y1+' '+(x2-26)+','+y2+' '+(x2-8)+','+y2
+       + '" fill="none" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="3 3"/>'
+       + '<polygon points="'+(x2-8)+','+(y2-4.5)+' '+x2+','+y2+' '+(x2-8)+','+(y2+4.5)+'" fill="#94a3b8"/>';
+}
+/* 공백 기준 줄바꿈 (SVG는 자동 줄바꿈이 없다) */
+function svgWrap(text,max){
+  var out=[], cur='';
+  String(text).split(' ').forEach(function(w){
+    if(cur && (cur+' '+w).length>max){ out.push(cur); cur=w; }
+    else cur=cur?cur+' '+w:w;
+  });
+  if(cur) out.push(cur);
+  return out;
+}
+
+/* ① 깔때기 — 위에서 아래로 좁혀지는 사다리꼴 3단 */
+function funnelSVG(c){
+  var fr=bandFractions(c), t=[fr[0],fr[1],fr[2]], b=[fr[1],fr[2],fr[2]*0.72];
+  var DW=330, cx=176, BH=76, GAP=6, Y0=10, LX=372;
+  var s='<svg viewBox="0 0 600 '+(Y0+3*(BH+GAP))+'" role="img" aria-label="TAM SAM SOM 깔때기">';
+  for(var i=0;i<3;i++){
+    var y=Y0+i*(BH+GAP), tw=DW*t[i], bw=DW*b[i], col=TIER[i].col;
+    s+='<polygon points="'
+      + (cx-tw/2)+','+y+' '+(cx+tw/2)+','+y+' '+(cx+bw/2)+','+(y+BH)+' '+(cx-bw/2)+','+(y+BH)
+      + '" fill="'+col+'" fill-opacity="0.12" stroke="'+col+'" stroke-width="1.5"/>';
+    s+=svgTxt(cx,y+BH/2+6,16,col,TIER[i].k,{anchor:'middle',mono:true,bold:true});
+    s+=sideLabel(c,i,LX,y+BH/2);
+  }
+  return s+'</svg>';
+}
+
+/* ② 동심원 — 바닥에서 맞닿은 세 원 (큰 원부터 그려 안쪽이 위로 올라온다) */
+function circleSVG(c){
+  var fr=bandFractions(c), R=116, cx=150, BASE=276, LX=352, LY=[62,152,244];
+  var r=[R*fr[0],R*fr[1],R*fr[2]];
+  var s='<svg viewBox="0 0 600 300" role="img" aria-label="TAM SAM SOM 동심원">';
+  for(var i=0;i<3;i++)
+    s+='<circle cx="'+cx+'" cy="'+(BASE-r[i])+'" r="'+r[i]+'" fill="'+TIER[i].bg+'" stroke="'+TIER[i].col+'" stroke-width="1.5"/>';
+  for(i=0;i<3;i++){
+    var ty=(BASE-2*r[i])+Math.min(30,r[i]*0.9)+4;
+    s+=svgTxt(cx,ty,15,TIER[i].col,TIER[i].k,{anchor:'middle',mono:true,bold:true});
+    s+=connector(cx+40,ty-5,LX,LY[i])+sideLabel(c,i,LX,LY[i]);
+  }
+  return s+'</svg>';
+}
+
+/* ③ 겹친 원 — 오른쪽 끝을 맞춘 포개진 원. 왼쪽 초승달 부분에 이름이 들어간다 */
+function nestedSVG(c){
+  /* 초승달 폭 안에 이름이 들어가야 하므로 다른 형태보다 간격을 크게 잡는다 */
+  var fr=bandFractions(c,{gap:0.24, lo:0.22, loB:0.46, hiB:0.82});
+  var R=120, cy=150, LX=364, LY=[58,150,242], K=0.85;
+  var r=[R*fr[0],R*fr[1],R*fr[2]];
+  /* 안쪽 원을 오른쪽으로 밀어 왼쪽에 이름 들어갈 초승달을 만든다.
+     K<1 이라 안쪽 원은 항상 바깥 원에 완전히 포함된다 — SOM ⊂ SAM ⊂ TAM 관계를 그림이 깨뜨리지 않도록 */
+  var cx=[150,0,0];
+  cx[1]=cx[0]+(r[0]-r[1])*K;
+  cx[2]=cx[1]+(r[1]-r[2])*K;
+  var edge=[cx[0]-r[0], cx[1]-r[1], cx[2]-r[2], cx[2]+r[2]];
+  var s='<svg viewBox="0 0 600 300" role="img" aria-label="TAM SAM SOM 겹친 원">';
+  for(var i=0;i<3;i++)
+    s+='<circle cx="'+cx[i]+'" cy="'+cy+'" r="'+r[i]+'" fill="'+TIER[i].bg+'" stroke="'+TIER[i].col+'" stroke-width="1.5"/>';
+  for(i=0;i<3;i++){
+    var lx=(edge[i]+edge[i+1])/2;
+    s+=svgTxt(lx,cy+5,14,TIER[i].col,TIER[i].k,{anchor:'middle',mono:true,bold:true});
+    /* 연결선은 각 원의 위 가장자리에서 뽑아 서로 엉키지 않게 한다 */
+    s+=connector(cx[i], cy-r[i]+8, LX, LY[i])+sideLabel(c,i,LX,LY[i]);
+  }
+  return s+'</svg>';
+}
+
+/* ④ 카드형 — 금액 배지를 단 카드 3장이 축 위에 핀으로 꽂힌다 */
+function cardsSVG(c){
+  var vals=tierVals(c), CW=180, GAP=14, X0=(600-(3*CW+2*GAP))/2;
+  var s='<svg viewBox="0 0 600 292" role="img" aria-label="TAM SAM SOM 카드">';
+  s+='<line x1="26" y1="236" x2="574" y2="236" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round"/>';
+  for(var i=0;i<3;i++){
+    var t=TIER[i], x=X0+i*(CW+GAP), mid=x+CW/2;
+    s+='<rect x="'+x+'" y="30" width="'+CW+'" height="172" rx="12" fill="#f8fafc" stroke="'+t.col+'" stroke-opacity="0.3"/>';
+    s+='<rect x="'+(mid-74)+'" y="12" width="148" height="34" rx="17" fill="'+t.col+'"/>';
+    s+=svgTxt(mid,35,15,'#ffffff',money(vals[i]),{anchor:'middle',mono:true,bold:true});
+    s+=svgTxt(mid,82,15,t.col,t.ko,{anchor:'middle',bold:true});
+    svgWrap(t.en,26).forEach(function(l,j){
+      s+=svgTxt(mid,102+j*13,9.5,'#94a3b8',l,{anchor:'middle'});
+    });
+    s+=svgTxt(mid,146,11.5,'#64748b',tierRatio(c,i),{anchor:'middle',bold:true});
+    s+=svgTxt(mid,172,11,'#94a3b8',t.desc,{anchor:'middle'});
+    s+='<polygon points="'+(mid-9)+',202 '+(mid+9)+',202 '+mid+',222" fill="'+t.col+'"/>';
+    s+='<circle cx="'+mid+'" cy="236" r="9" fill="'+t.col+'"/>';
+    s+=svgTxt(mid,272,16,t.col,t.k,{anchor:'middle',mono:true,bold:true});
+  }
+  return s+'</svg>';
+}
+
+function vizSVG(c){
+  if(data.viz==='circle') return circleSVG(c);
+  if(data.viz==='nested') return nestedSVG(c);
+  if(data.viz==='cards')  return cardsSVG(c);
+  return funnelSVG(c);
+}
+function vizName(){
+  var v=VIZ.filter(function(x){return x.k===data.viz;})[0]||VIZ[0];
+  return v.label.replace(/^\S+\s/,'');
+}
+
+/* ══════════════════════════════════════════
+   점검 — 이 도구의 핵심. 숫자가 말이 되는지 스스로 따져 준다
+   ══════════════════════════════════════════ */
+function checks(c){
+  var out=[];
+  var rSam=ratio(c.sam,c.tam), rSom=ratio(c.som,c.tam);
+
+  if(c.tam>0 && c.sam>0){
+    if(rSam>1) out.push(['bad','<b>SAM('+money(c.sam)+')이 TAM('+money(c.tam)+')보다 큽니다.</b> SAM은 TAM 안에 들어가는 부분집합입니다. 숫자를 다시 확인하세요.']);
+    else if(rSam>0.5) out.push(['warn','<b>SAM이 TAM의 '+pct(c.sam,c.tam)+'</b> — 절반을 넘습니다. TAM을 너무 좁게 잡았거나 SAM을 넓게 잡은 것일 수 있어요. 지역·채널·가격대 중 하나로 더 좁혀 보세요.']);
+    else if(rSam<0.01) out.push(['warn','<b>SAM이 TAM의 '+pct(c.sam,c.tam)+'</b> — 1%도 안 됩니다. TAM을 지나치게 넓게 잡은 건 아닌지 확인하세요. 큰 TAM은 오히려 근거를 약하게 만듭니다.']);
+    else out.push(['ok','<b>SAM은 TAM의 '+pct(c.sam,c.tam)+'</b> — 합리적인 범위입니다.']);
+  }
+
+  if(c.tam>0 && c.som>0){
+    if(rSom>0.2) out.push(['bad','<b>SOM이 전체 시장의 '+pct(c.som,c.tam)+'</b> — 3년 안에 시장의 5분의 1을 가져오겠다는 계획입니다. 특별한 근거가 없다면 점유율을 낮추세요.']);
+    else if(rSom>0.05) out.push(['warn','<b>SOM이 전체 시장의 '+pct(c.som,c.tam)+'</b> — 공격적인 목표입니다. 왜 가능한지(시범 결과·영업 계획)를 SOM 근거 칸에 적어 두세요.']);
+    else out.push(['ok','<b>SOM은 전체 시장의 '+pct(c.som,c.tam)+'</b> — 신규 진입으로 무리 없는 수준입니다.']);
+  }
+
+  if(data.mode==='bot' && num('custTotal')>0 && num('custReach')>num('custTotal'))
+    out.push(['bad','<b>도달 가능 고객('+cnt(num('custReach'))+'명)이 전체 잠재 고객('+cnt(num('custTotal'))+'명)보다 많습니다.</b> SAM은 TAM 안에 들어가야 합니다.']);
+
+  /* 교차 검증 — 두 방식이 모두 채워져 있을 때만 */
+  var ct=calcTop(), cb=calcBot();
+  if(ct.tam>0 && cb.tam>0){
+    /* 두 값의 배수로 비교한다 — 백분율 차이는 100%에서 포화돼 "8조 vs 1천만"도 100%로 보인다 */
+    var hi=Math.max(ct.tam,cb.tam), lo=Math.min(ct.tam,cb.tam), fold=hi/lo;
+    var gap = fold<1.5 ? '차이 '+dec((hi-lo)/hi*100)+'%' : '차이 '+dec(fold)+'배';
+    var line='하향식 <b>'+money(ct.tam)+'</b> vs 상향식 <b>'+money(cb.tam)+'</b> — '+gap+'. ';
+    if(fold<=1.5) out.push(['ok','<b>교차 검증 통과.</b> '+line+'두 방식이 비슷하게 나왔습니다. 신뢰할 만한 숫자입니다.']);
+    else if(fold<=3) out.push(['warn','<b>교차 검증 — 차이가 있습니다.</b> '+line+'어느 쪽 가정이 틀렸는지 확인하세요. 대개 고객 수 추정이나 구매 빈도가 원인입니다.']);
+    else out.push(['bad','<b>교차 검증 실패.</b> '+line+'두 방식이 크게 어긋납니다. 이대로는 어느 숫자도 근거가 되지 못합니다.']);
+  }else if(c.tam>0){
+    out.push(['warn','<b>한 가지 방식으로만 계산했습니다.</b> '
+      +(data.mode==='top'?'상향식':'하향식')+'으로도 채워 보세요 — 두 값이 비슷하게 나와야 숫자가 설득력을 갖습니다.']);
+  }
+
+  if(c.tam>0 && !v('tamSrc'))
+    out.push(['bad','<b>TAM 근거·출처가 비어 있습니다.</b> 심사에서 가장 먼저 묻는 항목입니다. 보고서명과 연도만이라도 적어 두세요.']);
+  if(c.som>0 && !v('somSrc'))
+    out.push(['warn','<b>SOM 근거가 비어 있습니다.</b> 점유율 숫자는 근거 없이는 그냥 희망입니다.']);
+
+  return out;
+}
+
+/* ══════════════════════════════════════════
+   렌더 — 산출물
+   ══════════════════════════════════════════ */
+function calcRows(c){
+  var rows=[];
+  if(data.mode==='top'){
+    var unit=v('tamUnit')||'억원';
+    rows.push(['TAM','#2563eb','입력한 시장 규모 <span class="mono">'+xe(dec(num('tamAmt')))+xe(unit)+'</span> = <span class="mono">'+xe(money(c.tam))+'</span>']);
+    rows.push(['SAM','#d97706','TAM <span class="mono">'+xe(money(c.tam))+'</span> × <span class="mono">'+dec(num('samPct'))+'%</span> = <span class="mono">'+xe(money(c.sam))+'</span>']);
+    rows.push(['SOM','#059669','SAM <span class="mono">'+xe(money(c.sam))+'</span> × 목표 점유율 <span class="mono">'+dec(num('somPct'))+'%</span> = <span class="mono">'+xe(money(c.som))+'</span> <span style="color:var(--dim)">(TAM의 '+xe(pct(c.som,c.tam))+')</span>']);
+  }else{
+    var arpu=c.arpu;
+    rows.push(['객단가','#64748b','1회 <span class="mono">'+cnt(num('price'))+'원</span> × 연 <span class="mono">'+dec(num('freq'))+'회</span> = 연 <span class="mono">'+cnt(arpu)+'원</span>']);
+    rows.push(['TAM','#2563eb','전체 잠재 고객 <span class="mono">'+cnt(num('custTotal'))+'명</span> × 연 객단가 <span class="mono">'+cnt(arpu)+'원</span> = <span class="mono">'+xe(money(c.tam))+'</span>']);
+    rows.push(['SAM','#d97706','도달 가능 고객 <span class="mono">'+cnt(num('custReach'))+'명</span> × 연 객단가 <span class="mono">'+cnt(arpu)+'원</span> = <span class="mono">'+xe(money(c.sam))+'</span> <span style="color:var(--dim)">(TAM의 '+xe(pct(c.sam,c.tam))+')</span>']);
+    rows.push(['SOM','#059669','SAM <span class="mono">'+xe(money(c.sam))+'</span> × 목표 점유율 <span class="mono">'+dec(num('somPct'))+'%</span> = <span class="mono">'+xe(money(c.som))+'</span> <span style="color:var(--dim)">(TAM의 '+xe(pct(c.som,c.tam))+')</span>']);
+  }
+  return rows.map(function(r){
+    return '<div class="calc-row"><div class="calc-k" style="color:'+r[1]+'">'+r[0]+'</div><div>'+r[2]+'</div></div>';
+  }).join('');
+}
+
+function docHTML(forExport){
+  var today=new Date().toISOString().slice(0,10);
+  var name=v('bizName')||'제목 없는 사업';
+  var mkt=v('market');
+  var author=v('author');
+  var year=v('baseYear');
+  var c=calc();
+
+  var head='<div class="page-title">📐 '+xe(name)+' — 시장 규모 분석</div>'
+    + (mkt?'<div class="lead">'+xe(mkt)+'</div>':'')
+    + '<div class="meta">'
+    +   (author?'<b style="color:var(--muted)">'+xe(author)+'</b> &nbsp;·&nbsp; ':'')
+    +   (year?xe(year)+'년 기준 &nbsp;·&nbsp; ':'')
+    +   (data.mode==='top'?'하향식(Top-down)':'상향식(Bottom-up)')+' 산정 &nbsp;·&nbsp; '
+    +   today+' &nbsp;·&nbsp; DataForge TAM SAM SOM</div>';
+
+  if(!(c.tam>0)){
+    return head+'<div class="section-card"><div class="empty-state">'
+      +'위쪽에서 숫자를 채우면<br>여기에 <b>TAM · SAM · SOM 깔때기</b>와 계산 과정이 그려집니다.<br><br>'
+      +'무엇을 넣어야 할지 모르겠다면 <b>✨ 예시 채우기</b>를 눌러 보세요.'
+      +'</div></div>';
+  }
+
+  /* 요약 카드 3개 */
+  var SUM=[
+    ['🌍','TAM · 전체 시장', c.tam,'#2563eb','rgba(37,99,235,.3)','rgba(37,99,235,.04)','우리 제품이 닿을 수 있는 최대치'],
+    ['🎯','SAM · 유효 시장', c.sam,'#d97706','rgba(217,119,6,.3)','rgba(217,119,6,.04)','TAM의 '+pct(c.sam,c.tam)],
+    ['🏆','SOM · 수익 시장', c.som,'#059669','rgba(5,150,105,.3)','rgba(5,150,105,.04)','TAM의 '+pct(c.som,c.tam)+' · SAM의 '+pct(c.som,c.sam)]
+  ];
+  head+='<div class="sum-row">'+SUM.map(function(s){
+    return '<div class="sum-c" style="border-color:'+s[4]+';background:'+s[5]+';">'
+      + '<div class="sum-icon">'+s[0]+'</div><div>'
+      + '<div class="sum-v" style="color:'+s[3]+';">'+xe(money(s[2]))+'</div>'
+      + '<div class="sum-l" style="color:'+s[3]+';">'+xe(s[1])+'</div>'
+      + '<div class="sum-sub">'+xe(s[6])+'</div></div></div>';
+  }).join('')+'</div>';
+
+  var body='<div class="card-grid">';
+
+  /* 시장 규모 그림 — 선택한 형태로 */
+  body+='<div class="section-card wide"><div class="section-title">📊 시장 규모 — '+xe(vizName())+'</div>'
+    + '<div class="funnel">'+vizSVG(c)+'</div>'
+    + (data.viz==='cards' ? ''
+       : '<div class="funnel-note">※ 띠·원의 크기는 눈으로 비교하기 쉽도록 조정된 값입니다. 실제 비율은 옆에 적힌 백분율을 보세요.</div>')
+    + '</div>';
+
+  /* 계산 과정 — 수식 한 줄이 접히지 않도록 전체 폭 */
+  body+='<div class="section-card wide"><div class="section-title">🧮 계산 과정</div>'+calcRows(c)+'</div>';
+
+  /* 현실 점검 — 아래 3년 전망과 짝으로 2열 배치(pair: 높이 맞춤) */
+  if(c.arpu>0 && c.som>0){
+    var need=c.som/c.arpu;
+    body+='<div class="section-card pair"><div class="section-title">🎯 현실 점검 — SOM을 3년 안에 채운다면</div>'
+      + '<div class="mini-row">'
+      +   '<div class="mini"><div class="mini-v">'+cnt(need)+'</div><div class="mini-l">필요한 유료 고객 (명)</div></div>'
+      +   '<div class="mini"><div class="mini-v">'+cnt(need/36)+'</div><div class="mini-l">월 평균 신규 고객</div></div>'
+      +   '<div class="mini"><div class="mini-v">'+dec(need/1095)+'</div><div class="mini-l">하루 평균 신규 고객</div></div>'
+      + '</div>'
+      + '<div class="funnel-note">연 객단가 <b class="mono">'+cnt(c.arpu)+'원</b>'
+      + (data.mode==='top' ? ' (상향식 칸의 1회 단가 × 연 구매 횟수)' : '')
+      + ' 기준 · 3년(36개월) 동안 균등하게 확보한다고 가정했습니다. '
+      + '이 숫자가 지금 인력·예산으로 가능한지 따져 보세요.</div>'
+      + '</div>';
+  }
+
+  /* 성장 전망 */
+  var g=num('cagr');
+  if(g>0){
+    var f3=Math.pow(1+g/100,3);
+    body+='<div class="section-card pair"><div class="section-title">🌱 3년 뒤 전망 (CAGR '+dec(g)+'%)</div>'
+      + '<div class="mini-row">'
+      +   '<div class="mini"><div class="mini-v" style="color:#2563eb;">'+xe(money(c.tam*f3))+'</div><div class="mini-l">3년 뒤 TAM</div></div>'
+      +   '<div class="mini"><div class="mini-v" style="color:#d97706;">'+xe(money(c.sam*f3))+'</div><div class="mini-l">3년 뒤 SAM</div></div>'
+      +   '<div class="mini"><div class="mini-v" style="color:#059669;">'+xe(money(c.som*f3))+'</div><div class="mini-l">3년 뒤 SOM (점유율 유지 시)</div></div>'
+      + '</div>'
+      + '<div class="funnel-note">현재 규모 × (1 + '+dec(g)+'%)<sup>3</sup> 로 계산했습니다. 성장률 출처도 근거 칸에 함께 적어 두세요.</div>'
+      + '</div>';
+  }
+
+  /* 점검 */
+  var ck=checks(c);
+  if(ck.length){
+    body+='<div class="section-card wide"><div class="section-title">🔎 점검 — 이 숫자가 말이 되나요</div>'
+      + ck.map(function(x){ return '<div class="chk '+x[0]+'">'+x[1]+'</div>'; }).join('')
+      + '</div>';
+  }
+
+  /* 근거 · 출처 */
+  SRC.forEach(function(f){
+    var val=v(f.k);
+    if(forExport && !val) return;
+    body+='<div class="section-card"><div class="section-title">'+f.icon+' '+xe(f.label)+'</div>'
+      + '<div class="sec-body'+(val?'':' empty')+'">'+(val?xe(val):'아직 작성하지 않았습니다')+'</div>'
+      + '</div>';
+  });
+
+  body+='</div>';
+  return head+body;
+}
+
+/* ══════════════════════════════════════════
+   편집 반영
+   ══════════════════════════════════════════ */
+function reqDone(){
+  var c=calc(), n=0;
+  if(v('bizName')) n++;
+  if(v('market'))  n++;
+  if(c.tam>0)      n++;
+  if(c.sam>0)      n++;
+  if(c.som>0)      n++;
+  if(v('tamSrc'))  n++;
+  return n;
+}
+
+function onEdit(){
+  document.getElementById('doc').innerHTML=docHTML(false);
+
+  var done=reqDone();
+  document.getElementById('progTxt').textContent=done+' / 6';
+  document.getElementById('progBar').style.width=(done/6*100)+'%';
+
+  var arpu=num('price')*num('freq');
+  document.getElementById('botLive').innerHTML = arpu>0
+    ? '연 객단가 <b>'+cnt(arpu)+'원</b> — 고객 1명이 1년 동안 쓰는 금액입니다.'
+    : '숫자를 채우면 여기에 연 객단가가 계산됩니다.';
+
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveLocal,500);
+}
+
+/* ══════════════════════════════════════════
+   저장 · 예시
+   ══════════════════════════════════════════ */
+function state(){ return {d:data}; }
+/* 저장본·공유 링크·초기화 어디로 들어와도 mode/viz가 항상 유효한 값이 되게 한다 */
+function normState(){
+  if(data.mode!=='bot') data.mode='top';
+  if(!VIZ.some(function(x){ return x.k===data.viz; })) data.viz='funnel';
+}
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state())); }catch(e){} }
+function loadLocal(){
+  var raw; try{ raw=localStorage.getItem(LS_KEY); }catch(e){ return false; }
+  if(!raw) return false;
+  try{
+    var s=JSON.parse(raw);
+    if(!s||typeof s.d!=='object') return false;
+    data=s.d||{};
+    normState();
+    return true;
+  }catch(e){ return false; }
+}
+
+/* 기본값이 자동으로 채워지는 칸(단위·기준연도)은 "작성했다"고 보지 않는다 */
+function hasAny(){
+  return KEYS.some(function(k){ return k!=='tamUnit' && k!=='baseYear' && v(k); });
+}
+
+function loadSample(){
+  if(hasAny() && !confirm('작성한 내용을 예시로 덮어씁니다. 계속할까요?')) return;
+  var keepViz=data.viz;   /* 고른 그림 형태는 예시를 채워도 그대로 둔다 */
+  data={
+    mode:'bot', viz:keepViz,
+    bizName:'이웃 로스터리 구독',
+    market:'수도권 아파트 단지 홈카페 이용자를 위한 원두 정기배송 시장',
+    author:'창업 1팀',
+    baseYear:'2026',
+    /* 상향식 — 고객 수부터 쌓아 올린다 */
+    custTotal:'3,200,000',
+    custReach:'420,000',
+    price:'19,000',
+    freq:'12',
+    somPct:'3',
+    /* 하향식 — 같은 시장을 위에서 좁혀 본 값 (교차 검증용) */
+    tamAmt:'7,296',
+    tamUnit:'억원',
+    samPct:'13',
+    cagr:'8',
+    tamSrc:'통계청 가계동향조사(2025) 커피·차 지출 항목 — 가구당 월 평균 지출 기준\naT 「커피류 시장 보고서」(2025) 원두 소매 시장 규모\n전국 홈카페 정기 이용 인구 320만 명 (커피업협회 2025 소비자조사)',
+    samSrc:'수도권 아파트 단지 거주 + 주 3회 이상 원두를 직접 내리는 이용자로 한정\n초기 배송 가능 반경 1km 단지 기준 — 전체의 약 13%\n(전국 320만 명 → 수도권 홈카페 헤비유저 42만 명)',
+    somSrc:'1개 단지(1,200가구) 시범 운영에서 사전 신청 가입률 4.2% 확인\n영업·배송 인력 2명으로 월 신규 350명 확보 계획 (3년 누적 12,600명)\n경쟁 구독 서비스 3사 합산 수도권 점유율 약 9% — 그중 3분의 1을 목표'
+  };
+  syncInputs(); onEdit();
+}
+
+function clearAll(){
+  if(!confirm('작성한 내용을 모두 지웁니다. 계속할까요?')) return;
+  data={mode:data.mode, viz:data.viz, tamUnit:'억원', baseYear:String(new Date().getFullYear())};
+  normState(); syncInputs(); onEdit();
+}
+
+function firstLine(t){
+  if(!t) return '';
+  var a=String(t).split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  return a.length?a[0]:'';
+}
+function importBMC(){
+  var raw; try{ raw=localStorage.getItem('df_bmc_v1'); }catch(e){ raw=null; }
+  if(!raw){ alert('비즈니스 모델 캔버스에 저장된 내용이 없습니다.\n\n먼저 /manage/bmc 에서 캔버스를 작성해 주세요.\n(같은 브라우저에서 작성한 내용만 불러옵니다.)'); return; }
+  var d; try{ d=JSON.parse(raw); }catch(e){ d=null; }
+  if(!d||!d.blocks){ alert('캔버스 내용을 읽지 못했습니다.'); return; }
+  if(!confirm('BMC 내용으로 사업명·시장 정의·SAM 근거 칸을 채웁니다.\n지금 입력한 내용은 덮어써집니다. 계속할까요?')) return;
+
+  var n=0;
+  function put(k,val){ if(val){ data[k]=val; n++; } }
+  put('bizName', d.name||'');
+  put('author',  d.author||'');
+  put('market',  firstLine(d.blocks.segments));
+  put('samSrc',  d.blocks.segments||'');
+  syncInputs(); onEdit();
+  alert(n+'칸을 캔버스 내용으로 채웠습니다.\n\n시장 규모 숫자는 캔버스에 없는 항목이라 비어 있습니다 — 직접 채워 주세요.');
+}
+
+/* ══════════════════════════════════════════
+   공유 링크 열기 — 예전에 만들어 배포된 #d= 링크를 계속 열 수 있도록 읽기만 남겨 둔다
+   (링크 만들기 기능은 제거됨 — 내보내기는 HTML 저장 하나로 통일)
+   ══════════════════════════════════════════ */
+function b64ToBytes(b){
+  b=String(b).replace(/-/g,'+').replace(/_/g,'/');
+  while(b.length%4) b+='=';
+  var s=atob(b), u=new Uint8Array(s.length);
+  for(var i=0;i<s.length;i++) u[i]=s.charCodeAt(i);
+  return u;
+}
+async function inflate(u8){
+  var ds=new DecompressionStream('deflate-raw');
+  var w=ds.writable.getWriter(); w.write(u8); w.close();
+  return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+}
+
+async function decodeState(str){
+  var mode=str.charAt(0), body=str.slice(1), bytes=b64ToBytes(body);
+  if(mode==='z'){
+    if(!window.DecompressionStream) throw new Error('이 브라우저는 압축 링크를 열 수 없습니다');
+    bytes=await inflate(bytes);
+  }else if(mode!=='u'){ throw new Error('형식을 알 수 없는 링크입니다'); }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+async function loadFromHash(){
+  var h=location.hash||'';
+  if(h.indexOf('#d=')!==0) return false;
+  try{
+    var s=await decodeState(h.slice(3));
+    if(!s||typeof s.d!=='object') return false;
+    data=s.d||{};
+    normState();
+    isShared=true;
+    return true;
+  }catch(e){
+    alert('공유 링크를 읽지 못했습니다.\n링크가 중간에 잘렸을 수 있습니다.\n\n('+e.message+')');
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   HTML 저장 — html.md(리포트 디자인 시스템) 규격
+   ══════════════════════════════════════════ */
+function saveHTML(){
+  if(!v('bizName') && !(calc().tam>0)){ alert('먼저 내용을 작성해 주세요.'); return; }
+  var today=new Date().toISOString().slice(0,10);
+  var name=v('bizName')||'시장 규모 분석';
+  var html='<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
+    +'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'
+    +'<title>'+xe(name)+' — TAM SAM SOM 시장 규모 분석</title>\n'
+    +'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+    +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n'
+    +'<style>\n'
+    +':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);'
+    +'--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;'
+    +'--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;}\n'
+    +'*{margin:0;padding:0;box-sizing:border-box;}\n'
+    +'body{font-family:"Noto Sans KR","Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}\n'
+    +'.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}\n'
+    +'.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.35;word-break:keep-all;}\n'
+    +'.lead{font-size:15px;font-weight:700;color:var(--green);line-height:1.6;margin-bottom:6px;word-break:keep-all;}\n'
+    +'.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}\n'
+    +'.sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}\n'
+    +'.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}\n'
+    +'.sum-icon{font-size:22px;opacity:.85;}\n'
+    +'.sum-v{font-family:"Noto Sans KR",sans-serif;font-size:22px;font-weight:700;line-height:1;}\n'
+    +'.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}\n'
+    +'.sum-sub{font-size:11px;color:var(--dim);margin-top:3px;}\n'
+    +'.card-grid{display:grid;grid-template-columns:1fr;gap:16px;}\n'
+    +'.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}\n'
+    +'.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}\n'
+    +'.sec-body{font-size:13px;color:var(--text);line-height:1.75;word-break:keep-all;white-space:pre-wrap;}\n'
+    +'.funnel svg{width:100%;height:auto;display:block;}\n'
+    +'.funnel-note{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.6;word-break:keep-all;}\n'
+    +'.section-card.pair{display:flex;flex-direction:column;}\n'
+    +'.section-card.pair .funnel-note{margin-top:auto;padding-top:10px;}\n'
+    +'.mono{font-family:"Noto Sans KR",sans-serif;font-weight:700;color:var(--text);}\n'
+    +'.calc-row{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--border);font-size:13px;line-height:1.75;word-break:keep-all;}\n'
+    +'.calc-row:last-child{border-bottom:none;}\n'
+    +'.calc-k{font-family:"Noto Sans KR",sans-serif;font-weight:700;font-size:12px;flex:0 0 40px;}\n'
+    +'.mini-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}\n'
+    +'.mini{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:11px 10px;text-align:center;}\n'
+    +'.mini-v{font-family:"Noto Sans KR",sans-serif;font-size:17px;font-weight:700;color:var(--text);line-height:1.2;}\n'
+    +'.mini-l{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4;word-break:keep-all;}\n'
+    +'.chk{font-size:12.5px;line-height:1.7;padding:9px 12px;border-radius:8px;margin-bottom:8px;border:1px solid;color:var(--muted);word-break:keep-all;}\n'
+    +'.chk:last-child{margin-bottom:0;}\n'
+    +'.chk b{color:var(--text);}\n'
+    +'.chk.ok{background:rgba(5,150,105,.05);border-color:rgba(5,150,105,.2);}.chk.ok b{color:var(--green);}\n'
+    +'.chk.warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.22);}.chk.warn b{color:var(--amber);}\n'
+    +'.chk.bad{background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.22);}.chk.bad b{color:var(--red);}\n'
+    +'.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}\n'
+    +'@media(min-width:820px){.card-grid{grid-template-columns:1fr 1fr;}.section-card.wide{grid-column:1/-1;}}\n'
+    +'@media(max-width:640px){.sum-row,.mini-row{grid-template-columns:1fr;}.wrap{padding:24px 16px 40px;}}\n'
+    +'@media print{@page{size:A4;margin:14mm;}body{background:#fff;}.wrap{padding:0;max-width:none;}'
+    +'.section-card,.sum-c{break-inside:avoid;}.footer{margin-top:24px;}}\n'
+    +'</style>\n</head>\n<body>\n<div class="wrap">\n'
+    + docHTML(true)
+    + '\n<div class="footer">DataForge · dataforge.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
+
+  var safe=name.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'market';
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download='시장규모-'+safe+'-'+today+'.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+
+/* ══════════════════════════════════════════
+   마크다운으로 저장 — 분석 결과를 .md 파일로 내려받는다 (bep.php와 같은 패턴)
+   ══════════════════════════════════════════ */
+function exportMD(){
+  var c=calc();
+  if(!v('bizName') && !(c.tam>0)){ alert('먼저 내용을 작성해 주세요.'); return; }
+  var today=new Date().toISOString().slice(0,10);
+  var name=v('bizName')||'시장 규모 분석';
+
+  var md='# 📐 '+name+' — 시장 규모 분석\n\n';
+  if(v('market')) md+='> '+v('market')+'\n\n';
+  md+=(v('author')?v('author')+' · ':'')
+    +(v('baseYear')?v('baseYear')+'년 기준 · ':'')
+    +(data.mode==='top'?'하향식(Top-down)':'상향식(Bottom-up)')+' 산정 · '
+    +today+' · DataForge TAM SAM SOM\n\n';
+
+  if(c.tam>0){
+    md+='## 요약\n\n| 구분 | 금액 | 비고 |\n|---|---:|---|\n';
+    md+='| 🌍 TAM · 전체 시장 | '+money(c.tam)+' | 우리 제품이 닿을 수 있는 최대치 |\n';
+    md+='| 🎯 SAM · 유효 시장 | '+money(c.sam)+' | TAM의 '+pct(c.sam,c.tam)+' |\n';
+    md+='| 🏆 SOM · 수익 시장 | '+money(c.som)+' | TAM의 '+pct(c.som,c.tam)+' · SAM의 '+pct(c.som,c.sam)+' |\n\n';
+
+    md+='## 🧮 계산 과정\n\n';
+    if(data.mode==='top'){
+      var unit=v('tamUnit')||'억원';
+      md+='- **TAM**: 입력한 시장 규모 '+dec(num('tamAmt'))+unit+' = '+money(c.tam)+'\n';
+      md+='- **SAM**: TAM '+money(c.tam)+' × '+dec(num('samPct'))+'% = '+money(c.sam)+'\n';
+      md+='- **SOM**: SAM '+money(c.sam)+' × 목표 점유율 '+dec(num('somPct'))+'% = '+money(c.som)+' (TAM의 '+pct(c.som,c.tam)+')\n\n';
+    }else{
+      md+='- **객단가**: 1회 '+cnt(num('price'))+'원 × 연 '+dec(num('freq'))+'회 = 연 '+cnt(c.arpu)+'원\n';
+      md+='- **TAM**: 전체 잠재 고객 '+cnt(num('custTotal'))+'명 × 연 객단가 '+cnt(c.arpu)+'원 = '+money(c.tam)+'\n';
+      md+='- **SAM**: 도달 가능 고객 '+cnt(num('custReach'))+'명 × 연 객단가 '+cnt(c.arpu)+'원 = '+money(c.sam)+' (TAM의 '+pct(c.sam,c.tam)+')\n';
+      md+='- **SOM**: SAM '+money(c.sam)+' × 목표 점유율 '+dec(num('somPct'))+'% = '+money(c.som)+' (TAM의 '+pct(c.som,c.tam)+')\n\n';
+    }
+
+    if(c.arpu>0 && c.som>0){
+      var need=c.som/c.arpu;
+      md+='## 🎯 현실 점검 — SOM을 3년 안에 채운다면\n\n';
+      md+='- 필요한 유료 고객: '+cnt(need)+'명\n';
+      md+='- 월 평균 신규 고객: '+cnt(need/36)+'명\n';
+      md+='- 하루 평균 신규 고객: '+dec(need/1095)+'명\n';
+      md+='- 연 객단가 '+cnt(c.arpu)+'원 기준 · 3년(36개월) 동안 균등 확보 가정\n\n';
+    }
+
+    var g=num('cagr');
+    if(g>0){
+      var f3=Math.pow(1+g/100,3);
+      md+='## 🌱 3년 뒤 전망 (CAGR '+dec(g)+'%)\n\n';
+      md+='- 3년 뒤 TAM: '+money(c.tam*f3)+'\n';
+      md+='- 3년 뒤 SAM: '+money(c.sam*f3)+'\n';
+      md+='- 3년 뒤 SOM (점유율 유지 시): '+money(c.som*f3)+'\n\n';
+    }
+
+    var ck=checks(c);
+    if(ck.length){
+      var ICO={ok:'✅',warn:'⚠️',bad:'❌'};
+      md+='## 🔎 점검 — 이 숫자가 말이 되나요\n\n';
+      ck.forEach(function(x){ md+='- '+(ICO[x[0]]||'')+' '+x[1].replace(/<[^>]+>/g,'')+'\n'; });
+      md+='\n';
+    }
+  }
+
+  SRC.forEach(function(f){
+    var val=v(f.k);
+    if(!val) return;
+    md+='## '+f.icon+' '+f.label+'\n\n'+val+'\n\n';
+  });
+
+  var safe=name.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'market';
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download='시장규모-'+safe+'-'+today+'.md';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+
+/* ══════════════════════════════════════════
+   시작
+   ══════════════════════════════════════════ */
+renderFields();
+(async function(){
+  var fromLink=await loadFromHash();
+  if(!fromLink) loadLocal();
+  normState();
+  if(!data.tamUnit) data.tamUnit='억원';
+  if(!data.baseYear) data.baseYear=String(new Date().getFullYear());
+  syncInputs();
+  onEdit();
+  if(isShared){
+    document.getElementById('sharedBanner').className='shared-banner show';
+    document.getElementById('doc').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+})();
+</script>
+<script>(function(){var k='tf_manage_market';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

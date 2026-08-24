@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인터랙티브 딥러닝 최적화 시뮬레이터</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        
+        body { font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>:root{--bg:#f8fafc;--card:#fff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--color-indigo-50:#eff6ff!important;--color-indigo-100:#dbeafe!important;--color-indigo-200:#bfdbfe!important;--color-indigo-300:#93c5fd!important;--color-indigo-400:#60a5fa!important;--color-indigo-500:#3b82f6!important;--color-indigo-600:#2563eb!important;--color-indigo-700:#1d4ed8!important;--color-indigo-800:#1e40af!important;--color-indigo-900:#1e3a8a!important;--color-indigo-950:#172554!important;--color-blue-50:#eff6ff!important;--color-blue-100:#dbeafe!important;--color-blue-200:#bfdbfe!important;--color-blue-300:#93c5fd!important;--color-blue-400:#60a5fa!important;--color-blue-500:#3b82f6!important;--color-blue-600:#2563eb!important;--color-blue-700:#1d4ed8!important;--color-blue-800:#1e40af!important;--color-blue-900:#1e3a8a!important;--color-blue-950:#172554!important;--color-sky-50:#eff6ff!important;--color-sky-100:#dbeafe!important;--color-sky-200:#bfdbfe!important;--color-sky-300:#93c5fd!important;--color-sky-400:#60a5fa!important;--color-sky-500:#3b82f6!important;--color-sky-600:#2563eb!important;--color-sky-700:#1d4ed8!important;--color-sky-800:#1e40af!important;--color-sky-900:#1e3a8a!important;--color-sky-950:#172554!important;--color-cyan-50:#eff6ff!important;--color-cyan-100:#dbeafe!important;--color-cyan-200:#bfdbfe!important;--color-cyan-300:#93c5fd!important;--color-cyan-400:#60a5fa!important;--color-cyan-500:#3b82f6!important;--color-cyan-600:#2563eb!important;--color-cyan-700:#1d4ed8!important;--color-cyan-800:#1e40af!important;--color-cyan-900:#1e3a8a!important;--color-cyan-950:#172554!important;--color-violet-50:#eef2ff!important;--color-violet-100:#e0e7ff!important;--color-violet-200:#c7d2fe!important;--color-violet-300:#a5b4fc!important;--color-violet-400:#818cf8!important;--color-violet-500:#6366f1!important;--color-violet-600:#4f46e5!important;--color-violet-700:#4338ca!important;--color-violet-800:#3730a3!important;--color-violet-900:#312e81!important;--color-violet-950:#1e1b4b!important;--color-purple-50:#eef2ff!important;--color-purple-100:#e0e7ff!important;--color-purple-200:#c7d2fe!important;--color-purple-300:#a5b4fc!important;--color-purple-400:#818cf8!important;--color-purple-500:#6366f1!important;--color-purple-600:#4f46e5!important;--color-purple-700:#4338ca!important;--color-purple-800:#3730a3!important;--color-purple-900:#312e81!important;--color-purple-950:#1e1b4b!important;--color-fuchsia-50:#eef2ff!important;--color-fuchsia-100:#e0e7ff!important;--color-fuchsia-200:#c7d2fe!important;--color-fuchsia-300:#a5b4fc!important;--color-fuchsia-400:#818cf8!important;--color-fuchsia-500:#6366f1!important;--color-fuchsia-600:#4f46e5!important;--color-fuchsia-700:#4338ca!important;--color-fuchsia-800:#3730a3!important;--color-fuchsia-900:#312e81!important;--color-fuchsia-950:#1e1b4b!important;}body{background-color:#f8fafc!important;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px)!important;background-size:40px 40px!important;background-attachment:fixed!important;}.df-header{position:sticky;top:0;z-index:100;max-width:1400px;margin:0 auto;width:100%;border-bottom:1px solid rgba(0,0,0,.1);background:rgba(248,250,252,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}.df-header-in{max-width:1400px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;}.df-logo{display:flex;align-items:center;gap:12px;}.df-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none;}.df-brand em{color:#ea580c;font-style:normal;}.df-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0;}.df-title{font-size:13px;color:#64748b;}.df-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}.df-back:hover{color:#1e293b;border-color:rgba(0,0,0,.3);}.df-header.dark{background:rgba(2,6,23,.85);border-bottom:1px solid rgba(255,255,255,.1);}.df-header.dark .df-sep{background:rgba(255,255,255,.18);}.df-header.dark .df-title{color:#94a3b8;}.df-header.dark .df-back{color:#94a3b8;border-color:rgba(255,255,255,.18);}.df-header.dark .df-back:hover{color:#f1f5f9;border-color:rgba(255,255,255,.4);}body,button,input,select,textarea,h1,h2,h3,h4,h5,p,span,div,label,li,a,td,th{font-family:'Noto Sans KR','Pretendard',system-ui,-apple-system,sans-serif;}.df-brand,code,pre,.font-mono{font-family:'Space Mono',monospace;}.df-header,.df-header *{line-height:1.3;}.df-subhead{max-width:1400px;margin:0 auto;width:100%;padding:22px 24px 4px;}.df-subhead-in{display:flex;align-items:center;gap:14px;}.df-subhead-ic{font-size:24px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px;flex-shrink:0;}.df-subhead-t{font-size:20px;font-weight:800;color:#1e293b;letter-spacing:-.01em;line-height:1.2;}.df-subhead-s{font-size:13px;color:#64748b;margin-top:3px;line-height:1.4;}.df-tabbar{max-width:1400px;margin:0 auto;width:100%;padding:12px 24px 0;}.df-tabbar-in{display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:4px;overflow-x:auto;width:fit-content;max-width:100%;}@media(max-width:640px){.df-header-in{padding:12px 14px;}.df-title{display:none;}.df-subhead{padding:16px 14px 4px;}.df-subhead-t{font-size:17px;}.df-subhead-ic{width:40px;height:40px;font-size:20px;}.df-tabbar{padding:10px 14px 0;}}</style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+<header class="df-header"><div class="df-header-in"><div class="df-logo"><a href="https://dataforge.ai.kr" class="df-brand">DATA<em>FORGE</em></a><div class="df-sep"></div><div class="df-title">하이퍼파라미터 튜닝</div></div><a href="https://dataforge.ai.kr" class="df-back">← DataForge 홈</a></div></header><div class="df-subhead"><div class="df-subhead-in"><div class="df-subhead-ic">🎛️</div><div><h1 class="df-subhead-t">하이퍼파라미터 튜닝</h1><p class="df-subhead-s">학습률·배치·에포크·옵티마이저가 학습에 미치는 영향을 실험합니다</p></div></div></div>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xs border border-slate-100 flex flex-col gap-6">
+                <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">🕹️ 하이퍼파라미터 설정</h2>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-700">Learning Rate (학습률)</label>
+                        <span id="lrVal" class="text-sm font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-sm">0.1</span>
+                    </div>
+                    <input type="range" id="lr" min="0.01" max="1.0" step="0.01" value="0.1" class="w-full accent-indigo-600">
+                    <p class="text-xs text-slate-400 mt-1">너무 크면 튕겨 나가고(Overshooting), 너무 작으면 학습이 지연됩니다.</p>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-700">Batch Size (배치 크기)</label>
+                        <span id="batchVal" class="text-sm font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-sm">32</span>
+                    </div>
+                    <input type="range" id="batchSize" min="4" max="128" step="4" value="32" class="w-full accent-indigo-600">
+                    <p class="text-xs text-slate-400 mt-1">작을수록 노이즈(무작위성)가 심해지지만 local minimum 탈출에 유리합니다.</p>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-700">Epochs (총 에포크)</label>
+                        <span id="epochVal" class="text-sm font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-sm">50</span>
+                    </div>
+                    <input type="range" id="epochs" min="10" max="100" step="5" value="50" class="w-full accent-indigo-600">
+                    <p class="text-xs text-slate-400 mt-1">전체 데이터를 몇 번 반복해서 학습할지 결정합니다.</p>
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-slate-700 block mb-2">Optimizer (최적화 알고리즘)</label>
+                    <select id="optimizer" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-medium focus:outline-indigo-600">
+                        <option value="sgd">SGD (기본 경사하강법)</option>
+                        <option value="momentum">Momentum (관성 추가)</option>
+                        <option value="adam" selected>Adam (방향 + 속도 자동 조절)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <button id="btnStart" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-xs transition-colors cursor-pointer">
+                        🚀 학습 시작
+                    </button>
+                    <button id="btnReset" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-xl transition-colors cursor-pointer">
+                        🔄 초기화
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 flex flex-col gap-6">
+                <div class="grid grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-xs">
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Current Epoch</p>
+                        <p id="currEpoch" class="text-2xl font-bold text-slate-800 font-mono mt-1">0</p>
+                    </div>
+                    <div class="text-center border-x border-slate-100">
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Current Loss</p>
+                        <p id="currLoss" class="text-2xl font-bold text-rose-500 font-mono mt-1">0.0000</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Step / Progress</p>
+                        <p id="currProgress" class="text-2xl font-bold text-emerald-500 font-mono mt-1">0%</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">📉 Loss Curve (손실 곡선)</h3>
+                    <div class="relative w-full h-72">
+                        <canvas id="lossChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 text-slate-300 p-6 rounded-2xl shadow-xs">
+                    <h3 class="text-lg font-bold text-white mb-3">💡 원리 빠르게 이해하기</h3>
+                    <ul class="space-y-2 text-sm leading-relaxed">
+                        <li>• <strong class="text-indigo-400">Batch Size가 작으면:</strong> 한 번에 일부 데이터만 보고 방향을 틀기 때문에 Loss 곡선이 거칠고 요동칩니다(노이즈 발생). 하지만 연산 속도가 빠르고 좁은 골짜기(Local Minimum)를 탈출하기 쉽습니다.</li>
+                        <li>• <strong class="text-indigo-400">Learning Rate가 너무 크면:</strong> 최소점을 지나쳐버려 가중치가 수렴하지 못하고 위아래로 진동하거나 발산합니다.</li>
+                        <li>• <strong class="text-indigo-400">Adam 옵티마이저는:</strong> 과거의 기울기를 기억하고(Momentum), 가중치마다 학습률을 다르게 조절하여(AdaGrad) 가장 안정적인 경로로 수렴하도록 돕습니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 요소 연결
+        const lrInput = document.getElementById('lr');
+        const batchInput = document.getElementById('batchSize');
+        const epochInput = document.getElementById('epochs');
+        const optSelect = document.getElementById('optimizer');
+        
+        const lrVal = document.getElementById('lrVal');
+        const batchVal = document.getElementById('batchVal');
+        const epochVal = document.getElementById('epochVal');
+
+        const btnStart = document.getElementById('btnStart');
+        const btnReset = document.getElementById('btnReset');
+
+        const currEpochText = document.getElementById('currEpoch');
+        const currLossText = document.getElementById('currLoss');
+        const currProgressText = document.getElementById('currProgress');
+
+        // 슬라이더 값 동기화
+        lrInput.addEventListener('input', () => lrVal.textContent = lrInput.value);
+        batchInput.addEventListener('input', () => batchVal.textContent = batchInput.value);
+        epochInput.addEventListener('input', () => epochVal.textContent = epochInput.value);
+
+        // Chart.js 초기화
+        const ctx = document.getElementById('lossChart').getContext('2d');
+        let lossChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Loss',
+                    data: [],
+                    borderColor: 'rgb(244, 63, 94)',
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 1,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Steps (Iterations)' }, grid: { display: false } },
+                    y: { title: { display: true, text: 'Loss' }, min: 0 }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        let animationFrameId = null;
+        let isTraining = false;
+
+        // 가상의 Loss 곡선 생성 함수 (Batch Size에 따른 노이즈 반영)
+        function trainSimulation() {
+            const lr = parseFloat(lrInput.value);
+            const batchSize = parseInt(batchInput.value);
+            const totalEpochs = parseInt(epochInput.value);
+            const optimizer = optSelect.value;
+
+            // 배치가 작을수록 스텝 수가 늘어남 (1 Epoch 내 가상 데이터 수 = 128개 기준)
+            const stepsPerEpoch = Math.max(1, Math.floor(128 / batchSize));
+            const totalSteps = totalEpochs * stepsPerEpoch;
+
+            let currentStep = 0;
+            let loss = 2.5; // 초기 가상 Loss
+            
+            lossChart.data.labels = [];
+            lossChart.data.datasets[0].data = [];
+
+            // 최적화 방식 및 파라미터 상태 변수
+            let velocity = 0; 
+            const beta = 0.9; // Momentum 및 Adam용
+            let m = 0, v = 0; // Adam용
+            const beta1 = 0.9, beta2 = 0.999, epsilon = 1e-8;
+
+            isTraining = true;
+            btnStart.disabled = true;
+            btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+
+            function step() {
+                if (!isTraining || currentStep >= totalSteps) {
+                    stopTraining();
+                    return;
+                }
+
+                currentStep++;
+
+                // 1. 기본 경사 계산 (이상적인 수렴 곡선 방향)
+                // 가상의 타겟 0.1을 향해 기울기 유도
+                let gradient = (loss - 0.1) * 0.15; 
+
+                // 2. 배치 크기에 따른 무작위 노이즈 추가 (작을수록 요동침)
+                // Batch=4 이면 노이즈가 강하고, Batch=128 이면 매우 매끄러움
+                const noiseScale = Math.max(0, (128 - batchSize) / 128) * 0.4;
+                const noise = (Math.random() - 0.5) * noiseScale;
+                gradient += noise;
+
+                // 3. 옵티마이저 알고리즘 적용
+                if (optimizer === 'sgd') {
+                    // 과도한 lr일 경우 진동 유발
+                    loss -= lr * gradient * 1.5; 
+                } else if (optimizer === 'momentum') {
+                    velocity = beta * velocity + lr * gradient;
+                    loss -= velocity;
+                } else if (optimizer === 'adam') {
+                    m = beta1 * m + (1 - beta1) * gradient;
+                    v = beta2 * v + (1 - beta2) * (gradient * gradient);
+                    const mHat = m / (1 - Math.pow(beta1, currentStep));
+                    const vHat = v / (1 - Math.pow(beta2, currentStep));
+                    loss -= (lr * 0.7) * mHat / (Math.sqrt(vHat) + epsilon);
+                }
+
+                // 4. 비정상적인 발산(Overshooting) 처리 예외 로직
+                if (lr > 0.6 && optimizer === 'sgd') {
+                    loss += Math.random() * 0.3; // 큰 학습률로 인한 이탈 현상 시뮬레이션
+                }
+
+                if (loss < 0) loss = 0.001; // 하한선
+
+                // UI 및 차트 데이터 갱신
+                const currentEpoch = Math.floor(currentStep / stepsPerEpoch);
+                currEpochText.textContent = currentEpoch;
+                currLossText.textContent = loss.toFixed(4);
+                currProgressText.textContent = Math.min(100, Math.floor((currentStep / totalSteps) * 100)) + '%';
+
+                lossChart.data.labels.push(currentStep);
+                lossChart.data.datasets[0].data.push(loss);
+                lossChart.update('none'); // 매끄러운 렌더링을 위해 애니메이션 효과 없음 처리
+
+                // 애니메이션 프레임 제어 (초당 약 30~60번 갱신)
+                animationFrameId = requestAnimationFrame(step);
+            }
+
+            step();
+        }
+
+        function stopTraining() {
+            isTraining = false;
+            btnStart.disabled = false;
+            btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        function resetSimulation() {
+            stopTraining();
+            currEpochText.textContent = '0';
+            currLossText.textContent = '0.0000';
+            currProgressText.textContent = '0%';
+            lossChart.data.labels = [];
+            lossChart.data.datasets[0].data = [];
+            lossChart.update();
+        }
+
+        btnStart.addEventListener('click', () => {
+            resetSimulation();
+            trainSimulation();
+        });
+        btnReset.addEventListener('click', resetSimulation);
+    </script>
+</body>
+</html>

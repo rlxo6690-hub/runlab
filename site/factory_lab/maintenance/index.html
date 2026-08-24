@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>설비 점검 이력 — DataForge Factory Lab</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#0284c7;--accent2:#ea580c;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:var(--accent2);font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:15px;font-weight:700;color:var(--text);}
+.logo-title span{color:var(--accent);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;font-family:'Noto Sans KR', sans-serif;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);text-decoration:none;}
+
+/* ── Page ── */
+.page{padding:32px 24px 80px;}
+
+/* ── Intro box ── */
+.intro-box{background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.ds-selector{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.search-input{border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text);background:var(--card2);font-family:'Noto Sans KR',sans-serif;outline:none;width:220px;}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(2,132,199,.1);}
+.ds-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;}
+.ds-btn:hover{color:var(--text);}
+.ds-btn.active{background:rgba(2,132,199,0.12);border-color:rgba(2,132,199,0.4);color:var(--accent);}
+.btn-search{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:background .15s;}
+.btn-search:hover{background:#0369a1;}
+.total-count{font-size:12px;color:var(--muted);white-space:nowrap;}
+.total-count strong{color:var(--text);}
+
+/* ── Table ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--card2);border-bottom:2px solid var(--border);padding:10px 12px;text-align:left;font-weight:600;color:var(--muted);white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(2,132,199,.03);cursor:pointer;}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600;}
+.badge-정상{background:#f0fdf4;color:#16a34a;}
+.badge-주의{background:#fffbeb;color:#d97706;}
+.badge-불량{background:#fef2f2;color:#dc2626;}
+
+/* ── Load more ── */
+.load-more-wrap{text-align:center;margin-top:16px;}
+.btn-more{background:var(--card2);color:var(--muted);border:1px solid var(--border2);border-radius:8px;padding:9px 28px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s;}
+.btn-more:hover{border-color:var(--accent);color:var(--text);}
+.btn-more.hidden{display:none;}
+.loading-msg{text-align:center;font-size:12px;color:var(--dim);padding:12px;display:none;}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:var(--r);width:90%;max-width:560px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.12);border:1px solid var(--border);}
+.modal-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h3{font-size:15px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);line-height:1;}
+.modal-body{padding:16px 20px 20px;}
+.detail-row{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg);font-size:13px;}
+.detail-row:last-child{border-bottom:none;}
+.detail-label{color:var(--muted);width:100px;flex-shrink:0;font-size:12px;}
+.detail-value{color:var(--text);font-weight:500;}
+
+@media(max-width:600px){.site-header{padding:12px 16px;}.page{padding:20px 16px 60px;}.search-input{width:100%;}}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/factory_lab/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>설비 점검</span> 이력</div>
+  </div>
+  <a href="/factory_lab/" class="header-back">← Factory Lab</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>실습 포인트</strong>
+    "더보기" 클릭(AJAX 로딩) → 반복 수집 &nbsp;|&nbsp; 행 클릭 → 모달 팝업 → 상세 데이터 추출 &nbsp;|&nbsp; 결과 필터 버튼
+  </div>
+
+  <!-- 필터 -->
+  <div class="a-card">
+    <div class="a-card-title">검색 · 필터</div>
+    <div class="filter-bar">
+      <div class="ds-selector">
+        <input type="text" id="search-input" class="search-input" placeholder="설비명, 점검자, 위치 검색...">
+        <button class="ds-btn active result-filter" data-result="">전체</button>
+        <button class="ds-btn result-filter" data-result="정상">정상</button>
+        <button class="ds-btn result-filter" data-result="주의">주의</button>
+        <button class="ds-btn result-filter" data-result="불량">불량</button>
+        <button class="btn-search" id="search-btn">검색</button>
+      </div>
+      <span class="total-count">총 <strong id="total-count">-</strong>건</span>
+    </div>
+  </div>
+
+  <!-- 테이블 -->
+  <div class="a-card">
+    <div class="a-card-title">점검 이력</div>
+    <div class="table-wrap">
+      <table id="maintenance-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>설비명</th><th>설비코드</th><th>위치</th>
+            <th>점검일</th><th>점검유형</th><th>점검자</th><th>결과</th><th>다음점검일</th>
+          </tr>
+        </thead>
+        <tbody id="maint-tbody">
+          <tr><td colspan="9" style="text-align:center;color:var(--dim);padding:24px;">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="loading-msg" id="loading-indicator">데이터를 불러오는 중...</div>
+    <div class="load-more-wrap">
+      <button class="btn-more hidden" id="load-more-btn">더보기</button>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<!-- 모달 -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">설비 점검 상세</h3>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-content">로딩 중...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentOffset = 0, currentResult = '', currentSearch = '', isLoading = false;
+
+function loadData(reset) {
+  if (isLoading) return;
+  if (reset) { currentOffset = 0; document.getElementById('maint-tbody').innerHTML = ''; }
+  isLoading = true;
+  document.getElementById('loading-indicator').style.display = 'block';
+
+  fetch(`?ajax=1&offset=${currentOffset}&result=${encodeURIComponent(currentResult)}&q=${encodeURIComponent(currentSearch)}`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('total-count').textContent = data.total;
+      const tbody = document.getElementById('maint-tbody');
+      if (reset && data.rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--dim);padding:24px;">데이터가 없습니다.</td></tr>';
+      }
+      data.rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = row.id;
+        tr.title = '클릭하여 상세 보기';
+        tr.innerHTML = `
+          <td style="font-family:'Space Mono',monospace;font-size:12px;color:var(--dim)">${row.id}</td>
+          <td><strong>${esc(row.equipment)}</strong></td>
+          <td style="font-size:12px;color:var(--muted)">${esc(row.equipment_code)}</td>
+          <td>${esc(row.location)}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:12px">${row.check_date}</td>
+          <td>${esc(row.check_type)}</td>
+          <td>${esc(row.inspector)}</td>
+          <td><span class="badge badge-${esc(row.result)}">${esc(row.result)}</span></td>
+          <td style="font-family:'Space Mono',monospace;font-size:12px">${row.next_check || '-'}</td>
+        `;
+        tr.addEventListener('click', () => openModal(row.id));
+        tbody.appendChild(tr);
+      });
+      currentOffset += data.rows.length;
+      document.getElementById('load-more-btn').classList.toggle('hidden', !data.has_more);
+    })
+    .finally(() => {
+      isLoading = false;
+      document.getElementById('loading-indicator').style.display = 'none';
+    });
+}
+
+function openModal(id) {
+  document.getElementById('detail-modal').classList.add('open');
+  document.getElementById('modal-content').innerHTML = '로딩 중...';
+  fetch(`?detail=${id}`)
+    .then(r => r.json())
+    .then(d => {
+      const colors = {정상:'var(--green)', 주의:'var(--amber)', 불량:'var(--red)'};
+      document.getElementById('modal-title').textContent = d.equipment + ' 점검 상세';
+      document.getElementById('modal-content').innerHTML = `
+        <div class="detail-row"><span class="detail-label">설비명</span><span class="detail-value" id="m-equipment">${esc(d.equipment)}</span></div>
+        <div class="detail-row"><span class="detail-label">설비코드</span><span class="detail-value" id="m-code">${esc(d.equipment_code)}</span></div>
+        <div class="detail-row"><span class="detail-label">위치</span><span class="detail-value" id="m-location">${esc(d.location)}</span></div>
+        <div class="detail-row"><span class="detail-label">점검일</span><span class="detail-value" id="m-date">${d.check_date}</span></div>
+        <div class="detail-row"><span class="detail-label">점검유형</span><span class="detail-value" id="m-type">${esc(d.check_type)}</span></div>
+        <div class="detail-row"><span class="detail-label">점검자</span><span class="detail-value" id="m-inspector">${esc(d.inspector)}</span></div>
+        <div class="detail-row"><span class="detail-label">점검결과</span><span class="detail-value" id="m-result" style="color:${colors[d.result]||'inherit'};font-weight:700">${esc(d.result)}</span></div>
+        <div class="detail-row"><span class="detail-label">비고</span><span class="detail-value" id="m-notes" style="white-space:pre-line">${esc(d.notes)}</span></div>
+        <div class="detail-row"><span class="detail-label">다음 점검일</span><span class="detail-value" id="m-next">${d.next_check || '-'}</span></div>
+      `;
+    });
+}
+
+function esc(str) {
+  if (!str) return '-';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+document.getElementById('load-more-btn').addEventListener('click', () => loadData(false));
+document.getElementById('modal-close').addEventListener('click', () => document.getElementById('detail-modal').classList.remove('open'));
+document.getElementById('detail-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('detail-modal')) document.getElementById('detail-modal').classList.remove('open');
+});
+document.getElementById('search-btn').addEventListener('click', () => {
+  currentSearch = document.getElementById('search-input').value;
+  loadData(true);
+});
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { currentSearch = e.target.value; loadData(true); }
+});
+document.querySelectorAll('.result-filter').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.result-filter').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentResult = this.dataset.result;
+    loadData(true);
+  });
+});
+
+loadData(true);
+</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

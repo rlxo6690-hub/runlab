@@ -1,0 +1,17 @@
+{"t":0,"agent":"a40d391","agent_type":"untracked-native-fork","event":"agent_stop","success":true,"synthetic":true,"telemetry_status":"unmatched_stop","reason":"SubagentStop arrived without a matching SubagentStart; native Agent/Task start telemetry was not observed."}
+{"t":0,"agent":"abca873","agent_type":"untracked-native-fork","event":"agent_stop","success":true,"synthetic":true,"telemetry_status":"unmatched_stop","reason":"SubagentStop arrived without a matching SubagentStart; native Agent/Task start telemetry was not observed."}
+{"t":0,"agent":"a09281c","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"acd0dc7","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a540066","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a0d953d","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a0b8f7b","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ac87eeb","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a546286","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a4d37f7","agent_type":"untracked-native-fork","event":"agent_stop","success":true,"synthetic":true,"telemetry_status":"unmatched_stop","reason":"SubagentStop arrived without a matching SubagentStart; native Agent/Task start telemetry was not observed."}
+{"t":0,"agent":"a546286","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":53327}
+{"t":0,"agent":"a0d953d","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":227138}
+{"t":0,"agent":"acd0dc7","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":266484}
+{"t":0,"agent":"a540066","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":275051}
+{"t":0,"agent":"a09281c","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":327457}
+{"t":0,"agent":"ac87eeb","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":441218}
+{"t":0,"agent":"a0b8f7b","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":505147}

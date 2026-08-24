@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge ADS — 광고 데이터 생성 · 분석 플랫폼</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="DataForge ADS — 광고 데이터 생성 · 분석 플랫폼">
+<meta property="og:description" content="캠페인·CTR·ROAS·A/B 테스트 광고 데이터를 실시간으로 생성하는 교육용 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="css/style.css?v=1784972875">
+<script>
+  window.ADS_DEMO_LIMIT = 100;
+  window.ADS_AUTHED     = false;
+</script>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">ADS · 광고 데이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<!-- ── Demo Banner ─────────────────────────────────────────── -->
+<div id="demo-banner" class="demo-banner"></div>
+
+<!-- ── Tab Bar ─────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="campaign"    onclick="switchTab('campaign')">📣 <span class="tab-label">캠페인 성과</span></button>
+  <button class="tab-btn"        data-tab="creative"    onclick="switchTab('creative')">🎨 <span class="tab-label">소재/채널 분석</span></button>
+  <button class="tab-btn"        data-tab="abtest"      onclick="switchTab('abtest')">🔬 <span class="tab-label">A/B 테스트</span></button>
+  <button class="tab-btn"        data-tab="conversion"  onclick="switchTab('conversion')">🎯 <span class="tab-label">전환 분석</span></button>
+  <button class="tab-btn"        data-tab="attribution" onclick="switchTab('attribution')">🗺️ <span class="tab-label">멀티터치 어트리뷰션</span></button>
+  <button class="tab-btn"        data-tab="schema"      onclick="switchTab('schema')">📋 <span class="tab-label">스키마 가이드</span></button>
+</div>
+
+<!-- ── Main Content ────────────────────────────────────────── -->
+<div class="main-pad">
+
+<!-- ═══════════════════════════════════════════════════════════
+     CAMPAIGN TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-campaign" class="tab-panel">
+  <div class="section-info">
+    📣 <strong>활용 도구:</strong> Python Pandas · Google Looker Studio · Power BI · Meta Ads Manager<br>
+    캠페인별 노출·클릭·전환·비용 KPI 데이터를 생성합니다. 퍼포먼스 마케팅 분석, ROI 최적화, 예측 모델 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">광고 플랫폼</label>
+        <select id="campaign-platform" class="input-field">
+          <option value="meta" selected>Meta (Facebook/Instagram)</option>
+          <option value="google">Google Ads (검색/디스플레이)</option>
+          <option value="kakao">카카오 모먼트</option>
+          <option value="naver">네이버 광고</option>
+          <option value="tiktok">TikTok Ads</option>
+          <option value="multichannel">멀티채널 통합</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">캠페인 수</label>
+        <input type="number" id="campaign-count" class="input-field" value="5" min="1" max="50">
+      </div>
+      <div class="form-group">
+        <label class="input-label">데이터 기간 (일)</label>
+        <input type="number" id="campaign-days" class="input-field" value="90" min="7" max="365">
+      </div>
+      <div class="form-group">
+        <label class="input-label">목표 유형</label>
+        <select id="campaign-objective" class="input-field">
+          <option value="awareness">인지도 (노출 중심)</option>
+          <option value="traffic" selected>트래픽 (클릭 중심)</option>
+          <option value="conversion">전환 (구매/가입 중심)</option>
+          <option value="roas">ROAS 최적화</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">일 예산 범위 (원)</label>
+        <div class="inline-row">
+          <input type="number" id="campaign-budget-min" class="input-field" value="100000" step="10000">
+          <span style="color:var(--text-dim);font-size:12px">~</span>
+          <input type="number" id="campaign-budget-max" class="input-field" value="1000000" step="10000">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">KPI 컬럼 선택</span></div>
+      <div id="campaign-cols"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">분석 난이도</span></div>
+    <div id="campaign-diff"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="campaign-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateCampaign()" class="btn btn-primary" style="background:#a855f7;border-color:#a855f7">🚀 데이터 생성</button>
+    <button onclick="downloadData('campaign')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('campaign')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="campaign-progress" class="progress-wrap" style="display:none"><div id="campaign-bar" class="progress-bar" style="width:0%;background:#a855f7"></div></div>
+  <div id="campaign-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="campaign-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="campaign-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="campaign-stat-ctr" style="color:#a855f7">-</div><div class="stat-label">평균 CTR</div></div>
+      <div class="stat-box"><div class="stat-value" id="campaign-stat-roas" style="color:var(--accent3)">-</div><div class="stat-label">평균 ROAS</div></div>
+      <div class="stat-box"><div class="stat-value" id="campaign-stat-spend" style="color:var(--warning)">-</div><div class="stat-label">총 광고비</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span>
+        <button onclick="copyData('campaign')" class="btn btn-outline" style="padding:3px 10px;font-size:10px;border-color:var(--border);color:var(--text-dim)">COPY ALL</button>
+      </div>
+      <div id="campaign-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CREATIVE TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-creative" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🎨 <strong>소재/채널 분석:</strong> 광고 소재(이미지/영상/텍스트)와 채널별 성과 비교 데이터를 생성합니다.<br>
+    소재 최적화 분석, 채널 믹스 최적화, 크리에이티브 성과 예측 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">소재 유형 조합</label>
+        <select id="creative-types" class="input-field">
+          <option value="all" selected>전체 (이미지·영상·캐러셀·텍스트)</option>
+          <option value="image_video">이미지 + 영상</option>
+          <option value="image_only">이미지 전용</option>
+          <option value="video_only">영상 전용</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">채널 수</label>
+        <input type="number" id="creative-channels" class="input-field" value="4" min="2" max="8">
+      </div>
+      <div class="form-group">
+        <label class="input-label">소재 수 (채널당)</label>
+        <input type="number" id="creative-count" class="input-field" value="10" min="3" max="50">
+      </div>
+      <div class="form-group">
+        <label class="input-label">측정 기간 (일)</label>
+        <input type="number" id="creative-days" class="input-field" value="30" min="7" max="90">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">분석 난이도</span></div>
+      <div id="creative-diff"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="creative-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateCreative()" class="btn btn-primary" style="background:#a855f7;border-color:#a855f7">🚀 데이터 생성</button>
+    <button onclick="downloadData('creative')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('creative')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="creative-progress" class="progress-wrap" style="display:none"><div id="creative-bar" class="progress-bar" style="width:0%;background:#a855f7"></div></div>
+  <div id="creative-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="creative-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="creative-stat-total">-</div><div class="stat-label">총 소재 수</div></div>
+      <div class="stat-box"><div class="stat-value" id="creative-stat-best" style="color:var(--accent3)">-</div><div class="stat-label">최고 CTR 소재</div></div>
+      <div class="stat-box"><div class="stat-value" id="creative-stat-video" style="color:#a855f7">-</div><div class="stat-label">영상 평균 CTR</div></div>
+      <div class="stat-box"><div class="stat-value" id="creative-stat-image" style="color:var(--accent)">-</div><div class="stat-label">이미지 평균 CTR</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="creative-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     A/B TEST TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-abtest" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🔬 <strong>A/B 테스트 데이터:</strong> 대조군/실험군 전환율 실험 데이터를 생성합니다.<br>
+    통계적 유의성 검정(t-test, chi-square), 베이지안 A/B 테스트 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">실험 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">테스트 유형</label>
+        <select id="ab-type" class="input-field">
+          <option value="landing" selected>랜딩페이지 전환율</option>
+          <option value="email">이메일 오픈율/CTR</option>
+          <option value="push">푸시 알림 CTR</option>
+          <option value="price">가격 실험 (구매 전환)</option>
+          <option value="cta">CTA 버튼 (색상/문구)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">그룹 수 (A/B/C...)</label>
+        <select id="ab-groups" class="input-field">
+          <option value="2" selected>2개 (A/B)</option>
+          <option value="3">3개 (A/B/C)</option>
+          <option value="4">4개 (A/B/C/D)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">총 샘플 수 (노출)</label>
+        <input type="number" id="ab-samples" class="input-field" value="10000" min="500" max="1000000">
+      </div>
+      <div class="form-group">
+        <label class="input-label">대조군 기본 전환율 (%)</label>
+        <input type="number" id="ab-base-cvr" class="input-field" value="3.5" min="0.1" max="50" step="0.1">
+      </div>
+      <div class="form-group">
+        <label class="input-label">실험군 효과 크기 (%)</label>
+        <input type="number" id="ab-effect" class="input-field" value="15" min="-50" max="200" step="1">
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">양수: 실험군 개선 / 음수: 악화</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">출력 레벨</span></div>
+      <div id="ab-level"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="abtest-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateABTest()" class="btn btn-primary" style="background:#a855f7;border-color:#a855f7">🚀 데이터 생성</button>
+    <button onclick="downloadData('abtest')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('abtest')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="abtest-progress" class="progress-wrap" style="display:none"><div id="abtest-bar" class="progress-bar" style="width:0%;background:#a855f7"></div></div>
+  <div id="abtest-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="abtest-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="abtest-stat-total">-</div><div class="stat-label">총 샘플</div></div>
+      <div class="stat-box"><div class="stat-value" id="abtest-stat-a" style="color:var(--text-dim)">-</div><div class="stat-label">A군 전환율</div></div>
+      <div class="stat-box"><div class="stat-value" id="abtest-stat-b" style="color:#a855f7">-</div><div class="stat-label">B군 전환율</div></div>
+      <div class="stat-box"><div class="stat-value" id="abtest-stat-lift" style="color:var(--accent3)">-</div><div class="stat-label">Lift</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="abtest-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONVERSION TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-conversion" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🎯 <strong>전환 분석:</strong> 시간대·요일·디바이스·지역별 전환 데이터를 생성합니다.<br>
+    전환 퍼널 분석, 시간대 입찰 최적화, 디바이스 타겟팅 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">전환 유형</label>
+        <select id="conv-type" class="input-field">
+          <option value="purchase" selected>구매 (e-Commerce)</option>
+          <option value="signup">회원가입</option>
+          <option value="lead">리드 (문의/신청)</option>
+          <option value="install">앱 설치</option>
+          <option value="view">영상 시청완료</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">데이터 기간 (일)</label>
+        <input type="number" id="conv-days" class="input-field" value="60" min="7" max="180">
+      </div>
+      <div class="form-group">
+        <label class="input-label">일 평균 전환 수</label>
+        <input type="number" id="conv-daily-cvr" class="input-field" value="200" min="10" max="10000">
+      </div>
+      <div class="form-group">
+        <label class="input-label">집계 단위</label>
+        <select id="conv-grain" class="input-field">
+          <option value="hourly" selected>시간별</option>
+          <option value="daily">일별</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">분석 난이도</span></div>
+      <div id="conv-diff"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="conv-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateConversion()" class="btn btn-primary" style="background:#a855f7;border-color:#a855f7">🚀 데이터 생성</button>
+    <button onclick="downloadData('conv')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('conv')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="conv-progress" class="progress-wrap" style="display:none"><div id="conv-bar" class="progress-bar" style="width:0%;background:#a855f7"></div></div>
+  <div id="conv-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="conv-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="conv-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="conv-stat-cvr" style="color:#a855f7">-</div><div class="stat-label">전체 전환율</div></div>
+      <div class="stat-box"><div class="stat-value" id="conv-stat-peak" style="color:var(--warning)">-</div><div class="stat-label">피크 시간대</div></div>
+      <div class="stat-box"><div class="stat-value" id="conv-stat-mobile" style="color:var(--accent)">-</div><div class="stat-label">모바일 비율</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="conv-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ATTRIBUTION TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-attribution" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🗺️ <strong>멀티터치 어트리뷰션:</strong> 구매 여정 내 터치포인트 기여도 데이터를 생성합니다.<br>
+    First Touch, Last Touch, Linear, Data-Driven 어트리뷰션 모델 비교 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">전환 고객 수</label>
+        <input type="number" id="attr-customers" class="input-field" value="1000" min="100" max="20000">
+      </div>
+      <div class="form-group">
+        <label class="input-label">평균 터치포인트 수</label>
+        <input type="number" id="attr-touchpoints" class="input-field" value="4" min="2" max="10">
+      </div>
+      <div class="form-group">
+        <label class="input-label">채널 조합</label>
+        <select id="attr-channels" class="input-field">
+          <option value="standard" selected>표준 (검색·SNS·디스플레이·이메일)</option>
+          <option value="digital">디지털 전체 (7채널)</option>
+          <option value="omni">옴니채널 (온·오프라인)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">전환 기간 (일)</label>
+        <input type="number" id="attr-window" class="input-field" value="30" min="7" max="90">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">분석 난이도</span></div>
+      <div id="attr-diff"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="attr-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateAttribution()" class="btn btn-primary" style="background:#a855f7;border-color:#a855f7">🚀 데이터 생성</button>
+    <button onclick="downloadData('attr')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('attr')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="attr-progress" class="progress-wrap" style="display:none"><div id="attr-bar" class="progress-bar" style="width:0%;background:#a855f7"></div></div>
+  <div id="attr-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="attr-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="attr-stat-total">-</div><div class="stat-label">터치포인트 수</div></div>
+      <div class="stat-box"><div class="stat-value" id="attr-stat-customers">-</div><div class="stat-label">전환 고객</div></div>
+      <div class="stat-box"><div class="stat-value" id="attr-stat-top" style="color:#a855f7">-</div><div class="stat-label">최다 채널 (Last)</div></div>
+      <div class="stat-box"><div class="stat-value" id="attr-stat-avg" style="color:var(--accent3)">-</div><div class="stat-label">평균 터치포인트</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="attr-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHEMA TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-schema" class="tab-panel" style="display:none">
+  <div class="section-info">
+    📋 <strong>데이터 스키마 가이드:</strong> 각 탭에서 생성되는 데이터의 컬럼 정의, 타입, 범위를 확인하세요.
+  </div>
+
+    <div class="card">
+    <div class="card-header"><span class="card-title">캠페인 성과 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">date</td>
+            <td class="col-type">DATE</td>
+            <td>날짜</td>
+            <td style="color:var(--text-dim);font-size:11px">2023-01-01~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">campaign_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>캠페인 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">CAM-001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">campaign_name</td>
+            <td class="col-type">VARCHAR</td>
+            <td>캠페인명</td>
+            <td style="color:var(--text-dim);font-size:11px">-</td>
+          </tr>
+                    <tr>
+            <td class="col-name">platform</td>
+            <td class="col-type">VARCHAR</td>
+            <td>광고 플랫폼</td>
+            <td style="color:var(--text-dim);font-size:11px">Meta/Google/Kakao/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">objective</td>
+            <td class="col-type">VARCHAR</td>
+            <td>캠페인 목표</td>
+            <td style="color:var(--text-dim);font-size:11px">awareness/traffic/conversion</td>
+          </tr>
+                    <tr>
+            <td class="col-name">impressions</td>
+            <td class="col-type">INT</td>
+            <td>노출수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">clicks</td>
+            <td class="col-type">INT</td>
+            <td>클릭수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">ctr_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>CTR (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">0.1~10</td>
+          </tr>
+                    <tr>
+            <td class="col-name">spend</td>
+            <td class="col-type">INT</td>
+            <td>광고비 (원)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">conversions</td>
+            <td class="col-type">INT</td>
+            <td>전환수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">cpa</td>
+            <td class="col-type">INT</td>
+            <td>CPA (원)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">roas</td>
+            <td class="col-type">FLOAT</td>
+            <td>ROAS (배)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~10</td>
+          </tr>
+                    <tr>
+            <td class="col-name">revenue</td>
+            <td class="col-type">INT</td>
+            <td>광고 기여 매출</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">소재 분석 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">creative_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>소재 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">CRE-0001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">creative_type</td>
+            <td class="col-type">VARCHAR</td>
+            <td>소재 유형</td>
+            <td style="color:var(--text-dim);font-size:11px">image/video/carousel/text</td>
+          </tr>
+                    <tr>
+            <td class="col-name">channel</td>
+            <td class="col-type">VARCHAR</td>
+            <td>채널</td>
+            <td style="color:var(--text-dim);font-size:11px">meta/google/kakao/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">format</td>
+            <td class="col-type">VARCHAR</td>
+            <td>광고 형식</td>
+            <td style="color:var(--text-dim);font-size:11px">feed/story/banner/search</td>
+          </tr>
+                    <tr>
+            <td class="col-name">impressions</td>
+            <td class="col-type">INT</td>
+            <td>노출수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">clicks</td>
+            <td class="col-type">INT</td>
+            <td>클릭수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">ctr_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>CTR (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~10</td>
+          </tr>
+                    <tr>
+            <td class="col-name">video_view_rate</td>
+            <td class="col-type">FLOAT</td>
+            <td>영상 시청률 (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">video 전용</td>
+          </tr>
+                    <tr>
+            <td class="col-name">quality_score</td>
+            <td class="col-type">FLOAT</td>
+            <td>품질 점수 (1~10)</td>
+            <td style="color:var(--text-dim);font-size:11px">1~10</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">A/B 테스트 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">user_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>사용자 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">USR-000001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">group</td>
+            <td class="col-type">VARCHAR</td>
+            <td>실험 그룹</td>
+            <td style="color:var(--text-dim);font-size:11px">A/B/C</td>
+          </tr>
+                    <tr>
+            <td class="col-name">exposed_at</td>
+            <td class="col-type">DATETIME</td>
+            <td>노출 시각</td>
+            <td style="color:var(--text-dim);font-size:11px">-</td>
+          </tr>
+                    <tr>
+            <td class="col-name">converted</td>
+            <td class="col-type">INT</td>
+            <td>전환 여부</td>
+            <td style="color:var(--text-dim);font-size:11px">0/1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">converted_at</td>
+            <td class="col-type">DATETIME</td>
+            <td>전환 시각</td>
+            <td style="color:var(--text-dim);font-size:11px">null or datetime</td>
+          </tr>
+                    <tr>
+            <td class="col-name">time_to_convert</td>
+            <td class="col-type">INT</td>
+            <td>전환까지 시간(초)</td>
+            <td style="color:var(--text-dim);font-size:11px">null or 0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">revenue</td>
+            <td class="col-type">FLOAT</td>
+            <td>전환 매출 (원)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">device</td>
+            <td class="col-type">VARCHAR</td>
+            <td>디바이스</td>
+            <td style="color:var(--text-dim);font-size:11px">mobile/desktop/tablet</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">전환 분석 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">datetime</td>
+            <td class="col-type">DATETIME</td>
+            <td>시각</td>
+            <td style="color:var(--text-dim);font-size:11px">-</td>
+          </tr>
+                    <tr>
+            <td class="col-name">date</td>
+            <td class="col-type">DATE</td>
+            <td>날짜</td>
+            <td style="color:var(--text-dim);font-size:11px">-</td>
+          </tr>
+                    <tr>
+            <td class="col-name">hour</td>
+            <td class="col-type">INT</td>
+            <td>시 (0~23)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~23</td>
+          </tr>
+                    <tr>
+            <td class="col-name">day_of_week</td>
+            <td class="col-type">VARCHAR</td>
+            <td>요일</td>
+            <td style="color:var(--text-dim);font-size:11px">월~일</td>
+          </tr>
+                    <tr>
+            <td class="col-name">device</td>
+            <td class="col-type">VARCHAR</td>
+            <td>디바이스</td>
+            <td style="color:var(--text-dim);font-size:11px">mobile/desktop/tablet</td>
+          </tr>
+                    <tr>
+            <td class="col-name">region</td>
+            <td class="col-type">VARCHAR</td>
+            <td>지역</td>
+            <td style="color:var(--text-dim);font-size:11px">서울/경기/부산/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">channel</td>
+            <td class="col-type">VARCHAR</td>
+            <td>유입 채널</td>
+            <td style="color:var(--text-dim);font-size:11px">paid/organic/direct/email</td>
+          </tr>
+                    <tr>
+            <td class="col-name">impressions</td>
+            <td class="col-type">INT</td>
+            <td>노출수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">clicks</td>
+            <td class="col-type">INT</td>
+            <td>클릭수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">conversions</td>
+            <td class="col-type">INT</td>
+            <td>전환수</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">cvr_pct</td>
+            <td class="col-type">FLOAT</td>
+            <td>CVR (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~100</td>
+          </tr>
+                    <tr>
+            <td class="col-name">revenue</td>
+            <td class="col-type">INT</td>
+            <td>매출 (원)</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">멀티터치 어트리뷰션 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">customer_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>고객 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">USR-0001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">journey_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>여정 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">JRN-0001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">touch_seq</td>
+            <td class="col-type">INT</td>
+            <td>터치 순서</td>
+            <td style="color:var(--text-dim);font-size:11px">1~N</td>
+          </tr>
+                    <tr>
+            <td class="col-name">touch_channel</td>
+            <td class="col-type">VARCHAR</td>
+            <td>터치 채널</td>
+            <td style="color:var(--text-dim);font-size:11px">search/social/email/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">touch_type</td>
+            <td class="col-type">VARCHAR</td>
+            <td>터치 유형</td>
+            <td style="color:var(--text-dim);font-size:11px">first/mid/last</td>
+          </tr>
+                    <tr>
+            <td class="col-name">touch_at</td>
+            <td class="col-type">DATETIME</td>
+            <td>터치 시각</td>
+            <td style="color:var(--text-dim);font-size:11px">-</td>
+          </tr>
+                    <tr>
+            <td class="col-name">is_conversion</td>
+            <td class="col-type">INT</td>
+            <td>전환 여부</td>
+            <td style="color:var(--text-dim);font-size:11px">0/1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">first_touch_credit</td>
+            <td class="col-type">FLOAT</td>
+            <td>First Touch 기여도</td>
+            <td style="color:var(--text-dim);font-size:11px">0~1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">linear_credit</td>
+            <td class="col-type">FLOAT</td>
+            <td>Linear 기여도</td>
+            <td style="color:var(--text-dim);font-size:11px">0~1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">last_touch_credit</td>
+            <td class="col-type">FLOAT</td>
+            <td>Last Touch 기여도</td>
+            <td style="color:var(--text-dim);font-size:11px">0~1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">revenue</td>
+            <td class="col-type">INT</td>
+            <td>전환 매출</td>
+            <td style="color:var(--text-dim);font-size:11px">0~</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header"><span class="card-title">활용 도구 매핑</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>도구</th><th>추천 데이터</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td style="white-space:nowrap">📊 Google Looker Studio</td>
+            <td style="color:var(--text-dim)">캠페인 성과 → 광고 KPI 대시보드</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🐍 Python / Pandas</td>
+            <td style="color:var(--text-dim)">A/B 테스트 → t-test, chi-square, 베이지안 검정</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🤖 Scikit-learn</td>
+            <td style="color:var(--text-dim)">전환 분석 → 전환 예측 분류 모델 (Random Forest)</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">📈 Tableau / Power BI</td>
+            <td style="color:var(--text-dim)">어트리뷰션 → 채널 기여도 비교 시각화</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🎯 Meta Ads API</td>
+            <td style="color:var(--text-dim)">캠페인 데이터 → 실제 API 형식 비교 실습</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">⚡ Google BigQuery</td>
+            <td style="color:var(--text-dim)">대용량 캠페인 로그 → SQL 집계 분석</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.main-pad -->
+
+<!-- ── Login Modal ─────────────────────────────────────────── -->
+<div id="login-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">🎓 교육 코드 입력</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:20px">
+      강사에게 받은 교육 코드를 입력하면 데이터 생성 제한이 해제됩니다.
+    </p>
+    <div class="form-group">
+      <label class="input-label">교육 코드</label>
+      <input type="text" id="login-pw" class="input-field" placeholder="EDU-XXXX-XXXX"
+             style="text-transform:uppercase;letter-spacing:2px;font-family:'Space Mono',monospace"
+             oninput="this.value=this.value.toUpperCase()"
+             onkeydown="if(event.key==='Enter')submitLogin()">
+    </div>
+    <div id="login-err" style="color:var(--danger);font-size:12px;min-height:18px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="submitLogin()" class="btn btn-primary" style="flex:1;background:#a855f7;border-color:#a855f7">입력 확인</button>
+      <button onclick="document.getElementById('login-modal').classList.remove('show')" class="btn btn-outline">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/generators.js?v=1773892535"></script>
+<script src="js/formatters.js?v=1773892535"></script>
+<script src="js/app.js?v=1778995458"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.ADS_AUTHED) setAuthed(true);
+  initAdsPage();
+});
+</script>
+<script>(function(){var k='tf_ads';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=ads&page='+encodeURIComponent(location.pathname)});})();</script>
+</div><!-- /.page-wrap -->
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

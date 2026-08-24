@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XGBoost 알고리즘 시각화 인터랙티브 가이드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { indigo:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},blue:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},sky:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},cyan:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a',950:'#172554'},violet:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},purple:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},fuchsia:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'} },
+  fontFamily: { sans: ['Noto Sans KR','Pretendard','system-ui','sans-serif'],
+               mono: ['Space Mono','monospace'] }
+} } };
+</script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- MathJax for rendering formulas (Modern browsers do not need polyfill.io for MathJax 3) -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght=300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .tree-node {
+            transition: all 0.3s ease;
+        }
+        .tree-node:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+        }
+        @keyframes pulse-highlight {
+            0%, 100% { transform: scale(1); border-color: rgba(99, 102, 241, 0.4); box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
+            50% { transform: scale(1.03); border-color: rgba(99, 102, 241, 1); box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
+        }
+        .animating-card {
+            animation: pulse-highlight 0.8s infinite ease-in-out;
+            z-index: 10;
+        }
+    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>:root{--bg:#f8fafc;--card:#fff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--accent:#2563eb;--accent2:#6366f1;--amber:#d97706;--green:#059669;--red:#dc2626;--orange:#ea580c;--r:10px;--color-indigo-50:#eff6ff!important;--color-indigo-100:#dbeafe!important;--color-indigo-200:#bfdbfe!important;--color-indigo-300:#93c5fd!important;--color-indigo-400:#60a5fa!important;--color-indigo-500:#3b82f6!important;--color-indigo-600:#2563eb!important;--color-indigo-700:#1d4ed8!important;--color-indigo-800:#1e40af!important;--color-indigo-900:#1e3a8a!important;--color-indigo-950:#172554!important;--color-blue-50:#eff6ff!important;--color-blue-100:#dbeafe!important;--color-blue-200:#bfdbfe!important;--color-blue-300:#93c5fd!important;--color-blue-400:#60a5fa!important;--color-blue-500:#3b82f6!important;--color-blue-600:#2563eb!important;--color-blue-700:#1d4ed8!important;--color-blue-800:#1e40af!important;--color-blue-900:#1e3a8a!important;--color-blue-950:#172554!important;--color-sky-50:#eff6ff!important;--color-sky-100:#dbeafe!important;--color-sky-200:#bfdbfe!important;--color-sky-300:#93c5fd!important;--color-sky-400:#60a5fa!important;--color-sky-500:#3b82f6!important;--color-sky-600:#2563eb!important;--color-sky-700:#1d4ed8!important;--color-sky-800:#1e40af!important;--color-sky-900:#1e3a8a!important;--color-sky-950:#172554!important;--color-cyan-50:#eff6ff!important;--color-cyan-100:#dbeafe!important;--color-cyan-200:#bfdbfe!important;--color-cyan-300:#93c5fd!important;--color-cyan-400:#60a5fa!important;--color-cyan-500:#3b82f6!important;--color-cyan-600:#2563eb!important;--color-cyan-700:#1d4ed8!important;--color-cyan-800:#1e40af!important;--color-cyan-900:#1e3a8a!important;--color-cyan-950:#172554!important;--color-violet-50:#eef2ff!important;--color-violet-100:#e0e7ff!important;--color-violet-200:#c7d2fe!important;--color-violet-300:#a5b4fc!important;--color-violet-400:#818cf8!important;--color-violet-500:#6366f1!important;--color-violet-600:#4f46e5!important;--color-violet-700:#4338ca!important;--color-violet-800:#3730a3!important;--color-violet-900:#312e81!important;--color-violet-950:#1e1b4b!important;--color-purple-50:#eef2ff!important;--color-purple-100:#e0e7ff!important;--color-purple-200:#c7d2fe!important;--color-purple-300:#a5b4fc!important;--color-purple-400:#818cf8!important;--color-purple-500:#6366f1!important;--color-purple-600:#4f46e5!important;--color-purple-700:#4338ca!important;--color-purple-800:#3730a3!important;--color-purple-900:#312e81!important;--color-purple-950:#1e1b4b!important;--color-fuchsia-50:#eef2ff!important;--color-fuchsia-100:#e0e7ff!important;--color-fuchsia-200:#c7d2fe!important;--color-fuchsia-300:#a5b4fc!important;--color-fuchsia-400:#818cf8!important;--color-fuchsia-500:#6366f1!important;--color-fuchsia-600:#4f46e5!important;--color-fuchsia-700:#4338ca!important;--color-fuchsia-800:#3730a3!important;--color-fuchsia-900:#312e81!important;--color-fuchsia-950:#1e1b4b!important;}body{background-color:#f8fafc!important;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px)!important;background-size:40px 40px!important;background-attachment:fixed!important;}.df-header{position:sticky;top:0;z-index:100;max-width:1400px;margin:0 auto;width:100%;border-bottom:1px solid rgba(0,0,0,.1);background:rgba(248,250,252,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}.df-header-in{max-width:1400px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;}.df-logo{display:flex;align-items:center;gap:12px;}.df-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#2563eb;letter-spacing:2px;text-decoration:none;}.df-brand em{color:#ea580c;font-style:normal;}.df-sep{width:1px;height:16px;background:rgba(0,0,0,.15);flex-shrink:0;}.df-title{font-size:13px;color:#64748b;}.df-back{font-size:12px;color:#64748b;text-decoration:none;border:1px solid rgba(0,0,0,.15);padding:5px 14px;border-radius:8px;transition:.2s;white-space:nowrap;}.df-back:hover{color:#1e293b;border-color:rgba(0,0,0,.3);}.df-header.dark{background:rgba(2,6,23,.85);border-bottom:1px solid rgba(255,255,255,.1);}.df-header.dark .df-sep{background:rgba(255,255,255,.18);}.df-header.dark .df-title{color:#94a3b8;}.df-header.dark .df-back{color:#94a3b8;border-color:rgba(255,255,255,.18);}.df-header.dark .df-back:hover{color:#f1f5f9;border-color:rgba(255,255,255,.4);}body,button,input,select,textarea,h1,h2,h3,h4,h5,p,span,div,label,li,a,td,th{font-family:'Noto Sans KR','Pretendard',system-ui,-apple-system,sans-serif;}.df-brand,code,pre,.font-mono{font-family:'Space Mono',monospace;}.df-header,.df-header *{line-height:1.3;}.df-subhead{max-width:1400px;margin:0 auto;width:100%;padding:22px 24px 4px;}.df-subhead-in{display:flex;align-items:center;gap:14px;}.df-subhead-ic{font-size:24px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:12px;flex-shrink:0;}.df-subhead-t{font-size:20px;font-weight:800;color:#1e293b;letter-spacing:-.01em;line-height:1.2;}.df-subhead-s{font-size:13px;color:#64748b;margin-top:3px;line-height:1.4;}.df-tabbar{max-width:1400px;margin:0 auto;width:100%;padding:12px 24px 0;}.df-tabbar-in{display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:4px;overflow-x:auto;width:fit-content;max-width:100%;}@media(max-width:640px){.df-header-in{padding:12px 14px;}.df-title{display:none;}.df-subhead{padding:16px 14px 4px;}.df-subhead-t{font-size:17px;}.df-subhead-ic{width:40px;height:40px;font-size:20px;}.df-tabbar{padding:10px 14px 0;}}</style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+<header class="df-header"><div class="df-header-in"><div class="df-logo"><a href="https://dataforge.ai.kr" class="df-brand">DATA<em>FORGE</em></a><div class="df-sep"></div><div class="df-title">XGBoost 시각화</div></div><a href="https://dataforge.ai.kr" class="df-back">← DataForge 홈</a></div></header><div class="df-subhead"><div class="df-subhead-in"><div class="df-subhead-ic">⚡</div><div><h1 class="df-subhead-t">XGBoost 시각화</h1><p class="df-subhead-s">목적 함수 설계와 순차적 잔차 전파를 직접 조작합니다</p></div></div></div>
+
+    <!-- Header -->
+    
+
+    <!-- Main Content Grid -->
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- Intro & Concept Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-indigo-500"></i>
+                        XGBoost를 관통하는 핵심 알고리즘 원리
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
+                            <span class="text-2xl mb-2 block">📉</span>
+                            <h3 class="font-bold text-indigo-900 text-sm mb-1">1. 순차 가산 모델(Additive)</h3>
+                            <p class="text-xs text-indigo-800 leading-relaxed">
+                                나무를 한 번에 다 만들지 않습니다. 이전 나무까지 구한 예측 오차(잔차)를 다음 나무가 전달받아, 징검다리를 놓듯 단계적으로 메꿔갑니다.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-violet-50/50 border border-violet-100">
+                            <span class="text-2xl mb-2 block">🎯</span>
+                            <h3 class="font-bold text-violet-900 text-sm mb-1">2. 맞춤형 목적 함수</h3>
+                            <p class="text-xs text-violet-800 leading-relaxed">
+                                합격 확률을 맞추는 <strong>이진 분류(Log-Loss)</strong>와 실제 시험 점수를 맞추는 <strong>선형 회귀(MSE)</strong>에 따라 손실 곡선의 기울기(Gradient)가 수학적으로 전환됩니다.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-amber-50/50 border border-amber-100">
+                            <span class="text-2xl mb-2 block">⚖️</span>
+                            <h3 class="font-bold text-amber-900 text-sm mb-1">3. 리프 규제 가중치</h3>
+                            <p class="text-xs text-amber-800 leading-relaxed">
+                                특정 노드가 오차를 무리해서 전부 책임지지 않도록, 가중치 계산 분모에 L2 규제항 \(\lambda\)를 더하여 극단적인 모델 성장(과적합)을 방어합니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center gap-2">
+                    <span class="bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded text-center sm:text-left">활성 목적 함수</span>
+                    <span id="active-scenario-description" class="font-medium text-slate-700"></span>
+                </div>
+            </div>
+
+            <!-- Configuration / Control Panel -->
+            <div class="bg-slate-900 text-slate-100 rounded-2xl p-6 shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-indigo-400">
+                        <i class="fa-solid fa-gears"></i>
+                        XGBoost 하이퍼파라미터 설정
+                    </h2>
+
+                    <!-- Loss Function Selection -->
+                    <div class="mb-4">
+                        <label class="text-xs text-slate-300 font-bold block mb-1.5"><i class="fa-solid fa-calculator text-indigo-400 mr-1"></i> 목적 함수 (Loss Function)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-loss-classification" class="py-2 px-3 text-xs font-black rounded-lg border transition-all duration-300 text-center flex flex-col items-center justify-center bg-indigo-600 border-indigo-500 text-white">
+                                <span>이진 분류</span>
+                                <span class="text-[9px] font-normal text-indigo-200">Binary Log-Loss</span>
+                            </button>
+                            <button id="btn-loss-regression" class="py-2 px-3 text-xs font-black rounded-lg border transition-all duration-300 text-center flex flex-col items-center justify-center bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-100">
+                                <span>선형 회귀</span>
+                                <span class="text-[9px] font-normal text-slate-400">Continuous MSE</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Learning Rate (Eta) -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">학습률 (Learning Rate, \(\eta\))</label>
+                            <span id="lr-val" class="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800 font-mono">0.3</span>
+                        </div>
+                        <input type="range" id="lr" min="0.05" max="0.8" value="0.3" step="0.05" 
+                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+
+                    <!-- Number of Trees -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">부스팅 트리 수 (Estimators)</label>
+                            <span id="tree-count-val" class="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800 font-mono">3개</span>
+                        </div>
+                        <input type="range" id="tree-count" min="1" max="5" value="3" step="1" 
+                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+
+                    <!-- L2 Regularization (Lambda) -->
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">L2 가중치 규제 (\(\lambda\))</label>
+                            <span id="lambda-val" class="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800 font-mono">1.0</span>
+                        </div>
+                        <input type="range" id="lambda" min="0.1" max="5.0" value="1.0" step="0.5" 
+                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+
+                    <!-- Base Score -->
+                    <div class="mb-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-300 font-medium">초기 예측값 (Base Score)</label>
+                            <span id="base-score-val" class="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800 font-mono">0.5</span>
+                        </div>
+                        <input type="range" id="base-score" min="0.1" max="0.9" value="0.5" step="0.1" 
+                               class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="mt-4 space-y-2">
+                    <button id="btn-animate-boosting" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all duration-300 shadow-md active:scale-95">
+                        <i class="fa-solid fa-play"></i>
+                        부스팅 체인 순차 학습 시작 (애니메이션)
+                    </button>
+                    <button id="btn-retrain" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all duration-300 active:scale-95">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        정적 업데이트
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animation Live Status Bar (Visible only when animating) -->
+        <div id="animation-status-bar" class="hidden bg-slate-900 border border-indigo-500 text-white rounded-2xl p-4 mb-8 shadow-md">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                    </span>
+                    <span id="animation-text" class="text-xs md:text-sm font-bold text-amber-300"></span>
+                </div>
+                <!-- Dynamic progress bars indicating residual transmission -->
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+                    <span id="animation-step">0</span> / <span id="animation-total">0</span> 트리 진행 중
+                </div>
+            </div>
+            <!-- Progress Line -->
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-3">
+                <div id="animation-progress" class="bg-amber-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+
+        <!-- Middle Part 1: Dataset & Residual Tracking (Real-time Updated) -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-database text-violet-500"></i>
+                    학습 데이터 및 실시간 잔차(Residual) 추적 테이블
+                </h2>
+                <span class="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full font-bold">Base Score: <span id="meta-base-score">0.5</span></span>
+            </div>
+            
+            <p class="text-xs text-slate-600 mb-4">
+                우측 '실제값(y)'과 '현재 모델 예측값(\(\hat{y}\))' 사이의 차이가 바로 **잔차(Residual = \(y - \hat{y}\))**입니다. <br>
+                새로운 나무는 이전 단계까지 누적 예측을 완료한 후, 남은 <strong>잔차</strong>를 완벽히 메꾸는 방향으로 계산을 시작합니다.
+            </p>
+
+            <!-- Data Table container -->
+            <div class="overflow-x-auto border border-slate-100 rounded-xl">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-150">
+                            <th class="p-3 font-bold text-slate-600 text-center">ID</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">📚 공부 시간 (h)</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">💤 수면 시간 (h)</th>
+                            <th class="p-3 font-bold text-slate-600 text-center">🎯 출석률 (%)</th>
+                            <th id="th-actual-y" class="p-3 font-bold text-slate-600 text-center bg-indigo-50 text-indigo-900">실제값 (y)</th>
+                            <th id="th-pred-y" class="p-3 font-bold text-slate-600 text-center bg-violet-50 text-violet-900">최종 모델 예측값 (\(\hat{y}\))</th>
+                            <th id="th-residual" class="p-3 font-bold text-slate-600 text-center bg-rose-50 text-rose-900">최종 잔차 (Residual)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataset-tbody">
+                        <!-- JS Dynamically Populates here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Reset Data Button -->
+            <button id="btn-reset-data" class="w-full mt-4 border border-dashed border-slate-200 text-slate-600 hover:bg-slate-50 text-xs py-2.5 rounded-lg font-medium flex items-center justify-center gap-1">
+                <i class="fa-solid fa-rotate"></i> 초기 샘플 데이터로 복원하기
+            </button>
+        </div>
+
+        <!-- Middle Part 2: Visualizing the Boosting Tree Chain -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8 flex flex-col">
+            <div class="mb-6 pb-4 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-indigo-500"></i>
+                    부스팅 학습 체인 (각 트리들의 상세 기여도)
+                </h2>
+                <p class="text-xs text-slate-500 mt-1">
+                    각 나무는 독립적이지 않으며 <strong>앞선 나무들의 오류(잔차)를 차례대로 물려받아 성장</strong>합니다. <br>
+                    나무를 클릭하여 각 나무가 어떤 feature와 오차 가중치를 이용해 학습되었는지 내부 구조와 가중치 수식을 검사해보세요.
+                </p>
+            </div>
+
+            <!-- Boosted Tree Tabs/Grid -->
+            <div id="tree-tabs-container" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+                <!-- Dynamically populated with miniatures of the sequential Trees -->
+            </div>
+
+            <!-- Detailed Inspector for Selected XGB Tree -->
+            <div class="bg-slate-50/70 rounded-2xl p-4 md:p-6 border border-slate-200/60 mt-2">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                    <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i>
+                        XGBoost 트리 <span id="current-tree-label" class="text-indigo-600 font-black">#1</span> 상세 분석
+                    </h3>
+                    <div id="leaf-formula-badge" class="text-xs text-indigo-900 bg-indigo-50 px-3 py-1 rounded border border-indigo-100 font-medium">
+                        <i class="fa-solid fa-calculator mr-1"></i>
+                        리프 가중치 계산 공식: <span class="font-mono text-xs font-bold">Weight = \(- \frac{\sum \text{Gradient}}{\sum \text{Hessian} + \lambda}\)</span>
+                    </div>
+                </div>
+
+                <!-- Tree and Sample Details Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Residuals used to Train this particular tree -->
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                                이번 트리 학습에 사용된 입력 '잔차'
+                            </h4>
+                            <p class="text-[11px] text-slate-500 leading-relaxed mb-3">
+                                앞선 나무들이 해결하지 못한 잔차(Residual)가 본 트리의 타겟값(\(g_i\))이 됩니다.
+                            </p>
+                            
+                            <div class="overflow-y-auto max-h-[220px] border border-slate-150 rounded-lg">
+                                <table class="w-full text-[10px] text-center border-collapse">
+                                    <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+                                        <tr>
+                                            <th class="p-1.5">ID</th>
+                                            <th class="p-1.5">공부</th>
+                                            <th class="p-1.5">수면</th>
+                                            <th class="p-1.5">출석</th>
+                                            <th class="p-1.5 bg-violet-50">입력 잔차(오차)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="residual-table-body">
+                                        <!-- Loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Stats or metadata -->
+                        <div class="mt-4 pt-3 border-t border-slate-200/60 text-[10px] text-slate-500 space-y-1">
+                            <div class="flex justify-between">
+                                <span id="lbl-residual-sum">이번 단계 잔차 절대 합계:</span>
+                                <span class="font-bold text-slate-700 font-mono" id="current-residual-sum">0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>이전 단계 대비 개선도:</span>
+                                <span class="font-bold text-indigo-600 font-mono" id="current-improvement-rate">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tree SVG Container (Detailed) -->
+                    <div class="lg:col-span-2 bg-slate-900 rounded-xl p-4 flex flex-col justify-between min-h-[380px] relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-code-fork"></i>
+                                트리 구조 및 분기점별 리프 가중치(Weight) 계산
+                            </span>
+                            <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded" id="tree-meta-info">
+                                Depth: 2
+                            </span>
+                        </div>
+
+                        <!-- SVG Drawing Area -->
+                        <div class="flex-grow flex items-center justify-center bg-slate-950 rounded-lg border border-slate-800 p-2 overflow-auto" id="tree-svg-wrapper">
+                            <!-- SVG generated dynamically -->
+                            <svg id="tree-svg" class="w-full h-full min-h-[280px]" viewBox="0 0 500 300" preserveAspectRatio="xMidYMid meet"></svg>
+                        </div>
+
+                        <div class="mt-2 flex justify-between items-center text-[10px] text-slate-400">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-500 inline-block"></span> 리프 가중치(Weight) 수치</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-violet-600 inline-block"></span> 분기 기준 피처</span>
+                            <span>💡 화살표는 조건 부합 여부에 따라 좌/우로 나누어 집니다. (Yes: 왼쪽 / No: 오른쪽)</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Real-time Accumulative Boosting Inference Simulator -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-square-poll-vertical text-indigo-600"></i>
+                실시간 아디티브(Additive) 예측 시뮬레이터
+            </h2>
+            <p class="text-xs text-slate-500 mb-6">가상의 학생 데이터를 변경하면, 각 트리가 예측한 보정치들을 순서대로 통과하며 최종 예측치를 점진적으로 보정하는 과정을 보여줍니다.</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Target Student Sliders -->
+                <div class="lg:col-span-4 bg-slate-50 p-5 rounded-xl border border-slate-200/60">
+                    <h3 class="text-xs font-bold text-slate-800 mb-4 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-user-gear text-slate-600"></i> 테스트할 가상 학생 프로필
+                    </h3>
+                    
+                    <!-- 공부시간 -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+                                <span>📚</span> 공부 시간
+                            </label>
+                            <span id="sim-study-val" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">6.0시간</span>
+                        </div>
+                        <input type="range" id="sim-study" min="0" max="10" value="6.0" step="0.5" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+
+                    <!-- 수면시간 -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+                                <span>💤</span> 수면 시간
+                            </label>
+                            <span id="sim-sleep-val" class="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded border border-violet-200">6.5시간</span>
+                        </div>
+                        <input type="range" id="sim-sleep" min="3" max="10" value="6.5" step="0.5" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-violet-600">
+                    </div>
+
+                    <!-- 출석률 -->
+                    <div class="mb-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-slate-700 font-semibold flex items-center gap-1.5">
+                                <span>🎯</span> 출석률
+                            </label>
+                            <span id="sim-attendance-val" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">85%</span>
+                        </div>
+                        <input type="range" id="sim-attendance" min="30" max="100" value="85" step="5" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600">
+                    </div>
+                </div>
+
+                <!-- Gradient Accumulation Progress Dashboard -->
+                <div class="lg:col-span-8 flex flex-col md:flex-row justify-around items-center gap-6 p-4">
+                    
+                    <!-- Left: Step-by-step weight sum visualizer -->
+                    <div class="w-full md:w-7/12 space-y-3">
+                        <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-list-check"></i> 부스팅 예측 누적 연산 흐름
+                        </h4>
+                        
+                        <div class="space-y-2" id="boosting-flow-container">
+                            <!-- JS Injection of the additive pipeline step-by-step -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Big Dial / Visual Result Card -->
+                    <div class="w-full md:w-5/12 bg-slate-950 text-white rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg border border-slate-800 min-h-[250px]">
+                        <span id="lbl-verdict-title" class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-1">XGBoost 최종 판정</span>
+                        
+                        <!-- Prediction Rate / Score -->
+                        <div id="final-probability" class="text-4xl font-black text-white mt-1 mb-2 font-mono">0.0%</div>
+                        
+                        <!-- Main prediction badge -->
+                        <div id="final-verdict-badge" class="px-5 py-1.5 rounded-full text-xs font-black tracking-wide mb-4 flex items-center gap-2 shadow-inner">
+                            <!-- PASS or FAIL Dynamic -->
+                        </div>
+
+                        <!-- Progress / Probability bar -->
+                        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden mb-3 border border-slate-700">
+                            <div id="prob-ratio-bar" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-500" style="width: 50%"></div>
+                        </div>
+
+                        <div id="lbl-formula-description" class="text-[10px] text-slate-400 leading-relaxed">
+                            누적 가중치 합 \(F(X)\)을 시그모이드 함수 <br>
+                            \(\sigma(F(X)) = \frac{1}{1 + e^{-F(X)}}\) 로 변환한 최종 확률입니다.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Detailed Explanation Section -->
+    <section class="bg-slate-100 py-10 mt-12 border-t border-slate-200">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center font-mono">🔍 수식으로 파헤치는 손실 함수별 오차 학습 구조</h2>
+            
+            <div class="space-y-6 text-sm text-slate-700 leading-relaxed">
+                <!-- Log Loss explanation cards -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-base text-slate-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">1</span>
+                        이진 분류 (Binary Log-Loss) 동작 공식
+                    </h3>
+                    <p class="text-slate-600 mb-3">
+                        예측 모델의 마지막 지점에는 활성화 함수 \(\sigma(F(X)) = \frac{1}{1 + e^{-F(X)}}\) 가 배치되어 값을 실수에서 0과 1 사이의 확률값 \(p_i\)로 반전시킵니다. <br>
+                        이때, Log-Loss 손실 함수를 1차 미분(Gradient, \(g_i\))하고 2차 미분(Hessian, \(h_i\))하면 다음과 같습니다.
+                    </p>
+                    <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-indigo-950 overflow-x-auto">
+                        <ul>
+                            <li><strong>Gradient (\(g_i\))</strong> = \(p_i - y_i\) (예측 확률에서 실제 참값 0 또는 1을 뺀 값)</li>
+                            <li><strong>Hessian (\(h_i\))</strong> = \(p_i(1 - p_i)\) (이진 분류 확률 분포의 곡률 및 분산)</li>
+                            <li><strong>가중치 공식 (\(w\))</strong> = \(- \frac{\sum (p_i - y_i)}{\sum p_i(1-p_i) + \lambda}\)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- MSE explanation cards -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-base text-slate-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">2</span>
+                        선형 회귀 (Continuous MSE) 동작 공식
+                    </h3>
+                    <p class="text-slate-600 mb-3">
+                        중간 예측치에 어떠한 비선형 활성함수도 씌우지 않으므로, 예측값 \(\hat{y}_i = F(X)\) 가 곧 결과 점수가 됩니다. <br>
+                        손실 함수가 평균 제곱 오차 \(L = \frac{1}{2}(y_i - \hat{y}_i)^2\) 이므로, 이를 모델 예측값 \(\hat{y}_i\)로 미분하면 다음으로 극도로 간소화됩니다.
+                    </p>
+                    <div class="bg-slate-50 p-3 rounded-lg font-mono text-xs text-indigo-950 overflow-x-auto font-mono">
+                        <ul>
+                            <li><strong>Gradient (\(g_i\))</strong> = \(\hat{y}_i - y_i\) (예측 점수에서 실제 시험 점수를 뺀 단순 오차)</li>
+                            <li><strong>Hessian (\(h_i\))</strong> = \(1.0\) (2차 미분 시 변수가 소거되므로 항상 고정 상수)</li>
+                            <li><strong>가중치 공식 (\(w\))</strong> = \(- \frac{\sum (\hat{y}_i - y_i)}{N + \lambda}\) (단순 평균 오차에 L2 규제가 추가된 형태)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Gradient Boosting Animation explanation -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-base text-slate-900 mb-2 flex items-center gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">3</span>
+                        어떻게 잔차가 순차 전파되며 전송되나요?
+                    </h3>
+                    <p class="text-slate-600">
+                        첫 번째 나무가 기본 점수(Base Score)로부터 출발하여 발생하는 첫 번째 오차(잔차)를 수렴시킵니다. <br>
+                        두 번째 나무를 만들 때, 데이터 샘플의 타겟 정보는 원래의 정답이 아니라 <strong>"첫 번째 나무까지 마친 예측 모델의 남아있는 오차"</strong>가 타겟 데이터로 전환됩니다. 애니메이션 기능은 이 연쇄적인 잔차 재계산 및 누적합 연산을 한 눈에 투영합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs">
+        <p>© 2026 XGBoost Interactive Academy. 이 시뮬레이터는 최신 XGBoost 알고리즘 수식을 브라우저 내에서 가볍게 근사화하여 재현한 고성능 교육 모델입니다.</p>
+    </footer>
+
+    <!-- JavaScript Engine -->
+    <script>
+        // --- CONSTANTS & MOCK DATA ---
+        // Dataset holds targets for both Classification (y_class: 0/1) and Regression (y_reg: 0-100)
+        const DEFAULT_DATASET = [
+            { id: 1, study: 8.5, sleep: 7.0, attendance: 95, y_class: 1, y_reg: 95 },
+            { id: 2, study: 3.5, sleep: 5.5, attendance: 70, y_class: 0, y_reg: 40 },
+            { id: 3, study: 6.0, sleep: 8.0, attendance: 85, y_class: 1, y_reg: 80 },
+            { id: 4, study: 2.0, sleep: 6.0, attendance: 40, y_class: 0, y_reg: 30 },
+            { id: 5, study: 7.0, sleep: 6.5, attendance: 50, y_class: 0, y_reg: 55 }, 
+            { id: 6, study: 4.5, sleep: 7.5, attendance: 90, y_class: 1, y_reg: 75 }, 
+            { id: 7, study: 9.0, sleep: 4.0, attendance: 100, y_class: 1, y_reg: 90 },
+            { id: 8, study: 5.0, sleep: 5.0, attendance: 75, y_class: 0, y_reg: 45 },
+            { id: 9, study: 1.5, sleep: 8.0, attendance: 80, y_class: 0, y_reg: 35 },
+            { id: 10, study: 7.5, sleep: 5.0, attendance: 90, y_class: 1, y_reg: 85 }
+        ];
+
+        let currentDataset = JSON.parse(JSON.stringify(DEFAULT_DATASET));
+        let xgboostModel = {
+            trees: [],
+            baseScore: 0.5,
+            objective: 'classification' // 'classification' or 'regression'
+        };
+        let activeTreeIndex = 0;
+        let isAnimating = false;
+
+        const FEATURES = ['study', 'sleep', 'attendance'];
+        const FEATURE_LABELS = {
+            study: '📚 공부',
+            sleep: '💤 수면',
+            attendance: '🎯 출석'
+        };
+
+        // Sigmoid helper functions for Log-Loss objective
+        function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
+        }
+        function inverseSigmoid(p) {
+            return Math.log(p / (1 - p));
+        }
+
+        // --- XGBOOST ALGORITHM ENGINE ---
+
+        // Build a single Gradient Boosting Regression Tree targeting residuals
+        function buildBoostingTree(data, remainingFeatures, currentDepth, maxDepth, lambda) {
+            const totalCount = data.length;
+            if (totalCount === 0) {
+                return { isLeaf: true, weight: 0, count: 0, sumG: 0, sumH: 0 };
+            }
+
+            // Calculate overall sum of Gradients and Hessians for current Node
+            const sumG = data.reduce((sum, item) => sum + item.g, 0);
+            const sumH = data.reduce((sum, item) => sum + item.h, 0);
+
+            // Leaf output weight formula: w_j = - (sum_i g_i) / (sum_i h_i + lambda)
+            const nodeWeight = -sumG / (sumH + lambda);
+
+            // Base split criteria check
+            if (currentDepth >= maxDepth || totalCount < 2) {
+                return {
+                    isLeaf: true,
+                    weight: Math.round(nodeWeight * 1000) / 1000,
+                    count: totalCount,
+                    sumG: Math.round(sumG * 100) / 100,
+                    sumH: Math.round(sumH * 100) / 100
+                };
+            }
+
+            let bestGain = -1;
+            let bestSplit = null;
+
+            // Search best split feature & threshold to maximize objective Gain
+            FEATURES.forEach(feature => {
+                const values = data.map(x => x[feature]);
+                const uniqueValues = [...new Set(values)].sort((a,b) => a - b);
+
+                for (let i = 0; i < uniqueValues.length - 1; i++) {
+                    const threshold = (uniqueValues[i] + uniqueValues[i+1]) / 2;
+
+                    const leftData = data.filter(x => x[feature] <= threshold);
+                    const rightData = data.filter(x => x[feature] > threshold);
+
+                    if (leftData.length === 0 || rightData.length === 0) continue;
+
+                    const GL = leftData.reduce((s, x) => s + x.g, 0);
+                    const HL = leftData.reduce((s, x) => s + x.h, 0);
+                    const GR = rightData.reduce((s, x) => s + x.g, 0);
+                    const HR = rightData.reduce((s, x) => s + x.h, 0);
+
+                    // Gain formulation = 1/2 [ GL^2/(HL+lambda) + GR^2/(HR+lambda) - (GL+GR)^2/(HL+HR+lambda) ]
+                    const leftTerm = (GL * GL) / (HL + lambda);
+                    const rightTerm = (GR * GR) / (HR + lambda);
+                    const parentTerm = ((GL + GR) * (GL + GR)) / (HL + HR + lambda);
+                    const gain = 0.5 * (leftTerm + rightTerm - parentTerm);
+
+                    if (gain > bestGain) {
+                        bestGain = gain;
+                        bestSplit = {
+                            feature,
+                            threshold: Math.round(threshold * 100) / 100,
+                            leftData,
+                            rightData,
+                            gain: Math.round(gain * 1000) / 1000
+                        };
+                    }
+                }
+            });
+
+            // If no split actually improves or provides valid gain, fallback to leaf
+            if (!bestSplit || bestSplit.gain <= 0) {
+                return {
+                    isLeaf: true,
+                    weight: Math.round(nodeWeight * 1000) / 1000,
+                    count: totalCount,
+                    sumG: Math.round(sumG * 100) / 100,
+                    sumH: Math.round(sumH * 100) / 100
+                };
+            }
+
+            // Recurse Left and Right
+            return {
+                isLeaf: false,
+                feature: bestSplit.feature,
+                threshold: bestSplit.threshold,
+                gain: bestSplit.gain,
+                count: totalCount,
+                sumG: Math.round(sumG * 100) / 100,
+                sumH: Math.round(sumH * 100) / 100,
+                left: buildBoostingTree(bestSplit.leftData, remainingFeatures, currentDepth + 1, maxDepth, lambda),
+                right: buildBoostingTree(bestSplit.rightData, remainingFeatures, currentDepth + 1, maxDepth, lambda)
+            };
+        }
+
+        // Traverse Tree to fetch leaf prediction weight
+        function predictSingleTree(node, item) {
+            if (node.isLeaf) {
+                return node.weight;
+            }
+            if (item[node.feature] <= node.threshold) {
+                return predictSingleTree(node.left, item);
+            } else {
+                return predictSingleTree(node.right, item);
+            }
+        }
+
+        // Core Gradient Boosting Model Loop
+        // Can be run instantly or with slow step-by-step sequential animation updates
+        function trainXGBoost(silent = false) {
+            const numTrees = parseInt(document.getElementById('tree-count').value);
+            const lr = parseFloat(document.getElementById('lr').value);
+            const lambda = parseFloat(document.getElementById('lambda').value);
+            const baseScore = parseFloat(document.getElementById('base-score').value);
+
+            xgboostModel.baseScore = baseScore;
+            xgboostModel.trees = [];
+
+            // Initialize prediction values for overall data
+            let currentPredictions = currentDataset.map(item => {
+                return {
+                    id: item.id,
+                    predVal: xgboostModel.objective === 'classification' ? inverseSigmoid(baseScore) : baseScore
+                };
+            });
+
+            // Build trees sequentially
+            for (let t = 0; t < numTrees; t++) {
+                // Step 1: Calculate Gradients (g_i) & Hessians (h_i) for each sample
+                const trainingDataWithGradients = currentDataset.map(item => {
+                    const currentPredInfo = currentPredictions.find(p => p.id === item.id);
+                    const y = xgboostModel.objective === 'classification' ? item.y_class : item.y_reg;
+                    
+                    let g, h, residual;
+                    if (xgboostModel.objective === 'classification') {
+                        const p = sigmoid(currentPredInfo.predVal);
+                        g = p - y; 
+                        h = Math.max(p * (1 - p), 0.01); // Hessian
+                        residual = y - p; // residual
+                    } else {
+                        const pred = currentPredInfo.predVal;
+                        g = pred - y; // Gradient is negative residual
+                        h = 1.0; // Hessian for MSE Loss is constantly 1
+                        residual = y - pred;
+                    }
+
+                    return {
+                        ...item,
+                        g,
+                        h,
+                        residual
+                    };
+                });
+
+                // Step 2: Build tree on current residuals (using gradients/hessians)
+                const treeRoot = buildBoostingTree(trainingDataWithGradients, FEATURES, 0, 2, lambda);
+
+                // Step 3: Update overall predictions by adding current tree's learning
+                currentDataset.forEach(item => {
+                    const predInfo = currentPredictions.find(p => p.id === item.id);
+                    const leafWeight = predictSingleTree(treeRoot, item);
+                    predInfo.predVal += lr * leafWeight; // Apply learning rate shrinkage
+                });
+
+                // Save built tree for visual rendering
+                xgboostModel.trees.push({
+                    treeId: t,
+                    root: treeRoot,
+                    inputStates: trainingDataWithGradients
+                });
+            }
+
+            if (activeTreeIndex >= numTrees) {
+                activeTreeIndex = numTrees - 1;
+            }
+
+            if (!silent) {
+                renderDatasetTable(currentPredictions);
+                renderTreeTabs();
+                renderSelectedTreeInspector();
+                runInteractiveInference();
+                triggerMathJax();
+            }
+
+            return currentPredictions;
+        }
+
+        // --- SEQUENTIAL BOOSTING ANIMATION LOGIC ---
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function startBoostingAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const animateBtn = document.getElementById('btn-animate-boosting');
+            const retrainBtn = document.getElementById('btn-retrain');
+            const statusBox = document.getElementById('animation-status-bar');
+            const animText = document.getElementById('animation-text');
+            const animStepNum = document.getElementById('animation-step');
+            const animTotalNum = document.getElementById('animation-total');
+            const animProgressBar = document.getElementById('animation-progress');
+
+            // Disable triggers during training run
+            animateBtn.disabled = true;
+            retrainBtn.disabled = true;
+            statusBox.classList.remove('hidden');
+
+            const numTrees = parseInt(document.getElementById('tree-count').value);
+            const lr = parseFloat(document.getElementById('lr').value);
+            const lambda = parseFloat(document.getElementById('lambda').value);
+            const baseScore = parseFloat(document.getElementById('base-score').value);
+
+            animTotalNum.innerText = numTrees;
+            xgboostModel.trees = [];
+
+            // Clear active tab & prepare UI
+            document.getElementById('tree-tabs-container').innerHTML = '';
+            document.getElementById('tree-svg').innerHTML = '';
+
+            let currentPredictions = currentDataset.map(item => {
+                return {
+                    id: item.id,
+                    predVal: xgboostModel.objective === 'classification' ? inverseSigmoid(baseScore) : baseScore
+                };
+            });
+
+            // Sequential Execution Loop
+            for (let t = 0; t < numTrees; t++) {
+                animStepNum.innerText = t + 1;
+                const progressPct = ((t + 1) / numTrees) * 100;
+                animProgressBar.style.width = `${progressPct}%`;
+
+                // Update text to show active computation state
+                animText.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> 트리 #${t + 1} 생성중... 이전 잔차 연산 및 경사 하강 방향을 정립하고 있습니다.`;
+                await delay(1200);
+
+                // Run math calculations for current Tree
+                const trainingDataWithGradients = currentDataset.map(item => {
+                    const currentPredInfo = currentPredictions.find(p => p.id === item.id);
+                    const y = xgboostModel.objective === 'classification' ? item.y_class : item.y_reg;
+                    
+                    let g, h, residual;
+                    if (xgboostModel.objective === 'classification') {
+                        const p = sigmoid(currentPredInfo.predVal);
+                        g = p - y; 
+                        h = Math.max(p * (1 - p), 0.01);
+                        residual = y - p;
+                    } else {
+                        const pred = currentPredInfo.predVal;
+                        g = pred - y;
+                        h = 1.0;
+                        residual = y - pred;
+                    }
+                    return { ...item, g, h, residual };
+                });
+
+                const treeRoot = buildBoostingTree(trainingDataWithGradients, FEATURES, 0, 2, lambda);
+
+                // Add built tree to model list
+                xgboostModel.trees.push({
+                    treeId: t,
+                    root: treeRoot,
+                    inputStates: trainingDataWithGradients
+                });
+
+                // Set focus to the newly formed tree
+                activeTreeIndex = t;
+                
+                // Partially render tabs & inspector so user sees progress live
+                renderTreeTabs();
+                renderSelectedTreeInspector();
+                
+                // Apply animation highlight to active tree tab card
+                const activeCard = document.getElementById(`tree-tabs-container`).children[t];
+                if (activeCard) activeCard.classList.add('animating-card');
+
+                animText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> 트리 #${t + 1} 완성! 학습률 \(\eta = ${lr}\)의 크기만큼 수축하여 누적 예측에 주입합니다.`;
+                
+                // Apply update to predictions
+                currentDataset.forEach(item => {
+                    const predInfo = currentPredictions.find(p => p.id === item.id);
+                    const leafWeight = predictSingleTree(treeRoot, item);
+                    predInfo.predVal += lr * leafWeight;
+                });
+
+                // Update predictions table live
+                renderDatasetTable(currentPredictions);
+                runInteractiveInference();
+                triggerMathJax();
+
+                await delay(2000);
+
+                if (activeCard) activeCard.classList.remove('animating-card');
+            }
+
+            // Finish animation loop
+            animText.innerHTML = `<i class="fa-solid fa-square-poll-vertical text-amber-400 mr-1"></i> 모든 트리가 완성되었습니다! 최종 예측 확률을 정합화했습니다.`;
+            await delay(1500);
+
+            statusBox.classList.add('hidden');
+            animateBtn.disabled = false;
+            retrainBtn.disabled = false;
+            isAnimating = false;
+
+            // Final refresh to ensure everything is perfect
+            trainXGBoost();
+        }
+
+        // MathJax typeset helper
+        function triggerMathJax() {
+            if (window.MathJax && typeof MathJax.typeset === 'function') {
+                MathJax.typeset();
+            }
+        }
+
+        // --- RENDER FUNCTIONS ---
+
+        // Render input dataset table with current predictions & residuals
+        function renderDatasetTable(currentPreds) {
+            const tbody = document.getElementById('dataset-tbody');
+            tbody.innerHTML = '';
+            document.getElementById('meta-base-score').innerText = xgboostModel.baseScore;
+
+            // Dynamic headers
+            const thY = document.getElementById('th-actual-y');
+            const thPred = document.getElementById('th-pred-y');
+            const thRes = document.getElementById('th-residual');
+
+            if (xgboostModel.objective === 'classification') {
+                thY.innerHTML = `실제값 (y) <span class="block text-[9px] font-normal text-indigo-200">합격여부 [0,1]</span>`;
+                thPred.innerHTML = `최종 모델 예측값 (\(\hat{y}\)) <span class="block text-[9px] font-normal text-violet-200">확률 (Sigmoid)</span>`;
+                thRes.innerHTML = `최종 잔차 (Residual) <span class="block text-[9px] font-normal text-rose-200">\(y - p\)</span>`;
+            } else {
+                thY.innerHTML = `실제값 (y) <span class="block text-[9px] font-normal text-indigo-200">시험 점수 [0-100]</span>`;
+                thPred.innerHTML = `최종 모델 예측값 (\(\hat{y}\)) <span class="block text-[9px] font-normal text-violet-200">점수 누적합</span>`;
+                thRes.innerHTML = `최종 잔차 (Residual) <span class="block text-[9px] font-normal text-rose-200">\(y - \hat{y}\)</span>`;
+            }
+
+            currentDataset.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors text-center";
+                
+                const predInfo = currentPreds ? currentPreds.find(p => p.id === row.id) : null;
+                
+                let yVal, predText, residualText, residualVal;
+                
+                if (xgboostModel.objective === 'classification') {
+                    const probability = predInfo ? sigmoid(predInfo.predVal) : xgboostModel.baseScore;
+                    residualVal = row.y_class - probability;
+
+                    yVal = `
+                        <select onchange="updateRow(${row.id}, 'y_class', this.value)" 
+                                class="border rounded-lg px-2 py-1 font-bold text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
+                            <option value="1" ${row.y_class === 1 ? 'selected' : ''}>1 (Pass)</option>
+                            <option value="0" ${row.y_class === 0 ? 'selected' : ''}>0 (Fail)</option>
+                        </select>
+                    `;
+                    predText = `${(probability * 100).toFixed(1)}%`;
+                    residualText = `${residualVal >= 0 ? '+' : ''}${residualVal.toFixed(2)}`;
+                } else {
+                    const predictedScore = predInfo ? predInfo.predVal : xgboostModel.baseScore;
+                    residualVal = row.y_reg - predictedScore;
+
+                    yVal = `
+                        <input type="number" step="5" min="0" max="100" value="${row.y_reg}" 
+                               class="w-16 text-center border rounded-lg bg-indigo-50 border-indigo-200 py-1 font-bold text-xs text-indigo-800" 
+                               onchange="updateRow(${row.id}, 'y_reg', this.value)">
+                    `;
+                    predText = `${predictedScore.toFixed(1)}점`;
+                    residualText = `${residualVal >= 0 ? '+' : ''}${residualVal.toFixed(1)}`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-slate-400">${row.id}</td>
+                    <td class="p-3">
+                        <input type="number" step="0.5" min="0" max="10" value="${row.study}" 
+                               class="w-16 text-center border rounded-lg bg-white py-1 focus:ring-2 focus:ring-indigo-200 outline-none font-semibold" 
+                               onchange="updateRow(${row.id}, 'study', this.value)">
+                    </td>
+                    <td class="p-3">
+                        <input type="number" step="0.5" min="0" max="10" value="${row.sleep}" 
+                               class="w-16 text-center border rounded-lg bg-white py-1 focus:ring-2 focus:ring-indigo-200 outline-none font-semibold" 
+                               onchange="updateRow(${row.id}, 'sleep', this.value)">
+                    </td>
+                    <td class="p-3">
+                        <input type="number" step="5" min="30" max="100" value="${row.attendance}" 
+                               class="w-16 text-center border rounded-lg bg-white py-1 focus:ring-2 focus:ring-indigo-200 outline-none font-semibold" 
+                               onchange="updateRow(${row.id}, 'attendance', this.value)">
+                    </td>
+                    <td class="p-3 bg-indigo-50/30">
+                        ${yVal}
+                    </td>
+                    <td class="p-3 bg-violet-50/50 font-bold font-mono text-violet-700">
+                        ${predText}
+                    </td>
+                    <td class="p-3 bg-rose-50/50 font-bold font-mono ${residualVal >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                        ${residualText}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.updateRow = function(id, field, value) {
+            const target = currentDataset.find(x => x.id === id);
+            if (target) {
+                target[field] = parseFloat(value);
+                trainXGBoost();
+            }
+        };
+
+        // Render small cards representing sequential trees
+        function renderTreeTabs() {
+            const container = document.getElementById('tree-tabs-container');
+            container.innerHTML = '';
+
+            xgboostModel.trees.forEach((tree, idx) => {
+                const isActive = idx === activeTreeIndex;
+                const card = document.createElement('div');
+                card.id = `tree-card-${idx}`;
+                card.className = `cursor-pointer rounded-xl p-3 border transition-all duration-300 flex flex-col justify-between h-[155px] ${
+                    isActive 
+                        ? 'bg-indigo-50/70 border-indigo-500 ring-2 ring-indigo-200 shadow-md' 
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`;
+
+                card.onclick = () => {
+                    if (isAnimating) return; // Prevent tab switching during animation runs
+                    activeTreeIndex = idx;
+                    renderTreeTabs();
+                    renderSelectedTreeInspector();
+                };
+
+                const title = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                            <i class="fa-solid fa-bolt text-indigo-500"></i> 트리 #${idx + 1}
+                        </span>
+                        <span class="text-[9px] text-slate-500 font-bold">오차 보정용</span>
+                    </div>
+                `;
+
+                const miniId = `mini-tree-svg-${idx}`;
+                const body = `
+                    <div class="flex-grow flex items-center justify-center bg-slate-50 border border-slate-100 rounded-lg overflow-hidden p-1">
+                        <svg id="${miniId}" class="w-full h-[90px]" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet"></svg>
+                    </div>
+                `;
+
+                card.innerHTML = title + body;
+                container.appendChild(card);
+                drawMiniXGBTree(tree.root, miniId);
+            });
+        }
+
+        // Helper to draw mini tree structure in the tab selector
+        function drawMiniXGBTree(root, svgId) {
+            const svg = document.getElementById(svgId);
+            if (!svg) return;
+
+            const nodes = [];
+            const links = [];
+
+            function traverseMini(node, depth, x, xSpan) {
+                const info = { node, depth, x, y: 15 + depth * 32 };
+                nodes.push(info);
+
+                if (!node.isLeaf && depth < 2) {
+                    const leftX = x - xSpan;
+                    const rightX = x + xSpan;
+                    const nextSpan = xSpan * 0.5;
+
+                    links.push({ x1: x, y1: info.y, x2: leftX, y2: 15 + (depth + 1) * 32 });
+                    links.push({ x1: x, y1: info.y, x2: rightX, y2: 15 + (depth + 1) * 32 });
+
+                    traverseMini(node.left, depth + 1, leftX, nextSpan);
+                    traverseMini(node.right, depth + 1, rightX, nextSpan);
+                }
+            }
+
+            traverseMini(root, 0, 100, 45);
+
+            links.forEach(l => {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", l.x1);
+                line.setAttribute("y1", l.y1);
+                line.setAttribute("x2", l.x2);
+                line.setAttribute("y2", l.y2);
+                line.setAttribute("stroke", "#cbd5e1");
+                line.setAttribute("stroke-width", "1.5");
+                svg.appendChild(line);
+            });
+
+            nodes.forEach(n => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", n.x);
+                circle.setAttribute("cy", n.y);
+                circle.setAttribute("r", n.node.isLeaf ? "4" : "5.5");
+
+                if (n.node.isLeaf) {
+                    circle.setAttribute("fill", n.node.weight >= 0 ? '#10b981' : '#f43f5e');
+                } else {
+                    circle.setAttribute("fill", "#6366f1");
+                }
+                svg.appendChild(circle);
+            });
+        }
+
+        // Render Inspector for selected tree (Left hand table, right hand SVG)
+        function renderSelectedTreeInspector() {
+            const currentTree = xgboostModel.trees[activeTreeIndex];
+            if (!currentTree) return;
+
+            document.getElementById('current-tree-label').innerText = `#${currentTree.treeId + 1}`;
+
+            // Handle labels depending on Loss Function
+            const lblFormula = document.getElementById('leaf-formula-badge');
+            const lblResSum = document.getElementById('lbl-residual-sum');
+
+            if (xgboostModel.objective === 'classification') {
+                lblFormula.innerHTML = `<i class="fa-solid fa-calculator mr-1"></i> 분류 리프 가중치: <span class="font-mono text-xs font-bold">w = \(- \frac{\sum G}{\sum H + \lambda}\)</span>`;
+                lblResSum.innerText = `이번 트리 타겟 오차(절대 확률 잔차합):`;
+            } else {
+                lblFormula.innerHTML = `<i class="fa-solid fa-calculator mr-1"></i> 회귀 리프 가중치 (H=1): <span class="font-mono text-xs font-bold">w = \(- \frac{\sum G}{N + \lambda}\)</span>`;
+                lblResSum.innerText = `이번 트리 타겟 오차(절대 점수 잔차합):`;
+            }
+
+            // 1. Table with target gradients
+            const tbody = document.getElementById('residual-table-body');
+            tbody.innerHTML = '';
+
+            let sumAbsoluteResiduals = 0;
+            currentTree.inputStates.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
+                
+                sumAbsoluteResiduals += Math.abs(row.residual);
+
+                tr.innerHTML = `
+                    <td class="p-1.5 font-bold font-mono text-slate-500 text-center">${row.id}</td>
+                    <td class="p-1.5 text-center">${row.study}h</td>
+                    <td class="p-1.5 text-center">${row.sleep}h</td>
+                    <td class="p-1.5 text-center">${row.attendance}%</td>
+                    <td class="p-1.5 text-center font-bold font-mono text-violet-700 bg-violet-50/50">
+                        ${row.residual >= 0 ? '+' : ''}${row.residual.toFixed(2)}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('current-residual-sum').innerText = sumAbsoluteResiduals.toFixed(2);
+
+            // Compute rate of improvement (compared to first model step)
+            if (activeTreeIndex === 0) {
+                document.getElementById('current-improvement-rate').innerText = '기준점 (시작)';
+            } else {
+                const prevTree = xgboostModel.trees[activeTreeIndex - 1];
+                let prevSum = prevTree.inputStates.reduce((acc, r) => acc + Math.abs(r.residual), 0);
+                const pct = ((prevSum - sumAbsoluteResiduals) / prevSum) * 100;
+                document.getElementById('current-improvement-rate').innerText = `${pct >= 0 ? '오차 ' + pct.toFixed(1) + '% 감소' : '오차 증가'}`;
+            }
+
+            // 2. SVG decision tree layout
+            renderTreeSVG(currentTree.root);
+        }
+
+        // Helper to draw detailed mathematical tree diagram
+        function renderTreeSVG(root) {
+            const svg = document.getElementById('tree-svg');
+            svg.innerHTML = ''; 
+
+            svg.innerHTML = `
+                <defs>
+                    <marker id="arrow-yes-xgb" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981" />
+                    </marker>
+                    <marker id="arrow-no-xgb" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+                    </marker>
+                </defs>
+            `;
+
+            const nodes = [];
+            const links = [];
+
+            function traverse(node, depth, x, xSpan) {
+                const info = { node, depth, x, y: 40 + depth * 85 };
+                nodes.push(info);
+
+                if (!node.isLeaf) {
+                    const leftX = x - xSpan;
+                    const rightX = x + xSpan;
+                    const nextSpan = xSpan * 0.45;
+
+                    links.push({
+                        x1: x, y1: info.y, x2: leftX, y2: 40 + (depth + 1) * 85,
+                        label: 'Yes (≤)', isYes: true
+                    });
+
+                    links.push({
+                        x1: x, y1: info.y, x2: rightX, y2: 40 + (depth + 1) * 85,
+                        label: 'No (>)', isYes: false
+                    });
+
+                    traverse(node.left, depth + 1, leftX, nextSpan);
+                    traverse(node.right, depth + 1, rightX, nextSpan);
+                }
+            }
+
+            traverse(root, 0, 250, 115);
+
+            // Print lines
+            links.forEach(l => {
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", l.x1);
+                line.setAttribute("y1", l.y1);
+                line.setAttribute("x2", l.x2);
+                line.setAttribute("y2", l.y2);
+                line.setAttribute("stroke", l.isYes ? "#10b981" : "#ef4444");
+                line.setAttribute("stroke-width", "2");
+                line.setAttribute("marker-end", l.isYes ? "url(#arrow-yes-xgb)" : "url(#arrow-no-xgb)");
+                svg.appendChild(line);
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", (l.x1 + l.x2) / 2);
+                text.setAttribute("y", (l.y1 + l.y2) / 2 - 5);
+                text.setAttribute("fill", l.isYes ? "#a7f3d0" : "#fecaca");
+                text.setAttribute("font-size", "9");
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = l.label;
+                svg.appendChild(text);
+            });
+
+            // Draw Nodes
+            nodes.forEach(n => {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "tree-node cursor-pointer");
+
+                const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                title.textContent = `샘플 수: ${n.node.count}개\nGradient 합(G): ${n.node.sumG}\nHessian 합(H): ${n.node.sumH}`;
+                g.appendChild(title);
+
+                const width = n.node.isLeaf ? 115 : 100;
+                const height = 44;
+                const rx = 8;
+
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", n.x - width/2);
+                rect.setAttribute("y", n.y - height/2);
+                rect.setAttribute("width", width);
+                rect.setAttribute("height", height);
+                rect.setAttribute("rx", rx);
+
+                if (n.node.isLeaf) {
+                    rect.setAttribute("fill", "#020617");
+                    rect.setAttribute("stroke", "#f59e0b");
+                    rect.setAttribute("stroke-width", "2");
+                } else {
+                    rect.setAttribute("fill", "#1e293b");
+                    rect.setAttribute("stroke", "#6366f1");
+                    rect.setAttribute("stroke-width", "1.5");
+                }
+                g.appendChild(rect);
+
+                const text1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text1.setAttribute("x", n.x);
+                text1.setAttribute("y", n.y - 6);
+                text1.setAttribute("text-anchor", "middle");
+                text1.setAttribute("fill", "#ffffff");
+                text1.setAttribute("font-size", "9.5");
+                text1.setAttribute("font-weight", "bold");
+
+                if (n.node.isLeaf) {
+                    text1.textContent = `가중치: ${n.node.weight >= 0 ? '+' : ''}${n.node.weight}`;
+                } else {
+                    text1.textContent = `${FEATURE_LABELS[n.node.feature]}`;
+                }
+                g.appendChild(text1);
+
+                const text2 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text2.setAttribute("x", n.x);
+                text2.setAttribute("y", n.y + 10);
+                text2.setAttribute("text-anchor", "middle");
+                text2.setAttribute("fill", n.node.isLeaf ? "#fbbf24" : "#cbd5e1");
+                text2.setAttribute("font-size", "8");
+
+                if (n.node.isLeaf) {
+                    text2.textContent = `G: ${n.node.sumG} | H: ${n.node.sumH}`;
+                } else {
+                    text2.textContent = `≤ ${n.node.threshold}`;
+                }
+                g.appendChild(text2);
+
+                svg.appendChild(g);
+            });
+        }
+
+        // --- INFERENCE & ACCUMULATION FLOW SIMULATION ---
+        function runInteractiveInference() {
+            const study = parseFloat(document.getElementById('sim-study').value);
+            const sleep = parseFloat(document.getElementById('sim-sleep').value);
+            const attendance = parseFloat(document.getElementById('sim-attendance').value);
+            const lr = parseFloat(document.getElementById('lr').value);
+
+            const testStudent = { study, sleep, attendance };
+
+            const container = document.getElementById('boosting-flow-container');
+            container.innerHTML = '';
+
+            let accumulativeVal = xgboostModel.objective === 'classification' ? inverseSigmoid(xgboostModel.baseScore) : xgboostModel.baseScore;
+
+            // Step 0: Initial Base Score
+            const baseItem = document.createElement('div');
+            baseItem.className = "flex justify-between items-center bg-slate-900 text-slate-300 p-2.5 rounded-xl text-xs border border-slate-700";
+            
+            if (xgboostModel.objective === 'classification') {
+                baseItem.innerHTML = `
+                    <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-flag text-indigo-400"></i> 초기 Base Odds [F₀(X)]</span>
+                    <span class="font-mono font-bold">${accumulativeVal.toFixed(3)}</span>
+                `;
+            } else {
+                baseItem.innerHTML = `
+                    <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-flag text-indigo-400"></i> 초기 Base Score [F₀(X)]</span>
+                    <span class="font-mono font-bold">${accumulativeVal.toFixed(1)}점</span>
+                `;
+            }
+            container.appendChild(baseItem);
+
+            // Append each tree's incremental addition
+            xgboostModel.trees.forEach((tree, idx) => {
+                const rawWeight = predictSingleTree(tree.root, testStudent);
+                const stepContribution = lr * rawWeight;
+                accumulativeVal += stepContribution;
+
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs";
+                
+                const badgeColor = rawWeight >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                
+                item.innerHTML = `
+                    <span class="font-semibold text-slate-700">
+                        <i class="fa-solid fa-bolt text-indigo-500 mr-1"></i> 트리 #${idx + 1} 보정치 (η × w)
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400">가중치 ${rawWeight >= 0 ? '+' : ''}${rawWeight} → </span>
+                        <span class="px-2 py-0.5 rounded-full font-bold font-mono ${badgeColor}">
+                            ${stepContribution >= 0 ? '+' : ''}${stepContribution.toFixed(3)}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+
+            const verdictBadge = document.getElementById('final-verdict-badge');
+            const ratioBar = document.getElementById('prob-ratio-bar');
+            const formulaDesc = document.getElementById('lbl-formula-description');
+            const finalProbBox = document.getElementById('final-probability');
+            const finalTitle = document.getElementById('lbl-verdict-title');
+
+            if (xgboostModel.objective === 'classification') {
+                finalTitle.innerText = "XGBoost 분류 최종 판정";
+                // Calculate final Probability using Sigmoid
+                const finalProb = sigmoid(accumulativeVal);
+                finalProbBox.innerText = `${(finalProb * 100).toFixed(1)}%`;
+
+                if (finalProb >= 0.5) {
+                    verdictBadge.innerHTML = `<i class="fa-solid fa-circle-check text-indigo-400"></i> 합격 예측 (Pass)`;
+                    verdictBadge.className = "px-5 py-1.5 rounded-full text-xs font-black bg-indigo-950 text-indigo-300 border border-indigo-800 shadow-inner";
+                    ratioBar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-500";
+                } else {
+                    verdictBadge.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i> 불합격 예측 (Fail)`;
+                    verdictBadge.className = "px-5 py-1.5 rounded-full text-xs font-black bg-rose-950 text-rose-300 border border-rose-800 shadow-inner";
+                    ratioBar.className = "bg-gradient-to-r from-rose-500 to-orange-500 h-full transition-all duration-500";
+                }
+
+                ratioBar.style.width = `${finalProb * 100}%`;
+                formulaDesc.innerHTML = `누적 가중치 합 \(F(X)\)을 시그모이드 함수 <br>\(\sigma(F(X)) = \frac{1}{1 + e^{-F(X)}}\) 로 변환한 최종 합격 확률입니다.`;
+            } else {
+                finalTitle.innerText = "XGBoost 회귀 예측 점수";
+                // Continuous value summing up directly
+                const finalScore = Math.min(Math.max(accumulativeVal, 0), 100); // Clamped between 0 and 100
+                finalProbBox.innerText = `${finalScore.toFixed(1)}점`;
+
+                // Set grades based on final score
+                let grade = "F";
+                let colorClass = "bg-rose-950 text-rose-300 border border-rose-800";
+                if (finalScore >= 90) {
+                    grade = "등급: A (우수)";
+                    colorClass = "bg-emerald-950 text-emerald-300 border border-emerald-800";
+                } else if (finalScore >= 80) {
+                    grade = "등급: B (보통)";
+                    colorClass = "bg-indigo-950 text-indigo-300 border border-indigo-800";
+                } else if (finalScore >= 70) {
+                    grade = "등급: C (미흡)";
+                    colorClass = "bg-yellow-950 text-yellow-300 border border-yellow-800";
+                } else {
+                    grade = "등급: F (낙제)";
+                }
+
+                verdictBadge.innerHTML = `<i class="fa-solid fa-graduation-cap text-indigo-400"></i> ${grade}`;
+                verdictBadge.className = `px-5 py-1.5 rounded-full text-xs font-black shadow-inner ${colorClass}`;
+                
+                ratioBar.className = "bg-gradient-to-r from-emerald-500 to-indigo-500 h-full transition-all duration-500";
+                ratioBar.style.width = `${finalScore}%`;
+
+                formulaDesc.innerHTML = `연속형 회귀에서는 시그모이드가 불필요하며, <br>모든 트리 예측치의 직접적인 아디티브 누적합 \(F(X)\)이 최종 점수가 됩니다.`;
+            }
+        }
+
+        // --- OBJECTIVE SWITCHING UI LOGIC ---
+        function setObjective(mode) {
+            if (isAnimating) return; // Prevent objective changes during animations
+            xgboostModel.objective = mode;
+
+            const btnClass = document.getElementById('btn-loss-classification');
+            const btnReg = document.getElementById('btn-loss-regression');
+            const labelDesc = document.getElementById('active-scenario-description');
+
+            if (mode === 'classification') {
+                btnClass.className = "py-2 px-3 text-xs font-black rounded-lg border transition-all duration-300 text-center flex flex-col items-center justify-center bg-indigo-600 border-indigo-500 text-white";
+                btnReg.className = "py-2 px-3 text-xs font-black rounded-lg border transition-all duration-300 text-center flex flex-col items-center justify-center bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-100";
+                labelDesc.innerHTML = "공부시간, 수면시간, 출석률을 활용하여 <strong>시험에 합격할지(1) 불합격할지(0)</strong>의 확률을 예측합니다.";
+            } else {
+                btnReg.className = "py-2 px-3 text-xs font-black rounded-lg border transition-all duration-300 text-center flex flex-col items-center justify-center bg-indigo-600 border-indigo-500 text-white";
+                btnClass.className = "py-2 px-3 text-xs font-black rounded-lg border transition-all duration-300 text-center flex flex-col items-center justify-center bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-100";
+                labelDesc.innerHTML = "공부시간, 수면시간, 출석률을 활용하여 <strong>실제 시험 취득 점수 (0점 ~ 100점)</strong>를 정량 예측합니다.";
+            }
+
+            // Sync Base Score range based on loss
+            const baseSlider = document.getElementById('base-score');
+            const baseValueLabel = document.getElementById('base-score-val');
+            if (mode === 'classification') {
+                baseSlider.min = "0.1";
+                baseSlider.max = "0.9";
+                baseSlider.step = "0.1";
+                baseSlider.value = "0.5";
+            } else {
+                baseSlider.min = "10";
+                baseSlider.max = "90";
+                baseSlider.step = "5";
+                baseSlider.value = "50";
+            }
+            baseValueLabel.innerText = baseSlider.value;
+
+            trainXGBoost();
+        }
+
+        // --- UI HANDLERS ---
+        function initInteractiveUI() {
+            const sliders = [
+                { id: 'lr', valId: 'lr-val', suffix: '' },
+                { id: 'tree-count', valId: 'tree-count-val', suffix: '개' },
+                { id: 'lambda', valId: 'lambda-val', suffix: '' },
+                { id: 'base-score', valId: 'base-score-val', suffix: '' },
+                { id: 'sim-study', valId: 'sim-study-val', suffix: '시간' },
+                { id: 'sim-sleep', valId: 'sim-sleep-val', suffix: '시간' },
+                { id: 'sim-attendance', valId: 'sim-attendance-val', suffix: '%' }
+            ];
+
+            sliders.forEach(slider => {
+                const el = document.getElementById(slider.id);
+                const valEl = document.getElementById(slider.valId);
+
+                el.addEventListener('input', (e) => {
+                    valEl.innerText = `${e.target.value}${slider.suffix}`;
+                    if (slider.id.startsWith('sim-')) {
+                        runInteractiveInference();
+                    } else {
+                        trainXGBoost();
+                    }
+                });
+            });
+
+            // Retrain static click
+            document.getElementById('btn-retrain').addEventListener('click', () => {
+                trainXGBoost();
+            });
+
+            // Sequential animation trigger
+            document.getElementById('btn-animate-boosting').addEventListener('click', () => {
+                startBoostingAnimation();
+            });
+
+            // Dataset reset button
+            document.getElementById('btn-reset-data').addEventListener('click', () => {
+                currentDataset = JSON.parse(JSON.stringify(DEFAULT_DATASET));
+                trainXGBoost();
+            });
+
+            // Switch objective events
+            document.getElementById('btn-loss-classification').addEventListener('click', () => {
+                setObjective('classification');
+            });
+            document.getElementById('btn-loss-regression').addEventListener('click', () => {
+                setObjective('regression');
+            });
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            initInteractiveUI();
+            setObjective('classification'); // classification active by default
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고객 여정 맵 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="고객 여정 맵 — DataForge">
+<meta property="og:description" content="페르소나별 고객 여정을 단계별로 작성하고 감정 곡선을 시각화합니다.">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+  --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+  --accent:#2563eb; --accent2:#6366f1;
+  --amber:#d97706; --green:#059669; --red:#dc2626;
+  --orange:#ea580c; --pink:#db2777; --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* ── header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title span{color:var(--pink);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);}
+.save-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit;}
+.save-btn:hover{opacity:.88;}
+.save-btn svg{flex-shrink:0;}
+/* 헤더 마크다운 저장 버튼 — bep.php와 동일 규격 */
+.md-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:8px;color:#0d9488;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;}
+.md-btn:hover{background:rgba(13,148,136,.18);}
+
+.page{padding:0 24px 80px;}
+
+/* ── 페르소나 바 ── */
+.persona-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;margin-top:20px;}
+.persona-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.persona-fields{display:flex;gap:14px;flex:1;flex-wrap:wrap;}
+.persona-group{display:flex;flex-direction:column;gap:3px;}
+.persona-group label{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;}
+.p-inp{background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;padding:6px 10px;outline:none;transition:border-color .2s;font-family:inherit;min-width:160px;}
+.p-inp:focus{border-color:var(--pink);}
+.persona-sep{width:1px;height:36px;background:var(--border2);flex-shrink:0;}
+.add-stage-btn{padding:7px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;margin-left:auto;white-space:nowrap;}
+.add-stage-btn:hover{border-color:var(--pink);color:var(--pink);}
+
+/* ── 맵 테이블 ── */
+.map-outer{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);background:var(--card);margin-bottom:20px;}
+.map-table{border-collapse:collapse;width:100%;}
+
+/* 행 레이블 열 */
+.row-label-cell{
+  padding:10px 14px;
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.05em;
+  background:var(--card2);
+  border-right:2px solid rgba(0,0,0,0.1);
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+  white-space:nowrap;
+  width:1px;
+}
+.row-label-icon{font-size:.95rem;margin-right:5px;}
+
+/* 단계 헤더 셀 */
+.stage-head{
+  padding:10px 10px 8px;
+  text-align:center;
+  background:var(--card2);
+  border-bottom:2px solid rgba(0,0,0,0.1);
+  border-right:1px solid var(--border);
+  position:relative;
+  min-width:200px;
+}
+.stage-idx{font-size:10px;color:var(--dim);font-weight:600;margin-bottom:4px;}
+.stage-name-inp{
+  background:transparent;border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text);font-size:13px;font-weight:700;
+  text-align:center;width:100%;outline:none;
+  padding:2px 22px 2px 4px;font-family:inherit;
+  transition:border-color .2s;
+}
+.stage-name-inp:focus{border-bottom-color:var(--pink);}
+.stage-del-btn{
+  position:absolute;top:8px;right:6px;
+  width:20px;height:20px;border:1px solid var(--border2);
+  border-radius:4px;background:transparent;color:var(--dim);
+  cursor:pointer;font-size:12px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.stage-del-btn:hover{border-color:var(--red);color:var(--red);}
+.stage-del-btn:disabled{opacity:.25;pointer-events:none;}
+
+/* 데이터 셀 */
+.map-cell{
+  padding:10px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+  min-width:200px;
+}
+.map-cell:last-child{border-right:none;}
+.map-table tr:last-child .map-cell,
+.map-table tr:last-child .row-label-cell{border-bottom:none;}
+
+/* 행 배경 */
+.row-action  .map-cell{background:#eff6ff;}
+.row-thought .map-cell{background:#faf5ff;}
+.row-emotion .map-cell{background:#fff7ed;}
+.row-touch   .map-cell{background:#f0fdf4;}
+.row-pain    .map-cell{background:#fef2f2;}
+.row-oppo    .map-cell{background:#f0fdfa;}
+
+/* textarea */
+.cell-ta{
+  width:100%;
+  height:110px;
+  background:#fff;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  color:var(--text);
+  font-size:12px;
+  line-height:1.6;
+  padding:7px 9px;
+  resize:vertical;
+  outline:none;
+  font-family:inherit;
+  transition:border-color .2s;
+}
+.cell-ta:focus{border-color:var(--pink);box-shadow:0 0 0 2px rgba(219,39,119,0.08);}
+
+/* text input (접점 채널) */
+.cell-inp{
+  width:100%;
+  background:#fff;
+  border:1px solid var(--border2);
+  border-radius:6px;
+  color:var(--text);
+  font-size:12px;
+  padding:7px 9px;
+  outline:none;
+  font-family:inherit;
+  transition:border-color .2s;
+}
+.cell-inp:focus{border-color:var(--pink);box-shadow:0 0 0 2px rgba(219,39,119,0.08);}
+.touch-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.touch-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(5,150,105,.12);color:#047857;font-weight:600;}
+
+/* 감정 슬라이더 셀 */
+.emo-inner{
+  display:flex;flex-direction:column;align-items:center;
+  gap:8px;padding:12px 6px;
+  background:rgba(255,255,255,0.5);border-radius:8px;
+}
+.emo-icon{font-size:1.6rem;line-height:1;}
+.emo-score{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--text);}
+.emo-label{font-size:10px;color:var(--muted);}
+
+/* range slider */
+input[type=range].emo-slider{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:6px;
+  border-radius:3px;outline:none;cursor:pointer;
+  background:#e2e8f0;
+}
+input[type=range].emo-slider::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;background:#e2e8f0;
+}
+input[type=range].emo-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--pink);cursor:pointer;
+  border:3px solid #fff;
+  box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  margin-top:-7px;
+}
+input[type=range].emo-slider::-moz-range-track{
+  height:6px;border-radius:3px;background:#e2e8f0;border:none;
+}
+input[type=range].emo-slider::-moz-range-thumb{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--pink);cursor:pointer;
+  border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ── 하단 영역 ── */
+.bottom-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+.insight-list{display:flex;flex-direction:column;gap:10px;}
+.insight-item{padding:10px 12px;border-radius:8px;border:1px solid var(--border);}
+.insight-lbl{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.insight-val{font-size:14px;font-weight:700;}
+.insight-val.good{color:var(--green);}
+.insight-val.bad{color:var(--red);}
+.insight-val.mid{color:var(--amber);}
+.insight-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+
+@media(max-width:900px){
+  .bottom-grid{grid-template-columns:1fr;}
+  .page{padding:16px 14px 60px;}
+}
+@media(max-width:640px){
+  .site-header{padding:10px 14px;}
+  .logo-sep,.logo-title{display:none;}
+  .header-right{gap:6px;}
+  .p-inp{font-size:16px;}
+  .cell-ta{font-size:16px;}
+  .md-btn{font-size:11px;padding:6px 9px;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>고객 여정 맵</span></div>
+  </div>
+  <div class="header-right">
+    <button class="save-btn" onclick="exportHTML()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      HTML로 저장
+    </button>
+    <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
+    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- 페르소나 바 -->
+  <div class="persona-bar">
+    <div class="persona-avatar">👤</div>
+    <div class="persona-fields">
+      <div class="persona-group">
+        <label>페르소나</label>
+        <input class="p-inp" id="pName" value="주요 고객" oninput="persona.name=this.value" placeholder="이름">
+      </div>
+      <span class="persona-sep"></span>
+      <div class="persona-group">
+        <label>목표</label>
+        <input class="p-inp" id="pGoal" value="빠르고 간편하게 구매하고 싶다" oninput="persona.goal=this.value" placeholder="고객 목표" style="min-width:240px">
+      </div>
+      <span class="persona-sep"></span>
+      <div class="persona-group">
+        <label>세그먼트</label>
+        <input class="p-inp" id="pSeg" value="30대 직장인" oninput="persona.segment=this.value" placeholder="세그먼트">
+      </div>
+    </div>
+    <button class="add-stage-btn" onclick="addStage()">+ 단계 추가</button>
+  </div>
+
+  <!-- 저니맵 테이블 -->
+  <div class="map-outer">
+    <table class="map-table">
+      <thead id="mapHead"></thead>
+      <tbody id="mapBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 감정 곡선 + 인사이트 -->
+  <div class="bottom-grid">
+    <div class="a-card">
+      <div class="a-card-title">고객 감정 곡선</div>
+      <div style="position:relative;height:230px;width:100%;">
+        <canvas id="emoChart"></canvas>
+      </div>
+    </div>
+    <div class="a-card">
+      <div class="a-card-title">핵심 인사이트</div>
+      <div class="insight-list" id="insightList"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ── 상수 ── */
+const EMO       = {1:'😤',2:'😕',3:'😐',4:'🙂',5:'😄'};
+const EMO_LABEL = {1:'매우 부정',2:'부정',3:'중립',4:'긍정',5:'매우 긍정'};
+const EMO_COLOR = {1:'#fca5a5',2:'#fcd34d',3:'#93c5fd',4:'#6ee7b7',5:'#34d399'};
+
+const ROWS = [
+  {key:'action',  label:'고객 행동',   icon:'🚶'},
+  {key:'thought', label:'생각 · 기대', icon:'💭'},
+  {key:'emotion', label:'감정 점수',   icon:'❤'},
+  {key:'touch',   label:'접점 채널',   icon:'📡'},
+  {key:'pain',    label:'페인포인트',  icon:'⚠'},
+  {key:'oppo',    label:'개선 기회',   icon:'💡'},
+];
+
+const ROW_CLS = {
+  action:'row-action', thought:'row-thought', emotion:'row-emotion',
+  touch:'row-touch', pain:'row-pain', oppo:'row-oppo'
+};
+
+const PLACEHOLDER = {
+  action:'이 단계에서 고객이 하는 행동',
+  thought:'고객의 생각 또는 기대',
+  pain:'불편함 · 문제점 · 장벽',
+  oppo:'서비스 개선 기회',
+};
+
+/* ── 상태 ── */
+let persona = {name:'주요 고객', goal:'빠르고 간편하게 구매하고 싶다', segment:'30대 직장인'};
+
+let stages = [
+  {name:'인지',   action:'SNS 광고·검색을 통해 브랜드를 처음 접함', thought:'이게 내 문제를 해결해줄까?',          emotion:3, touch:'SNS, 검색',         pain:'너무 많은 광고로 혼란스럽다',    oppo:'핵심 메시지를 명확히 전달'},
+  {name:'탐색',   action:'홈페이지·리뷰 사이트를 방문해 정보 수집', thought:'믿을 수 있는 제품인가?',              emotion:4, touch:'웹사이트, 유튜브',    pain:'정보가 분산되어 찾기 어렵다',    oppo:'원스톱 정보 허브 구성'},
+  {name:'비교',   action:'경쟁사와 가격·기능 비교',                 thought:'다른 곳이 더 저렴하지 않을까?',       emotion:2, touch:'비교사이트, 커뮤니티',pain:'차별점이 불분명하다',             oppo:'비교 테이블 강조'},
+  {name:'구매',   action:'장바구니 담기 후 결제 진행',              thought:'결제가 안전한가?',                    emotion:4, touch:'앱, 웹 쇼핑몰',      pain:'결제 단계가 복잡하다',           oppo:'원클릭 결제 도입'},
+  {name:'사용',   action:'제품 수령 후 사용 시작',                  thought:'기대한 대로 작동하는가?',             emotion:5, touch:'제품, 앱, 고객센터', pain:'사용 설명이 부족하다',           oppo:'온보딩 가이드 제공'},
+  {name:'재구매', action:'만족 시 재구매 및 지인 추천',             thought:'다음에도 이 브랜드를 선택할까?',      emotion:5, touch:'이메일, 앱 푸시',    pain:'별다른 리텐션 혜택이 없다',      oppo:'로열티 프로그램 운영'},
+];
+
+let emoChartInst = null;
+
+/* ── 초기화 ── */
+renderMap();
+buildEmotionChart();
+renderInsights();
+
+/* ════════════════════════════════
+   RENDER MAP  (단계 추가·삭제 때만 호출)
+════════════════════════════════ */
+function renderMap() {
+  buildHead();
+  buildBody();
+}
+
+function buildHead() {
+  var html = '<tr>';
+  html += '<th class="row-label-cell" style="border-bottom:2px solid rgba(0,0,0,0.1)"></th>';
+  for (var i = 0; i < stages.length; i++) {
+    var s = stages[i];
+    var dis = stages.length <= 2 ? ' disabled' : '';
+    html += '<th class="stage-head">';
+    html +=   '<div class="stage-idx">STEP ' + (i+1) + '</div>';
+    html +=   '<input class="stage-name-inp" value="' + esc(s.name) + '" oninput="setName(' + i + ',this.value)" placeholder="단계명">';
+    html +=   '<button class="stage-del-btn"' + dis + ' onclick="removeStage(' + i + ')">x</button>';
+    html += '</th>';
+  }
+  html += '</tr>';
+  document.getElementById('mapHead').innerHTML = html;
+}
+
+function buildBody() {
+  var html = '';
+  for (var r = 0; r < ROWS.length; r++) {
+    var row = ROWS[r];
+    html += '<tr class="' + ROW_CLS[row.key] + '">';
+    html += '<td class="row-label-cell"><span class="row-label-icon">' + row.icon + '</span> ' + row.label + '</td>';
+    for (var i = 0; i < stages.length; i++) {
+      html += '<td class="map-cell" id="cell-' + row.key + '-' + i + '">';
+      html += makeCellContent(row.key, stages[i], i);
+      html += '</td>';
+    }
+    html += '</tr>';
+  }
+  document.getElementById('mapBody').innerHTML = html;
+}
+
+function makeCellContent(key, s, i) {
+  if (key === 'emotion') {
+    var bg = emoGrad(s.emotion);
+    return '<div class="emo-inner" id="emo-wrap-' + i + '" style="background:' + bg + '">'
+      + '<div class="emo-icon" id="emo-icon-' + i + '">' + EMO[s.emotion] + '</div>'
+      + '<div class="emo-score" id="emo-score-' + i + '">' + s.emotion + ' / 5</div>'
+      + '<input type="range" class="emo-slider" min="1" max="5" value="' + s.emotion + '" id="emo-slider-' + i + '" oninput="setEmotion(' + i + ',this.value)">'
+      + '<div class="emo-label" id="emo-lbl-' + i + '">' + EMO_LABEL[s.emotion] + '</div>'
+      + '</div>';
+  }
+  if (key === 'touch') {
+    return '<input class="cell-inp" value="' + esc(s.touch) + '" id="touch-inp-' + i + '" placeholder="채널 입력 (쉼표 구분)" oninput="setField(' + i + ',\'touch\',this.value);refreshTags(' + i + ')">'
+      + '<div class="touch-tags" id="touch-tags-' + i + '">' + makeTags(s.touch) + '</div>';
+  }
+  return '<textarea class="cell-ta" oninput="setField(' + i + ',\'' + key + '\',this.value)" placeholder="' + (PLACEHOLDER[key]||'') + '">' + esc(s[key]) + '</textarea>';
+}
+
+function makeTags(val) {
+  return (val||'').split(',').map(function(t){t=t.trim();return t?'<span class="touch-tag">'+esc(t)+'</span>':''}).join('');
+}
+
+/* ── setters (포커스 유지) ── */
+function setName(i, v)         { stages[i].name = v; updateEmoChart(); }
+function setField(i, key, v)   { stages[i][key] = v; }
+function refreshTags(i)        { var el=document.getElementById('touch-tags-'+i); if(el) el.innerHTML=makeTags(stages[i].touch); }
+
+function setEmotion(i, val) {
+  var v = parseInt(val);
+  stages[i].emotion = v;
+  var wrap = document.getElementById('emo-wrap-'+i);
+  if (wrap) wrap.style.background = emoGrad(v);
+  var ic = document.getElementById('emo-icon-'+i);   if(ic)  ic.textContent  = EMO[v];
+  var sc = document.getElementById('emo-score-'+i);  if(sc)  sc.textContent  = v+' / 5';
+  var lb = document.getElementById('emo-lbl-'+i);    if(lb)  lb.textContent  = EMO_LABEL[v];
+  updateEmoChart();
+  renderInsights();
+}
+
+/* ── 단계 추가/삭제 ── */
+function addStage() {
+  stages.push({name:'단계 '+(stages.length+1), action:'', thought:'', emotion:3, touch:'', pain:'', oppo:''});
+  renderMap(); buildEmotionChart(); renderInsights();
+}
+function removeStage(i) {
+  if (stages.length <= 2) return;
+  stages.splice(i, 1);
+  renderMap(); buildEmotionChart(); renderInsights();
+}
+
+/* ── 감정 곡선 ── */
+function buildEmotionChart() {
+  var ctx = document.getElementById('emoChart');
+  if (!ctx) return;
+  if (emoChartInst) { emoChartInst.destroy(); emoChartInst = null; }
+  emoChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: stages.map(function(s){return s.name;}),
+      datasets: [{
+        data: stages.map(function(s){return s.emotion;}),
+        borderColor: '#db2777',
+        backgroundColor: 'rgba(219,39,119,0.08)',
+        borderWidth: 3,
+        pointBackgroundColor: stages.map(function(s){return EMO_COLOR[s.emotion];}),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 8,
+        pointHoverRadius: 10,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          callbacks: {
+            label: function(c) { return ' '+c.raw+'점 — '+EMO_LABEL[c.raw]; }
+          }
+        }
+      },
+      scales: {
+        x: {ticks:{color:'#64748b',font:{size:11}}, grid:{color:'rgba(0,0,0,0.05)'}},
+        y: {
+          min:0.5, max:5.5,
+          ticks:{
+            stepSize:1, color:'#94a3b8', font:{size:10},
+            callback: function(v) {
+              var m = {1:'매우부정',2:'부정',3:'중립',4:'긍정',5:'매우긍정'};
+              return m[v] || '';
+            }
+          },
+          grid:{color:'rgba(0,0,0,0.05)'}
+        }
+      }
+    }
+  });
+}
+
+function updateEmoChart() {
+  if (!emoChartInst) return;
+  emoChartInst.data.labels = stages.map(function(s){return s.name;});
+  emoChartInst.data.datasets[0].data = stages.map(function(s){return s.emotion;});
+  emoChartInst.data.datasets[0].pointBackgroundColor = stages.map(function(s){return EMO_COLOR[s.emotion];});
+  emoChartInst.update('none');
+}
+
+/* ── 인사이트 ── */
+function renderInsights() {
+  var ems = stages.map(function(s){return s.emotion;});
+  var avg = ems.reduce(function(a,b){return a+b;},0) / ems.length;
+  var maxI = ems.indexOf(Math.max.apply(null,ems));
+  var minI = ems.indexOf(Math.min.apply(null,ems));
+  var lows = stages.filter(function(s){return s.emotion<=2;}).map(function(s){return s.name;});
+  var avgCls = avg>=4?'good':avg>=3?'mid':'bad';
+  var html = '';
+  html += '<div class="insight-item">'
+    + '<div class="insight-lbl">최고 감정 단계</div>'
+    + '<div class="insight-val good">'+EMO[ems[maxI]]+' '+esc(stages[maxI].name)+'</div>'
+    + '<div class="insight-sub">'+ems[maxI]+'점 — '+EMO_LABEL[ems[maxI]]+'</div>'
+    + '</div>';
+  html += '<div class="insight-item">'
+    + '<div class="insight-lbl">병목 단계</div>'
+    + '<div class="insight-val bad">'+EMO[ems[minI]]+' '+esc(stages[minI].name)+'</div>'
+    + '<div class="insight-sub">'+ems[minI]+'점 — '+(stages[minI].pain?esc(stages[minI].pain):'페인포인트를 입력하세요')+'</div>'
+    + '</div>';
+  html += '<div class="insight-item">'
+    + '<div class="insight-lbl">평균 감정</div>'
+    + '<div class="insight-val '+avgCls+'">'+avg.toFixed(1)+'점</div>'
+    + '<div class="insight-sub">'+(avg>=4?'전반적으로 긍정적인 여정':avg>=3?'일부 구간 개선 필요':'전반적인 경험 개선 필요')+'</div>'
+    + '</div>';
+  if (lows.length) {
+    html += '<div class="insight-item" style="border-color:rgba(220,38,38,.25);background:rgba(220,38,38,.04)">'
+      + '<div class="insight-lbl">⚠ 이탈 위험 구간</div>'
+      + '<div class="insight-val bad">'+lows.join(', ')+'</div>'
+      + '<div class="insight-sub">감정 2점 이하 — 즉각 개선 필요</div>'
+      + '</div>';
+  }
+  document.getElementById('insightList').innerHTML = html;
+}
+
+/* ── 헬퍼 ── */
+function emoGrad(v) {
+  var c={1:'rgba(252,165,165,.3)',2:'rgba(252,211,77,.25)',3:'rgba(147,197,253,.25)',4:'rgba(110,231,183,.25)',5:'rgba(52,211,153,.3)'};
+  return c[v]||'transparent';
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── HTML 내보내기 ── */
+function exportHTML() {
+  var pName = document.getElementById('pName').value;
+  var pGoal = document.getElementById('pGoal').value;
+  var pSeg  = document.getElementById('pSeg').value;
+  var today = new Date().toLocaleDateString('ko-KR');
+  var ems   = stages.map(function(s){return s.emotion;});
+  var avg   = ems.reduce(function(a,b){return a+b;},0) / ems.length;
+  var maxI  = ems.indexOf(Math.max.apply(null,ems));
+  var minI  = ems.indexOf(Math.min.apply(null,ems));
+  var lows  = stages.filter(function(s){return s.emotion<=2;}).map(function(s){return s.name;});
+  var avgSc = avg>=4?'#059669':avg>=3?'#d97706':'#dc2626';
+  var avgBdr= avg>=4?'rgba(5,150,105,.3)':avg>=3?'rgba(217,119,6,.3)':'rgba(220,38,38,.3)';
+  var avgBg = avg>=4?'rgba(5,150,105,.04)':avg>=3?'rgba(217,119,6,.04)':'rgba(220,38,38,.04)';
+  var avgIco= avg>=4?'😄':avg>=3?'🙂':'😕';
+
+  function ec(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+  /* ── 맵 테이블 ── */
+  var rowBg    = {action:'#eff6ff',thought:'#faf5ff',emotion:'transparent',touch:'#f0fdf4',pain:'#fef2f2',oppo:'#f0fdfa'};
+  var rowLabel = {action:'🚶 고객 행동',thought:'💭 생각·기대',emotion:'❤ 감정',touch:'📡 접점',pain:'⚠ 페인포인트',oppo:'💡 개선기회'};
+
+  var tHead = '<tr><th style="padding:8px 12px;background:#f1f5f9;font-size:10px;font-weight:700;color:#64748b;white-space:nowrap;border-bottom:2px solid rgba(0,0,0,.1);border-right:2px solid rgba(0,0,0,.1);text-transform:uppercase;letter-spacing:.05em;"></th>';
+  for (var i=0;i<stages.length;i++) {
+    tHead += '<th style="padding:10px;text-align:center;background:#f1f5f9;border-bottom:2px solid rgba(0,0,0,.1);border-right:1px solid rgba(0,0,0,.07);min-width:170px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;">STEP '+(i+1)+'<br><span style="font-size:13px;color:#1e293b;">'+ec(stages[i].name)+'</span></th>';
+  }
+  tHead += '</tr>';
+
+  var tBody = '';
+  for (var r=0;r<ROWS.length;r++) {
+    var rk = ROWS[r].key;
+    tBody += '<tr>';
+    tBody += '<td style="padding:8px 12px;background:#f1f5f9;font-size:11px;font-weight:700;color:#64748b;white-space:nowrap;border-right:2px solid rgba(0,0,0,.1);border-bottom:1px solid rgba(0,0,0,.07);text-transform:uppercase;letter-spacing:.05em;">'+rowLabel[rk]+'</td>';
+    for (var i=0;i<stages.length;i++) {
+      var s = stages[i];
+      var bg = rk==='emotion'?emoGrad(s.emotion):(rowBg[rk]||'#fff');
+      var esc_c = ems[i]>=4?'#059669':ems[i]>=3?'#d97706':'#dc2626';
+      tBody += '<td style="padding:10px;vertical-align:top;background:'+bg+';border-right:1px solid rgba(0,0,0,.07);border-bottom:1px solid rgba(0,0,0,.07);font-size:12px;line-height:1.6;">';
+      if (rk==='emotion') {
+        tBody += '<div style="text-align:center;padding:6px 0;">'
+          +'<div style="font-size:1.5rem;margin-bottom:4px;">'+EMO[s.emotion]+'</div>'
+          +'<div style="font-family:\'Noto Sans KR\',sans-serif;font-size:13px;font-weight:700;color:'+esc_c+';">'+s.emotion+' / 5</div>'
+          +'<div style="font-size:10px;color:#64748b;margin-top:2px;">'+EMO_LABEL[s.emotion]+'</div>'
+          +'</div>';
+      } else if (rk==='touch') {
+        var tags = (s.touch||'').split(',').map(function(t){t=t.trim();return t?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(5,150,105,.12);color:#047857;font-weight:600;display:inline-block;margin:2px 2px 2px 0;">'+ec(t)+'</span>':''}).join('');
+        tBody += tags||'<span style="color:#94a3b8;">—</span>';
+      } else {
+        tBody += '<span style="white-space:pre-wrap;color:#334155;">'+(ec(s[rk])||'<span style="color:#94a3b8;">—</span>')+'</span>';
+      }
+      tBody += '</td>';
+    }
+    tBody += '</tr>';
+  }
+
+  /* ── 인사이트 카드 ── */
+  var insHTML = '';
+  var insItems = [
+    {lbl:'최고 감정 단계', val:EMO[ems[maxI]]+' '+ec(stages[maxI].name), sub:ems[maxI]+'점 — '+EMO_LABEL[ems[maxI]], c:'#059669'},
+    {lbl:'병목 단계',      val:EMO[ems[minI]]+' '+ec(stages[minI].name), sub:ems[minI]+'점 — '+(stages[minI].pain?ec(stages[minI].pain):'페인포인트 없음'), c:'#dc2626'},
+    {lbl:'평균 감정',      val:avg.toFixed(1)+'점', sub:avg>=4?'전반적으로 긍정적인 여정':avg>=3?'일부 구간 개선 필요':'전반적 경험 개선 필요', c:avgSc},
+  ];
+  insItems.forEach(function(ins){
+    insHTML += '<div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.08);margin-bottom:8px;">'
+      +'<div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">'+ins.lbl+'</div>'
+      +'<div style="font-size:14px;font-weight:700;color:'+ins.c+';">'+ins.val+'</div>'
+      +'<div style="font-size:11px;color:#64748b;margin-top:1px;">'+ins.sub+'</div>'
+      +'</div>';
+  });
+  if (lows.length) {
+    insHTML += '<div style="padding:10px 12px;border-radius:8px;border:1px solid rgba(220,38,38,.25);background:rgba(220,38,38,.04);margin-bottom:8px;">'
+      +'<div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">⚠ 이탈 위험 구간</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#dc2626;">'+lows.join(', ')+'</div>'
+      +'<div style="font-size:11px;color:#64748b;margin-top:1px;">감정 2점 이하 — 즉각 개선 필요</div>'
+      +'</div>';
+  }
+
+  /* ── Chart 데이터 ── */
+  var chartLabels = JSON.stringify(stages.map(function(s){return s.name;}));
+  var chartData   = JSON.stringify(ems);
+  var chartColors = JSON.stringify(ems.map(function(e){return EMO_COLOR[e];}));
+
+  /* ── HTML 조립 ── */
+  var html = '<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
+    +'<meta charset="UTF-8">\n'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'
+    +'<title>고객 여정 맵 — '+ec(pName)+'</title>\n'
+    +'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+    +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">\n'
+    +'<style>\n'
+    +':root{--bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);--text:#1e293b;--muted:#64748b;--dim:#94a3b8;--green:#059669;--red:#dc2626;--amber:#d97706;--orange:#ea580c;--r:10px;}\n'
+    +'*{margin:0;padding:0;box-sizing:border-box;}\n'
+    +'body{font-family:"Noto Sans KR","Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}\n'
+    +'.wrap{max-width:1400px;margin:0 auto;padding:36px 28px 60px;}\n'
+    +'.page-title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}\n'
+    +'.meta{font-size:12px;color:var(--dim);margin-bottom:24px;}\n'
+    +'.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}\n'
+    +'.sum-c{background:var(--card);border:1px solid;border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:12px;}\n'
+    +'.sum-icon{font-size:22px;opacity:.85;}\n'
+    +'.sum-v{font-family:"Noto Sans KR",sans-serif;font-size:20px;font-weight:700;line-height:1;}\n'
+    +'.sum-l{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;}\n'
+    +'.section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}\n'
+    +'.section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}\n'
+    +'.tbl-outer{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}\n'
+    +'table{border-collapse:collapse;width:100%;}\n'
+    +'.chart-ins{display:grid;grid-template-columns:2fr 1fr;gap:16px;}\n'
+    +'.footer{margin-top:40px;text-align:center;font-size:11px;color:var(--dim);}\n'
+    +'@media(max-width:768px){.sum-row{grid-template-columns:repeat(2,1fr);}.chart-ins{grid-template-columns:1fr;}}\n'
+    +'</style>\n'
+    +'</head>\n<body>\n<div class="wrap">\n\n'
+
+    +'<div class="page-title">🗺 고객 여정 맵</div>\n'
+    +'<div class="meta"><b style="color:var(--muted)">'+ec(pName)+'</b>'
+    +(pSeg?' &nbsp;·&nbsp; '+ec(pSeg):'')
+    +(pGoal?' &nbsp;·&nbsp; '+ec(pGoal):'')
+    +' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; DataForge</div>\n\n'
+
+    +'<div class="sum-row">\n'
+    +'<div class="sum-c" style="border-color:var(--border);"><div class="sum-icon">🗺</div><div><div class="sum-v">'+stages.length+'</div><div class="sum-l" style="color:var(--muted);">전체 단계</div></div></div>\n'
+    +'<div class="sum-c" style="border-color:'+avgBdr+';background:'+avgBg+';"><div class="sum-icon">'+avgIco+'</div><div><div class="sum-v" style="color:'+avgSc+';">'+avg.toFixed(1)+'점</div><div class="sum-l" style="color:'+avgSc+';">평균 감정</div></div></div>\n'
+    +'<div class="sum-c" style="border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.04);"><div class="sum-icon">✅</div><div><div class="sum-v" style="color:#059669;">'+ec(stages[maxI].name)+'</div><div class="sum-l" style="color:#059669;">최고 단계</div></div></div>\n'
+    +'<div class="sum-c" style="border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.04);"><div class="sum-icon">⚠️</div><div><div class="sum-v" style="color:#dc2626;">'+ec(stages[minI].name)+'</div><div class="sum-l" style="color:#dc2626;">병목 단계</div></div></div>\n'
+    +'</div>\n\n'
+
+    +'<div class="section-card">\n'
+    +'<div class="section-title">고객 여정 맵</div>\n'
+    +'<div class="tbl-outer"><table><thead>'+tHead+'</thead><tbody>'+tBody+'</tbody></table></div>\n'
+    +'</div>\n\n'
+
+    +'<div class="section-card">\n'
+    +'<div class="section-title">감정 곡선 &amp; 핵심 인사이트</div>\n'
+    +'<div class="chart-ins">\n'
+    +'<div style="position:relative;height:220px;"><canvas id="ec"></canvas></div>\n'
+    +'<div>'+insHTML+'</div>\n'
+    +'</div>\n'
+    +'</div>\n\n'
+
+    +'<div class="footer">DataForge · dataforge.ai.kr · '+ec(today)+'</div>\n'
+    +'</div>\n'
+    +'<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>\n'
+    +'<script>\n'
+    +'new Chart(document.getElementById("ec"),{'
+    +'type:"line",'
+    +'data:{labels:'+chartLabels+','
+    +'datasets:[{data:'+chartData+','
+    +'borderColor:"#db2777",backgroundColor:"rgba(219,39,119,.08)",borderWidth:3,'
+    +'pointBackgroundColor:'+chartColors+',pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:8,'
+    +'fill:true,tension:.4}]},'
+    +'options:{responsive:true,maintainAspectRatio:false,'
+    +'plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return" "+c.raw+"점 — "+({1:"매우 부정",2:"부정",3:"중립",4:"긍정",5:"매우 긍정"}[c.raw]||"");}}}},'
+    +'scales:{'
+    +'x:{ticks:{color:"#64748b",font:{size:11}},grid:{color:"rgba(0,0,0,.04)"}},'
+    +'y:{min:.5,max:5.5,ticks:{stepSize:1,color:"#94a3b8",font:{size:10},callback:function(v){return{1:"매우부정",2:"부정",3:"중립",4:"긍정",5:"매우긍정"}[v]||"";}},grid:{color:"rgba(0,0,0,.04)"}}'
+    +'}}'
+    +'});\n'
+    +'<\/script>\n'
+    +'</body>\n</html>';
+
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download = 'journey-map-'+new Date().toISOString().slice(0,10)+'.html';
+  a.click();
+}
+
+/* ── 마크다운으로 저장 — 여정 맵을 .md 파일로 내려받는다 (bep.php와 같은 패턴) ── */
+function exportMD() {
+  var pName = document.getElementById('pName').value;
+  var pGoal = document.getElementById('pGoal').value;
+  var pSeg  = document.getElementById('pSeg').value;
+  var today = new Date().toISOString().slice(0,10);
+  var ems   = stages.map(function(s){return s.emotion;});
+  var avg   = ems.reduce(function(a,b){return a+b;},0) / ems.length;
+  var maxI  = ems.indexOf(Math.max.apply(null,ems));
+  var minI  = ems.indexOf(Math.min.apply(null,ems));
+  var lows  = stages.filter(function(s){return s.emotion<=2;}).map(function(s){return s.name;});
+  /* 셀 안 줄바꿈은 목록 항목이 깨지지 않게 " / "로 잇는다 */
+  function line(x){ return String(x||'').trim().replace(/\s*\n+\s*/g,' / ') || '—'; }
+
+  var md = '# 🗺 고객 여정 맵\n\n';
+  md += [pName, pSeg, pGoal].filter(Boolean).join(' · ') + '\n\n';
+  md += today + ' · DataForge\n\n';
+  md += '## 단계별 여정\n\n';
+  stages.forEach(function(s, i){
+    md += '### STEP ' + (i+1) + ' — ' + (s.name || '단계 ' + (i+1)) + '\n\n';
+    md += '- 🚶 **고객 행동**: ' + line(s.action) + '\n';
+    md += '- 💭 **생각·기대**: ' + line(s.thought) + '\n';
+    md += '- ❤ **감정**: ' + s.emotion + ' / 5 (' + EMO_LABEL[s.emotion] + ')\n';
+    md += '- 📡 **접점 채널**: ' + line(s.touch) + '\n';
+    md += '- ⚠ **페인포인트**: ' + line(s.pain) + '\n';
+    md += '- 💡 **개선 기회**: ' + line(s.oppo) + '\n\n';
+  });
+  md += '## 핵심 인사이트\n\n';
+  md += '- 최고 감정 단계: ' + EMO[ems[maxI]] + ' ' + stages[maxI].name + ' (' + ems[maxI] + '점 — ' + EMO_LABEL[ems[maxI]] + ')\n';
+  md += '- 병목 단계: ' + EMO[ems[minI]] + ' ' + stages[minI].name + ' (' + ems[minI] + '점 — ' + EMO_LABEL[ems[minI]] + ')\n';
+  md += '- 평균 감정: ' + avg.toFixed(1) + '점 — ' + (avg>=4?'전반적으로 긍정적인 여정':avg>=3?'일부 구간 개선 필요':'전반적인 경험 개선 필요') + '\n';
+  if (lows.length) md += '- ⚠ 이탈 위험 구간: ' + lows.join(', ') + ' (감정 2점 이하 — 즉각 개선 필요)\n';
+  md += '\n';
+
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([md],{type:'text/markdown;charset=utf-8'}));
+  a.download = 'journey-map-'+today+'.md';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+</script>
+<script>(function(){var k='tf_manage_journey';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=manage&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

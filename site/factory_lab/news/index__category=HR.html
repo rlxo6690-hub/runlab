@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공지사항 — DataForge Factory Lab</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#0284c7;--accent2:#ea580c;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:var(--accent2);font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:15px;font-weight:700;color:var(--text);}
+.logo-title span{color:var(--accent);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;font-family:'Noto Sans KR', sans-serif;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);text-decoration:none;}
+
+/* ── Page ── */
+.page{padding:32px 24px 80px;}
+
+/* ── Intro box ── */
+.intro-box{background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.ds-selector{display:flex;gap:6px;flex-wrap:wrap;}
+.ds-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;}
+.ds-btn:hover{color:var(--text);text-decoration:none;}
+.ds-btn.active{background:rgba(2,132,199,0.12);border-color:rgba(2,132,199,0.4);color:var(--accent);}
+.filter-count{font-size:12px;color:var(--muted);white-space:nowrap;}
+.filter-count strong{color:var(--text);}
+
+/* ── News list ── */
+.news-list{list-style:none;}
+.news-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.news-item:last-child{border-bottom:none;}
+.ni-title{flex:1;}
+.ni-title a{color:var(--text);font-weight:500;font-size:14px;}
+.ni-title a:hover{color:var(--accent);text-decoration:none;}
+.ni-meta{font-size:11px;color:var(--dim);margin-top:2px;}
+.ni-right{text-align:right;flex-shrink:0;font-family:'Space Mono',monospace;font-size:11px;color:var(--dim);line-height:1.8;}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600;flex-shrink:0;}
+.badge-안전{background:#fef2f2;color:#dc2626;}
+.badge-생산{background:#f0fdf4;color:#16a34a;}
+.badge-설비{background:#eff6ff;color:#2563eb;}
+.badge-HR  {background:#fdf4ff;color:#9333ea;}
+.empty-msg{padding:40px;text-align:center;color:var(--dim);font-size:13px;}
+
+/* ── Pagination ── */
+.pagination{display:flex;gap:4px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:6px;border:1px solid var(--border);font-size:13px;color:var(--muted);background:var(--card);text-decoration:none;}
+.pagination a:hover{background:var(--card2);text-decoration:none;}
+.pagination .current{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+@media(max-width:600px){.site-header{padding:12px 16px;}.page{padding:20px 16px 60px;}}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/factory_lab/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>공지사항</span></div>
+  </div>
+  <a href="/factory_lab/" class="header-back">← Factory Lab</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>실습 포인트</strong>
+    카테고리 필터 클릭 → 목록 수집 &nbsp;|&nbsp; 제목 클릭 → 상세 페이지 텍스트 추출 &nbsp;|&nbsp; 다음 페이지 이동
+  </div>
+
+  <!-- 카테고리 필터 -->
+  <div class="filter-bar">
+    <div class="ds-selector">
+      <a href="/factory_lab/news/" class="ds-btn ">전체</a>
+            <a href="/factory_lab/news/?category=HR"
+         class="ds-btn active">HR</a>
+            <a href="/factory_lab/news/?category=%EC%83%9D%EC%82%B0"
+         class="ds-btn ">생산</a>
+            <a href="/factory_lab/news/?category=%EC%84%A4%EB%B9%84"
+         class="ds-btn ">설비</a>
+            <a href="/factory_lab/news/?category=%EC%95%88%EC%A0%84"
+         class="ds-btn ">안전</a>
+          </div>
+    <span class="filter-count">총 <strong>6</strong>건</span>
+  </div>
+
+  <!-- 목록 -->
+  <div class="a-card">
+    <div class="a-card-title">공지 목록</div>
+    <ul class="news-list" id="news-list">
+            <li class="news-item" data-id="4" data-category="HR">
+        <span class="badge badge-HR">HR</span>
+        <div class="ni-title">
+          <a href="/factory_lab/news/detail.php?id=4">2026년 2분기 교대 근무 일정 공지</a>
+          <div class="ni-meta">인사팀</div>
+        </div>
+        <div class="ni-right">
+          <div>2026-03-18</div>
+          <div>조회 328</div>
+        </div>
+      </li>
+            <li class="news-item" data-id="8" data-category="HR">
+        <span class="badge badge-HR">HR</span>
+        <div class="ni-title">
+          <a href="/factory_lab/news/detail.php?id=8">경력개발 프로그램 신청 안내</a>
+          <div class="ni-meta">인사팀</div>
+        </div>
+        <div class="ni-right">
+          <div>2026-03-14</div>
+          <div>조회 225</div>
+        </div>
+      </li>
+            <li class="news-item" data-id="12" data-category="HR">
+        <span class="badge badge-HR">HR</span>
+        <div class="ni-title">
+          <a href="/factory_lab/news/detail.php?id=12">2026년 연차 사용 촉진 안내</a>
+          <div class="ni-meta">인사팀</div>
+        </div>
+        <div class="ni-right">
+          <div>2026-03-10</div>
+          <div>조회 416</div>
+        </div>
+      </li>
+            <li class="news-item" data-id="16" data-category="HR">
+        <span class="badge badge-HR">HR</span>
+        <div class="ni-title">
+          <a href="/factory_lab/news/detail.php?id=16">신입사원 OJT 프로그램 일정 안내</a>
+          <div class="ni-meta">인사팀</div>
+        </div>
+        <div class="ni-right">
+          <div>2026-03-06</div>
+          <div>조회 194</div>
+        </div>
+      </li>
+            <li class="news-item" data-id="23" data-category="HR">
+        <span class="badge badge-HR">HR</span>
+        <div class="ni-title">
+          <a href="/factory_lab/news/detail.php?id=23">사내 식당 메뉴 개편 안내</a>
+          <div class="ni-meta">총무팀</div>
+        </div>
+        <div class="ni-right">
+          <div>2026-02-26</div>
+          <div>조회 467</div>
+        </div>
+      </li>
+            <li class="news-item" data-id="27" data-category="HR">
+        <span class="badge badge-HR">HR</span>
+        <div class="ni-title">
+          <a href="/factory_lab/news/detail.php?id=27">복리후생 포인트 지급 안내</a>
+          <div class="ni-meta">인사팀</div>
+        </div>
+        <div class="ni-right">
+          <div>2026-02-22</div>
+          <div>조회 540</div>
+        </div>
+      </li>
+                </ul>
+
+      </div>
+
+</div>
+</div>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

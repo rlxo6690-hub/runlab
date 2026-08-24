@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>유튜브 영상 다운로드 — DataForge</title>
+  <link rel="icon" type="image/png" href="/img/mfg.png">
+  <meta property="og:title" content="유튜브 영상 다운로드 — DataForge">
+  <meta property="og:description" content="YouTube URL을 입력하면 MP4·720p·MP3로 다운로드합니다.">
+  <meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1);
+      --border2:rgba(0,0,0,.15);
+      --text:#1e293b;
+      --muted:#64748b;
+      --dim:#94a3b8;
+      --accent:#2563eb;
+      --accent2:#6366f1;
+      --amber:#d97706;
+      --green:#059669;
+      --red:#dc2626;
+      --orange:#ea580c;
+      --r:10px;
+    }
+
+    body{
+      font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;font-size:14px;line-height:1.6;
+    }
+
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;
+    }
+
+    /* ── 헤더 ── */
+    .site-header{
+      padding:14px 24px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(248,250,252,.95);backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;
+    }
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;
+                color:var(--accent);letter-spacing:2px;text-decoration:none;}
+    .logo-brand em{color:var(--orange);font-style:normal;}
+    .logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+    .logo-title{font-size:13px;color:var(--muted);}
+    .header-back{font-size:12px;color:var(--muted);text-decoration:none;
+                 border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+    .header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+    /* ── 레이아웃 ── */
+    .page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+    .page{padding:0 24px 80px;}
+
+    .intro-box{
+      background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+      border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);
+      line-height:1.7;margin-top:20px;margin-bottom:16px;
+    }
+    .intro-box strong{color:var(--text);}
+
+    /* ── 카드 ── */
+    .a-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:var(--r);padding:16px 18px;margin-bottom:16px;
+    }
+    .a-card:last-child{margin-bottom:0;}
+    .a-card-title{
+      font-size:10px;font-weight:700;color:var(--muted);
+      letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;
+    }
+
+    /* ── URL 입력 ── */
+    .url-row{display:flex;gap:10px;}
+    .url-input{
+      flex:1;border:1px solid var(--border2);border-radius:8px;
+      padding:10px 12px;font-size:16px;font-family:inherit;
+      background:var(--card2);color:var(--text);outline:none;transition:.2s;min-width:0;
+    }
+    .url-input:focus{border-color:var(--accent);background:#fff;}
+
+    /* ── 버튼 ── */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+         padding:9px 20px;font-size:12px;font-weight:700;
+         font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;
+         cursor:pointer;transition:all .2s;white-space:nowrap;min-height:44px;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover:not(:disabled){background:#1d4ed8;}
+    .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+    .btn-outline:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#047857;}
+    .btn-lg{padding:12px 28px;font-size:14px;border-radius:10px;}
+
+    /* ── 영상 정보 ── */
+    .info-card{display:none;}
+    .info-inner{display:flex;gap:16px;}
+    .thumb{width:180px;flex-shrink:0;border-radius:8px;overflow:hidden;aspect-ratio:16/9;
+           background:var(--card2);border:1px solid var(--border);}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .info-meta{flex:1;min-width:0;}
+    .info-title{font-weight:700;font-size:15px;line-height:1.5;margin-bottom:10px;
+                display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .info-row{display:flex;flex-wrap:wrap;gap:6px;}
+    .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;
+           background:rgba(37,99,235,.08);color:var(--accent);border:1px solid rgba(37,99,235,.2);
+           font-family:'Noto Sans KR', sans-serif;}
+
+    /* ── 포맷 선택 (method-btn 3열) ── */
+    .format-section{display:none;}
+    .format-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+    .format-btn{
+      padding:12px 8px;border:1px solid var(--border2);border-radius:8px;
+      background:transparent;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;
+    }
+    .format-btn:hover{border-color:rgba(37,99,235,.4);}
+    .format-btn.selected{background:rgba(37,99,235,.1);border-color:var(--accent);}
+    .fmt-icon{font-size:20px;margin-bottom:4px;}
+    .fmt-name{font-size:12px;font-weight:700;color:var(--text);}
+    .fmt-desc{font-size:10px;color:var(--muted);margin-top:2px;}
+    .download-row{text-align:center;}
+
+    /* ── 진행 상태 ── */
+    .progress-card{display:none;}
+    .progress-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--accent);}
+    .spinner{width:16px;height:16px;border:2px solid rgba(37,99,235,.2);border-top-color:var(--accent);
+             border-radius:50%;animation:spin .8s linear infinite;display:inline-block;flex-shrink:0;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .progress-bar-wrap{background:var(--card2);border-radius:99px;height:7px;overflow:hidden;margin-bottom:8px;}
+    .progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+                  border-radius:99px;transition:width .4s ease;width:0%;}
+    .progress-info{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);
+                   font-family:'Space Mono',monospace;}
+    .progress-status{font-size:12px;color:var(--muted);margin-top:8px;min-height:20px;}
+
+    /* ── 완료 ── */
+    .done-card{display:none;text-align:center;
+               background:rgba(5,150,105,.05);border-color:rgba(5,150,105,.25);}
+    .done-icon{font-size:36px;margin-bottom:8px;}
+    .done-title{font-weight:700;font-size:15px;margin-bottom:4px;color:var(--green);}
+    .done-size{font-size:12px;color:var(--muted);margin-bottom:14px;font-family:'Space Mono',monospace;}
+
+    /* ── 오류 ── */
+    .error-box{display:none;padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.7;
+               background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#991b1b;
+               margin-top:12px;white-space:pre-wrap;word-break:break-all;}
+
+    /* ── 반응형 ── */
+    @media(max-width:640px){
+      .page{padding:0 14px 60px;}
+      .site-header{padding:12px 14px;}
+      .logo-sep,.logo-title{display:none;}
+      .url-row{flex-direction:column;}
+      .info-inner{flex-direction:column;}
+      .thumb{width:100%;}
+      .format-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <header class="site-header">
+    <div class="logo">
+      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <div class="logo-sep"></div>
+      <div class="logo-title">유튜브 다운로드</div>
+    </div>
+    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+  </header>
+
+  <div class="page">
+
+    <div class="intro-box">
+      <strong>YouTube URL을 입력하면 MP4(최고화질·720p) 또는 MP3로 다운로드합니다.</strong>
+      URL 입력 → 정보 확인 → 형식 선택 → 다운로드 순서로 진행하세요.
+    </div>
+
+    <!-- URL 입력 -->
+    <div class="a-card">
+      <div class="a-card-title">🔗 YouTube URL 입력</div>
+      <div class="url-row">
+        <input id="urlInput" class="url-input" type="url"
+               placeholder="https://www.youtube.com/watch?v=... 또는 youtu.be/..."
+               autocomplete="off" spellcheck="false">
+        <button id="infoBtn" class="btn btn-primary" onclick="fetchInfo()">정보 가져오기</button>
+      </div>
+      <div id="infoError" class="error-box"></div>
+    </div>
+
+    <!-- 영상 정보 -->
+    <div id="infoCard" class="a-card info-card">
+      <div class="a-card-title">🎬 영상 정보</div>
+      <div class="info-inner">
+        <div class="thumb">
+          <img id="thumbImg" src="" alt="썸네일">
+        </div>
+        <div class="info-meta">
+          <div id="infoTitle" class="info-title"></div>
+          <div class="info-row">
+            <span id="infoDuration" class="badge">⏱ —</span>
+            <span id="infoUploader" class="badge">👤 —</span>
+            <span id="infoViews" class="badge">👁 —</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 포맷 선택 -->
+    <div id="formatSection" class="a-card format-section">
+      <div class="a-card-title">⚙️ 다운로드 형식 선택</div>
+      <div class="format-grid">
+        <div class="format-btn selected" data-fmt="best" onclick="selectFmt(this)">
+          <div class="fmt-icon">🎬</div>
+          <div class="fmt-name">최고화질</div>
+          <div class="fmt-desc">MP4 · 최대 해상도</div>
+        </div>
+        <div id="fmt720btn" class="format-btn" data-fmt="720p" onclick="selectFmt(this)">
+          <div class="fmt-icon">📺</div>
+          <div class="fmt-name">720p</div>
+          <div class="fmt-desc">MP4 · HD</div>
+        </div>
+        <div class="format-btn" data-fmt="mp3" onclick="selectFmt(this)">
+          <div class="fmt-icon">🎵</div>
+          <div class="fmt-name">MP3</div>
+          <div class="fmt-desc">오디오만 추출</div>
+        </div>
+      </div>
+      <div class="download-row">
+        <button id="dlBtn" class="btn btn-primary btn-lg" onclick="startDownload()">⬇ 다운로드 시작</button>
+      </div>
+    </div>
+
+    <!-- 진행 상태 -->
+    <div id="progressCard" class="a-card progress-card">
+      <div class="progress-title">
+        <div class="spinner"></div>
+        <span id="progressLabel">다운로드 중...</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <div class="progress-info">
+        <span id="progressPct">0%</span>
+        <span id="progressSpeed"></span>
+        <span id="progressEta"></span>
+      </div>
+      <div id="progressStatus" class="progress-status"></div>
+    </div>
+
+    <!-- 완료 -->
+    <div id="doneCard" class="a-card done-card">
+      <div class="done-icon">✅</div>
+      <div class="done-title">다운로드 준비 완료!</div>
+      <div id="doneSize" class="done-size"></div>
+      <button id="fetchBtn" class="btn btn-green btn-lg" onclick="fetchFile()">⬇ 파일 저장</button>
+    </div>
+
+  </div>
+
+</div><!-- .page-wrap -->
+
+<script>
+let currentJob  = null;
+let pollTimer   = null;
+let selectedFmt = 'best';
+let currentUrl  = '';
+
+/* ── 포맷 선택 ── */
+function selectFmt(el) {
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedFmt = el.dataset.fmt;
+}
+
+/* ── 시간 포맷 ── */
+function fmtDur(sec) {
+  if (!sec) return '—';
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+           : `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtNum(n) {
+  if (!n) return '—';
+  if (n >= 1e8) return (n/1e8).toFixed(1) + '억회';
+  if (n >= 1e4) return (n/1e4).toFixed(1) + '만회';
+  return n.toLocaleString() + '회';
+}
+
+function fmtBytes(b) {
+  if (!b) return '';
+  if (b >= 1e9) return (b/1e9).toFixed(1) + ' GB';
+  if (b >= 1e6) return (b/1e6).toFixed(1) + ' MB';
+  return (b/1e3).toFixed(0) + ' KB';
+}
+
+/* ── UI 상태 ── */
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function resetState() {
+  clearInterval(pollTimer);
+  currentJob = null;
+  ['infoCard','formatSection','progressCard','doneCard'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  showError('infoError', '');
+}
+
+/* ── 영상 정보 가져오기 ── */
+async function fetchInfo() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  resetState();
+  currentUrl = url;
+
+  const btn = document.getElementById('infoBtn');
+  btn.disabled = true;
+  btn.textContent = '가져오는 중...';
+
+  try {
+    const res  = await fetch('/work/api/youtube_dl.php?action=info', {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'url=' + encodeURIComponent(url),
+    });
+    const data = await res.json();
+    if (data.error) { showError('infoError', data.error); return; }
+
+    document.getElementById('thumbImg').src      = data.thumbnail;
+    document.getElementById('infoTitle').textContent     = data.title;
+    document.getElementById('infoDuration').textContent  = '⏱ ' + fmtDur(data.duration);
+    document.getElementById('infoUploader').textContent  = '👤 ' + (data.uploader || '—');
+    document.getElementById('infoViews').textContent     = '👁 ' + fmtNum(data.view_count);
+
+    // 720p 없으면 비활성화
+    const btn720 = document.getElementById('fmt720btn');
+    if (!data.has720) {
+      btn720.style.opacity = '.4';
+      btn720.style.pointerEvents = 'none';
+      btn720.querySelector('.fmt-desc').textContent = '해상도 없음';
+    } else {
+      btn720.style.opacity = '';
+      btn720.style.pointerEvents = '';
+      btn720.querySelector('.fmt-desc').textContent = 'MP4 · HD';
+    }
+
+    document.getElementById('infoCard').style.display     = 'block';
+    document.getElementById('formatSection').style.display = 'block';
+  } catch(e) {
+    showError('infoError', '네트워크 오류가 발생했습니다.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '정보 가져오기';
+  }
+}
+
+/* ── 다운로드 시작 ── */
+async function startDownload() {
+  if (!currentUrl) return;
+  document.getElementById('dlBtn').disabled = true;
+  document.getElementById('formatSection').style.display = 'none';
+  document.getElementById('progressCard').style.display  = 'block';
+  document.getElementById('progressBar').style.width     = '0%';
+  document.getElementById('progressPct').textContent     = '0%';
+  document.getElementById('progressLabel').textContent   = '다운로드 중...';
+  document.getElementById('progressStatus').textContent  = '';
+
+  try {
+    const res  = await fetch('/work/api/youtube_dl.php?action=start', {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'url=' + encodeURIComponent(currentUrl) + '&format=' + encodeURIComponent(selectedFmt),
+    });
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById('progressCard').style.display = 'none';
+      document.getElementById('formatSection').style.display = 'block';
+      document.getElementById('dlBtn').disabled = false;
+      showError('infoError', data.error);
+      return;
+    }
+    currentJob = data.job;
+    pollTimer  = setInterval(pollStatus, 1500);
+  } catch(e) {
+    showError('infoError', '시작 실패: ' + e.message);
+    document.getElementById('progressCard').style.display  = 'none';
+    document.getElementById('formatSection').style.display = 'block';
+    document.getElementById('dlBtn').disabled = false;
+  }
+}
+
+/* ── 상태 폴링 ── */
+async function pollStatus() {
+  if (!currentJob) return;
+  try {
+    const res  = await fetch('/work/api/youtube_dl.php?action=status&job=' + currentJob);
+    const data = await res.json();
+
+    if (data.status === 'processing') {
+      const pct = Math.round(data.percent || 0);
+      document.getElementById('progressBar').style.width   = pct + '%';
+      document.getElementById('progressPct').textContent   = pct + '%';
+      document.getElementById('progressSpeed').textContent = data.speed || '';
+      document.getElementById('progressEta').textContent   = data.eta ? ('남은 시간 ' + data.eta) : '';
+      document.getElementById('progressLabel').textContent = '다운로드 중...';
+    } else if (data.status === 'merging') {
+      document.getElementById('progressBar').style.width   = '95%';
+      document.getElementById('progressPct').textContent   = '95%';
+      document.getElementById('progressLabel').textContent = '파일 병합 중...';
+      document.getElementById('progressStatus').textContent = '영상·오디오를 MP4로 합치는 중입니다.';
+    } else if (data.status === 'done') {
+      clearInterval(pollTimer);
+      document.getElementById('progressCard').style.display = 'none';
+      document.getElementById('doneCard').style.display     = 'block';
+      document.getElementById('doneSize').textContent       = '파일 크기: ' + fmtBytes(data.size);
+      document.getElementById('dlBtn').disabled = false;
+    } else if (data.status === 'error') {
+      clearInterval(pollTimer);
+      document.getElementById('progressCard').style.display  = 'none';
+      document.getElementById('formatSection').style.display = 'block';
+      document.getElementById('dlBtn').disabled = false;
+      showError('infoError', '오류: ' + (data.message || '다운로드 실패'));
+    }
+  } catch(e) { /* 일시적 네트워크 오류는 무시 */ }
+}
+
+/* ── 파일 저장 ── */
+function fetchFile() {
+  if (!currentJob) return;
+  const a = document.createElement('a');
+  a.href  = '/work/api/youtube_dl.php?action=fetch&job=' + currentJob;
+  a.click();
+}
+
+/* Enter 키 */
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fetchInfo();
+});
+</script>
+
+<script>(function(){
+  var k='tf_work_youtube_dl';
+  if(sessionStorage.getItem(k))return;
+  sessionStorage.setItem(k,'1');
+  fetch('/mfg/api/traffic_log.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'service=work&page='+encodeURIComponent(location.pathname)
+  });
+})();</script>
+
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

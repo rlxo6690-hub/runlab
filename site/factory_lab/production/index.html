@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생산 실적 — DataForge Factory Lab</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#0284c7;--accent2:#ea580c;
+  --green:#059669;--red:#dc2626;--amber:#d97706;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+.page-wrap{max-width:1400px;margin:0 auto;}
+
+/* ── Header ── */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:var(--accent2);font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:15px;font-weight:700;color:var(--text);}
+.logo-title span{color:var(--accent);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;font-family:'Noto Sans KR', sans-serif;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,0.3);text-decoration:none;}
+
+/* ── Page ── */
+.page{padding:32px 24px 80px;}
+
+/* ── Intro box ── */
+.intro-box{background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* ── Cards ── */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;}
+
+/* ── Tabs ── */
+.stat-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.stat-tab{padding:12px 22px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── Filter form ── */
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.filter-label{font-size:12px;color:var(--muted);white-space:nowrap;}
+input[type=date], select{
+  border:1px solid var(--border2);border-radius:8px;padding:7px 10px;
+  font-size:13px;color:var(--text);background:var(--card2);
+  font-family:'Noto Sans KR',sans-serif;outline:none;
+}
+input[type=date]:focus, select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(2,132,199,.1);}
+.btn-search{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:background .15s;}
+.btn-search:hover{background:#0369a1;}
+.range-sep{color:var(--dim);font-size:12px;}
+
+/* ── Stat chips ── */
+.stat-chips{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+.stat-chip{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.stat-chip .sc-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.stat-chip .sc-value{font-family:'Space Mono',monospace;font-size:1.4rem;font-weight:700;color:var(--text);}
+.stat-chip .sc-unit{font-size:11px;color:var(--dim);margin-top:2px;}
+
+/* ── Table ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--card2);border-bottom:2px solid var(--border);padding:10px 12px;text-align:left;font-weight:600;color:var(--muted);white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(2,132,199,.03);}
+.eff-high{color:var(--green);font-weight:700;}
+.eff-mid {color:var(--amber);font-weight:700;}
+.eff-low {color:var(--red);font-weight:700;}
+.empty-row td{text-align:center;color:var(--dim);padding:40px 0;}
+
+@media(max-width:1000px){.stat-chips{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.site-header{padding:12px 16px;}.page{padding:20px 16px 60px;}.stat-chips{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/factory_lab/" class="logo-brand">DATA<em>FORGE</em></a>
+    <span class="logo-sep"></span>
+    <div class="logo-title"><span>생산</span> 실적</div>
+  </div>
+  <a href="/factory_lab/" class="header-back">← Factory Lab</a>
+</header>
+
+<div class="page">
+
+  <div class="intro-box">
+    <strong>실습 포인트</strong>
+    탭 클릭(일간/주간/월간) → 테이블 변경 확인 &nbsp;|&nbsp; 날짜 범위 입력 후 조회 &nbsp;|&nbsp; 라인 필터 선택 &nbsp;|&nbsp; 전체 테이블 행 수집
+  </div>
+
+  <!-- 탭 -->
+  <div class="stat-tabs">
+    <button class="stat-tab active" onclick="switchTab('daily')">일간</button>
+    <button class="stat-tab " onclick="switchTab('weekly')">주간</button>
+    <button class="stat-tab " onclick="switchTab('monthly')">월간</button>
+  </div>
+
+  <!-- 필터 -->
+  <div class="a-card">
+    <div class="a-card-title">조회 조건</div>
+    <form method="get" id="filter-form" class="filter-row">
+      <input type="hidden" name="tab" id="tab-input" value="daily">
+      <span class="filter-label">기간</span>
+      <input type="date" name="from" id="date-from" value="2026-08-17">
+      <span class="range-sep">~</span>
+      <input type="date" name="to"   id="date-to"   value="2026-08-24">
+      <select name="line">
+        <option value="">전체 라인</option>
+                <option value="1라인" >1라인</option>
+                <option value="2라인" >2라인</option>
+                <option value="3라인" >3라인</option>
+              </select>
+      <button type="submit" class="btn-search">조회</button>
+    </form>
+  </div>
+
+  <!-- 요약 통계 -->
+  
+  <!-- 데이터 테이블 -->
+  <div class="a-card">
+    <div class="a-card-title">
+      일간 생산 실적
+      — 0건
+    </div>
+    <div class="table-wrap">
+      <table id="production-table">
+        <thead>
+          <tr>
+                        <th>날짜</th><th>라인</th><th>제품</th><th>목표</th><th>실적</th><th>달성률</th><th>불량</th><th>불량률</th><th>비가동(분)</th>
+                      </tr>
+        </thead>
+        <tbody>
+                              <tr class="empty-row"><td colspan="9">해당 기간의 데이터가 없습니다.</td></tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+function switchTab(tab) {
+  document.getElementById('tab-input').value = tab;
+  const today = new Date().toISOString().split('T')[0];
+  const from  = new Date();
+  if (tab === 'daily')        from.setDate(from.getDate() - 7);
+  else if (tab === 'weekly')  from.setDate(from.getDate() - 30);
+  else                        from.setDate(from.getDate() - 90);
+  document.getElementById('date-from').value = from.toISOString().split('T')[0];
+  document.getElementById('date-to').value   = today;
+  document.getElementById('filter-form').submit();
+}
+</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

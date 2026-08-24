@@ -1,0 +1,292 @@
+https://dataforge.ai.kr/	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/guide/	200	text/html; charset=UTF-8	8780
+https://dataforge.ai.kr/about	200	text/html; charset=UTF-8	8435
+https://dataforge.ai.kr/privacy	200	text/html; charset=UTF-8	9282
+https://dataforge.ai.kr/guide/accuracy_trap	200	text/html; charset=UTF-8	16557
+https://dataforge.ai.kr/guide/correlation_trap	200	text/html; charset=UTF-8	19173
+https://dataforge.ai.kr/guide/data_gen	200	text/html; charset=UTF-8	14673
+https://dataforge.ai.kr/guide/data_leakage	200	text/html; charset=UTF-8	17075
+https://dataforge.ai.kr/guide/imbalance_smote	200	text/html; charset=UTF-8	18835
+https://dataforge.ai.kr/guide/prep_edit	200	text/html; charset=UTF-8	13777
+https://dataforge.ai.kr/guide/prep_interpolate	200	text/html; charset=UTF-8	13551
+https://dataforge.ai.kr/guide/prep_missing	200	text/html; charset=UTF-8	12025
+https://dataforge.ai.kr/guide/prep_normalize	200	text/html; charset=UTF-8	14124
+https://dataforge.ai.kr/guide/prep_onehot	200	text/html; charset=UTF-8	13707
+https://dataforge.ai.kr/guide/prep_split	200	text/html; charset=UTF-8	13562
+https://dataforge.ai.kr/guide/sim_deep	200	text/html; charset=UTF-8	13675
+https://dataforge.ai.kr/guide/sim_ml	200	text/html; charset=UTF-8	15255
+https://dataforge.ai.kr/guide/sim_timeseries	200	text/html; charset=UTF-8	14146
+https://dataforge.ai.kr/mfg/	200	text/html; charset=UTF-8	55997
+https://dataforge.ai.kr/biz/	200	text/html; charset=UTF-8	40808
+https://dataforge.ai.kr/ads/	200	text/html; charset=UTF-8	42570
+https://dataforge.ai.kr/text/	200	text/html; charset=UTF-8	14322
+https://dataforge.ai.kr/prep/missing	200	text/html; charset=UTF-8	104474
+https://dataforge.ai.kr/prep/normalize	200	text/html; charset=UTF-8	57598
+https://dataforge.ai.kr/prep/interpolate	200	text/html; charset=UTF-8	68862
+https://dataforge.ai.kr/prep/edit	200	text/html; charset=UTF-8	111763
+https://dataforge.ai.kr/prep/onehot	200	text/html; charset=UTF-8	39256
+https://dataforge.ai.kr/prep/quality_check	200	text/html; charset=UTF-8	38562
+https://dataforge.ai.kr/prep/split	200	text/html; charset=UTF-8	31800
+https://dataforge.ai.kr/sim/chart	200	text/html; charset=UTF-8	55004
+https://dataforge.ai.kr/sim/basicstat	200	text/html; charset=UTF-8	67657
+https://dataforge.ai.kr/sim/stat	200	text/html; charset=UTF-8	115235
+https://dataforge.ai.kr/sim/timeseries	200	text/html; charset=UTF-8	65053
+https://dataforge.ai.kr/sim/geo	200	text/html; charset=UTF-8	36726
+https://dataforge.ai.kr/sim/text	200	text/html; charset=UTF-8	54076
+https://dataforge.ai.kr/sim/network	200	text/html; charset=UTF-8	42629
+https://dataforge.ai.kr/factory_lab	200	text/html; charset=UTF-8	11253
+https://dataforge.ai.kr/sim/ml	200	text/html; charset=UTF-8	315903
+https://dataforge.ai.kr/sim/deep	200	text/html; charset=UTF-8	127036
+https://dataforge.ai.kr/builder/prompt	200	text/html; charset=UTF-8	65345
+https://dataforge.ai.kr/builder/html	200	text/html; charset=UTF-8	41014
+https://dataforge.ai.kr/builder/chart	200	text/html; charset=UTF-8	46928
+https://dataforge.ai.kr/manage/dashboard	200	text/html; charset=UTF-8	40853
+https://dataforge.ai.kr/builder/link	200	text/html; charset=UTF-8	31493
+https://dataforge.ai.kr/builder/location	200	text/html; charset=UTF-8	24607
+https://dataforge.ai.kr/builder/boundary	200	text/html; charset=UTF-8	490864
+https://dataforge.ai.kr/vibe/pwa	200	text/html; charset=UTF-8	49504
+https://dataforge.ai.kr/vibe/firestore	200	text/html; charset=UTF-8	68681
+https://dataforge.ai.kr/vibe/push	200	text/html; charset=UTF-8	34156
+https://dataforge.ai.kr/vibe/split	200	text/html; charset=UTF-8	25812
+https://dataforge.ai.kr/vibe/telegram	200	text/html; charset=UTF-8	27915
+https://dataforge.ai.kr/manage/onepager	200	text/html; charset=UTF-8	37588
+https://dataforge.ai.kr/manage/bmc	200	text/html; charset=UTF-8	30706
+https://dataforge.ai.kr/manage/bizmodel	200	text/html; charset=UTF-8	40080
+https://dataforge.ai.kr/manage/persona	200	text/html; charset=UTF-8	42793
+https://dataforge.ai.kr/manage/journey	200	text/html; charset=UTF-8	38181
+https://dataforge.ai.kr/manage/market	200	text/html; charset=UTF-8	73061
+https://dataforge.ai.kr/manage/bep	200	text/html; charset=UTF-8	40128
+https://dataforge.ai.kr/manage/scenario	200	text/html; charset=UTF-8	46947
+https://dataforge.ai.kr/manage/elasticity	200	text/html; charset=UTF-8	41428
+https://dataforge.ai.kr/manage/npv	200	text/html; charset=UTF-8	46888
+https://dataforge.ai.kr/manage/financial	200	text/html; charset=UTF-8	57826
+https://dataforge.ai.kr/manage/kpi	200	text/html; charset=UTF-8	45462
+https://dataforge.ai.kr/work/markdown	200	text/html; charset=UTF-8	24304
+https://dataforge.ai.kr/work/pdf_splitter	200	text/html; charset=UTF-8	35150
+https://dataforge.ai.kr/work/pdf_maker	200	text/html; charset=UTF-8	39296
+https://dataforge.ai.kr/work/proposal	200	text/html; charset=UTF-8	42567
+https://dataforge.ai.kr/work/pdf_compress	200	text/html; charset=UTF-8	20193
+https://dataforge.ai.kr/work/ppt_font	200	text/html; charset=UTF-8	20622
+https://dataforge.ai.kr/work/youtube_dl	200	text/html; charset=UTF-8	19638
+https://dataforge.ai.kr/work/pdf_ppt	200	text/html; charset=UTF-8	23833
+https://dataforge.ai.kr/work/image_resize	200	text/html; charset=UTF-8	50622
+https://dataforge.ai.kr/work/char_count	200	text/html; charset=UTF-8	21332
+https://dataforge.ai.kr/work/pdf_unlock	200	text/html; charset=UTF-8	30003
+https://dataforge.ai.kr/builder/prompt_lib	200	text/html; charset=UTF-8	36453
+https://dataforge.ai.kr/extension/capture	200	text/html; charset=UTF-8	13803
+https://dataforge.ai.kr/extension/textgrab	200	text/html; charset=UTF-8	14578
+https://dataforge.ai.kr/extension/imagegrab	200	text/html; charset=UTF-8	14171
+https://dataforge.ai.kr/img/mfg.png	200	image/png	18548
+https://dataforge.ai.kr/lms/	200	text/html; charset=UTF-8	24476
+https://dataforge.ai.kr/sim/aitest	200	text/html; charset=UTF-8	60680
+https://dataforge.ai.kr/builder/defense_video	200	text/html; charset=UTF-8	48038
+https://dataforge.ai.kr/builder/defense_image	200	text/html; charset=UTF-8	27049
+https://dataforge.ai.kr/mfg	200	text/html; charset=UTF-8	55997
+https://dataforge.ai.kr/biz	200	text/html; charset=UTF-8	40808
+https://dataforge.ai.kr/ads	200	text/html; charset=UTF-8	42570
+https://dataforge.ai.kr/text	200	text/html; charset=UTF-8	14322
+https://dataforge.ai.kr/prep/type_convert	200	text/html; charset=UTF-8	45646
+https://dataforge.ai.kr/sheet	200	text/html; charset=UTF-8	40841
+https://dataforge.ai.kr/manage/pest	200	text/html; charset=UTF-8	39648
+https://dataforge.ai.kr/manage/swot	200	text/html; charset=UTF-8	41020
+https://dataforge.ai.kr/manage/problem	200	text/html; charset=UTF-8	49064
+https://dataforge.ai.kr/manage/3c	200	text/html; charset=UTF-8	40226
+https://dataforge.ai.kr/work/ppt_pdf	200	text/html; charset=UTF-8	26832
+https://dataforge.ai.kr/work/ocr	200	text/html; charset=UTF-8	20796
+https://dataforge.ai.kr/mfg/js/promo.js	200	application/javascript	10504
+https://dataforge.ai.kr/css/style.css?v=1784972629	404		0
+https://dataforge.ai.kr/api/grafana_queries.php	404		0
+https://dataforge.ai.kr/js/generators.js?v=1786256686	404		0
+https://dataforge.ai.kr/js/formatters.js?v=1773892535	404		0
+https://dataforge.ai.kr/js/app.js?v=1786256686	404		0
+https://dataforge.ai.kr/css/style.css?v=1784972874	404		0
+https://dataforge.ai.kr/js/generators.js?v=1773892535	404		0
+https://dataforge.ai.kr/js/app.js?v=1773894334	404		0
+https://dataforge.ai.kr/css/style.css?v=1784972875	404		0
+https://dataforge.ai.kr/js/app.js?v=1778995458	404		0
+https://dataforge.ai.kr	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/blob	404		0
+https://dataforge.ai.kr/url	404		0
+https://dataforge.ai.kr/a.href	404		0
+https://dataforge.ai.kr/link.href	404		0
+https://dataforge.ai.kr/image/png	404		0
+https://dataforge.ai.kr/factory_lab/crawl_lab.php	200	text/html; charset=UTF-8	31662
+https://dataforge.ai.kr/factory_lab/news/	200	text/html; charset=UTF-8	10968
+https://dataforge.ai.kr/factory_lab/catalog/	200	text/html; charset=UTF-8	14351
+https://dataforge.ai.kr/factory_lab/sensor/	200	text/html; charset=UTF-8	18170
+https://dataforge.ai.kr/factory_lab/production/	200	text/html; charset=UTF-8	8187
+https://dataforge.ai.kr/factory_lab/maintenance/	200	text/html; charset=UTF-8	13968
+https://dataforge.ai.kr/factory_lab/login.php	200	text/html; charset=UTF-8	2689
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=2	200	text/html; charset=UTF-8	3022
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=1	200	text/html; charset=UTF-8	3040
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=3	200	text/html; charset=UTF-8	2993
+https://dataforge.ai.kr/sim/randomforest	200	text/html; charset=UTF-8	65019
+https://dataforge.ai.kr/sim/xgboost	200	text/html; charset=UTF-8	87756
+https://dataforge.ai.kr/sim/lightgbm	200	text/html; charset=UTF-8	72680
+https://dataforge.ai.kr/sim/neuron	200	text/html; charset=UTF-8	105980
+https://dataforge.ai.kr/sim/gradient	200	text/html; charset=UTF-8	46357
+https://dataforge.ai.kr/sim/hyperparam	200	text/html; charset=UTF-8	20395
+https://dataforge.ai.kr/prevBlobUrl	404		0
+https://dataforge.ai.kr/file	404		0
+https://dataforge.ai.kr/mimeType, quality	ERR	URL can't contain control characters. '/mimeType, quality' (found at least ' ')
+https://dataforge.ai.kr/new Blob([content], { type: mime }	ERR	URL can't contain control characters. '/new Blob([content], { type: mime }' (found at least ' ')
+https://dataforge.ai.kr/e.request.url	404		0
+https://dataforge.ai.kr/manifest.json	404		0
+https://dataforge.ai.kr/icons/favicon-32.png	404		0
+https://dataforge.ai.kr/icons/apple-touch-icon.png	404		0
+https://dataforge.ai.kr/f	404		0
+https://dataforge.ai.kr/content	404		0
+https://dataforge.ai.kr/icon-192.png	404		0
+https://dataforge.ai.kr/style.css	404		0
+https://dataforge.ai.kr/app.js	404		0
+https://dataforge.ai.kr/bytes	404		0
+https://dataforge.ai.kr/a	404		0
+https://dataforge.ai.kr/32바이트	ERR	'ascii' codec can't encode characters in position 7-9: ordinal not in range(128)
+https://dataforge.ai.kr/new Uint8Array(pubRaw	ERR	URL can't contain control characters. '/new Uint8Array(pubRaw' (found at least ' ')
+https://dataforge.ai.kr/config.js	404		0
+https://dataforge.ai.kr/item.url	404		0
+https://dataforge.ai.kr/burl	404		0
+https://dataforge.ai.kr/i.url	404		0
+https://dataforge.ai.kr/zipBlob	404		0
+https://dataforge.ai.kr/work/api/ppt_proxy.php?action=download&token=	400		0
+https://dataforge.ai.kr/work/api/youtube_dl.php?action=fetch&job=	404		0
+https://dataforge.ai.kr/pptxBlob	404		0
+https://dataforge.ai.kr/items[i].thumb	404		0
+https://dataforge.ai.kr/it.thumb	404		0
+https://dataforge.ai.kr/prev.src	404		0
+https://dataforge.ai.kr/mergedBlob	404		0
+https://dataforge.ai.kr/extension/capture_ext/src/icons/icon128.png	200	image/png	4643
+https://dataforge.ai.kr/extension/textgrab_ext/src/icons/icon128.png	200	image/png	4157
+https://dataforge.ai.kr/extension/imagegrab_ext/src/icons/icon128.png	200	image/png	5798
+https://dataforge.ai.kr/admin/	200	text/html; charset=UTF-8	271104
+https://dataforge.ai.kr/pdfBlob	404		0
+https://dataforge.ai.kr/factory_lab/sensor/api.php	200	application/json; charset=utf-8	3333
+https://dataforge.ai.kr/fileOrBlob	404		0
+https://dataforge.ai.kr/factory_lab/	200	text/html; charset=UTF-8	11253
+https://dataforge.ai.kr/factory_lab/news/?category=HR	200	text/html; charset=UTF-8	8794
+https://dataforge.ai.kr/factory_lab/news/?category=%EC%83%9D%EC%82%B0	200	text/html; charset=UTF-8	9831
+https://dataforge.ai.kr/factory_lab/news/?category=%EC%84%A4%EB%B9%84	200	text/html; charset=UTF-8	9384
+https://dataforge.ai.kr/factory_lab/news/?category=%EC%95%88%EC%A0%84	200	text/html; charset=UTF-8	10254
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=4	200	text/html; charset=UTF-8	2996
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=5	200	text/html; charset=UTF-8	3019
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=6	200	text/html; charset=UTF-8	3002
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=7	200	text/html; charset=UTF-8	3023
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=8	200	text/html; charset=UTF-8	3027
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=9	200	text/html; charset=UTF-8	3058
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=10	200	text/html; charset=UTF-8	3035
+https://dataforge.ai.kr/?page=2&category=	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?page=3&category=	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/factory_lab/catalog/?category=IT%EA%B8%B0%EA%B8%B0	200	text/html; charset=UTF-8	9430
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EA%B2%80%EC%82%AC%EC%9E%A5%EB%B9%84	200	text/html; charset=UTF-8	9884
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EA%B3%B5%EA%B5%AC%EB%A5%98	200	text/html; charset=UTF-8	9862
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EA%B3%B5%EC%95%95%EA%B8%B0%EA%B8%B0	200	text/html; charset=UTF-8	10306
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EA%B5%AC%EB%8F%99%EA%B8%B0%EA%B8%B0	200	text/html; charset=UTF-8	9431
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC	200	text/html; charset=UTF-8	9452
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EB%AC%BC%EB%A5%98%EC%9E%A5%EB%B9%84	200	text/html; charset=UTF-8	9436
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EC%84%BC%EC%84%9C%EB%A5%98	200	text/html; charset=UTF-8	12426
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EC%8B%9D%EB%B3%84%2F%ED%8A%B8%EB%9E%98%ED%82%B9	200	text/html; charset=UTF-8	9877
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EC%95%88%EC%A0%84%EC%9E%A5%EC%B9%98	200	text/html; charset=UTF-8	10730
+https://dataforge.ai.kr/factory_lab/catalog/?category=%EC%A0%9C%EC%96%B4%EA%B8%B0%EA%B8%B0	200	text/html; charset=UTF-8	10296
+https://dataforge.ai.kr/factory_lab/catalog/?category=%ED%99%98%EA%B2%BD%EC%84%A4%EB%B9%84	200	text/html; charset=UTF-8	9867
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=18	200	text/html; charset=UTF-8	5194
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=23	200	text/html; charset=UTF-8	5854
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=29	200	text/html; charset=UTF-8	5818
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=28	200	text/html; charset=UTF-8	5790
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=27	200	text/html; charset=UTF-8	5796
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=15	200	text/html; charset=UTF-8	6144
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=16	200	text/html; charset=UTF-8	6120
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=21	200	text/html; charset=UTF-8	6116
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=20	200	text/html; charset=UTF-8	5215
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=9	200	text/html; charset=UTF-8	5258
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=17	200	text/html; charset=UTF-8	5199
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=10	200	text/html; charset=UTF-8	6720
+https://dataforge.ai.kr/?page=2&category=&q=	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?page=3&category=&q=	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/factory_lab/css/style.css	200	text/css	13419
+https://dataforge.ai.kr/?id=1	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=3	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=2	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=4	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/mfg/api/grafana_queries.php	200	text/html; charset=utf-8	9526
+https://dataforge.ai.kr/mfg/js/generators.js	200	application/javascript	40633
+https://dataforge.ai.kr/mfg/js/formatters.js	200	application/javascript	1569
+https://dataforge.ai.kr/admin/?logout=1	200	text/html; charset=UTF-8	271104
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=12	200	text/html; charset=UTF-8	2996
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=16	200	text/html; charset=UTF-8	3039
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=23	200	text/html; charset=UTF-8	2990
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=27	200	text/html; charset=UTF-8	2972
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=11	200	text/html; charset=UTF-8	2988
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=15	200	text/html; charset=UTF-8	3058
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=19	200	text/html; charset=UTF-8	3013
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=22	200	text/html; charset=UTF-8	2979
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=26	200	text/html; charset=UTF-8	3053
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=29	200	text/html; charset=UTF-8	3082
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=13	200	text/html; charset=UTF-8	3006
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=17	200	text/html; charset=UTF-8	3009
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=20	200	text/html; charset=UTF-8	2998
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=24	200	text/html; charset=UTF-8	2945
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=28	200	text/html; charset=UTF-8	3076
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=14	200	text/html; charset=UTF-8	3036
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=18	200	text/html; charset=UTF-8	3017
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=21	200	text/html; charset=UTF-8	3075
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=25	200	text/html; charset=UTF-8	3038
+https://dataforge.ai.kr/factory_lab/news/detail.php?id=30	200	text/html; charset=UTF-8	2979
+https://dataforge.ai.kr/?id=5	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=6	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=7	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=8	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=9	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=10	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=11	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=30	200	text/html; charset=UTF-8	6729
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=22	200	text/html; charset=UTF-8	6726
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=5	200	text/html; charset=UTF-8	6733
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=1	200	text/html; charset=UTF-8	6766
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=4	200	text/html; charset=UTF-8	6775
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=2	200	text/html; charset=UTF-8	6727
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=3	200	text/html; charset=UTF-8	6735
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=14	200	text/html; charset=UTF-8	5843
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=13	200	text/html; charset=UTF-8	5847
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=19	200	text/html; charset=UTF-8	6429
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=12	200	text/html; charset=UTF-8	6420
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=11	200	text/html; charset=UTF-8	6414
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=26	200	text/html; charset=UTF-8	6455
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=6	200	text/html; charset=UTF-8	6387
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=7	200	text/html; charset=UTF-8	6114
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=8	200	text/html; charset=UTF-8	6131
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=24	200	text/html; charset=UTF-8	5818
+https://dataforge.ai.kr/factory_lab/catalog/detail.php?id=25	200	text/html; charset=UTF-8	5837
+https://dataforge.ai.kr/?id=29	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=23	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=27	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=28	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=16	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=21	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=15	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=13	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=17	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=22	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=24	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=26	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=12	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=14	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=18	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=20	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=25	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=30	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/?id=19	200	text/html; charset=UTF-8	107541
+https://dataforge.ai.kr/biz/js/generators.js	200		13762
+https://dataforge.ai.kr/biz/css/style.css	200		15630
+https://dataforge.ai.kr/biz/js/app.js	200		23553
+https://dataforge.ai.kr/biz/js/formatters.js	200		1569
+https://dataforge.ai.kr/ads/js/app.js	200		21902
+https://dataforge.ai.kr/ads/js/formatters.js	200		1569
+https://dataforge.ai.kr/ads/js/generators.js	200		16275
+https://dataforge.ai.kr/ads/css/style.css	200		15630
+https://dataforge.ai.kr/mfg/js/app.js	200		65069
+https://dataforge.ai.kr/mfg/css/style.css	200		18106
+https://dataforge.ai.kr/extension/capture_ext/dist/pixelshot-capture.zip	200		16040
+https://dataforge.ai.kr/extension/imagegrab_ext/dist/imagegrab.zip	200		18666
+https://dataforge.ai.kr/extension/textgrab_ext/dist/textgrab.zip	200		17141
+https://dataforge.ai.kr/admin/index.php	200		271104

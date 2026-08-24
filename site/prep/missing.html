@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결측치 · 이상치 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="결측치 · 이상치 시뮬레이터 — DataForge">
+<meta property="og:description" content="결측치 탐지·보간과 이상치 탐지를 브라우저에서 직접 실습하는 교육용 시뮬레이터">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;
+  --amber:#d97706;--green:#059669;--red:#dc2626;
+  --orange:#ea580c;--r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* Page */
+.page{padding:0 24px 80px;}
+
+/* Tabs */
+.stat-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:28px;}
+.stat-tab{padding:14px 24px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.stat-tab:hover{color:var(--text);}
+.stat-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.stat-panel{display:none;}
+.stat-panel.active{display:block;}
+
+/* Intro */
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.intro-box strong{color:var(--text);}
+
+/* Dataset buttons */
+.ds-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.ds-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.ds-btn:hover{color:var(--text);}
+.ds-btn.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.4);color:var(--accent);}
+
+/* Cards */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card:last-child{margin-bottom:0;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+
+/* Grid */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.analysis-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:16px;}
+
+/* Controls */
+.ctrl-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.ctrl-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.ctrl-val{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);min-width:36px;}
+.range-inp{-webkit-appearance:none;width:160px;height:5px;border-radius:3px;background:rgba(37,99,235,.15);outline:none;cursor:pointer;}
+.range-inp::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.sel{background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;cursor:pointer;font-family:inherit;}
+.sel:focus{border-color:var(--accent);}
+
+/* Source toggle */
+.src-toggle{display:flex;gap:0;border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:16px;}
+.src-btn{flex:1;padding:7px 18px;font-size:12px;font-weight:700;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap;}
+.src-btn.active{background:var(--accent);color:#fff;}
+
+/* Upload zone */
+.upload-zone{display:none;border:2px dashed rgba(37,99,235,.3);border-radius:10px;padding:22px 18px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(37,99,235,.03);position:relative;margin-bottom:14px;}
+.upload-zone.open{display:block;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(37,99,235,.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:28px;margin-bottom:6px;}
+.upload-main{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);}
+.file-info{display:none;padding:10px 14px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.25);border-radius:8px;font-size:12px;color:#065f46;margin-bottom:12px;line-height:1.7;}
+.file-info.show{display:block;}
+.file-col-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.file-col-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(37,99,235,.08);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.file-col-tag.ignored{background:rgba(0,0,0,.04);color:var(--dim);border-color:var(--border2);}
+
+/* Pattern buttons */
+.pattern-row{display:flex;gap:8px;flex-wrap:wrap;}
+.pat-btn{font-size:10px;font-weight:700;padding:5px 12px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.pat-btn:hover{color:var(--text);}
+.pat-btn.active{background:rgba(234,88,12,.1);border-color:rgba(234,88,12,.4);color:var(--orange);}
+
+/* Run button */
+.run-btn{padding:8px 20px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s;white-space:nowrap;}
+.run-btn:hover{opacity:.85;}
+.run-btn.green{background:var(--green);}
+.run-btn.orange{background:var(--orange);}
+
+/* KPI */
+.stat-sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.stat-sum-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.stat-sum-num{font-size:26px;font-weight:800;font-family:'Space Mono',monospace;}
+.stat-sum-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+
+/* ── Heatmap (transposed: variables=rows, observations=cols) ── */
+.hm-outer{overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--card);}
+.hm-outer::-webkit-scrollbar{width:6px;height:6px;}
+.hm-outer::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.hm-table{border-collapse:separate;border-spacing:3px;padding:12px 12px 10px;}
+/* 인덱스 헤더 행 (상단 고정) */
+.hm-top-th{position:sticky;top:0;background:var(--card);z-index:3;padding:0 0 6px;text-align:center;font-size:9px;font-weight:700;color:var(--dim);font-family:'Space Mono',monospace;min-width:22px;}
+.hm-corner{position:sticky;top:0;left:0;background:var(--card);z-index:4;padding:0 8px 6px 0;}
+/* 변수명 셀 (좌측 고정) */
+.hm-var-lbl{position:sticky;left:0;background:var(--card);z-index:2;padding-right:10px;white-space:nowrap;font-size:12px;font-weight:700;color:var(--text);text-align:right;}
+/* 데이터 셀 */
+.hm-cell{width:18px;height:32px;border-radius:3px;cursor:pointer;transition:opacity .12s;}
+.hm-cell:hover{opacity:.6;}
+.hm-cell.present{background:#4ade80;}
+.hm-cell.missing{background:#f87171;}
+.hm-cell.outlier{background:#fb923c;}
+.hm-legend-row{display:flex;gap:14px;align-items:center;margin-bottom:0;font-size:11px;color:var(--muted);}
+.hm-legend-sq{width:16px;height:16px;border-radius:3px;flex-shrink:0;}
+.hm-note{font-size:10px;color:var(--dim);margin-top:8px;text-align:right;}
+
+/* Column miss bar */
+.col-miss-list{display:flex;flex-direction:column;gap:8px;}
+.col-miss-item{display:flex;align-items:center;gap:8px;}
+.col-miss-name{font-size:12px;font-weight:700;color:var(--text);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-miss-bar-bg{flex:1;height:12px;background:rgba(0,0,0,.07);border-radius:6px;overflow:hidden;}
+.col-miss-bar{height:100%;background:var(--red);border-radius:6px;transition:.4s;}
+.col-miss-pct{font-size:12px;font-family:'Space Mono',monospace;color:var(--red);width:42px;text-align:right;flex-shrink:0;font-weight:700;}
+.col-miss-cnt{font-size:10px;color:var(--dim);width:40px;text-align:right;flex-shrink:0;}
+
+/* Chart canvas */
+.chart-canvas{width:100%;display:block;border-radius:8px;background:#f8fafc;}
+
+/* Outlier table */
+.otable{width:100%;border-collapse:collapse;font-size:12px;}
+.otable th{padding:7px 10px;background:var(--card2);color:var(--muted);font-size:10px;font-weight:700;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.otable td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.05);color:var(--text);}
+.otable tr:last-child td{border-bottom:none;}
+.otable-wrap{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;}
+.badge-red{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(220,38,38,.1);color:var(--red);border:1px solid rgba(220,38,38,.2);}
+.badge-ok{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+
+/* Method buttons */
+.method-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.method-btn{font-size:11px;font-weight:700;padding:7px 14px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.method-btn:hover{color:var(--text);}
+.method-btn.active{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.4);color:var(--accent);}
+/* Method description */
+.method-desc{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(37,99,235,.05);border:1px solid rgba(37,99,235,.15);border-radius:8px;margin-bottom:16px;font-size:12px;line-height:1.7;color:var(--text);}
+.method-desc-icon{font-size:20px;flex-shrink:0;line-height:1;}
+.method-desc-body strong{color:var(--accent);}
+.method-desc-tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;margin-right:4px;vertical-align:middle;}
+.tag-good{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.tag-caution{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.2);}
+.tag-time{background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2);}
+
+/* Imputation compare */
+.imp-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;}
+.imp-legend-item{display:flex;align-items:center;gap:6px;}
+.imp-legend-dot{width:20px;height:4px;border-radius:2px;}
+/* Raw table cell states */
+.td-miss{background:rgba(248,113,113,.15);color:var(--red);font-style:italic;}
+.td-imp{background:rgba(249,115,22,.12);color:var(--orange);font-weight:700;}
+.td-orig{color:var(--text);}
+.td-idx{color:var(--dim);font-family:'Space Mono',monospace;font-size:11px;width:36px;text-align:center;}
+/* Raw comparison table overrides */
+#imp-raw-table{table-layout:fixed;width:100%;}
+#imp-raw-table th{padding:6px 10px;font-size:10px;}
+#imp-raw-table th:first-child{width:44px;text-align:center;}
+#imp-raw-table th:nth-last-child(2){width:90px;text-align:right;}
+#imp-raw-table th:last-child{width:72px;text-align:center;}
+.td-err-pos{color:#dc2626;font-weight:700;}
+.td-err-neg{color:#2563eb;font-weight:700;}
+.td-err-zero{color:var(--green);font-weight:700;}
+#imp-raw-table td{padding:5px 10px;font-size:12px;font-family:'Space Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#imp-raw-table td:last-child{text-align:center;}
+
+/* Interpretation */
+.interp{background:rgba(217,119,6,.08);border-left:3px solid var(--amber);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#92400e;line-height:1.7;margin-top:12px;}
+.interp strong{color:#78350f;}
+
+/* RMSE grid */
+.rmse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.rmse-box{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.rmse-val{font-size:20px;font-weight:800;font-family:'Space Mono',monospace;color:var(--accent);}
+.rmse-lbl{font-size:10px;color:var(--muted);margin-top:3px;}
+.rmse-best{border-color:rgba(5,150,105,.4);background:rgba(5,150,105,.06);}
+.rmse-best .rmse-val{color:var(--green);}
+
+/* ── Box Plot Tab ── */
+.bp-step-nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.bp-step-btn{padding:8px 18px;border:1px solid var(--border2);border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;}
+.bp-step-btn:hover:not(:disabled){color:var(--text);border-color:rgba(0,0,0,.3);}
+.bp-step-btn:disabled{opacity:.3;cursor:default;}
+.bp-step-counter{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);min-width:52px;text-align:center;}
+.bp-step-dots{display:flex;gap:7px;align-items:center;}
+.bp-step-dot{width:9px;height:9px;border-radius:50%;background:var(--border2);transition:all .2s;}
+.bp-step-dot.active{background:var(--accent);transform:scale(1.35);}
+.bp-step-dot.done{background:rgba(37,99,235,.35);}
+.bp-step-card{border-radius:10px;padding:14px 18px;margin-bottom:16px;border:2px solid;transition:background .3s,border-color .3s;}
+.bp-step-icon{font-size:22px;margin-bottom:6px;}
+.bp-step-title{font-size:14px;font-weight:700;margin-bottom:5px;}
+.bp-step-desc{font-size:13px;line-height:1.7;color:var(--muted);}
+.bp-canvas-wrap{position:relative;height:440px;border-radius:10px;overflow:hidden;}
+.bp-interp-block{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.bp-interp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px;}
+.bp-interp-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;margin-bottom:8px;}
+.bp-interp-text{font-size:12px;line-height:1.7;color:var(--text);}
+.bp-two-col{display:grid;grid-template-columns:2fr 3fr;gap:16px;margin-bottom:16px;align-items:start;}
+.bp-raw-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;max-height:96px;overflow-y:auto;}
+.bp-raw-bar::-webkit-scrollbar{height:4px;width:4px;}
+.bp-raw-bar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.bp-chip{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;white-space:nowrap;transition:background .3s,color .3s,border-color .3s;}
+.bp-chip.normal{background:rgba(147,197,253,.2);color:#1e40af;border:1px solid rgba(147,197,253,.45);}
+.bp-chip.outlier{background:rgba(220,38,38,.1);color:#dc2626;border:1px solid rgba(220,38,38,.35);}
+.bp-chip.neutral{background:rgba(0,0,0,.04);color:var(--muted);border:1px solid var(--border2);}
+.bp-stats-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.bp-stats-tbl th{padding:8px 14px;background:var(--card2);color:var(--muted);font-size:10px;font-weight:700;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em;}
+.bp-stats-tbl td{padding:9px 14px;border-bottom:1px solid rgba(0,0,0,.05);}
+.bp-stats-tbl tr:last-child td{border-bottom:none;}
+.bp-stat-val{font-family:'Space Mono',monospace;font-weight:700;font-size:14px;}
+.bp-stat-hidden{color:var(--dim);font-style:italic;font-size:11px;}
+
+@media(max-width:900px){
+  .bp-two-col{grid-template-columns:1fr;}
+  #bp-interp-body{grid-template-columns:1fr!important;}
+  .two-col,.analysis-grid{grid-template-columns:1fr;}
+  .stat-sum-grid{grid-template-columns:1fr 1fr;}
+  .rmse-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:600px){
+  .stat-tabs{overflow-x:auto;padding-bottom:1px;}
+  .stat-tab{padding:12px 14px;font-size:12px;}
+  .page{padding:0 12px 60px;}
+  .stat-sum-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">결측치 · 이상치 시뮬레이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page">
+<div style="height:28px"></div>
+
+<div class="stat-tabs">
+  <button class="stat-tab active" onclick="switchTab('missing')">🔍 결측치 탐지</button>
+  <button class="stat-tab" onclick="switchTab('impute')">🔧 결측치 보간</button>
+  <button class="stat-tab" onclick="switchTab('outlier')">⚡ 이상치 탐지</button>
+  <button class="stat-tab" onclick="switchTab('boxplot')">📦 박스플롯</button>
+</div>
+
+<!-- ══════════════════════════════════
+     TAB 1 : 결측치 탐지
+══════════════════════════════════ -->
+<div id="panel-missing" class="stat-panel active">
+
+  <div class="intro-box">
+    <strong>결측치(Missing Value)</strong>란 데이터셋에서 값이 기록되지 않은 항목입니다.
+    결측 비율과 패턴(무작위·연속·컬럼 집중)에 따라 분석 결과와 보간 전략이 달라집니다.
+    샘플 데이터 또는 <strong>CSV / XLSX 파일을 직접 업로드</strong>해 탐지 결과를 확인하세요.
+  </div>
+
+  <!-- 데이터 소스 -->
+  <div class="a-card">
+    <div class="a-card-title">데이터 소스</div>
+
+    <div class="src-toggle">
+      <button class="src-btn active" id="src-sample-btn" onclick="setSource('sample')">📊 샘플 데이터</button>
+      <button class="src-btn" id="src-upload-btn" onclick="setSource('upload')">📂 CSV / XLSX 업로드</button>
+    </div>
+
+    <!-- 샘플 선택 -->
+    <div id="sample-panel">
+      <div class="ds-selector" id="miss-ds-btns">
+        <button class="ds-btn active" data-ds="sensor" onclick="setMissingDs(this)">🏭 제조 센서</button>
+        <button class="ds-btn" data-ds="weather" onclick="setMissingDs(this)">🌤 기상 관측</button>
+        <button class="ds-btn" data-ds="sales" onclick="setMissingDs(this)">📦 판매 실적</button>
+      </div>
+    </div>
+
+    <!-- 파일 업로드 -->
+    <div id="upload-panel" style="display:none">
+      <div class="upload-zone open" id="upload-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'missing')">
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="handleFile(this.files[0],'missing')">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV / XLSX 파일을 드래그하거나 클릭해 선택</div>
+        <div class="upload-sub">CSV / TSV · Excel(xlsx, xls) 지원 · 행 수 제한 없음 · 한 번 올리면 네 탭에서 함께 사용</div>
+      </div>
+      <div class="file-info" id="file-info">
+        <strong id="file-name-lbl"></strong> <button onclick="clearUpload('missing')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;margin-left:8px">✕ 해제</button><br>
+        <span id="file-dim-lbl"></span>
+        <div class="file-col-tags" id="file-col-tags"></div>
+      </div>
+    </div>
+
+    <!-- 결측 삽입 (샘플 전용) -->
+    <div id="miss-inject-panel">
+      <div class="ctrl-row" style="margin-bottom:6px">
+        <span class="ctrl-label">결측 비율</span>
+        <input type="range" class="range-inp" id="miss-rate" min="2" max="45" value="15" step="1"
+          oninput="document.getElementById('miss-rate-val').textContent=this.value+'%'">
+        <span class="ctrl-val" id="miss-rate-val">15%</span>
+        <span class="ctrl-label" style="margin-left:12px">패턴</span>
+        <div class="pattern-row">
+          <button class="pat-btn active" data-pat="random" onclick="setMissPat(this)">무작위</button>
+          <button class="pat-btn" data-pat="block" onclick="setMissPat(this)">연속 구간</button>
+          <button class="pat-btn" data-pat="column" onclick="setMissPat(this)">컬럼 집중</button>
+        </div>
+      </div>
+      <div class="ctrl-row" style="margin-bottom:0">
+        <span class="ctrl-label">이상치 비율</span>
+        <input type="range" class="range-inp" id="out-rate" min="0" max="20" value="5" step="1"
+          oninput="document.getElementById('out-rate-val').textContent=this.value+'%'">
+        <span class="ctrl-val" id="out-rate-val" style="color:var(--orange)">5%</span>
+      </div>
+    </div>
+
+    <div class="ctrl-row" style="margin-top:4px">
+      <button class="run-btn" style="margin-left:auto" onclick="runMissing()">▶ 분석 실행</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="stat-sum-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-sum-box"><div class="stat-sum-num" id="mk-total">—</div><div class="stat-sum-lbl">전체 셀 수</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--red)" id="mk-miss">—</div><div class="stat-sum-lbl">결측 셀 수</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--amber)" id="mk-pct">—</div><div class="stat-sum-lbl">결측 비율</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--green)" id="mk-complete">—</div><div class="stat-sum-lbl">완전한 행 비율</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--orange)" id="mk-out">—</div><div class="stat-sum-lbl">이상치 셀 수</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--orange)" id="mk-out-pct">—</div><div class="stat-sum-lbl">이상치 비율</div></div>
+  </div>
+
+  <!-- 히트맵 (전체폭) -->
+  <div class="a-card">
+    <div class="a-card-title">
+      <span>결측 히트맵 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim)">— Y축: 변수 · X축: 관측치</span></span>
+      <div class="hm-legend-row">
+        <div class="hm-legend-sq" style="background:#4ade80"></div><span style="font-weight:400;text-transform:none;letter-spacing:0">정상</span>
+        <div class="hm-legend-sq" style="background:#f87171;margin-left:8px"></div><span style="font-weight:400;text-transform:none;letter-spacing:0">결측</span>
+        <div class="hm-legend-sq" style="background:#fb923c;margin-left:8px"></div><span style="font-weight:400;text-transform:none;letter-spacing:0">이상치</span>
+      </div>
+    </div>
+    <div class="hm-outer" id="hm-outer">
+      <table class="hm-table" id="heatmap"></table>
+    </div>
+    <div class="hm-note" id="hm-note"></div>
+  </div>
+
+  <!-- 컬럼별 결측 + 분포 차트 -->
+  <div class="two-col">
+    <div class="a-card">
+      <div class="a-card-title">컬럼별 결측 비율</div>
+      <div id="col-miss-list" class="col-miss-list"></div>
+    </div>
+    <div class="a-card">
+      <div class="a-card-title">시간 축 결측 분포</div>
+      <canvas class="chart-canvas" id="miss-dist-chart" height="150"></canvas>
+    </div>
+  </div>
+  <div class="interp" id="miss-interp">분석을 실행하면 해석이 표시됩니다.</div>
+
+</div>
+
+<!-- ══════════════════════════════════
+     TAB 2 : 이상치 탐지
+══════════════════════════════════ -->
+<div id="panel-outlier" class="stat-panel">
+
+  <div class="intro-box">
+    <strong>이상치(Outlier)</strong>는 다른 데이터와 크게 다른 값으로, 센서 오류·이벤트·노이즈 등이 원인입니다.
+    <strong>Z-Score</strong>는 평균·표준편차 기반, <strong>IQR</strong>은 사분위수 기반으로 이상치를 탐지합니다.
+    업로드한 파일이 있으면 해당 데이터로 자동 전환됩니다.
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title">데이터 소스</div>
+    <div class="src-toggle">
+      <button class="src-btn active" id="out-src-sample-btn" onclick="setOutlierSrc('sample')">📊 샘플 데이터</button>
+      <button class="src-btn" id="out-src-upload-btn" onclick="setOutlierSrc('upload')">📂 CSV / XLSX 업로드</button>
+    </div>
+    <div id="out-sample-panel">
+      <div class="ds-selector" id="out-ds-btns">
+        <button class="ds-btn active" data-ds="sensor" onclick="setOutlierDs(this)">🏭 제조 센서</button>
+        <button class="ds-btn" data-ds="weather" onclick="setOutlierDs(this)">🌤 기상 관측</button>
+        <button class="ds-btn" data-ds="sales" onclick="setOutlierDs(this)">📦 판매 실적</button>
+      </div>
+    </div>
+    <div id="out-upload-panel" style="display:none">
+      <div class="upload-zone open" id="out-upload-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'outlier')">
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="handleFile(this.files[0],'outlier')">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV / XLSX 파일을 드래그하거나 클릭해 선택</div>
+        <div class="upload-sub">CSV / TSV · Excel(xlsx, xls) 지원 · 행 수 제한 없음 · 한 번 올리면 네 탭에서 함께 사용</div>
+      </div>
+      <div class="file-info" id="out-file-info">
+        <strong id="out-file-name-lbl"></strong> <button onclick="clearUpload('outlier')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;margin-left:8px">✕ 해제</button><br>
+        <span id="out-file-dim-lbl"></span>
+        <div class="file-col-tags" id="out-file-col-tags"></div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">이상치 강도</span>
+      <input type="range" class="range-inp" id="out-intensity" min="1" max="5" value="3" step="1"
+        oninput="document.getElementById('out-int-val').textContent=['약','보통','강','매우강','극단'][this.value-1]">
+      <span class="ctrl-val" id="out-int-val">강</span>
+      <span class="ctrl-label" style="margin-left:12px">컬럼</span>
+      <select class="sel" id="out-col"></select>
+      <span class="ctrl-label" style="margin-left:12px">방법</span>
+      <select class="sel" id="out-method">
+        <option value="zscore">Z-Score</option>
+        <option value="iqr">IQR</option>
+        <option value="both">Z-Score + IQR</option>
+      </select>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">Z-Score 임계값</span>
+      <input type="range" class="range-inp" id="z-thresh" min="1.5" max="4.0" value="2.5" step="0.1"
+        oninput="document.getElementById('z-thresh-val').textContent=parseFloat(this.value).toFixed(1)">
+      <span class="ctrl-val" id="z-thresh-val">2.5</span>
+      <span class="ctrl-label" style="margin-left:12px">IQR 배수</span>
+      <input type="range" class="range-inp" id="iqr-mult" min="1.0" max="3.0" value="1.5" step="0.1"
+        oninput="document.getElementById('iqr-mult-val').textContent=parseFloat(this.value).toFixed(1)">
+      <span class="ctrl-val" id="iqr-mult-val">1.5</span>
+      <button class="run-btn orange" style="margin-left:auto" onclick="runOutlier()">▶ 탐지 실행</button>
+    </div>
+  </div>
+
+  <div class="stat-sum-grid">
+    <div class="stat-sum-box"><div class="stat-sum-num" id="ok-n">—</div><div class="stat-sum-lbl">전체 관측치</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--red)" id="ok-out">—</div><div class="stat-sum-lbl">탐지된 이상치</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:var(--amber)" id="ok-pct">—</div><div class="stat-sum-lbl">이상치 비율</div></div>
+    <div class="stat-sum-box"><div class="stat-sum-num" style="color:#0d9488" id="ok-bound">—</div><div class="stat-sum-lbl">정상 범위</div></div>
+  </div>
+
+  <div class="analysis-grid">
+    <div class="a-card">
+      <div class="a-card-title">산점도 — 이상치 강조</div>
+      <div style="position:relative;height:360px"><canvas class="chart-canvas" id="outlier-scatter"></canvas></div>
+      <div class="imp-legend" style="margin-top:8px">
+        <div class="imp-legend-item"><div style="width:10px;height:10px;border-radius:50%;background:#93c5fd"></div><span>정상</span></div>
+        <div class="imp-legend-item"><div style="width:10px;height:10px;border-radius:50%;background:#fca5a5"></div><span>이상치</span></div>
+      </div>
+    </div>
+    <div class="a-card">
+      <div class="a-card-title">분포 히스토그램 + 탐지 경계</div>
+      <div style="position:relative;height:360px"><canvas class="chart-canvas" id="outlier-hist"></canvas></div>
+    </div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title">탐지된 이상치 목록</div>
+    <div class="otable-wrap">
+      <table class="otable">
+        <thead><tr><th>#</th><th>인덱스</th><th>값</th><th>Z-Score</th><th>IQR 판정</th><th>상태</th></tr></thead>
+        <tbody id="outlier-tbody"><tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px">탐지 실행 후 결과가 표시됩니다</td></tr></tbody>
+      </table>
+    </div>
+    <div class="interp" id="outlier-interp" style="margin-top:12px">분석을 실행하면 해석이 표시됩니다.</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════
+     TAB 3 : 결측치 보간
+══════════════════════════════════ -->
+<div id="panel-impute" class="stat-panel">
+
+  <div class="intro-box">
+    <strong>결측치 보간(Imputation)</strong>은 누락된 값을 통계적·수학적 방법으로 채우는 과정입니다.
+    방법에 따라 결과가 크게 달라지며, RMSE로 원본 대비 정확도를 비교할 수 있습니다.
+    업로드한 파일이 있으면 해당 데이터로 자동 전환됩니다.
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title">데이터 소스</div>
+    <div class="src-toggle">
+      <button class="src-btn active" id="imp-src-sample-btn" onclick="setImpSrc('sample')">📊 샘플 데이터</button>
+      <button class="src-btn" id="imp-src-upload-btn" onclick="setImpSrc('upload')">📂 CSV / XLSX 업로드</button>
+    </div>
+    <div id="imp-sample-panel">
+      <div class="ds-selector" id="imp-ds-btns">
+        <button class="ds-btn active" data-ds="sensor" onclick="setImpDs(this)">🏭 제조 센서</button>
+        <button class="ds-btn" data-ds="weather" onclick="setImpDs(this)">🌤 기상 관측</button>
+        <button class="ds-btn" data-ds="sales" onclick="setImpDs(this)">📦 판매 실적</button>
+      </div>
+    </div>
+    <div id="imp-upload-panel" style="display:none">
+      <div class="upload-zone open" id="imp-upload-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'impute')">
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="handleFile(this.files[0],'impute')">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV / XLSX 파일을 드래그하거나 클릭해 선택</div>
+        <div class="upload-sub">CSV / TSV · Excel(xlsx, xls) 지원 · 행 수 제한 없음 · 한 번 올리면 네 탭에서 함께 사용</div>
+      </div>
+      <div class="file-info" id="imp-file-info">
+        <strong id="imp-file-name-lbl"></strong> <button onclick="clearUpload('impute')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;margin-left:8px">✕ 해제</button><br>
+        <span id="imp-file-dim-lbl"></span>
+        <div class="file-col-tags" id="imp-file-col-tags"></div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">결측 비율</span>
+      <input type="range" class="range-inp" id="imp-miss-rate" min="5" max="40" value="20" step="1"
+        oninput="document.getElementById('imp-miss-val').textContent=this.value+'%'">
+      <span class="ctrl-val" id="imp-miss-val">20%</span>
+      <span class="ctrl-label" style="margin-left:12px">패턴</span>
+      <select class="sel" id="imp-pattern">
+        <option value="random">무작위</option>
+        <option value="block">연속 구간</option>
+      </select>
+      <span class="ctrl-label" style="margin-left:12px">컬럼</span>
+      <select class="sel" id="imp-col"></select>
+      <button class="run-btn green" style="margin-left:auto" onclick="runImpute()">▶ 보간 실행</button>
+    </div>
+    <div class="a-card-title" style="margin-top:14px">보간 방법 선택</div>
+    <div class="method-btns">
+      <button class="method-btn active" data-method="mean" onclick="selectImpMethod(this)">평균값 대체</button>
+      <button class="method-btn" data-method="median" onclick="selectImpMethod(this)">중앙값 대체</button>
+      <button class="method-btn" data-method="ffill" onclick="selectImpMethod(this)">전진 채우기</button>
+      <button class="method-btn" data-method="bfill" onclick="selectImpMethod(this)">후진 채우기</button>
+      <button class="method-btn" data-method="linear" onclick="selectImpMethod(this)">선형 보간</button>
+      <button class="method-btn" data-method="spline" onclick="selectImpMethod(this)">스플라인 보간</button>
+    </div>
+    <div class="method-desc" id="method-desc"></div>
+  </div>
+
+  <!-- Raw 데이터 테이블 -->
+  <div class="a-card" id="imp-raw-card" style="display:none">
+    <div class="a-card-title">
+      <span>원본 / 결측 / 보간 데이터 비교</span>
+      <button onclick="toggleRawTable()" id="raw-toggle-btn" style="font-size:11px;font-weight:700;padding:4px 12px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;font-family:inherit">접기 ▲</button>
+    </div>
+    <div id="imp-raw-wrap" class="otable-wrap" style="max-height:300px">
+      <table class="otable" id="imp-raw-table">
+        <thead><tr id="imp-raw-thead"></tr></thead>
+        <tbody id="imp-raw-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 비교 차트 -->
+  <div class="a-card">
+    <div class="a-card-title">보간 전/후 비교</div>
+    <div class="imp-legend">
+      <div class="imp-legend-item">
+        <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="5,3"/></svg>
+        <span>원본 (참조)</span>
+      </div>
+      <div class="imp-legend-item"><div class="imp-legend-dot" style="background:#93c5fd"></div><span>결측 포함 데이터</span></div>
+      <div class="imp-legend-item"><div class="imp-legend-dot" style="background:#f97316"></div><span>보간 결과</span></div>
+    </div>
+    <div style="position:relative;height:500px">
+      <canvas class="chart-canvas" id="imp-chart"></canvas>
+    </div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title">방법별 RMSE 비교 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim)">(낮을수록 정확)</span></div>
+    <canvas class="chart-canvas" id="rmse-chart" height="80"></canvas>
+    <div class="rmse-grid" id="rmse-grid">
+      <div class="rmse-box"><div class="rmse-val">—</div><div class="rmse-lbl">현재 방법 RMSE</div></div>
+      <div class="rmse-box"><div class="rmse-val">—</div><div class="rmse-lbl">최우수 방법</div></div>
+      <div class="rmse-box"><div class="rmse-val">—</div><div class="rmse-lbl">최저 방법</div></div>
+    </div>
+    <div class="interp" id="imp-interp" style="margin-top:12px">보간 실행 후 결과가 표시됩니다.</div>
+  </div>
+
+  <div class="intro-box" style="margin-bottom:0">
+    💡 여기서 방법별 차이를 익혔다면, 실제 CSV 파일의 결측값을 컬럼별로 한 번에 보간해 내려받는 건
+    <a href="/prep/interpolate" style="color:var(--accent);font-weight:700">CSV 보간 · 병합 도구 →</a>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════
+     TAB 4 : 박스플롯 시뮬레이터
+══════════════════════════════════ -->
+<div id="panel-boxplot" class="stat-panel">
+
+  <div class="intro-box">
+    <strong>박스플롯(Box Plot)</strong>은 Min · Q1 · Median · Q3 · Max 5가지 요약 통계를 하나의 그래프로 시각화합니다.
+    <strong>단계별로 추가</strong> 버튼을 눌러 각 요소가 어떻게 박스플롯을 구성하는지 순서대로 확인하세요.
+  </div>
+
+  <!-- 데이터 선택 + 원시 데이터 확인 -->
+  <div class="a-card">
+    <div class="a-card-title">데이터 소스</div>
+    <div class="src-toggle">
+      <button class="src-btn active" id="bp-src-sample-btn" onclick="setBpSrc('sample')">📊 샘플 데이터</button>
+      <button class="src-btn" id="bp-src-upload-btn" onclick="setBpSrc('upload')">📂 CSV / XLSX 업로드</button>
+    </div>
+    <div id="bp-sample-panel">
+      <div class="ds-selector" id="bp-ds-btns">
+        <button class="ds-btn active" data-ds="basic" onclick="setBpDs(this)">📐 기초 학습</button>
+        <button class="ds-btn" data-ds="sensor" onclick="setBpDs(this)">🏭 제조 센서</button>
+        <button class="ds-btn" data-ds="weather" onclick="setBpDs(this)">🌤 기상 관측</button>
+        <button class="ds-btn" data-ds="sales" onclick="setBpDs(this)">📦 판매 실적</button>
+      </div>
+    </div>
+    <div id="bp-upload-panel" style="display:none">
+      <div class="upload-zone open" id="bp-upload-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'boxplot')">
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onchange="handleFile(this.files[0],'boxplot')">
+        <div class="upload-icon">📂</div>
+        <div class="upload-main">CSV / XLSX 파일을 드래그하거나 클릭해 선택</div>
+        <div class="upload-sub">CSV / TSV · Excel(xlsx, xls) 지원 · 행 수 제한 없음 · 한 번 올리면 네 탭에서 함께 사용</div>
+      </div>
+      <div class="file-info" id="bp-file-info">
+        <strong id="bp-file-name-lbl"></strong> <button onclick="clearUpload('boxplot')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;margin-left:8px">✕ 해제</button><br>
+        <span id="bp-file-dim-lbl"></span>
+        <div class="file-col-tags" id="bp-file-col-tags"></div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">컬럼</span>
+      <select class="sel" id="bp-col" onchange="requestAnimationFrame(drawBp)"></select>
+    </div>
+
+    <!-- 원시 데이터 (컬럼 선택 직후 확인) -->
+    <div style="padding-top:14px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span class="ctrl-label">원시 데이터</span>
+        <span id="bp-raw-count" style="font-size:11px;color:var(--dim)"></span>
+      </div>
+      <div class="bp-raw-bar" id="bp-raw-bar"></div>
+    </div>
+
+    <!-- 단계 진행 -->
+    <div style="padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">단계별 박스플롯 구성</div>
+      <div class="bp-step-nav">
+        <button class="bp-step-btn" id="bp-prev-btn" onclick="bpStep(-1)">← 이전</button>
+        <span class="bp-step-counter" id="bp-step-counter">1 / 6</span>
+        <button class="bp-step-btn" id="bp-next-btn" onclick="bpStep(1)">다음 단계 →</button>
+        <div class="bp-step-dots" id="bp-step-dots"></div>
+        <button class="run-btn" style="margin-left:auto" onclick="_bpStep=1;drawBp()">↺ 처음부터</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 단계 설명 카드 -->
+  <div class="bp-step-card" id="bp-step-card">
+    <div class="bp-step-icon" id="bp-step-icon"></div>
+    <div class="bp-step-title" id="bp-step-title"></div>
+    <div class="bp-step-desc" id="bp-step-desc"></div>
+  </div>
+
+  <!-- 분포 해석 (step 6 완료 후 표시) -->
+  <div class="a-card" id="bp-interp-card" style="display:none;border-left:4px solid var(--accent)">
+    <div class="a-card-title">📊 분포 분석 결과</div>
+    <div id="bp-interp-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px"></div>
+  </div>
+
+  <div class="bp-two-col">
+    <!-- 왼쪽: 5수치 요약 통계 -->
+    <div class="a-card" style="margin-bottom:0">
+      <div class="a-card-title">5수치 요약 통계 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim)">— 단계별 공개</span></div>
+      <table class="bp-stats-tbl">
+        <thead><tr><th>통계량</th><th>값</th><th style="text-align:center">단계</th></tr></thead>
+        <tbody id="bp-stats-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- 오른쪽: 박스플롯 캔버스 -->
+    <div class="a-card" style="margin-bottom:0">
+      <div class="a-card-title">박스플롯 시뮬레이션</div>
+      <div class="bp-canvas-wrap">
+        <canvas id="bp-canvas" style="width:100%;height:100%;display:block;"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /.page -->
+</div><!-- /.page-wrap -->
+
+<script>
+// ════════════════════════════════════════
+//  전역 상태
+// ════════════════════════════════════════
+// 업로드 데이터셋 — 한 번 올리면 네 탭이 공유한다 (탭별 컬럼 규칙 차이는 loadAllTabs가 처리)
+let _missUpload = null, _outlierUpload = null, _impUpload = null, _bpUpload = null;
+let _curTab = 'missing';
+let _missDs = 'sensor', _missPat = 'random';
+let _outlierDs = 'sensor', _impDs = 'sensor', _impMethod = 'mean';
+let _missDistChart = null, _outlierScatter = null, _outlierHist = null;
+let _impChart = null, _rmseChart = null;
+
+const N = 60;
+
+// ── 시드 기반 난수 ──
+function seededRand(seed) {
+  let s = seed;
+  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+
+// ── 샘플 데이터셋 ──
+const DATASETS = {
+  basic: {
+    name: '기초 학습',
+    cols: ['측정값'],
+    gen() {
+      // 11개 고정 데이터 — 이상치 2개(-5, 30) 포함
+      return [[-5],[5],[6],[7],[8],[9],[10],[11],[12],[13],[30]];
+    }
+  },
+  sensor: {
+    name: '제조 센서',
+    cols: ['온도(°C)', '압력(kPa)', '진동(mm/s)', '전류(A)', '회전수(RPM)'],
+    gen(seed) {
+      const r = seededRand(seed || 42);
+      return Array.from({length:N}, (_, i) => [
+        60 + 15*Math.sin(i*.18) + r()*6 - 3,
+        200 + 30*Math.sin(i*.12+1) + r()*10 - 5,
+        2.5 + .8*Math.sin(i*.25) + r()*.6,
+        12 + 2*Math.sin(i*.15+.5) + r()*1.2,
+        1500 + 200*Math.sin(i*.1) + r()*80 - 40
+      ]);
+    }
+  },
+  weather: {
+    name: '기상 관측',
+    cols: ['기온(°C)', '습도(%)', '기압(hPa)', '풍속(m/s)', '강수량(mm)'],
+    gen(seed) {
+      const r = seededRand(seed || 77);
+      return Array.from({length:N}, (_, i) => [
+        20 + 8*Math.sin(i*.2) + r()*4 - 2,
+        65 + 20*Math.sin(i*.15+.5) + r()*8,
+        1013 + 5*Math.sin(i*.08) + r()*3,
+        3 + 2*Math.abs(Math.sin(i*.3)) + r()*1.5,
+        r() < .3 ? r()*15 : 0
+      ]);
+    }
+  },
+  sales: {
+    name: '판매 실적',
+    cols: ['매출(만원)', '방문자수', '전환율(%)', '객단가(원)', '반품율(%)'],
+    gen(seed) {
+      const r = seededRand(seed || 123);
+      return Array.from({length:N}, (_, i) => [
+        500 + 100*Math.sin(i*.2) + i*2 + r()*80,
+        1000 + 300*Math.sin(i*.15) + r()*150,
+        3.5 + 1.5*Math.sin(i*.18) + r()*.8,
+        45000 + 8000*Math.sin(i*.12) + r()*3000,
+        2 + .8*Math.sin(i*.22+1) + r()*.5
+      ]);
+    }
+  }
+};
+
+// ════════════════════════════════════════
+//  CSV 파일 업로드 (탭별 독립)
+// ════════════════════════════════════════
+const TAB_UPLOAD_CFG = {
+  missing: { set: ds => { _missUpload = ds; },    get: () => _missUpload,    infoId: 'file-info',     nameId: 'file-name-lbl',     dimId: 'file-dim-lbl',     tagsId: 'file-col-tags',     zoneId: 'upload-zone',     onLoad: () => {}                              },
+  outlier: { set: ds => { _outlierUpload = ds; }, get: () => _outlierUpload, infoId: 'out-file-info', nameId: 'out-file-name-lbl', dimId: 'out-file-dim-lbl', tagsId: 'out-file-col-tags', zoneId: 'out-upload-zone', onLoad: () => initOutlierCols()               },
+  impute:  { set: ds => { _impUpload = ds; },     get: () => _impUpload,     infoId: 'imp-file-info', nameId: 'imp-file-name-lbl', dimId: 'imp-file-dim-lbl', tagsId: 'imp-file-col-tags', zoneId: 'imp-upload-zone', onLoad: () => initImpCols()                   },
+  boxplot: { set: ds => { _bpUpload = ds; },      get: () => _bpUpload,      infoId: 'bp-file-info',  nameId: 'bp-file-name-lbl',  dimId: 'bp-file-dim-lbl',  tagsId: 'bp-file-col-tags',  zoneId: 'bp-upload-zone',  onLoad: () => { initBpCols(); requestAnimationFrame(drawBp); } }
+};
+
+function setSource(src) {
+  document.getElementById('src-sample-btn').classList.toggle('active', src === 'sample');
+  document.getElementById('src-upload-btn').classList.toggle('active', src === 'upload');
+  document.getElementById('sample-panel').style.display = src === 'sample' ? '' : 'none';
+  document.getElementById('upload-panel').style.display = src === 'upload' ? '' : 'none';
+  document.getElementById('miss-inject-panel').style.display = src === 'sample' ? '' : 'none';
+}
+function setOutlierSrc(src) {
+  document.getElementById('out-src-sample-btn').classList.toggle('active', src === 'sample');
+  document.getElementById('out-src-upload-btn').classList.toggle('active', src === 'upload');
+  document.getElementById('out-sample-panel').style.display = src === 'sample' ? '' : 'none';
+  document.getElementById('out-upload-panel').style.display = src === 'upload' ? '' : 'none';
+}
+function setImpSrc(src) {
+  document.getElementById('imp-src-sample-btn').classList.toggle('active', src === 'sample');
+  document.getElementById('imp-src-upload-btn').classList.toggle('active', src === 'upload');
+  document.getElementById('imp-sample-panel').style.display = src === 'sample' ? '' : 'none';
+  document.getElementById('imp-upload-panel').style.display = src === 'upload' ? '' : 'none';
+}
+function setBpSrc(src) {
+  document.getElementById('bp-src-sample-btn').classList.toggle('active', src === 'sample');
+  document.getElementById('bp-src-upload-btn').classList.toggle('active', src === 'upload');
+  document.getElementById('bp-sample-panel').style.display = src === 'sample' ? '' : 'none';
+  document.getElementById('bp-upload-panel').style.display = src === 'upload' ? '' : 'none';
+}
+
+function handleDrop(e, tab) {
+  e.preventDefault();
+  document.getElementById(TAB_UPLOAD_CFG[tab].zoneId).classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file, tab);
+}
+
+function handleFile(file, tab) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  if (ext === 'xlsx' || ext === 'xls') {
+    reader.onload = ev => {
+      try {
+        const wb = XLSX.read(ev.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (rows.length < 2) { alert('\uB370\uC774\uD130\uAC00 2\uD589 \uC774\uC0C1\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.'); return; }
+        const headers = rows[0].map(h => String(h).trim());
+        const dataRows = rows.slice(1).map(r => headers.map((_, ci) => String(r[ci] ?? '').trim()));
+        loadAllTabs(headers, dataRows, file.name);
+      } catch (e) {
+        alert('XLSX \uD30C\uC2F1 \uC624\uB958: ' + e.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.onload = ev => {
+      const buf = ev.target.result;
+      const bytes = new Uint8Array(buf);
+      const hasUtf8Bom = bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+      let text = new TextDecoder('utf-8').decode(buf);
+      if (!hasUtf8Bom && text.includes('\uFFFD')) {
+        try {
+          const eucText = new TextDecoder('euc-kr').decode(buf);
+          if (!eucText.includes('\uFFFD')) text = eucText;
+        } catch (_) {}
+      }
+      parseCSV(text, file.name, tab);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseCSV(text, fileName, tab) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) { alert('데이터가 2행 이상이어야 합니다.'); return; }
+  const sep = lines[0].includes('\t') ? '\t' : ',';
+  const rawHeaders = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = lines.slice(1).map(l => l.split(sep).map(v => v.trim().replace(/^"|"$/g,'')));
+  loadAllTabs(rawHeaders, rows, fileName);
+}
+
+function parseRows(rawHeaders, rows, fileName, tab) {
+  const numCols = [], ignoredCols = [], colTypes = [];
+  rawHeaders.forEach((h, ci) => {
+    const vals = rows.map(r => r[ci]);
+    const nums = vals.filter(v => v !== '' && !isNaN(parseFloat(v)));
+    if (nums.length / vals.length >= 0.7) { numCols.push(ci); colTypes.push('num'); }
+    else { ignoredCols.push(h); colTypes.push('str'); }
+  });
+
+  // missing 탭은 문자형 컬럼도 포함, 나머지 탭은 숫자형만
+  const includedCols = tab === 'missing' ? rawHeaders.map((_, ci) => ci) : numCols;
+
+  if (tab !== 'missing' && !numCols.length) return false;
+  if (!includedCols.length) return false;
+
+  const NULL_VALS = new Set(['', 'NA', 'null', 'NaN', '-', 'N/A', 'none', 'None', 'NULL']);
+
+  const dataRows = rows.map(row =>
+    includedCols.map(ci => {
+      const v = row[ci];
+      if (NULL_VALS.has(v)) return null;
+      if (colTypes[ci] === 'num') { const n = parseFloat(v); return isNaN(n) ? null : n; }
+      return v;  // 문자형은 원본값 유지
+    })
+  );
+
+  const cfg = TAB_UPLOAD_CFG[tab];
+  const includedNames = includedCols.map(ci => rawHeaders[ci]);
+  const includedTypes = includedCols.map(ci => colTypes[ci]);
+  cfg.set({ name: fileName.replace(/\.[^.]+$/, ''), cols: includedNames, colTypes: includedTypes, data: dataRows });
+
+  document.getElementById(cfg.infoId).classList.add('show');
+  document.getElementById(cfg.nameId).textContent = `📄 ${fileName}`;
+
+  if (tab === 'missing') {
+    const nStr = includedTypes.filter(t => t === 'str').length;
+    const nNum = includedTypes.length - nStr;
+    document.getElementById(cfg.dimId).textContent =
+      `${dataRows.length}행 × ${includedCols.length}개 컬럼` +
+      (nStr > 0 ? ` (숫자 ${nNum}개, 문자 ${nStr}개)` : '');
+    document.getElementById(cfg.tagsId).innerHTML = includedCols.map((ci, i) =>
+      includedTypes[i] === 'num'
+        ? `<span class="file-col-tag">${rawHeaders[ci]}</span>`
+        : `<span class="file-col-tag" style="background:rgba(148,163,184,.15);color:#64748b;border-color:rgba(148,163,184,.3)">${rawHeaders[ci]} <span style="font-size:9px;opacity:.7">문자</span></span>`
+    ).join('');
+  } else {
+    document.getElementById(cfg.dimId).textContent = `${dataRows.length}행 × ${numCols.length}개 숫자 컬럼`;
+    document.getElementById(cfg.tagsId).innerHTML =
+      numCols.map(ci => `<span class="file-col-tag">${rawHeaders[ci]}</span>`).join('') +
+      ignoredCols.map(h => `<span class="file-col-tag ignored">${h} (문자)</span>`).join('');
+  }
+
+  return true;  // onLoad는 loadAllTabs가 현재 탭에만 호출 (숨은 탭은 switchTab 진입 시 재초기화됨)
+}
+
+// 한 번의 업로드로 네 탭 전부에 데이터를 공급한다
+function loadAllTabs(rawHeaders, rows, fileName) {
+  const ok = {};
+  ['missing','outlier','impute','boxplot'].forEach(t => { ok[t] = parseRows(rawHeaders, rows, fileName, t); });
+  if (ok.missing) setSource('upload');
+  if (ok.outlier) setOutlierSrc('upload');
+  if (ok.impute)  setImpSrc('upload');
+  if (ok.boxplot) setBpSrc('upload');
+  if (!ok[_curTab]) {
+    alert(ok.missing
+      ? '숫자형 컬럼이 없어 이 탭에서는 사용할 수 없습니다. 결측치 탐지 탭에서는 사용 가능합니다.'
+      : '컬럼을 읽을 수 없습니다. 파일을 확인해 주세요.');
+    return;
+  }
+  TAB_UPLOAD_CFG[_curTab].onLoad();
+}
+
+function clearUpload() {
+  // 공유 데이터 해제 — 네 탭 모두 샘플 모드로 복귀
+  Object.values(TAB_UPLOAD_CFG).forEach(cfg => {
+    cfg.set(null);
+    document.getElementById(cfg.infoId).classList.remove('show');
+  });
+  document.querySelectorAll('.upload-zone input[type=file]').forEach(inp => { inp.value = ''; });
+  setSource('sample'); setOutlierSrc('sample'); setImpSrc('sample'); setBpSrc('sample');
+  TAB_UPLOAD_CFG[_curTab].onLoad();
+}
+// ════════════════════════════════════════
+//  결측치 삽입
+// ════════════════════════════════════════
+function insertMissing(data, rate, pattern) {
+  const rows = data.length, cols = data[0].length;
+  const result = data.map(r => r.map(v => v));
+  const totalCells = rows * cols;
+  const targetMiss = Math.round(totalCells * rate / 100);
+
+  if (pattern === 'random') {
+    const r = seededRand(999); let cnt = 0;
+    while (cnt < targetMiss) {
+      const ri = Math.floor(r() * rows), ci = Math.floor(r() * cols);
+      if (result[ri][ci] !== null) { result[ri][ci] = null; cnt++; }
+    }
+  } else if (pattern === 'block') {
+    const r = seededRand(888); let cnt = 0;
+    while (cnt < targetMiss) {
+      const ci = Math.floor(r() * cols);
+      const start = Math.floor(r() * (rows - 5));
+      const len = 3 + Math.floor(r() * 6);
+      for (let i = start; i < Math.min(start+len, rows) && cnt < targetMiss; i++) {
+        if (result[i][ci] !== null) { result[i][ci] = null; cnt++; }
+      }
+    }
+  } else {
+    const r = seededRand(777); let cnt = 0;
+    const focus = [0, Math.min(2, cols-1)];
+    while (cnt < targetMiss) {
+      const ci = focus[Math.floor(r() * focus.length)];
+      const ri = Math.floor(r() * rows);
+      if (result[ri][ci] !== null) { result[ri][ci] = null; cnt++; }
+    }
+  }
+  return result;
+}
+
+// ════════════════════════════════════════
+//  탭 전환
+// ════════════════════════════════════════
+const TAB_IDS = ['missing','impute','outlier','boxplot'];  // 탭 버튼 표시 순서와 일치해야 함
+function switchTab(name) {
+  _curTab = name;
+  TAB_IDS.forEach((n,i) => {
+    document.querySelectorAll('.stat-tab')[i].classList.toggle('active', n === name);
+    document.getElementById('panel-'+n).classList.toggle('active', n === name);
+  });
+  if (name === 'outlier') initOutlierCols();
+  if (name === 'impute') initImpCols();
+  if (name === 'boxplot') { initBpCols(); requestAnimationFrame(drawBp); }
+  // 해시 딥링크: /prep/missing#impute 형태로 탭 직접 연결
+  if (history.replaceState) history.replaceState(null, '', '#'+name);
+}
+
+// ════════════════════════════════════════
+//  TAB 1 : 결측치 탐지
+// ════════════════════════════════════════
+function setMissingDs(btn) {
+  document.querySelectorAll('#miss-ds-btns .ds-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _missDs = btn.dataset.ds;
+}
+function setMissPat(btn) {
+  document.querySelectorAll('.pat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _missPat = btn.dataset.pat;
+}
+
+function buildHeatmap(data, colNames, outlierMask) {
+  // 전치 배치: 행 = 변수, 열 = 관측치
+  const MAX_OBS = 200;
+  const showN = Math.min(data.length, MAX_OBS);
+  const nVars = colNames.length;
+
+  let html = '<thead><tr><th class="hm-corner"></th>';
+  for (let i = 0; i < showN; i++) {
+    const lbl = (i % 10 === 0) ? (i+1) : '';
+    html += `<th class="hm-top-th">${lbl}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (let ci = 0; ci < nVars; ci++) {
+    const varName = colNames[ci];
+    html += `<tr><td class="hm-var-lbl">${varName}</td>`;
+    for (let ri = 0; ri < showN; ri++) {
+      const v = data[ri][ci];
+      const isMiss = v === null;
+      const isOut = !isMiss && outlierMask?.[ri]?.[ci];
+      const cls = isMiss ? 'missing' : isOut ? 'outlier' : 'present';
+      const tip = isMiss
+        ? `#${ri+1} · ${colNames[ci]}: 결측`
+        : isOut
+          ? `#${ri+1} · ${colNames[ci]}: ${v.toFixed(3)} ⚠ 이상치`
+          : `#${ri+1} · ${colNames[ci]}: ${typeof v === 'number' ? v.toFixed(3) : v}`;
+      html += `<td class="hm-cell ${cls}" title="${tip}"></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody>';
+
+  document.getElementById('heatmap').innerHTML = html;
+  document.getElementById('hm-note').textContent =
+    data.length > MAX_OBS
+      ? `처음 ${MAX_OBS}개 관측치 표시 (전체 ${data.length}행 × ${nVars}변수)`
+      : `${data.length}개 관측치 × ${nVars}개 변수`;
+}
+
+function injectOutliers(data, rate) {
+  const rows = data.length, cols = data[0].length;
+  const mask = Array.from({length:rows}, () => Array(cols).fill(false));
+  if (rate === 0) return mask;
+
+  // 컬럼별 통계 (non-null 기준)
+  const colStats = Array.from({length:cols}, (_, ci) => {
+    const vals = data.map(r => r[ci]).filter(v => v !== null);
+    if (!vals.length) return { mean:0, std:1 };
+    const mean = vals.reduce((a,b) => a+b, 0) / vals.length;
+    const std = Math.sqrt(vals.reduce((s,v) => s+(v-mean)**2, 0) / vals.length) || 1;
+    return { mean, std };
+  });
+
+  // non-null 셀 목록
+  const available = [];
+  for (let ri = 0; ri < rows; ri++)
+    for (let ci = 0; ci < cols; ci++)
+      if (data[ri][ci] !== null) available.push([ri, ci]);
+
+  const nOut = Math.round(available.length * rate / 100);
+  const rng = seededRand(7777);
+  // 셔플 후 앞 nOut개 선택
+  for (let i = available.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i+1));
+    [available[i], available[j]] = [available[j], available[i]];
+  }
+  available.slice(0, nOut).forEach(([ri, ci]) => {
+    const { mean, std } = colStats[ci];
+    const sign = rng() > 0.5 ? 1 : -1;
+    data[ri][ci] = mean + sign * std * (3.5 + rng() * 1.5);
+    mask[ri][ci] = true;
+  });
+  return mask;
+}
+
+function runMissing() {
+  let ds, data;
+  if (_missUpload) {
+    ds = _missUpload;
+    data = ds.data;
+  } else {
+    ds = DATASETS[_missDs];
+    const rate = parseInt(document.getElementById('miss-rate').value);
+    data = insertMissing(ds.gen(), rate, _missPat);
+  }
+
+  const rows = data.length, cols = ds.cols.length;
+
+  // 이상치 주입 (샘플 전용, 결측 삽입 후)
+  let outlierMask = null;
+  if (!_missUpload) {
+    const outRate = parseInt(document.getElementById('out-rate').value);
+    outlierMask = injectOutliers(data, outRate);
+  }
+
+  let totalMiss = 0, totalOut = 0;
+  data.forEach((r, ri) => r.forEach((v, ci) => {
+    if (v === null) totalMiss++;
+    else if (outlierMask?.[ri]?.[ci]) totalOut++;
+  }));
+  const totalCells = rows * cols;
+  const completeRows = data.filter(r => r.every(v => v !== null)).length;
+
+  document.getElementById('mk-total').textContent = totalCells.toLocaleString();
+  document.getElementById('mk-miss').textContent = totalMiss.toLocaleString();
+  document.getElementById('mk-pct').textContent = (totalMiss/totalCells*100).toFixed(1)+'%';
+  document.getElementById('mk-complete').textContent = (completeRows/rows*100).toFixed(0)+'%';
+  document.getElementById('mk-out').textContent = totalOut.toLocaleString();
+  document.getElementById('mk-out-pct').textContent = (totalOut/totalCells*100).toFixed(1)+'%';
+
+  // 히트맵
+  buildHeatmap(data, ds.cols, outlierMask);
+
+  // 컬럼별 결측 + 이상치 비율
+  const colMiss = ds.cols.map((_, ci) => data.filter(r => r[ci] === null).length);
+  const colOut  = ds.cols.map((_, ci) =>
+    outlierMask ? data.filter((r, ri) => outlierMask[ri][ci]).length : 0);
+  const maxBar = Math.max(...colMiss, ...colOut, 1);
+  document.getElementById('col-miss-list').innerHTML = ds.cols.map((col, ci) => {
+    const missPct = (colMiss[ci]/rows*100).toFixed(1);
+    const outPct  = (colOut[ci]/rows*100).toFixed(1);
+    const missW = (colMiss[ci]/maxBar*100).toFixed(0);
+    const outW  = (colOut[ci]/maxBar*100).toFixed(0);
+    return `<div class="col-miss-item">
+      <div class="col-miss-name" title="${col}">${col.split('(')[0]}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+        <div class="col-miss-bar-bg"><div class="col-miss-bar" style="width:${missW}%"></div></div>
+        ${colOut[ci]>0?`<div class="col-miss-bar-bg"><div class="col-miss-bar" style="width:${outW}%;background:var(--orange)"></div></div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0;min-width:72px">
+        <div class="col-miss-pct">${missPct}%</div>
+        ${colOut[ci]>0?`<div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--orange);font-weight:700">${outPct}%</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // 시간 축 분포 차트
+  const rowMissCnt = data.map(r => r.filter(v => v === null).length);
+  const chartData = rowMissCnt;
+  const MAX_SHOW = 200;
+  const showData = chartData.length > MAX_SHOW
+    ? chartData.filter((_, i) => i % Math.ceil(chartData.length/MAX_SHOW) === 0)
+    : chartData;
+
+  if (_missDistChart) _missDistChart.destroy();
+  _missDistChart = new Chart(document.getElementById('miss-dist-chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: Array.from({length: showData.length}, (_, i) => i+1),
+      datasets: [{
+        label: '결측 컬럼 수',
+        data: showData,
+        backgroundColor: showData.map(v => v === 0 ? 'rgba(74,222,128,.7)' : v >= 3 ? 'rgba(248,113,113,.9)' : 'rgba(253,224,71,.8)'),
+        borderWidth: 0, borderRadius: 2
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:9}},grid:{display:false}},
+        y:{ticks:{color:'#94a3b8',font:{size:10},stepSize:1},grid:{color:'rgba(0,0,0,.05)'},max:cols,title:{display:true,text:'결측 변수 수',color:'#94a3b8',font:{size:10}}}
+      }
+    }
+  });
+
+  // 해석
+  const worstCol = ds.cols[colMiss.indexOf(Math.max(...colMiss))].split('(')[0];
+  const missType = _missUpload ? '실제 데이터' : (_missPat==='random'?'무작위(MCAR)':_missPat==='block'?'연속 구간(MAR)':'컬럼 집중(MNAR)');
+  const ratio = totalMiss/(rows*cols);
+  document.getElementById('miss-interp').innerHTML =
+    `<strong>해석:</strong> 결측 패턴 <strong>${missType}</strong> · 전체 결측률 <strong>${(ratio*100).toFixed(1)}%</strong>.
+    결측이 가장 많은 컬럼은 <strong>${worstCol}</strong>입니다.
+    ${ratio > 0.2 ? '결측 비율이 20% 이상 — 단순 삭제보다 <strong>보간 처리</strong>가 권장됩니다.' : '결측 비율이 낮아 행 제거(listwise deletion)도 고려할 수 있습니다.'}`;
+}
+
+// ════════════════════════════════════════
+//  TAB 2 : 이상치 탐지
+// ════════════════════════════════════════
+function setOutlierDs(btn) {
+  document.querySelectorAll('#out-ds-btns .ds-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _outlierDs = btn.dataset.ds;
+  initOutlierCols();
+}
+
+function initOutlierCols() {
+  const sel = document.getElementById('out-col');
+  if (!sel) return;
+  const cols = _outlierUpload ? _outlierUpload.cols : DATASETS[_outlierDs].cols;
+  sel.innerHTML = cols.map((c, i) => `<option value="${i}">${c}</option>`).join('');
+  document.getElementById('out-ds-btns').style.opacity = _outlierUpload ? '.4' : '1';
+  document.getElementById('out-ds-btns').style.pointerEvents = _outlierUpload ? 'none' : '';
+}
+
+function addOutliers(data, colIdx, intensity) {
+  const result = data.map(r => [...r]);
+  const col = data.map(r => r[colIdx]).filter(v => v !== null);
+  const mean = col.reduce((a,b) => a+b, 0) / col.length;
+  const std = Math.sqrt(col.reduce((s,v) => s+(v-mean)**2, 0) / col.length);
+  const r = seededRand(555 + intensity);
+  const nOut = [2,3,5,7,10][intensity-1];
+  const indices = new Set();
+  while (indices.size < nOut) indices.add(Math.floor(r() * data.length));
+  indices.forEach(i => { result[i][colIdx] = mean + (r()>.5?1:-1) * std * (3+intensity+r()*2); });
+  return { data: result, injected: [...indices] };
+}
+
+function runOutlier() {
+  const colIdx = parseInt(document.getElementById('out-col').value);
+  const intensity = parseInt(document.getElementById('out-intensity').value);
+  const method = document.getElementById('out-method').value;
+  const zThresh = parseFloat(document.getElementById('z-thresh').value);
+  const iqrMult = parseFloat(document.getElementById('iqr-mult').value);
+
+  let rawData, colName;
+  if (_outlierUpload) {
+    rawData = _outlierUpload.data.map(r => r.map(v => v));
+    colName = _outlierUpload.cols[colIdx];
+  } else {
+    const {data} = addOutliers(DATASETS[_outlierDs].gen(), colIdx, intensity);
+    rawData = data;
+    colName = DATASETS[_outlierDs].cols[colIdx];
+  }
+
+  const col = rawData.map(r => r[colIdx]).filter(v => v !== null);
+  const n = col.length;
+  const mean = col.reduce((a,b)=>a+b,0)/n;
+  const std = Math.sqrt(col.reduce((s,v)=>s+(v-mean)**2,0)/n);
+  const { q1, q3, iqr } = calcBoxStats(col);
+  const lb = q1 - iqrMult*iqr, ub = q3 + iqrMult*iqr;
+
+  const detectedZ = new Set(), detectedIQR = new Set();
+  const colFull = rawData.map(r => r[colIdx]);
+  colFull.forEach((v, i) => {
+    if (v === null) return;
+    if (Math.abs((v-mean)/std) > zThresh) detectedZ.add(i);
+    if (v < lb || v > ub) detectedIQR.add(i);
+  });
+  let detected = new Set();
+  if (method==='zscore') detected = detectedZ;
+  else if (method==='iqr') detected = detectedIQR;
+  else { detectedZ.forEach(i=>detected.add(i)); detectedIQR.forEach(i=>detected.add(i)); }
+
+  document.getElementById('ok-n').textContent = n;
+  document.getElementById('ok-out').textContent = detected.size;
+  document.getElementById('ok-pct').textContent = (detected.size/n*100).toFixed(1)+'%';
+  document.getElementById('ok-bound').textContent = method==='zscore'?`μ±${zThresh}σ`:method==='iqr'?`IQR×${iqrMult}`:'Z+IQR';
+
+  // 산점도
+  const validPairs = colFull.map((v,i) => ({x:i+1,y:v,out:detected.has(i)})).filter(d=>d.y!==null);
+  if (_outlierScatter) _outlierScatter.destroy();
+  _outlierScatter = new Chart(document.getElementById('outlier-scatter').getContext('2d'), {
+    type:'scatter',
+    data:{datasets:[
+      {label:'정상',data:validPairs.filter(d=>!d.out).map(d=>({x:d.x,y:d.y})),backgroundColor:'rgba(147,197,253,.7)',pointRadius:4,pointHoverRadius:6},
+      {label:'이상치',data:validPairs.filter(d=>d.out).map(d=>({x:d.x,y:d.y})),backgroundColor:'rgba(248,113,113,.9)',pointRadius:7,pointHoverRadius:9,pointStyle:'triangle'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#64748b',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'},title:{display:true,text:colName,color:'#94a3b8',font:{size:10}}}
+      }
+    }
+  });
+
+  // 히스토그램
+  const bins = 20, minV = Math.min(...col), maxV = Math.max(...col);
+  const bw = (maxV-minV)/bins;
+  const bc = Array(bins).fill(0);
+  col.forEach(v => { bc[Math.min(Math.floor((v-minV)/bw), bins-1)]++; });
+  const bl = Array.from({length:bins},(_,i)=>(minV+i*bw).toFixed(1));
+  const zL = mean-zThresh*std, zH = mean+zThresh*std;
+  if (_outlierHist) _outlierHist.destroy();
+  _outlierHist = new Chart(document.getElementById('outlier-hist').getContext('2d'), {
+    type:'bar',
+    data:{labels:bl,datasets:[{label:'빈도',data:bc,
+      backgroundColor:bl.map(v=>{const f=parseFloat(v);return(f<zL||f>zH)?'rgba(248,113,113,.8)':'rgba(147,197,253,.7)';}),
+      borderWidth:0,borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:8},maxRotation:45},grid:{display:false}},
+        y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}
+      }
+    }
+  });
+
+  // 테이블
+  const tbody = document.getElementById('outlier-tbody');
+  if (!detected.size) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px">탐지된 이상치 없음</td></tr>';
+  } else {
+    tbody.innerHTML = [...detected].sort((a,b)=>a-b).map((i,idx) => {
+      const v = colFull[i]; const z = ((v-mean)/std).toFixed(2);
+      const iqrF = (v<lb||v>ub);
+      return `<tr>
+        <td style="color:var(--dim)">${idx+1}</td>
+        <td style="font-family:'Space Mono',monospace">${i+1}</td>
+        <td style="font-family:'Space Mono',monospace;font-weight:700">${v.toFixed(3)}</td>
+        <td style="font-family:'Space Mono',monospace;color:${Math.abs(z)>zThresh?'var(--red)':'var(--muted)'}">${z}</td>
+        <td>${iqrF?'<span class="badge-red">이상</span>':'<span class="badge-ok">정상</span>'}</td>
+        <td><span class="badge-red">이상치</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('outlier-interp').innerHTML =
+    `<strong>해석:</strong> <strong>${{zscore:'Z-Score',iqr:'IQR',both:'Z-Score+IQR'}[method]}</strong> 방법으로
+    <strong>${n}개</strong> 중 <strong>${detected.size}개(${(detected.size/n*100).toFixed(1)}%)</strong> 이상치 탐지.
+    ${method!=='iqr'?`Z-Score 정상 범위: [${(mean-zThresh*std).toFixed(2)}, ${(mean+zThresh*std).toFixed(2)}]`:``}
+    ${method!=='zscore'?`IQR 정상 범위: [${lb.toFixed(2)}, ${ub.toFixed(2)}]`:''}`;
+}
+
+// ════════════════════════════════════════
+//  TAB 3 : 결측치 보간
+// ════════════════════════════════════════
+function setImpDs(btn) {
+  document.querySelectorAll('#imp-ds-btns .ds-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _impDs = btn.dataset.ds;
+  initImpCols();
+}
+
+const METHOD_DESC = {
+  mean: {
+    icon: '📊',
+    title: '평균값 대체 (Mean Imputation)',
+    body: '비결측 값들의 <strong>산술 평균</strong>으로 결측치를 모두 동일하게 채웁니다.',
+    tags: [['good','단순·빠름'],['caution','분산 축소'],['caution','이상치 영향']],
+    note: '무작위 결측(MCAR)에 적합. 시계열·연속 구간 결측에는 부적합.'
+  },
+  median: {
+    icon: '📏',
+    title: '중앙값 대체 (Median Imputation)',
+    body: '비결측 값을 정렬했을 때 <strong>중앙에 위치한 값</strong>으로 결측치를 채웁니다.',
+    tags: [['good','이상치에 강함'],['good','왜도 데이터에 유리'],['caution','분산 축소']],
+    note: '이상치나 분포가 치우친 데이터에 평균값 대체보다 안정적.'
+  },
+  ffill: {
+    icon: '→',
+    title: '전진 채우기 (Forward Fill)',
+    body: '결측 직전의 <strong>마지막 관측값</strong>을 그대로 앞으로 복사해 채웁니다.',
+    tags: [['time','시계열 적합'],['good','추세 유지'],['caution','연속 결측 시 오차 누적']],
+    note: '센서 데이터·주가처럼 값이 일정 기간 유지되는 시계열에 효과적.'
+  },
+  bfill: {
+    icon: '←',
+    title: '후진 채우기 (Backward Fill)',
+    body: '결측 직후의 <strong>다음 관측값</strong>을 거꾸로 복사해 채웁니다.',
+    tags: [['time','시계열 적합'],['good','미래 참조'],['caution','인과 역전 주의']],
+    note: '다음 값이 이미 알려진 상황(예: 배치 처리)에 활용. 실시간 스트림에는 부적합.'
+  },
+  linear: {
+    icon: '📈',
+    title: '선형 보간 (Linear Interpolation)',
+    body: '결측 앞뒤 값을 <strong>직선으로 연결</strong>해 등간격으로 값을 추정합니다.',
+    tags: [['time','시계열 필수'],['good','연속 구간 결측'],['good','추세 반영']],
+    note: '완만하게 변화하는 시계열에 가장 흔히 쓰이는 방법. 급격한 변동에는 오차 발생.'
+  },
+  spline: {
+    icon: '〜',
+    title: '스플라인 보간 (Spline Interpolation)',
+    body: '<strong>곡선(Catmull-Rom)</strong>으로 앞뒤 여러 점을 부드럽게 이어 값을 추정합니다.',
+    tags: [['time','시계열 필수'],['good','곡선 추세'],['caution','계산 비용 높음']],
+    note: '사인파·계절성처럼 곡선형 패턴을 가진 데이터에서 선형 보간보다 정확.'
+  }
+};
+
+function updateMethodDesc(method) {
+  const d = METHOD_DESC[method];
+  const tags = d.tags.map(([cls, lbl]) => `<span class="method-desc-tag tag-${cls}">${lbl}</span>`).join('');
+  document.getElementById('method-desc').innerHTML =
+    `<div class="method-desc-icon">${d.icon}</div>
+    <div class="method-desc-body">
+      <strong>${d.title}</strong><br>
+      ${d.body}<br>
+      <span style="margin-top:4px;display:inline-block">${tags}</span><br>
+      <span style="font-size:11px;color:var(--muted)">${d.note}</span>
+    </div>`;
+}
+
+function selectImpMethod(btn) {
+  document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _impMethod = btn.dataset.method;
+  updateMethodDesc(_impMethod);
+}
+
+function initImpCols() {
+  const cols = _impUpload ? _impUpload.cols : DATASETS[_impDs].cols;
+  const sel = document.getElementById('imp-col');
+  if (!sel) return;
+  sel.innerHTML = cols.map((c,i)=>`<option value="${i}">${c}</option>`).join('');
+  document.getElementById('imp-ds-btns').style.opacity = _impUpload ? '.4' : '1';
+  document.getElementById('imp-ds-btns').style.pointerEvents = _impUpload ? 'none' : '';
+}
+
+const IMPUTERS = {
+  mean(a){const m=a.filter(v=>v!==null).reduce((s,v)=>s+v,0)/a.filter(v=>v!==null).length;return a.map(v=>v===null?m:v);},
+  median(a){const s=[...a.filter(v=>v!==null)].sort((x,y)=>x-y);const m=s[Math.floor(s.length/2)];return a.map(v=>v===null?m:v);},
+  ffill(a){const r=[...a];let l=null;for(let i=0;i<r.length;i++){if(r[i]!==null)l=r[i];else if(l!==null)r[i]=l;}
+    const f=a.find(v=>v!==null);return r.map(v=>v===null?f:v);},
+  bfill(a){const r=[...a];let n=null;for(let i=r.length-1;i>=0;i--){if(r[i]!==null)n=r[i];else if(n!==null)r[i]=n;}
+    const l=[...a].reverse().find(v=>v!==null);return r.map(v=>v===null?l:v);},
+  linear(a){const r=[...a];
+    for(let i=0;i<r.length;i++){if(r[i]===null){let li=-1,ri=-1,lv=null,rv=null;
+      for(let j=i-1;j>=0;j--){if(r[j]!==null){li=j;lv=r[j];break;}}
+      for(let j=i+1;j<r.length;j++){if(r[j]!==null){ri=j;rv=r[j];break;}}
+      if(lv!==null&&rv!==null)r[i]=lv+(rv-lv)*(i-li)/(ri-li);
+      else if(lv!==null)r[i]=lv;else if(rv!==null)r[i]=rv;}}return r;},
+  spline(a){const r=IMPUTERS.linear([...a]);const o=[...a];
+    for(let i=0;i<o.length;i++){if(o[i]===null){
+      const p0=o[i-2]??o[i-1]??r[i],p1=o[i-1]??r[i],p2=o[i+1]??r[i],p3=o[i+2]??o[i+1]??r[i];
+      r[i]=r[i]*.55+(-.5*p0+1.5*p1+1.5*p2-.5*p3)*.5*.45;}}return r;}
+};
+
+function rmse(orig, imp, mask) {
+  let s=0,c=0;
+  orig.forEach((v,i)=>{if(mask[i]&&v!==null&&imp[i]!==null){s+=(v-imp[i])**2;c++;}});
+  return c?Math.sqrt(s/c):0;
+}
+
+function runImpute() {
+  const colIdx = parseInt(document.getElementById('imp-col').value);
+  const rate = parseInt(document.getElementById('imp-miss-rate').value);
+  const pattern = document.getElementById('imp-pattern').value;
+
+  let origCol;
+  if (_impUpload) {
+    origCol = _impUpload.data.map(r => r[colIdx]);
+  } else {
+    origCol = DATASETS[_impDs].gen().map(r => r[colIdx]);
+  }
+  const n = origCol.length;
+
+  // 결측 삽입
+  const mask = Array(n).fill(false);
+  const withMissing = [...origCol];
+  if (pattern === 'random') {
+    const r = seededRand(321);
+    origCol.forEach((_, i) => { if (r() < rate/100) { withMissing[i]=null; mask[i]=true; } });
+  } else {
+    const r = seededRand(456);
+    let tries=0;
+    while (mask.filter(Boolean).length < Math.round(n*rate/100) && tries<200) {
+      const start=Math.floor(r()*(n-6)), len=4+Math.floor(r()*5);
+      for(let j=start;j<Math.min(start+len,n);j++){withMissing[j]=null;mask[j]=true;}
+      tries++;
+    }
+  }
+
+  const imputed = IMPUTERS[_impMethod](withMissing);
+  const methodNames = {mean:'평균',median:'중앙값',ffill:'전진채우기',bfill:'후진채우기',linear:'선형보간',spline:'스플라인'};
+  const allRmse = {};
+  Object.keys(IMPUTERS).forEach(m => { allRmse[m] = rmse(origCol, IMPUTERS[m](withMissing), mask); });
+  const bestM = Object.keys(allRmse).reduce((a,b)=>allRmse[a]<allRmse[b]?a:b);
+  const worstM = Object.keys(allRmse).reduce((a,b)=>allRmse[a]>allRmse[b]?a:b);
+
+  const labels = Array.from({length:n},(_,i)=>i+1);
+  if (_impChart) _impChart.destroy();
+  _impChart = new Chart(document.getElementById('imp-chart').getContext('2d'), {
+    type:'line',
+    data:{labels,datasets:[
+      {label:'원본(참조)',data:origCol,borderColor:'#7c3aed',borderWidth:2.5,borderDash:[5,3],pointRadius:0,fill:false,tension:.3},
+      {label:'결측 포함',data:withMissing,borderColor:'rgba(147,197,253,.9)',borderWidth:1.5,
+        pointRadius:withMissing.map(v=>v===null?0:3),pointBackgroundColor:'#93c5fd',fill:false,tension:.3,spanGaps:false},
+      {label:`보간(${methodNames[_impMethod]})`,data:imputed,borderColor:'#f97316',borderWidth:2,
+        pointRadius:mask.map(m=>m?5:0),pointBackgroundColor:mask.map(m=>m?'#f97316':'transparent'),
+        pointStyle:mask.map(m=>m?'rectRot':'circle'),fill:false,tension:.4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#64748b',font:{size:12}}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}
+      }
+    }
+  });
+
+  // RMSE 차트
+  if (_rmseChart) _rmseChart.destroy();
+  _rmseChart = new Chart(document.getElementById('rmse-chart').getContext('2d'), {
+    type:'bar',
+    data:{labels:Object.keys(allRmse).map(m=>methodNames[m]),
+      datasets:[{label:'RMSE',data:Object.values(allRmse).map(v=>parseFloat(v.toFixed(4))),
+        backgroundColor:Object.keys(allRmse).map(m=>m===bestM?'rgba(5,150,105,.7)':m===_impMethod?'rgba(249,115,22,.7)':'rgba(147,197,253,.6)'),
+        borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#64748b',font:{size:11}},grid:{display:false}},
+              y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}
+    }
+  });
+
+  const curR = allRmse[_impMethod];
+  document.getElementById('rmse-grid').innerHTML = `
+    <div class="rmse-box${_impMethod===bestM?' rmse-best':''}">
+      <div class="rmse-val" style="color:${_impMethod===bestM?'var(--green)':'var(--orange)'}">${curR.toFixed(4)}</div>
+      <div class="rmse-lbl">현재(${methodNames[_impMethod]})</div>
+    </div>
+    <div class="rmse-box rmse-best">
+      <div class="rmse-val">${allRmse[bestM].toFixed(4)}</div>
+      <div class="rmse-lbl">최우수: ${methodNames[bestM]}</div>
+    </div>
+    <div class="rmse-box">
+      <div class="rmse-val" style="color:var(--red)">${allRmse[worstM].toFixed(4)}</div>
+      <div class="rmse-lbl">최저: ${methodNames[worstM]}</div>
+    </div>`;
+
+  const missedCnt = mask.filter(Boolean).length;
+  document.getElementById('imp-interp').innerHTML =
+    `<strong>해석:</strong> ${missedCnt}개 결측(${(missedCnt/n*100).toFixed(0)}%)을 <strong>${methodNames[_impMethod]}</strong>으로 보간 — RMSE <strong>${curR.toFixed(4)}</strong>.
+    ${_impMethod===bestM?'✅ 이 데이터에서 <strong>가장 정확한</strong> 방법입니다.':
+    `이 데이터에서는 <strong>${methodNames[bestM]}</strong>(RMSE: ${allRmse[bestM].toFixed(4)})이 더 정확합니다.`}
+    ${pattern==='block'?'연속 구간 결측에는 선형·스플라인 보간이 유리합니다.':'무작위 결측에는 평균·중앙값이 안정적입니다.'}`;
+
+  // Raw 데이터 테이블 렌더링
+  buildImpRawTable(origCol, withMissing, imputed, mask, methodNames[_impMethod]);
+}
+
+function buildImpRawTable(origCol, withMissing, imputed, mask, methodName) {
+  // 헤더
+  document.getElementById('imp-raw-thead').innerHTML =
+    `<th>#</th>
+     <th>원본</th>
+     <th>결측 포함</th>
+     <th>${methodName}</th>
+     <th>오차 (보간−원본)</th>
+     <th>상태</th>`;
+
+  // 바디 — 결측 행 강조, 전체 표시
+  document.getElementById('imp-raw-tbody').innerHTML = origCol.map((orig, i) => {
+    const isMiss = mask[i];
+    const origFmt = orig !== null ? orig.toFixed(3) : '—';
+    const missFmt = withMissing[i] !== null ? withMissing[i].toFixed(3) : '—';
+    const impFmt  = imputed[i] !== null ? imputed[i].toFixed(3) : '—';
+
+    // 오차: 보간된 행만 계산
+    let errCell = '<span style="color:var(--dim)">—</span>';
+    if (isMiss && orig !== null && imputed[i] !== null) {
+      const err = imputed[i] - orig;
+      const absErr = Math.abs(err);
+      const sign = err > 0 ? '+' : '';
+      const cls = absErr < 0.001 ? 'td-err-zero' : err > 0 ? 'td-err-pos' : 'td-err-neg';
+      errCell = `<span class="${cls}">${sign}${err.toFixed(3)}</span>`;
+    }
+
+    const status = isMiss
+      ? `<span class="badge-red">보간됨</span>`
+      : `<span class="badge-ok">정상</span>`;
+    return `<tr${isMiss ? ' style="background:rgba(249,115,22,.04)"' : ''}>
+      <td class="td-idx">${i+1}</td>
+      <td class="td-orig">${origFmt}</td>
+      <td class="${isMiss?'td-miss':''}">${isMiss ? '<span style="color:var(--red)">—</span>' : missFmt}</td>
+      <td class="${isMiss?'td-imp':''}">${impFmt}</td>
+      <td style="text-align:right">${errCell}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('imp-raw-card').style.display = '';
+}
+
+let _rawTableOpen = true;
+function toggleRawTable() {
+  _rawTableOpen = !_rawTableOpen;
+  document.getElementById('imp-raw-wrap').style.display = _rawTableOpen ? '' : 'none';
+  document.getElementById('raw-toggle-btn').textContent = _rawTableOpen ? '접기 ▲' : '펼치기 ▼';
+}
+
+// ════════════════════════════════════════
+//  TAB 4 : 박스플롯 시뮬레이터
+// ════════════════════════════════════════
+let _bpDs = 'basic', _bpStep = 1;
+const BP_MAX_STEPS = 6;
+
+const BP_STEP_INFO = [
+  { icon:'🔵', title:'① 데이터 포인트', color:'#3b82f6',
+    bg:'rgba(59,130,246,.06)', border:'rgba(59,130,246,.25)',
+    desc:'원시 데이터 값들을 점으로 표시합니다. 세로 축(Y)에서 값들이 어떻게 분포하는지 먼저 확인하세요.' },
+  { icon:'📏', title:'② 최솟값 · 최댓값 (Min · Max)', color:'#8b5cf6',
+    bg:'rgba(139,92,246,.06)', border:'rgba(139,92,246,.25)',
+    desc:'데이터에서 가장 작은 값(Min)과 가장 큰 값(Max)입니다. 범위(Range = Max − Min)로 데이터의 전체 퍼짐 정도를 알 수 있습니다.' },
+  { icon:'📍', title:'③ 중앙값 (Median · Q2)', color:'#059669',
+    bg:'rgba(5,150,105,.06)', border:'rgba(5,150,105,.25)',
+    desc:'전체 데이터를 정렬한 뒤 정중앙 값입니다. 중앙값을 기준으로 데이터를 하위 절반과 상위 절반으로 나눕니다. 이것이 Q1·Q3를 구하는 출발점입니다.' },
+  { icon:'📦', title:'④ Q1 · Q3 (1사분위 · 3사분위)', color:'#0284c7',
+    bg:'rgba(2,132,199,.06)', border:'rgba(2,132,199,.25)',
+    desc:'하위 절반의 중앙값 → Q1, 상위 절반의 중앙값 → Q3. 이 박스(IQR = Q3−Q1)가 전체 데이터의 중간 50%를 담습니다.' },
+  { icon:'〰️', title:'⑤ 수염 (Whiskers)', color:'#d97706',
+    bg:'rgba(217,119,6,.06)', border:'rgba(217,119,6,.25)',
+    desc:'IQR = Q3 − Q1. 수염 범위는 Q1 − 1.5×IQR ~ Q3 + 1.5×IQR 입니다. 그 안에 있는 실제 최솟·최댓값까지 수염을 그립니다.' },
+  { icon:'🔴', title:'⑥ 이상치 (Outliers)', color:'#dc2626',
+    bg:'rgba(220,38,38,.06)', border:'rgba(220,38,38,.25)',
+    desc:'수염 범위 바깥에 위치한 값들이 이상치입니다. 이상치가 없으면 수염이 Min/Max까지 닿습니다. 좌측 산점도에서도 붉게 표시됩니다.' }
+];
+
+function setBpDs(btn) {
+  document.querySelectorAll('#bp-ds-btns .ds-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _bpDs = btn.dataset.ds;
+  initBpCols();
+  requestAnimationFrame(drawBp);
+}
+
+function initBpCols() {
+  const cols = _bpUpload ? _bpUpload.cols : DATASETS[_bpDs].cols;
+  const sel = document.getElementById('bp-col');
+  if (!sel) return;
+  sel.innerHTML = cols.map((c,i) => `<option value="${i}">${c}</option>`).join('');
+  document.getElementById('bp-ds-btns').style.opacity = _bpUpload ? '.4' : '1';
+  document.getElementById('bp-ds-btns').style.pointerEvents = _bpUpload ? 'none' : '';
+}
+
+function getBpData() {
+  const colIdx = parseInt(document.getElementById('bp-col')?.value || '0');
+  return _bpUpload
+    ? _bpUpload.data.map(r => r[colIdx]).filter(v => v !== null)
+    : DATASETS[_bpDs].gen().map(r => r[colIdx]);
+}
+
+function calcBoxStats(data) {
+  const sorted = [...data].sort((a,b) => a-b);
+  const n = sorted.length;
+
+  // 배열 중앙값
+  function arrMedian(arr) {
+    const mid = Math.floor(arr.length / 2);
+    return arr.length % 2 === 0 ? (arr[mid-1] + arr[mid]) / 2 : arr[mid];
+  }
+
+  // 중앙값 제외 방식 (교과서 표준):
+  // 홀수 n → 중앙값 인덱스 제외하고 상하 분리
+  // 짝수 n → 절반씩 분리
+  const mid = Math.floor(n / 2);
+  const q2 = arrMedian(sorted);
+  const lowerHalf = sorted.slice(0, mid);
+  const upperHalf = sorted.slice(n % 2 === 0 ? mid : mid + 1);
+  const q1 = arrMedian(lowerHalf);
+  const q3 = arrMedian(upperHalf);
+
+  const min = sorted[0], max = sorted[n-1];
+  const iqr = q3 - q1;
+  const fL = q1 - 1.5*iqr, fH = q3 + 1.5*iqr;
+  const wL = Math.min(...data.filter(v => v >= fL));
+  const wH = Math.max(...data.filter(v => v <= fH));
+  const outliers = data.filter(v => v < fL || v > fH);
+  return { min, max, q1, q2, q3, iqr, fL, fH, wL, wH, outliers, n };
+}
+
+function bpStep(dir) {
+  _bpStep = Math.max(1, Math.min(BP_MAX_STEPS, _bpStep + dir));
+  drawBp();
+}
+
+function updateBpUI(stats) {
+  const info = BP_STEP_INFO[_bpStep - 1];
+
+  // ── Raw 데이터 바 ──
+  const rawData = getBpData();
+  const colName = (_bpUpload ? _bpUpload.cols : DATASETS[_bpDs].cols)[
+    parseInt(document.getElementById('bp-col')?.value || '0')
+  ];
+  document.getElementById('bp-raw-count').textContent = `— ${colName} · n = ${rawData.length}`;
+  const showOutlierColor = _bpStep >= 6;
+  document.getElementById('bp-raw-bar').innerHTML = rawData.map(v => {
+    const isOut = v < stats.fL || v > stats.fH;
+    const cls = showOutlierColor && isOut ? 'outlier' : showOutlierColor ? 'normal' : 'neutral';
+    return `<span class="bp-chip ${cls}">${typeof v==='number' ? v.toFixed(_bpDs==='basic'&&!_bpUpload?0:2) : v}</span>`;
+  }).join('');
+
+  // 단계 카드
+  const card = document.getElementById('bp-step-card');
+  card.style.background = info.bg;
+  card.style.borderColor = info.border;
+  document.getElementById('bp-step-icon').textContent = info.icon;
+  const titleEl = document.getElementById('bp-step-title');
+  titleEl.textContent = info.title;
+  titleEl.style.color = info.color;
+  document.getElementById('bp-step-desc').textContent = info.desc;
+
+  // 카운터 & 버튼
+  document.getElementById('bp-step-counter').textContent = `${_bpStep} / ${BP_MAX_STEPS}`;
+  document.getElementById('bp-prev-btn').disabled = _bpStep <= 1;
+  document.getElementById('bp-next-btn').disabled = _bpStep >= BP_MAX_STEPS;
+
+  // 점 진행바
+  document.getElementById('bp-step-dots').innerHTML =
+    Array.from({length:BP_MAX_STEPS}, (_,i) =>
+      `<div class="bp-step-dot ${i+1===_bpStep?'active':i+1<_bpStep?'done':''}"></div>`
+    ).join('');
+
+  // 5수치 테이블
+  const ROWS = [
+    { name:'Min',       sub:'최솟값',       val:stats.min,             step:2, color:'#8b5cf6' },
+    { name:'Median',    sub:'중앙값',        val:stats.q2,              step:3, color:'#059669' },
+    { name:'Q1',        sub:'하위 절반 중앙', val:stats.q1,              step:4, color:'#0284c7' },
+    { name:'Q3',        sub:'상위 절반 중앙', val:stats.q3,              step:4, color:'#0284c7' },
+    { name:'Max',       sub:'최댓값',        val:stats.max,             step:2, color:'#8b5cf6' },
+    { name:'IQR',       sub:'Q3 − Q1',      val:stats.iqr,             step:4, color:'#0284c7' },
+    { name:'수염 하한', sub:'Q1 − 1.5×IQR', val:stats.wL,              step:5, color:'#d97706' },
+    { name:'수염 상한', sub:'Q3 + 1.5×IQR', val:stats.wH,              step:5, color:'#d97706' },
+    { name:'이상치 수', sub:'수염 밖',        val:stats.outliers.length, step:6, color:'#dc2626', cnt:true },
+  ];
+  document.getElementById('bp-stats-tbody').innerHTML = ROWS.map(row => {
+    const ok = _bpStep >= row.step;
+    const valCell = ok
+      ? `<span class="bp-stat-val" style="color:${row.color}">${row.cnt ? row.val : row.val.toFixed(3)}</span>`
+      : `<span class="bp-stat-hidden">—</span>`;
+    const stepBadge = `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;
+      background:${ok?'rgba(37,99,235,.08)':'rgba(0,0,0,.04)'};
+      color:${ok?'var(--accent)':'var(--dim)'};
+      border:1px solid ${ok?'rgba(37,99,235,.2)':'var(--border2)'}">
+      ${ok?'✓':''} Step ${row.step}
+    </span>`;
+    return `<tr style="${ok?'':'opacity:.55'}">
+      <td><span style="font-weight:700;font-family:'Space Mono',monospace">${row.name}</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:5px">${row.sub}</span></td>
+      <td>${valCell}</td>
+      <td style="text-align:center">${stepBadge}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Step 6 완료: 분포 해석 카드 ──
+  const interpCard = document.getElementById('bp-interp-card');
+  if (_bpStep < 6) { interpCard.style.display = 'none'; return; }
+
+  // rawData는 위에서 이미 선언됨 (재사용)
+  const mean = rawData.reduce((a,b) => a+b, 0) / rawData.length;
+  const std  = Math.sqrt(rawData.reduce((s,v) => s+(v-mean)**2, 0) / rawData.length);
+  const cv   = Math.abs(mean) > 0.001 ? std / Math.abs(mean) * 100 : 0;
+  const range = stats.max - stats.min;
+  const iqrRatio = range > 0 ? stats.iqr / range : 0;
+
+  // 치우침 판단 (평균 vs 중앙값)
+  const skewDiff = mean - stats.q2;
+  const relSkew  = range > 0 ? Math.abs(skewDiff) / range : 0;
+  let skewBadge, skewColor, skewBg, skewText;
+  if (relSkew < 0.05) {
+    skewBadge='대칭 분포'; skewColor='#059669'; skewBg='rgba(5,150,105,.1)';
+    skewText=`평균(${mean.toFixed(2)})과 중앙값(${stats.q2.toFixed(2)})이 거의 같아 분포가 <strong>대칭에 가깝습니다.</strong>`;
+  } else if (skewDiff > 0) {
+    skewBadge='오른쪽 치우침'; skewColor='#d97706'; skewBg='rgba(217,119,6,.1)';
+    skewText=`평균(${mean.toFixed(2)})이 중앙값(${stats.q2.toFixed(2)})보다 높습니다. 소수의 <strong>큰 값이 평균을 끌어올리는</strong> 오른쪽 치우침(Right Skew)입니다.`;
+  } else {
+    skewBadge='왼쪽 치우침'; skewColor='#7c3aed'; skewBg='rgba(124,58,237,.1)';
+    skewText=`평균(${mean.toFixed(2)})이 중앙값(${stats.q2.toFixed(2)})보다 낮습니다. 소수의 <strong>작은 값이 평균을 끌어내리는</strong> 왼쪽 치우침(Left Skew)입니다.`;
+  }
+
+  // 집중도 판단 (IQR/Range)
+  let spreadBadge, spreadColor, spreadBg, spreadText;
+  if (iqrRatio < 0.25) {
+    spreadBadge='높은 집중도'; spreadColor='#0284c7'; spreadBg='rgba(2,132,199,.1)';
+    spreadText=`IQR(${stats.iqr.toFixed(2)})이 전체 범위의 <strong>${(iqrRatio*100).toFixed(0)}%</strong>에 불과합니다. 중간 50% 데이터가 <strong>좁은 구간에 밀집</strong>되어 있습니다.`;
+  } else if (iqrRatio < 0.5) {
+    spreadBadge='보통 분산도'; spreadColor='#0284c7'; spreadBg='rgba(2,132,199,.1)';
+    spreadText=`IQR(${stats.iqr.toFixed(2)})이 전체 범위의 <strong>${(iqrRatio*100).toFixed(0)}%</strong>로 데이터가 <strong>적당히 퍼져</strong> 있습니다.`;
+  } else {
+    spreadBadge='넓은 분산도'; spreadColor='#6366f1'; spreadBg='rgba(99,102,241,.1)';
+    spreadText=`IQR(${stats.iqr.toFixed(2)})이 전체 범위의 <strong>${(iqrRatio*100).toFixed(0)}%</strong>를 차지합니다. 데이터가 <strong>넓게 분산</strong>되어 있습니다.`;
+  }
+
+  // 이상치 판단
+  const hiOut = stats.outliers.filter(v => v > stats.wH);
+  const loOut = stats.outliers.filter(v => v < stats.wL);
+  let outlierBadge, outlierColor, outlierBg, outlierText;
+  if (stats.outliers.length === 0) {
+    outlierBadge='이상치 없음'; outlierColor='#059669'; outlierBg='rgba(5,150,105,.1)';
+    outlierText='모든 데이터가 수염 범위 안에 있습니다. <strong>정상적인 분포</strong>로 볼 수 있습니다.';
+  } else {
+    outlierBadge=`이상치 ${stats.outliers.length}개`; outlierColor='#dc2626'; outlierBg='rgba(220,38,38,.1)';
+    const parts = [];
+    if (hiOut.length) parts.push(`상위 ${hiOut.length}개(${hiOut.map(v=>v.toFixed(1)).join(', ')})`);
+    if (loOut.length) parts.push(`하위 ${loOut.length}개(${loOut.map(v=>v.toFixed(1)).join(', ')})`);
+    outlierText=`${parts.join(', ')} 탐지. 이상치가 <strong>평균을 왜곡</strong>할 수 있으며, 분석 전 처리 여부를 검토하세요.`;
+  }
+
+  function block(label, badge, color, bg, text) {
+    return `<div class="bp-interp-block">
+      <div class="bp-interp-label">${label}</div>
+      <div class="bp-interp-badge" style="background:${bg};color:${color};border:1px solid ${color}40">${badge}</div>
+      <div class="bp-interp-text">${text}</div>
+    </div>`;
+  }
+
+  document.getElementById('bp-interp-body').innerHTML =
+    block('치우침 (Skewness)', skewBadge, skewColor, skewBg, skewText) +
+    block('집중도 (Spread)', spreadBadge, spreadColor, spreadBg, spreadText) +
+    block('이상치 (Outliers)', outlierBadge, outlierColor, outlierBg, outlierText);
+
+  interpCard.style.display = '';
+}
+
+function drawBp() {
+  const canvas = document.getElementById('bp-canvas');
+  if (!canvas) return;
+  const W0 = canvas.clientWidth, H0 = canvas.clientHeight;
+  if (!W0 || !H0) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = W0 * dpr;
+  canvas.height = H0 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = W0, H = H0;
+
+  const data = getBpData();
+  const s = calcBoxStats(data);
+  const step = _bpStep;
+
+  const pad = { top:46, bottom:36, left:66, right:110 };
+  const plotH = H - pad.top - pad.bottom;
+  const plotW = W - pad.left - pad.right;
+
+  const vRange = s.max - s.min || 1;
+  const vMin = s.min - vRange * 0.1;
+  const vMax = s.max + vRange * 0.1;
+  function yP(v) { return pad.top + plotH * (1-(v-vMin)/(vMax-vMin)); }
+
+  // 레이아웃
+  const jCX = pad.left + plotW * 0.25;
+  const jSpread = plotW * 0.18;
+  const bpCX = pad.left + plotW * 0.68;
+  const bpHW = Math.min(44, plotW * 0.12);
+  const divX = pad.left + plotW * 0.47;
+  const lblX = bpCX + bpHW + 8;
+
+  // ── 배경 ──
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Y축 ──
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top+plotH); ctx.stroke();
+
+  // 눈금 & 그리드
+  for (let i = 0; i <= 6; i++) {
+    const v = vMin + (vMax-vMin)*i/6;
+    const y = yP(v);
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left-5, y); ctx.lineTo(W-pad.right+20, y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px "Space Mono",monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(v.toFixed(1), pad.left-8, y+4);
+  }
+
+  // ── 섹션 레이블 ──
+  ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('데이터 분포', jCX, pad.top-16);
+  ctx.fillText('박스플롯', bpCX, pad.top-16);
+
+  // ── 구분선 ──
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(divX, pad.top); ctx.lineTo(divX, pad.top+plotH); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Step 1+: Jitter scatter ──
+  const isBasic = _bpDs === 'basic' && !_bpUpload;
+  const rng = seededRand(42);
+  data.forEach((v, idx) => {
+    const x = isBasic ? jCX : jCX + (rng()-0.5)*jSpread*2;
+    const y = yP(v);
+    const isOut = step >= 6 && (v < s.fL || v > s.fH);
+    const r2 = isBasic ? 7 : 4;
+    ctx.beginPath(); ctx.arc(x, y, r2, 0, Math.PI*2);
+    ctx.fillStyle = isOut ? 'rgba(220,38,38,0.85)' : 'rgba(147,197,253,0.75)';
+    ctx.fill();
+    ctx.strokeStyle = isOut ? '#dc2626' : '#93c5fd';
+    ctx.lineWidth = 1.5; ctx.stroke();
+    // 기초 학습: 값 레이블 표시
+    if (isBasic) {
+      ctx.fillStyle = isOut ? '#dc2626' : '#1e40af';
+      ctx.font = 'bold 11px "Space Mono",monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(v, x, y - 12);
+    }
+  });
+
+  // ── Step 2+: Min / Max 점선 ──
+  if (step >= 2) {
+    [[s.min,'Min','#8b5cf6'],[s.max,'Max','#8b5cf6']].forEach(([v,lbl,col]) => {
+      const y = yP(v);
+      ctx.save();
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.setLineDash([5,3]);
+      ctx.beginPath(); ctx.moveTo(jCX-jSpread-10, y); ctx.lineTo(bpCX+bpHW+2, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = col; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(`${lbl}: ${v.toFixed(2)}`, lblX, y+4);
+      ctx.restore();
+    });
+  }
+
+  // ── Step 5+: 수염 (박스 뒤에 그려야 하므로 먼저) ──
+  if (step >= 5) {
+    const wLY = yP(s.wL), wHY = yP(s.wH);
+    const q1Y = yP(s.q1), q3Y = yP(s.q3);
+    ctx.save(); ctx.strokeStyle = '#d97706'; ctx.lineWidth = 2;
+    // 하단 수염
+    ctx.beginPath(); ctx.moveTo(bpCX, q1Y); ctx.lineTo(bpCX, wLY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bpCX-bpHW*.45, wLY); ctx.lineTo(bpCX+bpHW*.45, wLY); ctx.stroke();
+    // 상단 수염
+    ctx.beginPath(); ctx.moveTo(bpCX, q3Y); ctx.lineTo(bpCX, wHY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bpCX-bpHW*.45, wHY); ctx.lineTo(bpCX+bpHW*.45, wHY); ctx.stroke();
+    // 수염 레이블 — 수염 캡 위아래에 중앙 정렬
+    ctx.fillStyle = '#d97706'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(`하한: ${s.wL.toFixed(2)}`, bpCX, wLY + 15);
+    ctx.fillText(`상한: ${s.wH.toFixed(2)}`, bpCX, wHY - 7);
+    ctx.restore();
+  }
+
+  // ── Step 4+: 박스 Q1~Q3 ──
+  if (step >= 4) {
+    const boxTop = yP(s.q3), boxBot = yP(s.q1), boxH2 = boxBot-boxTop;
+    ctx.save();
+    ctx.fillStyle = 'rgba(2,132,199,0.1)';
+    ctx.fillRect(bpCX-bpHW, boxTop, bpHW*2, boxH2);
+    ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2.5;
+    ctx.strokeRect(bpCX-bpHW, boxTop, bpHW*2, boxH2);
+    ctx.fillStyle = '#0284c7'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(`Q3: ${s.q3.toFixed(2)}`, lblX, boxTop+4);
+    ctx.fillText(`Q1: ${s.q1.toFixed(2)}`, lblX, boxBot+4);
+    ctx.restore();
+  }
+
+  // ── Step 3+: 중앙값 ──
+  if (step >= 3) {
+    const mY = yP(s.q2);
+    ctx.save();
+    ctx.strokeStyle = '#059669'; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.moveTo(bpCX-bpHW, mY); ctx.lineTo(bpCX+bpHW, mY); ctx.stroke();
+    ctx.fillStyle = '#059669'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(`Med: ${s.q2.toFixed(2)}`, lblX, mY+4);
+    ctx.restore();
+  }
+
+  // ── Step 6: 이상치 원 (박스플롯 위에) ──
+  if (step >= 6 && s.outliers.length) {
+    s.outliers.forEach(v => {
+      const y = yP(v);
+      ctx.save();
+      ctx.fillStyle = 'rgba(220,38,38,0.18)'; ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(bpCX, y, 7, 0, Math.PI*2);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+    ctx.fillStyle = '#dc2626'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(`이상치 ${s.outliers.length}개`, bpCX, pad.top+plotH+22);
+  }
+
+  updateBpUI(s);
+}
+
+// ── 초기화 ── (레이아웃 계산 후 실행 보장)
+requestAnimationFrame(() => {
+  initOutlierCols();
+  initImpCols();
+  initBpCols();
+  updateMethodDesc('mean');
+  // 해시 딥링크 진입: /prep/missing#impute → 해당 탭 활성화
+  if (TAB_IDS.includes(location.hash.slice(1))) switchTab(location.hash.slice(1));
+});
+</script>
+<script>(function(){var k='tf_prep';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

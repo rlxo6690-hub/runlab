@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataForge BIZ — 경영 데이터 생성 · 분석 플랫폼</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="DataForge BIZ — 경영 데이터 생성 · 분석 플랫폼">
+<meta property="og:description" content="수요예측·재무·고객·공급망·HR 데이터를 실시간으로 생성하는 교육용 플랫폼">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="css/style.css?v=1784972874">
+<script>
+  window.BIZ_DEMO_LIMIT = 100;
+  window.BIZ_AUTHED     = false;
+</script>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="logo">
+    <a href="/" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">BIZ · 경영 데이터</div>
+  </div>
+  <a href="/" class="header-back">← DataForge 홈</a>
+</header>
+
+<!-- ── Demo Banner ─────────────────────────────────────────── -->
+<div id="demo-banner" class="demo-banner"></div>
+
+<!-- ── Tab Bar ─────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="demand"   onclick="switchTab('demand')">📈 <span class="tab-label">수요 예측</span></button>
+  <button class="tab-btn"        data-tab="finance"  onclick="switchTab('finance')">💰 <span class="tab-label">재무 P&L</span></button>
+  <button class="tab-btn"        data-tab="customer" onclick="switchTab('customer')">👥 <span class="tab-label">고객 분석</span></button>
+  <button class="tab-btn"        data-tab="supply"   onclick="switchTab('supply')">🚚 <span class="tab-label">공급망</span></button>
+  <button class="tab-btn"        data-tab="hr"       onclick="switchTab('hr')">🧑‍💼 <span class="tab-label">HR 데이터</span></button>
+  <button class="tab-btn"        data-tab="schema"   onclick="switchTab('schema')">📋 <span class="tab-label">스키마 가이드</span></button>
+</div>
+
+<!-- ── Main Content ────────────────────────────────────────── -->
+<div class="main-pad">
+
+<!-- ═══════════════════════════════════════════════════════════
+     DEMAND TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-demand" class="tab-panel">
+  <div class="section-info">
+    📈 <strong>활용 도구:</strong> Python Pandas · Prophet / ARIMA · Power BI · Tableau<br>
+    계절성·트렌드·프로모션 효과가 반영된 제품별 판매량 시계열 데이터를 생성합니다. 수요 예측 모델 학습에 바로 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">산업 유형</label>
+        <select id="demand-industry" class="input-field">
+          <option value="retail" selected>소매 유통 (일별 판매량)</option>
+          <option value="ecommerce">이커머스 (시간별 주문)</option>
+          <option value="food">식음료 (일별 매출)</option>
+          <option value="manufacturing">제조 부품 (월별 출하)</option>
+          <option value="fashion">패션/의류 (시즌별)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">제품 수</label>
+        <input type="number" id="demand-products" class="input-field" value="5" min="1" max="20">
+      </div>
+      <div class="form-group">
+        <label class="input-label">데이터 기간</label>
+        <select id="demand-period" class="input-field">
+          <option value="90d">3개월 (일별)</option>
+          <option value="365d" selected>1년 (일별)</option>
+          <option value="730d">2년 (일별)</option>
+          <option value="36m">3년 (월별)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">계절성</label>
+        <select id="demand-seasonal" class="input-field">
+          <option value="none">없음</option>
+          <option value="mild" selected>약함 (±15%)</option>
+          <option value="strong">강함 (±40%)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">트렌드</label>
+        <select id="demand-trend" class="input-field">
+          <option value="flat" selected>없음</option>
+          <option value="up">성장 (+20%/년)</option>
+          <option value="down">감소 (-10%/년)</option>
+          <option value="volatile">변동성 높음</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">프로모션 이벤트 포함</label>
+        <select id="demand-promo" class="input-field">
+          <option value="none">없음</option>
+          <option value="some" selected>간헐적 (연 4~8회)</option>
+          <option value="frequent">빈번 (월 1~2회)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">컬럼 설정</span></div>
+      <div id="demand-cols"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">분석 난이도 (ML Difficulty)</span></div>
+    <div id="demand-diff"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="demand-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateDemand()" class="btn btn-primary" style="background:var(--accent2);border-color:var(--accent2)">🚀 데이터 생성</button>
+    <button onclick="downloadData('demand')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('demand')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="demand-progress" class="progress-wrap" style="display:none"><div id="demand-bar" class="progress-bar" style="width:0%;background:var(--accent2)"></div></div>
+  <div id="demand-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="demand-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="demand-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="demand-stat-avg" style="color:var(--accent2)">-</div><div class="stat-label">평균 판매량</div></div>
+      <div class="stat-box"><div class="stat-value" id="demand-stat-max" style="color:var(--danger)">-</div><div class="stat-label">최댓값</div></div>
+      <div class="stat-box"><div class="stat-value" id="demand-stat-promo" style="color:var(--warning)">-</div><div class="stat-label">프로모션 이벤트</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span>
+        <button onclick="copyData('demand')" class="btn btn-outline" style="padding:3px 10px;font-size:10px;border-color:var(--border);color:var(--text-dim)">COPY ALL</button>
+      </div>
+      <div id="demand-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FINANCE TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-finance" class="tab-panel" style="display:none">
+  <div class="section-info">
+    💰 <strong>활용 도구:</strong> Python Pandas · Excel · Power BI · Tableau<br>
+    월별 손익(P&L) 데이터를 생성합니다. 매출·비용·영업이익 분석, 재무 대시보드, 예측 모델 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">기업 규모</label>
+        <select id="finance-size" class="input-field">
+          <option value="small">소기업 (매출 10~50억)</option>
+          <option value="medium" selected>중견기업 (매출 100~500억)</option>
+          <option value="large">대기업 (매출 1,000억+)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">사업 부문 수</label>
+        <input type="number" id="finance-divisions" class="input-field" value="3" min="1" max="10">
+      </div>
+      <div class="form-group">
+        <label class="input-label">데이터 기간 (개월)</label>
+        <input type="number" id="finance-months" class="input-field" value="24" min="6" max="60">
+      </div>
+      <div class="form-group">
+        <label class="input-label">산업 유형</label>
+        <select id="finance-industry" class="input-field">
+          <option value="manufacturing" selected>제조업</option>
+          <option value="retail">유통/소매</option>
+          <option value="service">서비스업</option>
+          <option value="tech">IT/소프트웨어</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">포함 항목</span></div>
+      <div id="finance-cols"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="finance-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateFinance()" class="btn btn-primary" style="background:var(--accent2);border-color:var(--accent2)">🚀 데이터 생성</button>
+    <button onclick="downloadData('finance')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('finance')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="finance-progress" class="progress-wrap" style="display:none"><div id="finance-bar" class="progress-bar" style="width:0%;background:var(--accent2)"></div></div>
+  <div id="finance-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="finance-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="finance-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="finance-stat-revenue" style="color:var(--accent2)">-</div><div class="stat-label">평균 월 매출</div></div>
+      <div class="stat-box"><div class="stat-value" id="finance-stat-profit" style="color:var(--accent3)">-</div><div class="stat-label">평균 영업이익률</div></div>
+      <div class="stat-box"><div class="stat-value" id="finance-stat-loss" style="color:var(--danger)">-</div><div class="stat-label">적자 월수</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="finance-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CUSTOMER TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-customer" class="tab-panel" style="display:none">
+  <div class="section-info">
+    👥 <strong>활용 도구:</strong> Python Pandas · Scikit-learn · CRM 분석 도구<br>
+    RFM 분석, 고객 이탈(Churn) 예측, CLV 계산에 활용할 수 있는 고객 거래 데이터를 생성합니다.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">분석 유형</label>
+        <select id="customer-type" class="input-field" onchange="updateCustomerCols(this.value)">
+          <option value="rfm" selected>RFM 분석 (Recency·Frequency·Monetary)</option>
+          <option value="churn">이탈 예측 (Churn Prediction)</option>
+          <option value="clv">고객 생애가치 (CLV)</option>
+          <option value="transaction">거래 이력 (Transaction Log)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">고객 수</label>
+        <input type="number" id="customer-count" class="input-field" value="2000" min="100" max="50000">
+      </div>
+      <div class="form-group">
+        <label class="input-label">관측 기간 (개월)</label>
+        <input type="number" id="customer-months" class="input-field" value="12" min="3" max="36">
+      </div>
+      <div class="form-group">
+        <label class="input-label">이탈률 (%)</label>
+        <input type="number" id="customer-churn-rate" class="input-field" value="15" min="1" max="50" step="0.5">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">세그먼트 설정</span></div>
+      <div id="customer-segments"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">분석 난이도</span></div>
+    <div id="customer-diff"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="customer-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateCustomer()" class="btn btn-primary" style="background:var(--accent2);border-color:var(--accent2)">🚀 데이터 생성</button>
+    <button onclick="downloadData('customer')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('customer')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="customer-progress" class="progress-wrap" style="display:none"><div id="customer-bar" class="progress-bar" style="width:0%;background:var(--accent2)"></div></div>
+  <div id="customer-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="customer-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="customer-stat-total">-</div><div class="stat-label">총 고객수</div></div>
+      <div class="stat-box"><div class="stat-value" id="customer-stat-churn" style="color:var(--danger)">-</div><div class="stat-label">이탈 고객</div></div>
+      <div class="stat-box"><div class="stat-value" id="customer-stat-clv" style="color:var(--accent2)">-</div><div class="stat-label">평균 CLV</div></div>
+      <div class="stat-box"><div class="stat-value" id="customer-stat-vip" style="color:var(--accent3)">-</div><div class="stat-label">VIP 고객 (상위 10%)</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="customer-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SUPPLY CHAIN TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-supply" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🚚 <strong>활용 도구:</strong> Python · OR-Tools · Power BI · Tableau<br>
+    발주, 재고, 납기 지연, 리드타임 데이터를 생성합니다. 재고 최적화, 공급망 리스크 분석, 납기 예측 모델 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">공급망 유형</label>
+        <select id="supply-type" class="input-field">
+          <option value="inventory" selected>재고 관리 (SKU별 재고 추이)</option>
+          <option value="order">발주/주문 이력</option>
+          <option value="delivery">납기/배송 실적</option>
+          <option value="supplier">공급업체 평가</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">SKU / 품목 수</label>
+        <input type="number" id="supply-skus" class="input-field" value="20" min="5" max="200">
+      </div>
+      <div class="form-group">
+        <label class="input-label">데이터 기간 (일)</label>
+        <input type="number" id="supply-days" class="input-field" value="180" min="30" max="730">
+      </div>
+      <div class="form-group">
+        <label class="input-label">납기 지연율 (%)</label>
+        <input type="number" id="supply-delay-rate" class="input-field" value="8" min="0" max="50" step="0.5">
+      </div>
+      <div class="form-group">
+        <label class="input-label">재고 부족 발생률 (%)</label>
+        <input type="number" id="supply-stockout-rate" class="input-field" value="5" min="0" max="30" step="0.5">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">분석 난이도</span></div>
+      <div id="supply-diff"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="supply-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateSupply()" class="btn btn-primary" style="background:var(--accent2);border-color:var(--accent2)">🚀 데이터 생성</button>
+    <button onclick="downloadData('supply')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('supply')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="supply-progress" class="progress-wrap" style="display:none"><div id="supply-bar" class="progress-bar" style="width:0%;background:var(--accent2)"></div></div>
+  <div id="supply-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="supply-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="supply-stat-total">-</div><div class="stat-label">총 행수</div></div>
+      <div class="stat-box"><div class="stat-value" id="supply-stat-delay" style="color:var(--danger)">-</div><div class="stat-label">납기 지연</div></div>
+      <div class="stat-box"><div class="stat-value" id="supply-stat-stockout" style="color:var(--warning)">-</div><div class="stat-label">재고 부족</div></div>
+      <div class="stat-box"><div class="stat-value" id="supply-stat-lead" style="color:var(--accent2)">-</div><div class="stat-label">평균 리드타임</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="supply-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HR TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-hr" class="tab-panel" style="display:none">
+  <div class="section-info">
+    🧑‍💼 <strong>활용 도구:</strong> Python Pandas · HRIS 시스템 · Power BI<br>
+    직원 성과, 이직률, 급여, 조직 구조 데이터를 생성합니다. HR 분석 대시보드, 이직 예측 모델, 성과 평가 실습에 활용하세요.
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">생성 설정</span></div>
+      <div class="form-group">
+        <label class="input-label">HR 데이터 유형</label>
+        <select id="hr-type" class="input-field">
+          <option value="employee" selected>직원 마스터 (인적 사항·직급·급여)</option>
+          <option value="performance">성과 평가 (KPI·평가등급)</option>
+          <option value="attendance">근태/출퇴근 로그</option>
+          <option value="turnover">이직 분석 (이탈 예측용)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="input-label">직원 수</label>
+        <input type="number" id="hr-employees" class="input-field" value="500" min="50" max="10000">
+      </div>
+      <div class="form-group">
+        <label class="input-label">부서 수</label>
+        <input type="number" id="hr-depts" class="input-field" value="8" min="2" max="20">
+      </div>
+      <div class="form-group">
+        <label class="input-label">연간 이직률 (%)</label>
+        <input type="number" id="hr-turnover-rate" class="input-field" value="12" min="1" max="50" step="0.5">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">분석 난이도</span></div>
+      <div id="hr-diff"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">출력 포맷</span></div>
+    <div id="hr-fmt"></div>
+  </div>
+
+  <div class="action-btns">
+    <button onclick="generateHR()" class="btn btn-primary" style="background:var(--accent2);border-color:var(--accent2)">🚀 데이터 생성</button>
+    <button onclick="downloadData('hr')" class="btn btn-outline">⬇ 다운로드</button>
+    <button onclick="copyData('hr')" class="btn btn-outline">📋 클립보드 복사</button>
+  </div>
+
+  <div id="hr-progress" class="progress-wrap" style="display:none"><div id="hr-bar" class="progress-bar" style="width:0%;background:var(--accent2)"></div></div>
+  <div id="hr-log" class="terminal" style="margin-top:12px"><span class="t-dim">// 생성 버튼을 눌러 시작...</span></div>
+
+  <div id="hr-results" style="display:none;margin-top:16px">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-value" id="hr-stat-total">-</div><div class="stat-label">총 직원수</div></div>
+      <div class="stat-box"><div class="stat-value" id="hr-stat-turnover" style="color:var(--danger)">-</div><div class="stat-label">이직 예측 인원</div></div>
+      <div class="stat-box"><div class="stat-value" id="hr-stat-salary" style="color:var(--accent2)">-</div><div class="stat-label">평균 연봉</div></div>
+      <div class="stat-box"><div class="stat-value" id="hr-stat-tenure" style="color:var(--accent3)">-</div><div class="stat-label">평균 근속연수</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">데이터 미리보기</span></div>
+      <div id="hr-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHEMA TAB
+═══════════════════════════════════════════════════════════ -->
+<div id="tab-schema" class="tab-panel" style="display:none">
+  <div class="section-info">
+    📋 <strong>데이터 스키마 가이드:</strong> 각 탭에서 생성되는 데이터의 컬럼 정의, 타입, 범위를 확인하세요.
+  </div>
+
+    <div class="card">
+    <div class="card-header"><span class="card-title">수요 예측 데이터 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">date</td>
+            <td class="col-type">DATE</td>
+            <td>날짜</td>
+            <td style="color:var(--text-dim);font-size:11px">2022-01-01 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">product_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>제품 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">P001~P020</td>
+          </tr>
+                    <tr>
+            <td class="col-name">product_name</td>
+            <td class="col-type">VARCHAR</td>
+            <td>제품명</td>
+            <td style="color:var(--text-dim);font-size:11px">상품A~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">category</td>
+            <td class="col-type">VARCHAR</td>
+            <td>카테고리</td>
+            <td style="color:var(--text-dim);font-size:11px">A/B/C</td>
+          </tr>
+                    <tr>
+            <td class="col-name">sales_qty</td>
+            <td class="col-type">INT</td>
+            <td>판매 수량</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 5,000</td>
+          </tr>
+                    <tr>
+            <td class="col-name">sales_amount</td>
+            <td class="col-type">FLOAT</td>
+            <td>판매 금액 (원)</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 5,000,000</td>
+          </tr>
+                    <tr>
+            <td class="col-name">promo_flag</td>
+            <td class="col-type">INT</td>
+            <td>프로모션 여부</td>
+            <td style="color:var(--text-dim);font-size:11px">0 / 1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">promo_type</td>
+            <td class="col-type">VARCHAR</td>
+            <td>프로모션 유형</td>
+            <td style="color:var(--text-dim);font-size:11px">SALE/COUPON/EVENT/null</td>
+          </tr>
+                    <tr>
+            <td class="col-name">stock_qty</td>
+            <td class="col-type">INT</td>
+            <td>재고 수량</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 10,000</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">재무 P&amp;L 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">year_month</td>
+            <td class="col-type">VARCHAR</td>
+            <td>연월</td>
+            <td style="color:var(--text-dim);font-size:11px">2022-01~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">division</td>
+            <td class="col-type">VARCHAR</td>
+            <td>사업 부문</td>
+            <td style="color:var(--text-dim);font-size:11px">DIV_A~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">revenue</td>
+            <td class="col-type">BIGINT</td>
+            <td>매출 (원)</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">cogs</td>
+            <td class="col-type">BIGINT</td>
+            <td>매출원가</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">gross_profit</td>
+            <td class="col-type">BIGINT</td>
+            <td>매출총이익</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">opex</td>
+            <td class="col-type">BIGINT</td>
+            <td>판관비</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">ebit</td>
+            <td class="col-type">BIGINT</td>
+            <td>영업이익</td>
+            <td style="color:var(--text-dim);font-size:11px">- ~ +</td>
+          </tr>
+                    <tr>
+            <td class="col-name">ebit_margin</td>
+            <td class="col-type">FLOAT</td>
+            <td>영업이익률 (%)</td>
+            <td style="color:var(--text-dim);font-size:11px">-30 ~ 40</td>
+          </tr>
+                    <tr>
+            <td class="col-name">headcount</td>
+            <td class="col-type">INT</td>
+            <td>임직원 수</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">고객 분석 스키마 (RFM)</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">customer_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>고객 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">CUS-000001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">recency_days</td>
+            <td class="col-type">INT</td>
+            <td>최근 구매일 (일)</td>
+            <td style="color:var(--text-dim);font-size:11px">1 ~ 365</td>
+          </tr>
+                    <tr>
+            <td class="col-name">frequency</td>
+            <td class="col-type">INT</td>
+            <td>구매 횟수</td>
+            <td style="color:var(--text-dim);font-size:11px">1 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">monetary</td>
+            <td class="col-type">FLOAT</td>
+            <td>총 구매 금액</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">rfm_score</td>
+            <td class="col-type">INT</td>
+            <td>RFM 점수 (1~5)</td>
+            <td style="color:var(--text-dim);font-size:11px">3 ~ 15</td>
+          </tr>
+                    <tr>
+            <td class="col-name">segment</td>
+            <td class="col-type">VARCHAR</td>
+            <td>고객 세그먼트</td>
+            <td style="color:var(--text-dim);font-size:11px">Champions/Loyal/At Risk/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">churn_prob</td>
+            <td class="col-type">FLOAT</td>
+            <td>이탈 확률 (0~1)</td>
+            <td style="color:var(--text-dim);font-size:11px">0.0 ~ 1.0</td>
+          </tr>
+                    <tr>
+            <td class="col-name">clv_estimate</td>
+            <td class="col-type">FLOAT</td>
+            <td>예상 CLV</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">공급망 재고 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">date</td>
+            <td class="col-type">DATE</td>
+            <td>날짜</td>
+            <td style="color:var(--text-dim);font-size:11px">2022-01-01 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">sku_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>SKU ID</td>
+            <td style="color:var(--text-dim);font-size:11px">SKU-0001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">warehouse</td>
+            <td class="col-type">VARCHAR</td>
+            <td>창고 코드</td>
+            <td style="color:var(--text-dim);font-size:11px">WH-A~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">stock_qty</td>
+            <td class="col-type">INT</td>
+            <td>현재 재고 수량</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">reorder_point</td>
+            <td class="col-type">INT</td>
+            <td>발주점</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">lead_time_days</td>
+            <td class="col-type">INT</td>
+            <td>리드타임 (일)</td>
+            <td style="color:var(--text-dim);font-size:11px">1 ~ 60</td>
+          </tr>
+                    <tr>
+            <td class="col-name">stockout_flag</td>
+            <td class="col-type">INT</td>
+            <td>재고 부족 여부</td>
+            <td style="color:var(--text-dim);font-size:11px">0 / 1</td>
+          </tr>
+                    <tr>
+            <td class="col-name">delay_days</td>
+            <td class="col-type">INT</td>
+            <td>납기 지연 일수</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 30</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    <div class="card">
+    <div class="card-header"><span class="card-title">HR 데이터 스키마</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>컬럼명</th><th>타입</th><th>설명</th><th>범위/예시</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td class="col-name">employee_id</td>
+            <td class="col-type">VARCHAR</td>
+            <td>직원 ID</td>
+            <td style="color:var(--text-dim);font-size:11px">EMP-0001~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">department</td>
+            <td class="col-type">VARCHAR</td>
+            <td>부서</td>
+            <td style="color:var(--text-dim);font-size:11px">영업/개발/생산/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">position</td>
+            <td class="col-type">VARCHAR</td>
+            <td>직급</td>
+            <td style="color:var(--text-dim);font-size:11px">사원/대리/과장/...</td>
+          </tr>
+                    <tr>
+            <td class="col-name">tenure_years</td>
+            <td class="col-type">FLOAT</td>
+            <td>근속연수</td>
+            <td style="color:var(--text-dim);font-size:11px">0 ~ 30</td>
+          </tr>
+                    <tr>
+            <td class="col-name">annual_salary</td>
+            <td class="col-type">INT</td>
+            <td>연봉 (만원)</td>
+            <td style="color:var(--text-dim);font-size:11px">2,400 ~</td>
+          </tr>
+                    <tr>
+            <td class="col-name">performance_score</td>
+            <td class="col-type">FLOAT</td>
+            <td>성과 점수 (1~5)</td>
+            <td style="color:var(--text-dim);font-size:11px">1.0 ~ 5.0</td>
+          </tr>
+                    <tr>
+            <td class="col-name">satisfaction</td>
+            <td class="col-type">FLOAT</td>
+            <td>만족도 (1~5)</td>
+            <td style="color:var(--text-dim);font-size:11px">1.0 ~ 5.0</td>
+          </tr>
+                    <tr>
+            <td class="col-name">turnover_risk</td>
+            <td class="col-type">FLOAT</td>
+            <td>이직 위험도 (0~1)</td>
+            <td style="color:var(--text-dim);font-size:11px">0.0 ~ 1.0</td>
+          </tr>
+                    <tr>
+            <td class="col-name">turnover_label</td>
+            <td class="col-type">INT</td>
+            <td>이직 여부 (ML타겟)</td>
+            <td style="color:var(--text-dim);font-size:11px">0 / 1</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header"><span class="card-title">활용 도구 매핑</span></div>
+    <div class="table-wrap">
+      <table class="schema-table">
+        <thead><tr><th>도구</th><th>추천 데이터</th></tr></thead>
+        <tbody>
+                    <tr>
+            <td style="white-space:nowrap">🐍 Python / Prophet</td>
+            <td style="color:var(--text-dim)">수요예측 CSV → 시계열 예측 모델 (ARIMA, LSTM)</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">📊 Power BI / Tableau</td>
+            <td style="color:var(--text-dim)">재무 P&amp;L → KPI 대시보드, Waterfall 차트</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🤖 Scikit-learn</td>
+            <td style="color:var(--text-dim)">고객 RFM + churn_label → 이탈 예측 분류 모델</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">📦 OR-Tools / Linear</td>
+            <td style="color:var(--text-dim)">공급망 CSV → 재고 최적화, EOQ 모델</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">🧑‍💼 HR Analytics</td>
+            <td style="color:var(--text-dim)">HR CSV → 이직 예측 모델, 성과 분석</td>
+          </tr>
+                    <tr>
+            <td style="white-space:nowrap">📈 Excel / Google Sheets</td>
+            <td style="color:var(--text-dim)">재무 P&amp;L → 피벗, 재무비율 계산 실습</td>
+          </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.main-pad -->
+
+<!-- ── Login Modal ─────────────────────────────────────────── -->
+<div id="login-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">🎓 교육 코드 입력</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:20px">
+      강사에게 받은 교육 코드를 입력하면 데이터 생성 제한이 해제됩니다.
+    </p>
+    <div class="form-group">
+      <label class="input-label">교육 코드</label>
+      <input type="text" id="login-pw" class="input-field" placeholder="EDU-XXXX-XXXX"
+             style="text-transform:uppercase;letter-spacing:2px;font-family:'Space Mono',monospace"
+             oninput="this.value=this.value.toUpperCase()"
+             onkeydown="if(event.key==='Enter')submitLogin()">
+    </div>
+    <div id="login-err" style="color:var(--danger);font-size:12px;min-height:18px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="submitLogin()" class="btn btn-primary" style="flex:1;background:var(--accent2);border-color:var(--accent2)">입력 확인</button>
+      <button onclick="document.getElementById('login-modal').classList.remove('show')" class="btn btn-outline">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/generators.js?v=1773892535"></script>
+<script src="js/formatters.js?v=1773892535"></script>
+<script src="js/app.js?v=1773894334"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.BIZ_AUTHED) setAuthed(true);
+  initBizPage();
+});
+</script>
+<script>(function(){var k='tf_biz';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=biz&page='+encodeURIComponent(location.pathname)});})();</script>
+</div><!-- /.page-wrap -->
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정규화 · 표준화 시뮬레이터 — DataForge</title>
+<link rel="icon" type="image/png" href="/img/mfg.png">
+<meta property="og:title" content="정규화 · 표준화 시뮬레이터 — DataForge">
+<meta property="og:description" content="Min-Max 정규화·Z-Score·Robust 표준화를 직접 데이터로 체험하는 교육용 시뮬레이터">
+<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;--card:#fff;--card2:#f1f5f9;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.15);
+  --text:#1e293b;--muted:#64748b;--dim:#94a3b8;
+  --accent:#2563eb;--accent2:#6366f1;--green:#059669;--orange:#ea580c;--red:#dc2626;--amber:#d97706;
+  --r:10px;
+
+  /* per-method colors */
+  --c-orig:#2563eb;
+  --c-minmax:#059669;
+  --c-zscore:#ea580c;
+  --c-robust:#6366f1;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans KR','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.page-wrap{max-width:1400px;margin:0 auto;position:relative;}
+
+/* Header */
+.site-header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(248,250,252,.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;text-decoration:none;}
+.logo-brand em{color:#ea580c;font-style:normal;}
+.logo-sep{width:1px;height:16px;background:var(--border2);flex-shrink:0;}
+.logo-title{font-size:14px;font-weight:600;color:var(--text);}
+.header-back{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:5px 14px;border-radius:8px;transition:.2s;}
+.header-back:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+
+/* Page */
+.page{padding:0 24px 80px;}
+.intro-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.8;margin-top:20px;}
+.intro-box strong{color:var(--text);}
+.intro-box code{font-family:'Noto Sans KR', sans-serif;font-size:11px;background:rgba(37,99,235,.08);padding:1px 5px;border-radius:3px;color:var(--accent);}
+
+/* Cards */
+.a-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.a-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* Preset buttons */
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.preset-btn{font-size:11px;font-weight:600;padding:5px 14px;border:1px solid var(--border2);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;}
+.preset-btn:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+.preset-btn.active{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);}
+
+/* Data input area */
+.data-input-wrap{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;}
+.data-textarea{flex:1;font-family:'Space Mono',monospace;font-size:12px;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;background:var(--card2);color:var(--text);resize:vertical;min-height:52px;outline:none;line-height:1.8;}
+.data-textarea:focus{border-color:var(--accent);}
+
+/* Outlier toggle */
+.outlier-toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.15);border-radius:8px;}
+.outlier-toggle-label{font-size:12px;color:var(--muted);flex:1;}
+.outlier-toggle-label strong{color:var(--text);}
+.toggle-btn{font-size:11px;font-weight:700;padding:4px 14px;border-radius:6px;border:1px solid rgba(220,38,38,.3);background:transparent;color:var(--red);cursor:pointer;font-family:inherit;transition:.2s;}
+.toggle-btn.on{background:rgba(220,38,38,.12);border-color:var(--red);}
+.toggle-btn:hover{background:rgba(220,38,38,.1);}
+
+/* Input stats */
+.stat-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.stat-pill{font-family:'Noto Sans KR', sans-serif;font-size:11px;padding:4px 12px;border-radius:20px;background:var(--card2);border:1px solid var(--border2);color:var(--muted);}
+.stat-pill strong{color:var(--text);}
+
+/* 4-method grid */
+.method-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.method-panel{border:2px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--card);}
+.method-panel-head{padding:12px 14px;border-bottom:1px solid var(--border);}
+.method-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.method-badge{display:inline-block;font-family:'Noto Sans KR', sans-serif;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.5px;margin-bottom:6px;}
+.method-formula{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);background:var(--card2);padding:4px 8px;border-radius:5px;margin-top:4px;word-break:break-all;}
+.method-body{padding:12px 14px;}
+.chart-wrap{height:160px;position:relative;margin-bottom:10px;}
+.method-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.m-stat{background:var(--card2);border-radius:5px;padding:5px 8px;text-align:center;}
+.m-stat-val{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+.m-stat-lbl{font-size:9px;color:var(--muted);margin-top:1px;}
+.method-insight{margin-top:8px;font-size:11px;line-height:1.6;color:var(--muted);padding:7px 10px;border-radius:6px;}
+
+/* Data table */
+.table-wrap{overflow-x:auto;max-height:260px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{background:var(--card2);padding:6px 10px;text-align:right;font-family:'Space Mono',monospace;font-size:9px;border-bottom:1px solid var(--border);position:sticky;top:0;white-space:nowrap;}
+.data-table th:first-child{text-align:center;}
+.data-table td{padding:5px 10px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;text-align:right;color:var(--muted);}
+.data-table td:first-child{text-align:center;color:var(--dim);}
+.data-table tr:hover td{background:rgba(37,99,235,.04);color:var(--text);}
+.data-table td.orig{color:var(--c-orig);font-weight:700;}
+.data-table td.minmax{color:var(--c-minmax);}
+.data-table td.zscore{color:var(--c-zscore);}
+.data-table td.robust{color:var(--c-robust);}
+
+/* Guide cards */
+.guide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.guide-card{border-radius:var(--r);padding:16px 18px;border:1px solid var(--border);}
+.guide-title{font-size:13px;font-weight:700;margin-bottom:6px;}
+.guide-formula{font-family:'Space Mono',monospace;font-size:11px;padding:7px 10px;border-radius:6px;margin-bottom:10px;line-height:1.8;}
+.guide-row{display:flex;gap:6px;margin-bottom:4px;font-size:12px;color:var(--muted);}
+.guide-row-icon{flex-shrink:0;}
+.guide-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.gtag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;}
+
+/* Outlier impact section */
+.outlier-section{background:var(--card);border:1px solid rgba(220,38,38,.2);border-radius:var(--r);padding:16px 18px;margin-bottom:16px;}
+.outlier-section-title{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.outlier-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.outlier-panel{border:1px solid var(--border);border-radius:8px;padding:12px;}
+.outlier-panel-name{font-size:12px;font-weight:700;margin-bottom:8px;}
+.outlier-chart-wrap{height:130px;position:relative;}
+
+/* Badges */
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.badge-green{background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);}
+.badge-red{background:rgba(220,38,38,.1);color:var(--red);border:1px solid rgba(220,38,38,.2);}
+.badge-blue{background:rgba(37,99,235,.1);color:var(--accent);border:1px solid rgba(37,99,235,.2);}
+.badge-orange{background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2);}
+.badge-purple{background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2);}
+
+/* Buttons */
+.btn{display:inline-block;padding:8px 18px;font-size:12px;font-weight:700;font-family:'Noto Sans KR', sans-serif;border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+
+/* Divider */
+.section-sep{display:flex;align-items:center;gap:12px;margin:20px 0 16px;}
+.section-sep-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;}
+.section-sep-line{flex:1;height:1px;background:var(--border);}
+
+@media(max-width:900px){
+  .method-grid-4{grid-template-columns:repeat(2,1fr);}
+  .guide-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  .page{padding:0 14px 60px;}
+  .method-grid-4{grid-template-columns:1fr;}
+  .guide-grid{grid-template-columns:1fr;}
+  .outlier-compare{grid-template-columns:1fr;}
+  .site-header{padding:12px 14px;}
+}
+
+/* ── Page tabs ── */
+.page-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:rgba(248,250,252,.95);backdrop-filter:blur(12px);position:sticky;top:53px;z-index:99;}
+.p-tab{padding:12px 24px;font-size:13px;font-weight:600;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
+.p-tab:hover{color:var(--text);}
+.p-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── CSV: 업로드 존 ── */
+.csv-drop-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--card2);position:relative;margin-bottom:16px;}
+.csv-drop-zone.drag-over{border-color:var(--accent);background:rgba(37,99,235,.05);}
+.csv-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.csv-drop-icon{font-size:30px;margin-bottom:8px;}
+.csv-drop-label{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:4px;}
+.csv-drop-sub{font-size:11px;color:var(--dim);}
+
+/* ── CSV: 열 선택 칩 ── */
+.col-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.col-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;transition:all .2s;background:var(--card2);color:var(--muted);user-select:none;}
+.col-chip:hover{border-color:var(--accent);color:var(--accent);}
+.col-chip.selected{background:rgba(37,99,235,.1);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.col-chip.non-numeric{opacity:.4;cursor:not-allowed;pointer-events:none;}
+
+/* ── CSV: 방법 선택 ── */
+.method-radio-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.method-radio{display:flex;align-items:center;gap:7px;padding:8px 16px;border:1px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .2s;font-size:12px;font-weight:600;color:var(--muted);background:var(--card2);}
+.method-radio:hover{color:var(--text);border-color:rgba(0,0,0,.25);}
+.method-radio input{display:none;}
+.method-radio.sel-mm{border-color:rgba(5,150,105,.4);background:rgba(5,150,105,.08);color:var(--green);}
+.method-radio.sel-zs{border-color:rgba(234,88,12,.4);background:rgba(234,88,12,.08);color:var(--orange);}
+.method-radio.sel-rb{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.08);color:var(--accent2);}
+
+/* ── CSV: 미리보기 테이블 ── */
+.csv-table-wrap{overflow-x:auto;max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+.csv-table{width:100%;border-collapse:collapse;font-size:11px;}
+.csv-table th{background:var(--card2);padding:6px 12px;text-align:left;font-family:'Space Mono',monospace;font-size:9px;border-bottom:1px solid var(--border);position:sticky;top:0;white-space:nowrap;}
+.csv-table td{padding:5px 12px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;color:var(--muted);white-space:nowrap;}
+.csv-table tr:hover td{background:rgba(37,99,235,.03);}
+.csv-table th.t-col,.csv-table td.t-col{background:rgba(37,99,235,.05);color:var(--accent);font-weight:700;}
+
+/* ── CSV: info bar / buttons ── */
+.csv-info-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:rgba(37,99,235,.04);border:1px solid rgba(37,99,235,.12);border-radius:8px;font-size:12px;color:var(--muted);}
+.csv-info-bar strong{color:var(--text);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#047857;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{color:var(--text);border-color:rgba(0,0,0,.3);}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<header class="site-header">
+  <div class="logo">
+    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <div class="logo-sep"></div>
+    <div class="logo-title">정규화 · 표준화 시뮬레이터</div>
+  </div>
+  <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+</header>
+
+<div class="page-tabs">
+  <button class="p-tab active" data-tab="sim" onclick="switchTab('sim',this)">📊 시뮬레이터</button>
+  <button class="p-tab" data-tab="csv" onclick="switchTab('csv',this)">📂 CSV 변환 · 저장</button>
+</div>
+
+<div class="page">
+<div id="tab-sim" class="tab-panel active">
+
+  <div class="intro-box">
+    <strong>정규화(Normalization)</strong>와 <strong>표준화(Standardization)</strong>는 서로 다른 범위의 변수들을 같은 기준으로 맞추는 전처리 과정입니다.
+    아래에서 직접 숫자를 입력하거나 프리셋을 선택해, 같은 데이터에 각 방법을 적용하면 값이 어떻게 바뀌는지 확인하세요.
+    <strong>이상치 추가</strong> 버튼으로 극단값이 각 방법에 미치는 영향도 비교할 수 있습니다.
+  </div>
+
+  <!-- ─── 데이터 입력 ─── -->
+  <div class="a-card" style="margin-top:20px">
+    <div class="a-card-title">데이터 입력</div>
+    <div class="preset-row" id="preset-row">
+      <button class="preset-btn active" data-key="basic" onclick="loadPreset(this)">📊 기본</button>
+      <button class="preset-btn" data-key="skewed" onclick="loadPreset(this)">📉 치우친 분포</button>
+      <button class="preset-btn" data-key="negative" onclick="loadPreset(this)">↕ 음수 포함</button>
+      <button class="preset-btn" data-key="wide" onclick="loadPreset(this)">↔ 넓은 범위</button>
+      <button class="preset-btn" data-key="sensor" onclick="loadPreset(this)">🌡 센서 데이터</button>
+    </div>
+    <div class="data-input-wrap">
+      <textarea class="data-textarea" id="data-input" rows="2"
+        placeholder="쉼표로 구분된 숫자 입력 (예: 10, 25, 30, 45, 80)"
+        oninput="onInputChange()"></textarea>
+      <button class="btn btn-primary" onclick="update()">변환 ▶</button>
+    </div>
+    <div class="outlier-toggle-row">
+      <div class="outlier-toggle-label">
+        <strong>⚠ 이상치(999) 추가</strong> — 극단값이 각 방법에 어떤 영향을 주는지 확인하세요
+      </div>
+      <button class="toggle-btn" id="outlier-btn" onclick="toggleOutlier()">이상치 OFF</button>
+    </div>
+    <div class="stat-pills" id="orig-stats"></div>
+  </div>
+
+  <!-- ─── 4방법 비교 패널 ─── -->
+  <div class="section-sep">
+    <div class="section-sep-label">변환 결과 비교</div>
+    <div class="section-sep-line"></div>
+    <span style="font-size:11px;color:var(--dim)">막대 높이 = 변환된 값</span>
+  </div>
+
+  <div class="method-grid-4" id="method-panels">
+
+    <!-- 원본 -->
+    <div class="method-panel" style="border-color:rgba(37,99,235,.3)">
+      <div class="method-panel-head" style="background:rgba(37,99,235,.04)">
+        <span class="method-badge" style="background:rgba(37,99,235,.1);color:var(--c-orig);border:1px solid rgba(37,99,235,.2)">원본 데이터</span>
+        <div class="method-name" style="color:var(--c-orig)">Original</div>
+        <div class="method-formula" style="background:rgba(37,99,235,.06)">변환 없음 — 있는 그대로</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-orig"></canvas></div>
+        <div class="method-stats-grid" id="mstats-orig"></div>
+        <div class="method-insight" style="background:rgba(37,99,235,.05);color:var(--accent)">
+          값 그대로. 단위와 범위가 그대로 유지됩니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- Min-Max -->
+    <div class="method-panel" style="border-color:rgba(5,150,105,.3)">
+      <div class="method-panel-head" style="background:rgba(5,150,105,.04)">
+        <span class="method-badge" style="background:rgba(5,150,105,.1);color:var(--c-minmax);border:1px solid rgba(5,150,105,.2)">정규화</span>
+        <div class="method-name" style="color:var(--c-minmax)">Min-Max 정규화</div>
+        <div class="method-formula" style="background:rgba(5,150,105,.06);color:var(--c-minmax)">x' = (x − min) / (max − min)</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-minmax"></canvas></div>
+        <div class="method-stats-grid" id="mstats-minmax"></div>
+        <div class="method-insight" style="background:rgba(5,150,105,.05);color:var(--green)">
+          결과값 범위: <strong>[0, 1]</strong><br>최솟값→0, 최댓값→1로 고정됩니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- Z-Score -->
+    <div class="method-panel" style="border-color:rgba(234,88,12,.3)">
+      <div class="method-panel-head" style="background:rgba(234,88,12,.04)">
+        <span class="method-badge" style="background:rgba(234,88,12,.1);color:var(--c-zscore);border:1px solid rgba(234,88,12,.2)">표준화</span>
+        <div class="method-name" style="color:var(--c-zscore)">Z-Score 표준화</div>
+        <div class="method-formula" style="background:rgba(234,88,12,.06);color:var(--c-zscore)">x' = (x − μ) / σ</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-zscore"></canvas></div>
+        <div class="method-stats-grid" id="mstats-zscore"></div>
+        <div class="method-insight" style="background:rgba(234,88,12,.05);color:var(--orange)">
+          평균 → <strong>0</strong>, 표준편차 → <strong>1</strong><br>정규분포를 가정한 스케일링.
+        </div>
+      </div>
+    </div>
+
+    <!-- Robust -->
+    <div class="method-panel" style="border-color:rgba(99,102,241,.3)">
+      <div class="method-panel-head" style="background:rgba(99,102,241,.04)">
+        <span class="method-badge" style="background:rgba(99,102,241,.1);color:var(--c-robust);border:1px solid rgba(99,102,241,.2)">표준화</span>
+        <div class="method-name" style="color:var(--c-robust)">Robust 표준화</div>
+        <div class="method-formula" style="background:rgba(99,102,241,.06);color:var(--c-robust)">x' = (x − median) / IQR</div>
+      </div>
+      <div class="method-body">
+        <div class="chart-wrap"><canvas id="chart-robust"></canvas></div>
+        <div class="method-stats-grid" id="mstats-robust"></div>
+        <div class="method-insight" style="background:rgba(99,102,241,.05);color:var(--accent2)">
+          중앙값 → <strong>0</strong>, IQR → <strong>1</strong><br>이상치에 가장 강건합니다.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── 이상치 영향 섹션 ─── -->
+  <div class="outlier-section" id="outlier-section">
+    <div class="outlier-section-title">⚠ 이상치(999)가 있을 때 — Min-Max vs Robust 비교</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">
+      이상치 추가 버튼을 켜면 아래 차트가 활성화됩니다.
+      <strong>Min-Max는 이상치 하나에 나머지 값들이 모두 왼쪽(0 근처)으로 눌리는 반면</strong>,
+      Robust는 중앙값·IQR 기반이라 이상치 영향을 최소화합니다.
+    </p>
+    <div class="outlier-compare" id="outlier-compare">
+      <div class="outlier-panel">
+        <div class="outlier-panel-name" style="color:var(--c-minmax)">Min-Max — 이상치 전/후</div>
+        <div class="outlier-chart-wrap"><canvas id="chart-ol-minmax"></canvas></div>
+      </div>
+      <div class="outlier-panel">
+        <div class="outlier-panel-name" style="color:var(--c-robust)">Robust — 이상치 전/후</div>
+        <div class="outlier-chart-wrap"><canvas id="chart-ol-robust"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 변환값 테이블 ─── -->
+  <div class="section-sep">
+    <div class="section-sep-label">변환값 상세 비교</div>
+    <div class="section-sep-line"></div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title">데이터 포인트별 변환 결과</div>
+    <div class="table-wrap">
+      <table class="data-table" id="val-table"></table>
+    </div>
+  </div>
+
+  <!-- ─── 방법 가이드 ─── -->
+  <div class="section-sep">
+    <div class="section-sep-label">언제 어떤 방법을 쓸까?</div>
+    <div class="section-sep-line"></div>
+  </div>
+  <div class="guide-grid">
+
+    <div class="guide-card" style="border-color:rgba(5,150,105,.25);background:rgba(5,150,105,.03)">
+      <div class="method-badge" style="background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2);margin-bottom:8px">Min-Max 정규화</div>
+      <div class="guide-title" style="color:var(--green)">x' = (x − min) / (max − min)</div>
+      <div class="guide-formula" style="background:rgba(5,150,105,.06);color:var(--green)">결과 범위: 항상 [0, 1]</div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>이미지 픽셀값(0~255) 정규화</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>신경망 입력층 전처리</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>변수 범위가 명확히 정해진 경우</span></div>
+      <div class="guide-row"><span class="guide-row-icon">⚠️</span><span>이상치에 매우 민감 — 하나의 극단값이 전체를 왜곡</span></div>
+      <div class="guide-tags">
+        <span class="gtag badge-green">이미지처리</span>
+        <span class="gtag badge-green">신경망</span>
+        <span class="gtag badge-green">KNN</span>
+      </div>
+    </div>
+
+    <div class="guide-card" style="border-color:rgba(234,88,12,.25);background:rgba(234,88,12,.03)">
+      <div class="method-badge" style="background:rgba(234,88,12,.1);color:var(--orange);border:1px solid rgba(234,88,12,.2);margin-bottom:8px">Z-Score 표준화</div>
+      <div class="guide-title" style="color:var(--orange)">x' = (x − μ) / σ</div>
+      <div class="guide-formula" style="background:rgba(234,88,12,.06);color:var(--orange)">결과: 평균=0, 표준편차=1</div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>정규분포를 따르는 데이터</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>선형회귀, SVM, PCA 등 거리 기반 모델</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>단위가 다른 여러 변수를 같은 기준으로</span></div>
+      <div class="guide-row"><span class="guide-row-icon">⚠️</span><span>분포가 크게 치우치면 효과 감소</span></div>
+      <div class="guide-tags">
+        <span class="gtag badge-orange">선형회귀</span>
+        <span class="gtag badge-orange">SVM</span>
+        <span class="gtag badge-orange">PCA</span>
+        <span class="gtag badge-orange">클러스터링</span>
+      </div>
+    </div>
+
+    <div class="guide-card" style="border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.03)">
+      <div class="method-badge" style="background:rgba(99,102,241,.1);color:var(--accent2);border:1px solid rgba(99,102,241,.2);margin-bottom:8px">Robust 표준화</div>
+      <div class="guide-title" style="color:var(--accent2)">x' = (x − median) / IQR</div>
+      <div class="guide-formula" style="background:rgba(99,102,241,.06);color:var(--accent2)">결과: 중앙값=0, IQR=1</div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>이상치가 많거나 분포가 치우친 데이터</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>센서 오류·로그 데이터 전처리</span></div>
+      <div class="guide-row"><span class="guide-row-icon">✅</span><span>평균보다 중앙값이 더 대표값인 경우</span></div>
+      <div class="guide-row"><span class="guide-row-icon">⚠️</span><span>결과 범위가 보장되지 않음</span></div>
+      <div class="guide-tags">
+        <span class="gtag badge-purple">이상치대응</span>
+        <span class="gtag badge-purple">센서데이터</span>
+        <span class="gtag badge-purple">로그분석</span>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- #tab-sim -->
+
+<!-- ══════════════════════════════════════════════
+     TAB: CSV 변환 · 저장
+══════════════════════════════════════════════ -->
+<div id="tab-csv" class="tab-panel">
+
+  <div class="intro-box" style="margin-top:20px">
+    CSV 또는 XLSX 파일을 업로드하고, 변환할 <strong>숫자형 열</strong>을 선택한 뒤 정규화·표준화 방법을 고르면
+    결과를 미리보고 <strong>CSV 또는 XLSX로 저장</strong>할 수 있습니다.
+    선택하지 않은 열은 원본 그대로 유지됩니다.
+  </div>
+
+  <!-- ① 파일 업로드 -->
+  <div class="a-card" style="margin-top:20px">
+    <div class="a-card-title">① CSV 파일 업로드</div>
+    <div class="csv-drop-zone" id="csv-drop">
+      <input type="file" id="csv-file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      <div class="csv-drop-icon">📂</div>
+      <div class="csv-drop-label">CSV 또는 XLSX 파일을 드래그하거나 클릭해서 선택</div>
+      <div class="csv-drop-sub">CSV: UTF-8 / EUC-KR 인코딩 지원 · XLSX: Excel 파일 지원 · 최대 10MB</div>
+    </div>
+    <div class="csv-info-bar" id="csv-info" style="display:none"></div>
+  </div>
+
+  <!-- ② 열 선택 + 방법 선택 -->
+  <div class="a-card" id="csv-settings" style="display:none">
+    <div class="a-card-title">② 변환할 열 선택 &amp; 방법 선택</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      숫자형 열만 선택 가능합니다. 클릭으로 선택·해제하세요.
+    </div>
+    <div class="col-grid" id="col-grid"></div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 10px">변환 방법</div>
+    <div class="method-radio-row">
+      <label class="method-radio sel-mm" id="mr-mm">
+        <input type="radio" name="csv-method" value="minmax" checked onchange="onMethodChange()">
+        Min-Max 정규화 · [0, 1]
+      </label>
+      <label class="method-radio" id="mr-zs">
+        <input type="radio" name="csv-method" value="zscore" onchange="onMethodChange()">
+        Z-Score 표준화 · μ=0, σ=1
+      </label>
+      <label class="method-radio" id="mr-rb">
+        <input type="radio" name="csv-method" value="robust" onchange="onMethodChange()">
+        Robust 표준화 · median=0, IQR=1
+      </label>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="applyTransform()">변환 적용 ▶</button>
+      <button class="btn btn-ghost" onclick="resetCsv()">초기화</button>
+    </div>
+  </div>
+
+  <!-- ③ 미리보기 + 다운로드 -->
+  <div id="csv-result-wrap" style="display:none">
+    <div class="section-sep">
+      <div class="section-sep-label">변환 결과 미리보기</div>
+      <div class="section-sep-line"></div>
+      <span style="font-size:11px;color:var(--dim)" id="preview-note"></span>
+    </div>
+    <div class="a-card">
+      <div class="a-card-title">
+        <span id="result-col-info"></span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="downloadCsv()">CSV 저장 ↓</button>
+          <button class="btn btn-green" onclick="downloadXlsx()" style="background:#0e7490;" onmouseover="this.style.background='#0c6680'" onmouseout="this.style.background='#0e7490'">XLSX 저장 ↓</button>
+        </div>
+      </div>
+      <div class="csv-table-wrap">
+        <table class="csv-table" id="csv-preview-table"></table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #tab-csv -->
+
+</div><!-- .page -->
+</div><!-- .page-wrap -->
+
+<script>
+// ═══════════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════════
+const PRESETS = {
+  basic:    [12, 25, 34, 45, 23, 56, 67, 89, 78, 43],
+  skewed:   [1, 2, 2, 3, 3, 3, 5, 8, 15, 50],
+  negative: [-30, -15, -5, 0, 8, 20, 35, 55, 70, 90],
+  wide:     [1, 150, 320, 500, 850, 1200, 2100, 5000, 8000, 12000],
+  sensor:   [23.1, 24.5, 22.8, 25.0, 99.9, 23.7, 24.1, 22.5, 24.8, 23.3]
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let _data = [...PRESETS.basic];
+let _outlierOn = false;
+let _charts = {};
+
+// ═══════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════
+function calcStats(arr) {
+  const n = arr.length;
+  const min = Math.min(...arr), max = Math.max(...arr);
+  const mean = arr.reduce((s,v)=>s+v,0)/n;
+  const std = Math.sqrt(arr.reduce((s,v)=>s+(v-mean)**2,0)/n);
+  const sorted = [...arr].sort((a,b)=>a-b);
+  const median = n%2===0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+  const q1 = sorted[Math.floor(n/4)];
+  const q3 = sorted[Math.floor(3*n/4)];
+  const iqr = q3 - q1 || 1;
+  return { n, min, max, mean, std, median, q1, q3, iqr };
+}
+
+function minMax(arr) {
+  const { min, max } = calcStats(arr);
+  const range = max - min || 1;
+  return arr.map(v => (v-min)/range);
+}
+
+function zScore(arr) {
+  const { mean, std } = calcStats(arr);
+  const s = std || 1;
+  return arr.map(v => (v-mean)/s);
+}
+
+function robust(arr) {
+  const { median, iqr } = calcStats(arr);
+  return arr.map(v => (v-median)/iqr);
+}
+
+// ═══════════════════════════════════════════════
+// CHART HELPERS
+// ═══════════════════════════════════════════════
+const METHOD_COLORS = {
+  orig:   { border:'#2563eb', bg:'rgba(37,99,235,.7)' },
+  minmax: { border:'#059669', bg:'rgba(5,150,105,.7)' },
+  zscore: { border:'#ea580c', bg:'rgba(234,88,12,.7)' },
+  robust: { border:'#6366f1', bg:'rgba(99,102,241,.7)' }
+};
+
+function makeChart(canvasId, labels, data, key, yLabel) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  if (_charts[canvasId]) { _charts[canvasId].destroy(); delete _charts[canvasId]; }
+  const c = METHOD_COLORS[key];
+  _charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: data.map(v => v >= 0 ? c.bg : c.bg.replace('.7',',.5')),
+        borderColor: c.border,
+        borderWidth: 1.5,
+        borderRadius: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmt(ctx.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks:{ color:'#94a3b8', font:{size:9} }, grid:{ display:false } },
+        y: {
+          ticks:{ color:'#94a3b8', font:{size:9} },
+          grid:{ color:'rgba(0,0,0,.05)' },
+          title: yLabel ? { display:true, text:yLabel, color:'#94a3b8', font:{size:9} } : undefined
+        }
+      }
+    }
+  });
+}
+
+function makeCompareChart(canvasId, labels, dataBefore, dataAfter, color) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  if (_charts[canvasId]) { _charts[canvasId].destroy(); delete _charts[canvasId]; }
+  _charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'이상치 전', data:dataBefore,
+          backgroundColor:'rgba(148,163,184,.5)', borderColor:'#94a3b8', borderWidth:1, borderRadius:2 },
+        { label:'이상치 후', data:dataAfter,
+          backgroundColor: color+',.7)', borderColor: color.replace('rgba(','').replace(',','|').split('|')[0].trim()+')', borderWidth:1, borderRadius:2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ labels:{color:'#64748b',font:{size:9}} } },
+      scales: {
+        x: { ticks:{color:'#94a3b8',font:{size:9}}, grid:{display:false} },
+        y: { ticks:{color:'#94a3b8',font:{size:9}}, grid:{color:'rgba(0,0,0,.05)'} }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// STATS PANEL RENDER
+// ═══════════════════════════════════════════════
+function renderMethodStats(elId, arr, color) {
+  const st = calcStats(arr);
+  document.getElementById(elId).innerHTML = `
+    <div class="m-stat">
+      <div class="m-stat-val" style="color:${color}">${fmt(st.min)}</div>
+      <div class="m-stat-lbl">최솟값</div>
+    </div>
+    <div class="m-stat">
+      <div class="m-stat-val" style="color:${color}">${fmt(st.max)}</div>
+      <div class="m-stat-lbl">최댓값</div>
+    </div>
+    <div class="m-stat">
+      <div class="m-stat-val" style="color:${color}">${fmt(st.mean)}</div>
+      <div class="m-stat-lbl">평균</div>
+    </div>
+    <div class="m-stat">
+      <div class="m-stat-val" style="color:${color}">${fmt(st.std)}</div>
+      <div class="m-stat-lbl">표준편차</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// MAIN UPDATE
+// ═══════════════════════════════════════════════
+function update() {
+  const input = document.getElementById('data-input').value;
+  const parsed = input.split(/[,\s]+/).map(v=>v.trim()).filter(v=>v!=='').map(Number).filter(v=>!isNaN(v));
+  if (parsed.length < 2) { alert('숫자를 2개 이상 입력해주세요.'); return; }
+  _data = parsed;
+
+  const data = _outlierOn ? [..._data, 999] : [..._data];
+  const labels = data.map((_, i) => `#${i+1}`);
+
+  const mm  = minMax(data);
+  const zs  = zScore(data);
+  const rb  = robust(data);
+
+  // ── original stats pills ──
+  const st = calcStats(data);
+  document.getElementById('orig-stats').innerHTML = `
+    <span class="stat-pill"><strong>n</strong> = ${st.n}</span>
+    <span class="stat-pill">최솟값 <strong>${fmt(st.min)}</strong></span>
+    <span class="stat-pill">최댓값 <strong>${fmt(st.max)}</strong></span>
+    <span class="stat-pill">평균 <strong>${fmt(st.mean)}</strong></span>
+    <span class="stat-pill">표준편차 <strong>${fmt(st.std)}</strong></span>
+    <span class="stat-pill">중앙값 <strong>${fmt(st.median)}</strong></span>
+    <span class="stat-pill">IQR <strong>${fmt(st.iqr)}</strong></span>`;
+
+  // ── 4 charts ──
+  makeChart('chart-orig',   labels, data, 'orig');
+  makeChart('chart-minmax', labels, mm,   'minmax');
+  makeChart('chart-zscore', labels, zs,   'zscore');
+  makeChart('chart-robust', labels, rb,   'robust');
+
+  // ── method stats ──
+  renderMethodStats('mstats-orig',   data, 'var(--c-orig)');
+  renderMethodStats('mstats-minmax', mm,   'var(--c-minmax)');
+  renderMethodStats('mstats-zscore', zs,   'var(--c-zscore)');
+  renderMethodStats('mstats-robust', rb,   'var(--c-robust)');
+
+  // ── value table ──
+  const maxRows = Math.min(data.length, 30);
+  const thead = `<thead><tr>
+    <th style="text-align:center">#</th>
+    <th style="color:var(--c-orig)">원본</th>
+    <th style="color:var(--c-minmax)">Min-Max</th>
+    <th style="color:var(--c-zscore)">Z-Score</th>
+    <th style="color:var(--c-robust)">Robust</th>
+  </tr></thead>`;
+  const tbody = `<tbody>${Array.from({length:maxRows},(_,i)=>`
+    <tr>
+      <td>${i+1}${_outlierOn && i===data.length-1?' <span style="color:var(--red);font-size:9px">이상치</span>':''}</td>
+      <td class="orig">${fmt(data[i])}</td>
+      <td class="minmax">${fmt(mm[i])}</td>
+      <td class="zscore">${fmt(zs[i])}</td>
+      <td class="robust">${fmt(rb[i])}</td>
+    </tr>`).join('')}</tbody>`;
+  document.getElementById('val-table').innerHTML = thead + tbody;
+
+  // ── outlier compare section ──
+  updateOutlierSection();
+}
+
+function updateOutlierSection() {
+  const baseData = [..._data];
+  const withOutlier = [..._data, 999];
+  const baseLabels = baseData.map((_,i)=>`#${i+1}`);
+  const olLabels = withOutlier.map((_,i)=>`#${i+1}`);
+
+  // Min-Max: show base vs with-outlier (normalized)
+  const mmBase = minMax(baseData);
+  const mmOl   = minMax(withOutlier);
+
+  // Robust: show base vs with-outlier (robust scaled)
+  const rbBase = robust(baseData);
+  const rbOl   = robust(withOutlier);
+
+  if (_charts['chart-ol-minmax']) { _charts['chart-ol-minmax'].destroy(); delete _charts['chart-ol-minmax']; }
+  if (_charts['chart-ol-robust']) { _charts['chart-ol-robust'].destroy(); delete _charts['chart-ol-robust']; }
+
+  const ctx1 = document.getElementById('chart-ol-minmax');
+  const ctx2 = document.getElementById('chart-ol-robust');
+  if (!ctx1 || !ctx2) return;
+
+  // Show side-by-side: base (first n) + outlier (last bar) in one chart
+  _charts['chart-ol-minmax'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: olLabels,
+      datasets: [
+        { label:'이상치 없을 때', data:[...mmBase, null],
+          backgroundColor:'rgba(5,150,105,.5)', borderColor:'#059669', borderWidth:1, borderRadius:2 },
+        { label:'이상치 있을 때', data:mmOl,
+          backgroundColor: mmOl.map((_,i)=> i===mmOl.length-1 ? 'rgba(220,38,38,.7)':'rgba(5,150,105,.25)'),
+          borderColor: mmOl.map((_,i)=> i===mmOl.length-1 ? '#dc2626':'#059669'),
+          borderWidth:1, borderRadius:2 }
+      ]
+    },
+    options: chartOpts('rgba(5,150,105,')
+  });
+
+  _charts['chart-ol-robust'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: olLabels,
+      datasets: [
+        { label:'이상치 없을 때', data:[...rbBase, null],
+          backgroundColor:'rgba(99,102,241,.5)', borderColor:'#6366f1', borderWidth:1, borderRadius:2 },
+        { label:'이상치 있을 때', data:rbOl,
+          backgroundColor: rbOl.map((_,i)=> i===rbOl.length-1 ? 'rgba(220,38,38,.7)':'rgba(99,102,241,.25)'),
+          borderColor: rbOl.map((_,i)=> i===rbOl.length-1 ? '#dc2626':'#6366f1'),
+          borderWidth:1, borderRadius:2 }
+      ]
+    },
+    options: chartOpts('rgba(99,102,241,')
+  });
+}
+
+function chartOpts() {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ labels:{color:'#64748b',font:{size:9}} } },
+    scales:{
+      x:{ ticks:{color:'#94a3b8',font:{size:9}}, grid:{display:false} },
+      y:{ ticks:{color:'#94a3b8',font:{size:9}}, grid:{color:'rgba(0,0,0,.05)'} }
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════
+function loadPreset(btn) {
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _data = [...PRESETS[btn.dataset.key]];
+  _outlierOn = false;
+  document.getElementById('outlier-btn').textContent = '이상치 OFF';
+  document.getElementById('outlier-btn').classList.remove('on');
+  document.getElementById('data-input').value = _data.join(', ');
+  update();
+}
+
+function onInputChange() {
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+}
+
+function toggleOutlier() {
+  _outlierOn = !_outlierOn;
+  const btn = document.getElementById('outlier-btn');
+  btn.textContent = _outlierOn ? '이상치 ON ⚠' : '이상치 OFF';
+  btn.classList.toggle('on', _outlierOn);
+  update();
+}
+
+// ═══════════════════════════════════════════════
+// FORMAT
+// ═══════════════════════════════════════════════
+function fmt(v) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  if (!Number.isFinite(v)) return String(v);
+  if (Math.abs(v) >= 1000) return v.toFixed(0);
+  if (Math.abs(v) >= 10)   return v.toFixed(2);
+  return v.toFixed(3);
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.getElementById('data-input').value = PRESETS.basic.join(', ');
+update();
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.p-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (history.replaceState) history.replaceState(null, '', '#' + tab);  // 해시 딥링크 동기화
+}
+
+// 해시 딥링크 진입: /prep/…#csv → CSV 변환 탭 직접 열기
+(function(){
+  const h = location.hash.slice(1);
+  const b = document.querySelector('.p-tab[data-tab="' + h + '"]');
+  if (b) switchTab(h, b);
+})();
+
+
+// ═══════════════════════════════════════════════
+// CSV STATE
+// ═══════════════════════════════════════════════
+let _csvHeaders = [];
+let _csvRows    = [];
+let _csvNumericCols = new Set();
+let _csvSelectedCols = new Set();
+let _csvTransformed  = null;
+
+// ═══════════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════════
+(function initCsvDrop() {
+  const fileInput = document.getElementById('csv-file');
+  const dropZone  = document.getElementById('csv-drop');
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault(); dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+})();
+
+function handleFile(file) {
+  if (file.size > 10 * 1024 * 1024) { alert('파일 크기가 10MB를 초과합니다.'); return; }
+  const isXlsx = /\.xlsx$/i.test(file.name);
+  const reader = new FileReader();
+  reader.onload = e => {
+    const buf = e.target.result;
+    if (isXlsx) {
+      parseXlsx(buf, file.name);
+    } else {
+      // UTF-8 BOM 감지 (EF BB BF)
+      const bytes = new Uint8Array(buf.slice(0, 3));
+      const hasBom = bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF;
+      // UTF-8로 먼저 디코딩 시도
+      let text = new TextDecoder('utf-8').decode(buf);
+      // 대체 문자(U+FFFD)가 많으면 EUC-KR로 재시도
+      const replacements = (text.match(/\uFFFD/g) || []).length;
+      if (!hasBom && replacements > 2) {
+        try { text = new TextDecoder('euc-kr').decode(buf); } catch(e) {}
+      }
+      parseCsv(text, file.name);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseXlsx(buf, filename) {
+  try {
+    const wb = XLSX.read(new Uint8Array(buf), {type:'array', codepage:65001});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+    if (data.length < 2) { alert('데이터가 부족합니다. 헤더와 1행 이상이 필요합니다.'); return; }
+    _csvHeaders = data[0].map(v => String(v));
+    _csvRows    = data.slice(1).map(r => {
+      // 열 수를 헤더에 맞춤
+      const row = Array.from({length:_csvHeaders.length}, (_,i) => r[i] !== undefined ? String(r[i]) : '');
+      return row;
+    });
+    finishParse(filename);
+  } catch(err) {
+    alert('XLSX 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+  }
+}
+
+function parseCsv(text, filename) {
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l => l.trim() !== '');
+  if (lines.length < 2) { alert('데이터가 부족합니다. 헤더와 1행 이상이 필요합니다.'); return; }
+
+  const firstLine = lines[0];
+  const delim = (firstLine.match(/;/g)||[]).length > (firstLine.match(/,/g)||[]).length ? ';' : ',';
+
+  function parseLine(line) {
+    const result = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === delim && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  _csvHeaders = parseLine(lines[0]);
+  _csvRows    = lines.slice(1).map(l => parseLine(l));
+  finishParse(filename);
+}
+
+function finishParse(filename) {
+  // 숫자형 열 자동 탐지 (90% 이상 숫자이면 숫자형)
+  _csvNumericCols = new Set();
+  _csvHeaders.forEach((_, ci) => {
+    const vals = _csvRows.map(r => r[ci]).filter(v => v !== '' && v != null);
+    const numCnt = vals.filter(v => !isNaN(parseFloat(v)) && isFinite(v)).length;
+    if (vals.length > 0 && numCnt / vals.length >= 0.9) _csvNumericCols.add(ci);
+  });
+
+  _csvSelectedCols = new Set([..._csvNumericCols]);
+  _csvTransformed  = null;
+
+  // info bar
+  const infoBar = document.getElementById('csv-info');
+  infoBar.style.display = 'flex';
+  infoBar.innerHTML = `
+    <span>📄 <strong>${escHtml(filename)}</strong></span>
+    <span>행: <strong>${_csvRows.length.toLocaleString()}</strong></span>
+    <span>열: <strong>${_csvHeaders.length}</strong></span>
+    <span>숫자형 열: <strong>${_csvNumericCols.size}</strong>개</span>`;
+
+  document.querySelector('.csv-drop-label').textContent = `✅ ${filename} 로드됨 — 다른 파일을 선택하려면 클릭`;
+  renderColGrid();
+  document.getElementById('csv-settings').style.display = 'block';
+  document.getElementById('csv-result-wrap').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
+// COLUMN CHIPS
+// ═══════════════════════════════════════════════
+function renderColGrid() {
+  document.getElementById('col-grid').innerHTML = _csvHeaders.map((h, i) => {
+    const isNum = _csvNumericCols.has(i);
+    const isSel = _csvSelectedCols.has(i);
+    return `<div class="col-chip${isNum ? (isSel ? ' selected' : '') : ' non-numeric'}"
+      ${isNum ? `onclick="toggleCol(${i},this)"` : `title="문자형 열 — 선택 불가"`}
+      >${isNum ? (isSel ? '✓' : '+') : '—'} ${escHtml(h)}</div>`;
+  }).join('');
+}
+
+function toggleCol(ci, el) {
+  if (_csvSelectedCols.has(ci)) {
+    _csvSelectedCols.delete(ci);
+    el.classList.remove('selected');
+    el.textContent = '+ ' + _csvHeaders[ci];
+  } else {
+    _csvSelectedCols.add(ci);
+    el.classList.add('selected');
+    el.textContent = '✓ ' + _csvHeaders[ci];
+  }
+}
+
+function onMethodChange() {
+  const val = document.querySelector('input[name="csv-method"]:checked').value;
+  document.getElementById('mr-mm').className = 'method-radio' + (val==='minmax' ? ' sel-mm' : '');
+  document.getElementById('mr-zs').className = 'method-radio' + (val==='zscore' ? ' sel-zs' : '');
+  document.getElementById('mr-rb').className = 'method-radio' + (val==='robust' ? ' sel-rb' : '');
+}
+
+// ═══════════════════════════════════════════════
+// TRANSFORM
+// ═══════════════════════════════════════════════
+function applyTransform() {
+  if (_csvSelectedCols.size === 0) { alert('변환할 열을 하나 이상 선택하세요.'); return; }
+  const method = document.querySelector('input[name="csv-method"]:checked').value;
+
+  _csvTransformed = _csvRows.map(r => [...r]);
+
+  _csvSelectedCols.forEach(ci => {
+    const rawVals = _csvRows.map(r => { const v = parseFloat(r[ci]); return isNaN(v) ? null : v; });
+    const numericVals = rawVals.filter(v => v !== null);
+    if (numericVals.length === 0) return;
+
+    let result;
+    if (method === 'minmax')      result = csvMinMax(rawVals, numericVals);
+    else if (method === 'zscore') result = csvZScore(rawVals, numericVals);
+    else                          result = csvRobust(rawVals, numericVals);
+
+    _csvTransformed.forEach((r, ri) => {
+      r[ci] = rawVals[ri] === null ? _csvRows[ri][ci] : fmtNum(result[ri]);
+    });
+  });
+
+  renderCsvPreview(method);
+  document.getElementById('csv-result-wrap').style.display = 'block';
+  setTimeout(() => document.getElementById('csv-result-wrap').scrollIntoView({behavior:'smooth',block:'start'}), 50);
+}
+
+function csvMinMax(vals, nums) {
+  const mn = Math.min(...nums), mx = Math.max(...nums), rng = mx - mn || 1;
+  return vals.map(v => v === null ? null : (v - mn) / rng);
+}
+
+function csvZScore(vals, nums) {
+  const n = nums.length;
+  const mean = nums.reduce((s,v)=>s+v,0)/n;
+  const std  = Math.sqrt(nums.reduce((s,v)=>s+(v-mean)**2,0)/n) || 1;
+  return vals.map(v => v === null ? null : (v - mean) / std);
+}
+
+function csvRobust(vals, nums) {
+  const sorted = [...nums].sort((a,b)=>a-b), n = sorted.length;
+  const median = n%2===0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+  const q1 = sorted[Math.floor(n/4)], q3 = sorted[Math.floor(3*n/4)];
+  const iqr = (q3 - q1) || 1;
+  return vals.map(v => v === null ? null : (v - median) / iqr);
+}
+
+function fmtNum(v) {
+  if (v === null || isNaN(v)) return '';
+  return parseFloat(v.toFixed(6)).toString();
+}
+
+// ═══════════════════════════════════════════════
+// PREVIEW
+// ═══════════════════════════════════════════════
+function renderCsvPreview(method) {
+  const names = {minmax:'Min-Max 정규화', zscore:'Z-Score 표준화', robust:'Robust 표준화'};
+  const previewN = Math.min(_csvTransformed.length, 20);
+  document.getElementById('preview-note').textContent =
+    `상위 ${previewN}행 표시 / 전체 ${_csvTransformed.length.toLocaleString()}행`;
+  document.getElementById('result-col-info').textContent =
+    `${names[method]} 적용 — 변환 열: ${_csvSelectedCols.size}개`;
+
+  const thead = '<thead><tr>' +
+    _csvHeaders.map((h,i) => `<th class="${_csvSelectedCols.has(i)?'t-col':''}">${escHtml(h)}${_csvSelectedCols.has(i)?' *':''}</th>`).join('') +
+    '</tr></thead>';
+
+  const tbody = '<tbody>' +
+    Array.from({length:previewN},(_,ri) =>
+      '<tr>' + _csvTransformed[ri].map((v,ci)=>
+        `<td class="${_csvSelectedCols.has(ci)?'t-col':''}">${escHtml(v)}</td>`
+      ).join('') + '</tr>'
+    ).join('') + '</tbody>';
+
+  document.getElementById('csv-preview-table').innerHTML = thead + tbody;
+}
+
+// ═══════════════════════════════════════════════
+// DOWNLOAD
+// ═══════════════════════════════════════════════
+function downloadCsv() {
+  if (!_csvTransformed) return;
+  const lines = [
+    _csvHeaders.map(csvCell).join(','),
+    ..._csvTransformed.map(r => r.map(csvCell).join(','))
+  ];
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {href:url, download:'normalized_data.csv'});
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadXlsx() {
+  if (!_csvTransformed) return;
+  const toVal = v => {
+    if (v === '' || v == null) return '';
+    const n = Number(v);
+    return isFinite(n) ? n : v;
+  };
+  const wsData = [_csvHeaders, ..._csvTransformed.map(r => r.map(toVal))];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'normalized');
+  XLSX.writeFile(wb, 'normalized_data.xlsx');
+}
+
+function csvCell(v) {
+  if (v == null) return '';
+  const s = String(v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n'))
+    ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+
+function escHtml(s) {
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════
+function resetCsv() {
+  _csvHeaders=[]; _csvRows=[]; _csvNumericCols=new Set(); _csvSelectedCols=new Set(); _csvTransformed=null;
+  document.getElementById('csv-info').style.display='none';
+  document.getElementById('csv-settings').style.display='none';
+  document.getElementById('csv-result-wrap').style.display='none';
+  document.querySelector('.csv-drop-label').textContent='CSV 파일을 드래그하거나 클릭해서 선택';
+  document.getElementById('csv-file').value='';
+}
+</script>
+<script>(function(){var k='tf_prep';if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');fetch('/mfg/api/traffic_log.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'service=prep&page='+encodeURIComponent(location.pathname)});})();</script>
+<script src="/mfg/js/promo.js" defer></script>
+</body>
+</html>

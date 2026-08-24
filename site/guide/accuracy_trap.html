@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>정확도 98%의 함정 — 불량 121개 중 110개를 놓친 모델 이야기 | DataForge 가이드</title>
+  <meta name="description" content="정확도 97.98% 모델이 불량 121개 중 110개를 놓치는 이유. 혼동행렬의 네 칸, 불균형 데이터에서 정확도가 배신하는 구조, 정밀도·재현율·F1이 필요한 이유를 실제 숫자로 설명합니다.">
+  <link rel="canonical" href="https://dataforge.ai.kr/guide/accuracy_trap">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="정확도 98%의 함정 — 불량 121개 중 110개를 놓친 모델 이야기 | DataForge 가이드">
+  <meta property="og:description" content="정확도 97.98% 모델이 불량 121개 중 110개를 놓친 이유. 혼동행렬과 정밀도·재현율로 숫자 뒤의 진실을 읽는 법.">
+  <meta property="og:url" content="https://dataforge.ai.kr/guide/accuracy_trap">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f8fafc; --card:#ffffff; --card2:#f1f5f9;
+      --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.15);
+      --text:#1e293b; --muted:#64748b; --dim:#94a3b8;
+      --accent:#2563eb; --accent2:#6366f1; --amber:#d97706;
+      --green:#059669; --red:#dc2626; --orange:#ea580c; --r:10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.75; color: var(--text); background: var(--bg);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    body::before {
+      content:''; position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+      background-size:40px 40px; pointer-events:none; z-index:0;
+    }
+    header { position: relative; z-index: 1; background: var(--card); border-bottom: 1px solid var(--border); }
+    .header-inner { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+    .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .logo a { color: var(--text); text-decoration: none; }
+    .logo span { color: var(--orange); }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+    main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 20px 64px; }
+    .crumb { font-size: 12px; margin-bottom: 12px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover, .crumb a:active { color: var(--accent); }
+    .doc { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 22px; }
+    .url-badge {
+      display: inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--accent); background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; }
+    .lead { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+    .tabs-line { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
+    h2 { font-size: 16px; font-weight: 700; margin: 30px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+    p { margin-bottom: 11px; }
+    ul { margin: 0 0 12px 18px; }
+    li { margin-bottom: 7px; }
+    b { font-weight: 700; }
+    a { color: var(--accent); }
+    ol.steps { list-style: none; margin: 14px 0 6px; counter-reset: step; }
+    ol.steps > li {
+      position: relative; padding: 0 0 16px 44px; counter-increment: step; margin: 0;
+    }
+    ol.steps > li::before {
+      content: counter(step); position: absolute; left: 0; top: 0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3);
+      color: var(--accent); font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    ol.steps > li:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 2px;
+      width: 1px; background: var(--border);
+    }
+    ol.steps b { display: inline; }
+    .tip {
+      font-size: 13px; background: var(--card2); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .think {
+      font-size: 13px; background: rgba(217,119,6,.06); border-left: 3px solid var(--amber);
+      border-radius: 0 8px 8px 0; padding: 12px 14px; margin: 12px 0;
+    }
+    .cta {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 22px; margin: 10px 0 4px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+      border-radius: 8px; text-decoration: none; transition: background .15s;
+    }
+    .cta:hover, .cta:active { background: #1d4ed8; }
+    .related { margin-top: 4px; }
+    .related a { display: block; padding: 6px 0; font-size: 13px; }
+    footer {
+      position: relative; z-index: 1; text-align: center; padding: 24px; font-size: 11px;
+      color: var(--dim); font-family: 'Space Mono', monospace; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 6px; font-family: 'Noto Sans KR', sans-serif; }
+    footer a:hover, footer a:active { color: var(--accent); }
+    .foot-links { margin-bottom: 8px; }
+    @media (min-width: 768px) { .doc { padding: 36px 40px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo"><a href="/">DATA<span>FORGE</span></a></div>
+      <div class="logo-sub">dataforge.ai.kr</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="crumb"><a href="/guide/">‹ 가이드 홈</a></div>
+    <article class="doc">
+      <div class="url-badge">개념 아티클 · 모델 평가</div>
+      <h1>정확도 98%의 함정 — 불량 121개 중 110개를 놓친 모델 이야기</h1>
+      <p class="lead">보고서에는 정확도 97.98%가 올라갑니다. 현장에는 '불량 121개 중 110개를 놓쳤다'가 갑니다. 같은 모델의 이야기입니다.</p>
+      <div class="tabs-line">키워드: 혼동행렬 · 정확도 · 정밀도 · 재현율 · F1 · 불균형 데이터</div>
+
+      <h2>소수점까지 똑같은 두 '모델'</h2>
+      <p>CNC 정밀가공 라인의 최종검사 기록 30,000건이 있습니다. 불량은 606건, <b>불량률 2.02%</b>입니다.
+      품질팀의 요청은 간단합니다 — "불량을 미리 잡아주는 모델을 만들어 주세요. 검사 인력이 부족합니다."</p>
+      <p>랜덤포레스트 300그루를 학습시킵니다. 결과는 <b>정확도 97.98%</b>. 꽤 훌륭해 보입니다.</p>
+      <p>그런데 옆자리 동료가 장난삼아 '모델'을 하나 만듭니다. 데이터를 보지도 않고 무조건
+      <b>"정상"</b>이라고만 답하는 한 줄짜리 프로그램입니다. 그 정확도는 <b>97.98%</b>.
+      소수점 네 자리까지 정확히 같습니다.</p>
+      <p>거짓말이 아닙니다. 불량률이 2%면 전부 정상이라고 답하는 것만으로 정말 98%를 맞힙니다.
+      다만 그 숫자는 우리가 궁금한 것 — 불량을 잡아내는 능력 — 을 하나도 알려주지 않을 뿐입니다.
+      현업 데이터는 거의 언제나 이렇게 한쪽으로 쏠려 있습니다. 불량률 2%, 이탈률 5%, 사기 거래 0.1%.
+      그리고 우리가 정말로 맞히고 싶은 것은 언제나 그 적은 쪽입니다.</p>
+
+      <h2>혼동행렬의 네 칸부터</h2>
+      <p>정확도라는 숫자 하나로는 이 상황을 구분할 수 없습니다. 그래서 모든 분류 평가는
+      <b>혼동행렬(confusion matrix)</b>에서 출발합니다. 예측 결과를 네 칸으로 분해하는 표입니다.
+      불량 검출을 예로 들면 이렇습니다.</p>
+      <ul>
+        <li><b>TP (True Positive, 진짜 양성)</b> — 불량을 불량이라고 맞혔다 ✓</li>
+        <li><b>FP (False Positive, 거짓 양성)</b> — 정상을 불량이라고 했다 ✗ (헛경보)</li>
+        <li><b>FN (False Negative, 거짓 음성)</b> — 불량을 정상이라고 놓쳤다 ✗ (고객에게 흘러간다)</li>
+        <li><b>TN (True Negative, 진짜 음성)</b> — 정상을 정상이라 맞혔다 ✓</li>
+      </ul>
+      <p>외우는 요령이 있습니다. 두 번째 단어(Positive/Negative)가 <b>모델이 뭐라고 했는지</b>,
+      첫 번째 단어(True/False)가 <b>그 말이 맞았는지</b>입니다. False Negative는
+      "Negative(정상)라고 했는데 그게 False(틀렸다)" — 즉 불량을 놓친 것입니다.</p>
+      <p>정확도는 이 네 칸 중 <b>맞은 두 칸만</b> 봅니다 — 정확도 = (TP + TN) / 전체.
+      문제는 불균형 데이터에서 <b>TN이 압도적으로 많다</b>는 것입니다. 불량이 2%뿐이라면 TN이 될 수 있는
+      표본이 98%입니다. 아무것도 하지 않아도 TN이 정확도를 다 채워줍니다. 이것이
+      <b>정확도의 역설(accuracy paradox)</b>입니다. 소수 클래스가 중요한 문제 — 불량 검출, 사기 탐지,
+      질병 진단, 이탈 예측 — 에서 정확도는 거의 언제나 쓸모없는 지표가 됩니다.</p>
+      <div class="tip">💡 파이썬 sklearn을 쓴다면 순서 함정을 조심하세요. <b>confusion_matrix(y, pred).ravel()</b>은
+      (TN, FP, FN, TP) 순서로 반환합니다. TP부터가 아닙니다. 이 순서를 헷갈려 지표를 통째로
+      잘못 계산하는 일이 정말 흔합니다.</div>
+
+      <h2>정확도 97.98% 뒤에 숨은 숫자</h2>
+      <p>이제 앞의 랜덤포레스트를 혼동행렬로 다시 채점해 봅니다. 테스트 데이터 6,000행에는
+      불량이 121개 들어 있습니다. 임계값 0.5 기준 성적표는 이렇습니다.</p>
+      <ul>
+        <li><b>"전부 정상"이라고 답하기</b> — 정확도 0.9798 · 재현율 0.000 · 정밀도 0.000 · <b>놓침 121개 전부</b></li>
+        <li><b>랜덤포레스트 (임계값 0.5)</b> — 정확도 0.9798 · 재현율 0.091 · 정밀도 0.500 · 적발 11 · 헛경보 11 · <b>놓침 110</b></li>
+      </ul>
+      <p><b>재현율 0.091</b> — 불량 121개 중 11개를 잡았다는 뜻입니다. 나머지 110개는 그대로
+      고객에게 갑니다. 정확도 97.98%라는 숫자 뒤에 '121개 중 110개를 놓쳤다'가 숨어 있는 것입니다.
+      보고서에는 앞의 숫자가 올라가고, 현장에는 뒤의 숫자가 갑니다.</p>
+      <p>흥미로운 것은 <b>정밀도 0.500</b>입니다. 모델이 경보를 울린 22개 중 11개가 진짜 불량이었습니다.
+      모델이 확신을 갖고 말할 때는 절반이 맞는다는 뜻이고, 모델이 아무것도 배우지 못한 게 아니라는
+      첫 번째 힌트입니다. 실제로 이 모델이 매긴 불량 확률 상위 50개를 뽑아보면 <b>23개가 진짜 불량</b>입니다.
+      무작위로 50개를 골랐다면 1개였을 겁니다. 모델이 무능한 게 아니라, 정확도라는 저울이
+      그 능력을 보여주지 못했던 것입니다.</p>
+
+      <h2>정밀도와 재현율 — 서로 다른 질문에 답한다</h2>
+      <p>다른 도메인에서도 같은 일이 반복됩니다. 카드사의 이상거래 탐지를 봅니다. 거래 5,000건 중
+      사기는 152건(3.04%)입니다. "전부 정상"이라고 찍기만 해도 정확도 0.9696이 나오는 데이터입니다.
+      외주 업체 네 곳이 모델을 만들어 왔고, 그중 두 모델의 성적이 이렇습니다.</p>
+      <ul>
+        <li><b>모델A</b> — 정확도 0.9696, 잡은 사기 <b>0건 / 152건</b>. 단 한 건도 사기라고 예측하지 않았습니다.
+        정확도가 "전부 정상 찍기"와 소수점까지 같은, 아무 일도 하지 않는 모델입니다.</li>
+        <li><b>모델C</b> — 정확도 0.8230으로 네 모델 중 꼴찌. 그런데 잡은 사기는 <b>128건 / 152건</b>으로 최다입니다.
+        대신 정상 거래 861건을 사기로 의심(FP)했습니다.</li>
+      </ul>
+      <p>정확도만 보면 모델A가 모델C를 압도합니다. 사기를 잡는다는 목적으로 보면 정반대입니다.
+      그래서 혼동행렬의 네 칸을 조합한 지표들이 필요합니다. 각 지표는 서로 다른 질문에 답합니다.</p>
+      <ul>
+        <li><b>정밀도(Precision) = TP / (TP + FP)</b> — "사기라고 부른 것 중 진짜는 몇 %인가?"
+        헛수고를 줄이고 싶을 때 봅니다.</li>
+        <li><b>재현율(Recall) = TP / (TP + FN)</b> — "진짜 사기 중 몇 %를 잡았나?"
+        놓치면 안 될 때 봅니다. 암 진단, 사기 탐지, 불량 검출이 여기에 해당합니다.</li>
+        <li><b>F1</b> — 정밀도와 재현율의 <b>조화평균</b>. 정밀도 1.0에 재현율 0.0이면 산술평균은 0.5로
+        그럴듯해 보이지만, F1은 0.0입니다. 한쪽만 극단으로 올리는 꼼수를 허용하지 않습니다.</li>
+      </ul>
+      <p>정밀도와 재현율은 거래 관계입니다. 공격적으로 예측하면 재현율이 오르고 정밀도가 떨어지며,
+      보수적으로 예측하면 반대가 됩니다. 어느 쪽에 무게를 둘지는 지표가 아니라 <b>비용</b>이 정합니다 —
+      불량 하나를 놓치는 손실이 큰가, 헛경보 하나의 비용이 큰가.</p>
+      <div class="think">🤔 <b>생각해볼 점</b> — 모델A의 정확도는 0.9696인데 잡은 사기는 0건입니다.
+      모델C는 정확도 0.8230으로 훨씬 낮은데 사기를 128건 잡았습니다. 여러분이 카드사 담당자라면
+      어느 모델과 계약하시겠습니까? 그리고 그 판단에 정확도는 어떤 역할을 했나요?</div>
+
+      <h2>보고서를 받으면 가장 먼저 물어볼 것</h2>
+      <p>누군가 "정확도 97%입니다"라고 말할 때, 그 숫자가 자랑스러워서가 아니라
+      다른 지표를 보여주고 싶지 않아서일 수 있습니다. 그래서 첫 질문은 언제나 이것이어야 합니다.
+      <b>"혼동행렬을 보여주세요."</b> 네 칸을 보면 모델이 실제로 무엇을 하고 있는지 숨길 수 없습니다.</p>
+      <p>정리하면 이렇습니다. 정확도는 데이터가 균형 잡혀 있을 때만 믿을 수 있는 지표입니다.
+      불균형 데이터에서는 반드시 혼동행렬을 열고, 재현율("놓치면 안 되는 것을 몇 % 잡았나")과
+      정밀도("경보 중 진짜가 몇 %인가")를 나란히 봐야 합니다. 그 두 숫자 사이의 균형은
+      수식이 아니라 업무의 비용 구조가 정해줍니다.</p>
+      <p>이 글은 DataForge 교육 과정 원고에서 발췌·각색했습니다. 아래 시뮬레이터에서 임계값을
+      직접 움직여 보면 정확도·정밀도·재현율·F1이 어떻게 서로 밀고 당기는지 눈으로 확인할 수 있습니다.</p>
+
+      <a class="cta" href="/sim/ml#metrics" target="_blank" rel="noopener">📊 평가지표 시뮬레이터에서 직접 확인하기 →</a>
+
+      <h2>함께 보면 좋은 가이드</h2>
+      <div class="related">
+        <a href="/guide/data_leakage">AUC 0.987은 축하가 아니라 경고다 — 데이터 누수 이야기</a>
+        <a href="/guide/sim_ml">머신러닝 시뮬레이터 사용법 — 코드 없이 모델을 만져보기</a>
+        <a href="/guide/prep_missing">결측치·이상치 시뮬레이터 사용법 — 빠진 값과 튀는 값, 적을 먼저 알기</a>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="foot-links"><a href="/guide/">가이드</a>·<a href="/about">소개·문의</a>·<a href="/privacy">개인정보처리방침</a></div>
+    © 2026 DATAFORGE · dataforge.ai.kr · Education Data Platform
+  </footer>
+</body>
+</html>
