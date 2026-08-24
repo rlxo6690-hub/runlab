@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /Users/user/Desktop/태태/dataforge-복구/site/sim/\\necho \\\"===== pyodide / loadPackage / micropip / worker =====\\\"\\nfor f in *.html; do m=$(grep -oiE \\\"pyodide|loadPackage|micropip|new Worke...",
-  "error": "Exit code 1\n===== pyodide / loadPackage / micropip / worker =====\ntext.html: Pyodide \ntimeseries.html: Pyodide loadPackage pyodide \n\n===== localStorage / sessionStorage keys =====\n\n===== hash routing (location.hash / #arch etc) =====\nbasicstat.html: location.hash \ndeep.html: #neuron location.hash \nml.html: location.hash \nstat.html: location.hash \n\n===== other relative script srcs =====\naitest.html: src=\"/mfg/js/promo.js\" \nbasicstat.html: src=\"/mfg/js/promo.js\" \nchart.html: src=\"/mfg/js/promo.js\"...",
-  "timestamp": "2026-08-24T07:47:18.174Z",
+  "tool_name": "mcp__Claude_Browser__computer",
+  "tool_input_preview": "{\"action\":\"scroll\",\"coordinate\":[400,300],\"scroll_direction\":\"down\",\"scroll_amount\":6}",
+  "error": "computer timed out after 30s. The Browser pane is currently hidden. The pane may be stuck (modal dialog, navigation hang, or unresponsive renderer). Check preview_console_logs for errors.",
+  "timestamp": "2026-08-24T08:25:59.536Z",
   "retry_count": 1
 }
