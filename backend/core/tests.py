@@ -249,3 +249,17 @@ class WorkProxyTests(TestCase):
         w._assemble(uid, out)
         self.assertEqual(open(out, "rb").read(), b"AAAABBBBCCCC")
         os.remove(out)
+
+
+class LmsTests(TestCase):
+    def test_code_gate(self):
+        from .models import TrainingSession
+        TrainingSession.objects.create(name="교육", code="LMS123")
+        bad = self.client.post("/lms/", {"code": "NOPE00"})
+        self.assertEqual(bad.status_code, 302)
+        self.assertIn("err=1", bad["Location"])
+        good = self.client.post("/lms/", {"code": "lms123"})  # 소문자→대문자
+        self.assertEqual(good.status_code, 302)
+        self.assertNotIn("err", good["Location"])
+        # 인증 후 배너
+        self.assertIn("인증됨", self.client.get("/lms/").content.decode())

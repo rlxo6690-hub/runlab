@@ -15,6 +15,7 @@ from core import views_timeseries as ts
 from core import views_text as txt
 from core import views_ml as ml
 from core import views_work as work
+from core import views_lms as lms
 from core import frontend
 
 urlpatterns = [
@@ -56,6 +57,9 @@ urlpatterns = [
     # ── 관리자 페이지(self-router + 로그아웃) ──
     path("admin/", apage.admin_page),
     path("admin", apage.admin_page),
+
+    # ── LMS 교육 코드 게이트(로그인 후 뷰어는 6단계 재설계) ──
+    path("lms/", lms.lms),
 
     # ── 업로드된 미디어 ──
     re_path(r"^media/(?P<path>.*)$", media_serve, {"document_root": settings.MEDIA_ROOT}),
