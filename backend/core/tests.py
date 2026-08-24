@@ -127,3 +127,37 @@ class AdminApiTests(TestCase):
                                      content_type="application/json")
         self.c.post("/mfg/api/reviews.php", {"_method": "APPROVE", "payload": payload})
         self.assertEqual(len(Client().get("/mfg/api/reviews.php").json()), 1)
+
+
+class StreamTests(TestCase):
+    def test_stream_fanout_and_classification(self):
+        admin = Client()
+        from django.conf import settings
+        admin.post("/mfg/api/login.php",
+                   data=json.dumps({"password": settings.ADMIN_PASSWORD}),
+                   content_type="application/json")
+        admin.post("/mfg/api/stream_state.php",
+                   data=json.dumps({"action": "start", "topic": "T", "rate": 1,
+                                    "dbEnabled": True, "config": {}}),
+                   content_type="application/json")
+        rows = [{"timestamp": "1", "process_status": "RUNNING"},
+                {"timestamp": "2", "process_status": "ALARM"},
+                {"timestamp": "3", "process_status": "WARNING"}]
+        admin.post("/mfg/api/stream_state.php",
+                   data=json.dumps({"action": "broadcast", "msgs": rows, "msgCount": 3, "topic": "T"}),
+                   content_type="application/json")
+        admin.post("/mfg/api/db_write.php",
+                   data=json.dumps({"topic": "T", "rows": rows}),
+                   content_type="application/json")
+        # 뷰어(비로그인)도 poll 가능
+        viewer = Client()
+        d = viewer.get("/mfg/api/stream_state.php").json()
+        self.assertTrue(d["running"])
+        self.assertEqual(d["msgCount"], 3)
+        self.assertEqual([m["cls"] for m in d["recentMsgs"]], ["normal", "err", "warn"])
+        from .models import StreamRow
+        self.assertEqual(StreamRow.objects.count(), 3)
+
+    def test_sensor_api_shape(self):
+        d = Client().get("/factory_lab/sensor/api.php").json()
+        self.assertTrue(all({"sensor_code", "value", "status"} <= set(s) for s in d["sensors"]))

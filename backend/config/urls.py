@@ -10,6 +10,7 @@ from django.views.static import serve as media_serve
 from core import views_public as pub
 from core import views_admin as adm
 from core import views_adminpage as apage
+from core import views_stream as strm
 from core import frontend
 
 urlpatterns = [
@@ -31,6 +32,11 @@ urlpatterns = [
     path("mfg/api/upload_file.php", adm.upload_file),
     path("mfg/api/upload_pdf.php", adm.upload_pdf),
     path("mfg/api/traffic_stats.php", adm.traffic_stats),
+
+    # ── 제조 스트리밍 데모 ──
+    path("mfg/api/stream_state.php", strm.stream_state),
+    path("mfg/api/db_write.php", strm.db_write),
+    path("factory_lab/sensor/api.php", strm.sensor_api),
 
     # ── 관리자 페이지(self-router + 로그아웃) ──
     path("admin/", apage.admin_page),

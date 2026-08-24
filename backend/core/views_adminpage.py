@@ -36,9 +36,19 @@ def admin_page(request):
         return JsonResponse({"ok": False, "msg": "관리자 인증이 필요합니다"}, status=403)
     action = request.POST.get("action", "")
     if action == "stats":
-        return JsonResponse({"ok": True, "tables": {}})   # 스트리밍 슬라이스에서 채움
-    if action in ("db_setup", "truncate"):
-        return JsonResponse({"ok": True, "msg": "제조 DB는 스트리밍 단계에서 활성화됩니다"})
+        from .models import StreamRow
+        from django.db.models import Count
+        per = {r["topic"]: r["n"] for r in
+               StreamRow.objects.values("topic").annotate(n=Count("id"))}
+        return JsonResponse({"ok": True, "total": StreamRow.objects.count(), "tables": per})
+    if action == "db_setup":
+        return JsonResponse({"ok": True, "msg": "준비 완료"})  # 마이그레이션이 테이블 담당
+    if action == "truncate":
+        from .models import StreamRow
+        table = request.POST.get("table", "")
+        qs = StreamRow.objects.all() if not table else StreamRow.objects.filter(topic=table)
+        n = qs.count(); qs.delete()
+        return JsonResponse({"ok": True, "deleted": n})
     if action.startswith("ac_"):
         # 외부 오픈API 수집기 — 스트리밍/수집 슬라이스에서 구현
         return JsonResponse({"ok": True, "total": 0, "pages": 0,

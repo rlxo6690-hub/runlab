@@ -123,3 +123,27 @@ class ShortURL(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class StreamState(models.Model):
+    """제조 스트리밍 데모의 서버측 공유 상태(싱글턴 id=1).
+    관리자가 broadcast → 여기 buffer에 쌓임 → 교육생 뷰어가 poll로 수신."""
+    running = models.BooleanField(default=False)
+    topic = models.CharField(max_length=80, blank=True)
+    rate = models.FloatField(default=1)
+    db_enabled = models.BooleanField(default=False)
+    config = models.JSONField(default=dict)
+    recent_msgs = models.JSONField(default=list)  # [{ts,msg,cls}] 최근 N개
+    msg_count = models.IntegerField(default=0)
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj
+
+
+class StreamRow(models.Model):
+    """db_write로 적재되는 스트리밍 행. 동적 컬럼이라 payload는 JSON."""
+    topic = models.CharField(max_length=80, db_index=True)
+    data = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
