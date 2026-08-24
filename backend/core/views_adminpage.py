@@ -22,9 +22,17 @@ def admin_page(request):
             html = os.path.join(settings.SITE_DIR, "admin", "index.php")
         body = open(html, encoding="utf-8").read()
         # 리브랜드: 관리자 콘솔도 RunLab 표기로(원본 site/admin은 그대로 두고 서빙 시 치환)
+        import re as _re
+        body = _re.sub(r"DATA(<(?:em|span|b|strong)>)FORGE(</(?:em|span|b|strong)>)",
+                       lambda m: "RUN" + m.group(1) + "LAB" + m.group(2), body)
         for a, b in (("DATA FORGE", "RUN LAB"), ("DATAFORGE", "RUNLAB"),
                      ("DataForge", "RunLab"), ("dataforge.ai.kr", "runlab.ai.kr")):
             body = body.replace(a, b)
+        # 노트북 스킨 주입 (인라인 <style> 뒤에 오도록 </head> 직전)
+        skin = ('<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">'
+                '<link rel="stylesheet" href="/assets/df-skin.css">')
+        if "df-skin.css" not in body and "</head>" in body:
+            body = body.replace("</head>", skin + "</head>", 1)
         authed = bool(request.session.get("is_admin"))
         # 원본 PHP가 서버에서 주입하던 값. 세션 로그인 상태를 여기서 주입한다.
         body = re.sub(r"const isAdmin\s*=\s*(true|false)\s*;",
