@@ -68,3 +68,30 @@ table th{font-family:var(--df-mono)}
 
 /* 접근성: 모션 최소화 존중 */
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ══ 인터랙티브 sim 데모 6개(Tailwind 기반) 노트북 라이트 통일 ══
+   이 다크 유틸들은 gradient·hyperparam·lightgbm·neuron·randomforest·xgboost 에만 존재.
+   df-header/df-brand 헤더도 노트북 톤으로. */
+
+/* 헤더·브랜드 */
+.df-header{background:rgba(251,251,250,.85)!important;border-bottom:1px solid var(--border)!important}
+.df-brand{font-family:var(--df-mono)!important;color:var(--text)!important;letter-spacing:-.01em!important;
+  font-size:15px!important;display:inline-flex;align-items:center;gap:7px}
+.df-brand::before{content:'▶';color:var(--green);font-size:11px}
+.df-brand em{color:var(--accent)!important}
+.df-title{color:var(--muted)!important}
+.df-back{font-family:var(--df-mono);border-color:var(--border2)!important;color:var(--muted)!important;border-radius:7px!important}
+.df-back:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+
+/* 다크 콘솔 패널 → 라이트 노트북 카드 */
+.bg-slate-900,.bg-slate-950,.bg-slate-800,.bg-gray-900,.bg-gray-800{
+  background:#ffffff!important;border:1px solid var(--border)!important;
+  box-shadow:0 1px 2px rgba(24,24,27,.04),0 6px 20px rgba(24,24,27,.04)!important}
+.text-slate-100,.text-slate-200,.text-slate-300,.text-white{color:var(--text)!important}
+.text-slate-400,.text-slate-500{color:var(--muted)!important}
+.text-indigo-300,.text-indigo-400{color:var(--accent)!important}
+.border-slate-700,.border-slate-800{border-color:var(--border)!important}
+/* 다크 위에서 쓰이던 인디고/앰버 강조 버튼은 노트북 액센트로 */
+.bg-indigo-600,.bg-indigo-500{background:var(--accent)!important}
+.bg-amber-500,.bg-amber-400,.bg-yellow-500{background:var(--accent)!important;color:#fff!important}
+.hover\:bg-slate-800:hover,.hover\:bg-slate-700:hover{background:#f4f4f2!important}
