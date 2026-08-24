@@ -121,3 +121,7 @@ STATIC_URL = 'static/'
 SITE_DIR = str(BASE_DIR.parent / "site")   # 회수한 정적 프론트
 DEMO_PASSWORD = "dataforge"                 # ads/biz 데모 게이트 비번(임시)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024   # 파일 업로드(마크다운 이미지 등)
+
+ADMIN_PASSWORD = "dataforge2026!"           # 관리자 로그인(대표가 바꿀 것)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = str(BASE_DIR / "media")

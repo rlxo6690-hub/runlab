@@ -1,0 +1,7 @@
+{
+  "tool_name": "mcp__Claude_Browser__find",
+  "tool_input_preview": "{\"query\":\"admin password input field\"}",
+  "error": "no read_page tree cached; call read_page first",
+  "timestamp": "2026-08-24T11:57:17.929Z",
+  "retry_count": 2
+}

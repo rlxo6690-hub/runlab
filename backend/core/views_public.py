@@ -36,27 +36,48 @@ def traffic_log(request):
 
 @csrf_exempt
 def reviews(request):
-    """GET → 승인된 후기 배열. POST {name,org,text,website} → 미승인 등록."""
+    """공개·관리자 공용(admin RV_API도 같은 /mfg/api/reviews.php).
+    - GET ?all=1 (+관리자 세션) → 대기 포함 전체
+    - GET → 승인된 후기만
+    - POST + 관리자 _method(APPROVE/DELETE) → 승인/삭제
+    - POST (일반) → 미승인 등록(허니팟 차단)
+    """
+    is_admin = request.session.get("is_admin")
     if request.method == "GET":
+        if request.GET.get("all") and is_admin:
+            return JsonList([{"id": r.id, "name": r.name, "org": r.org, "text": r.text,
+                              "approved": r.approved, "createdAt": r.created_at.isoformat()}
+                             for r in Review.objects.all()])
         items = Review.objects.filter(approved=True)[:100]
         return JsonList([{"text": r.text, "name": r.name, "org": r.org} for r in items])
+
     method, data = read_request(request)
-    if method == "POST":
-        if data.get("website"):  # 허니팟 — 봇
-            return ok()  # 조용히 성공인 척
-        text = (data.get("text") or "").strip()
-        name = (data.get("name") or "").strip()
-        if len(text) < 2 or not name:
-            return err("이름과 후기를 입력해 주세요")
-        Review.objects.create(name=name[:100], org=(data.get("org") or "")[:200],
-                              text=text, approved=False)
-        return ok(msg="등록되었습니다. 검토 후 게시됩니다.")
-    return err("지원하지 않는 요청", status=405)
+    # 관리자 관리 동작
+    if is_admin and method in ("APPROVE", "PUT", "PATCH", "DELETE"):
+        rid = data.get("id")
+        if method == "DELETE":
+            Review.objects.filter(id=rid).delete()
+        else:
+            Review.objects.filter(id=rid).update(approved=bool(data.get("approved", True)))
+        return ok()
+    # 공개 등록
+    if data.get("website"):  # 허니팟 — 봇
+        return ok()
+    text = (data.get("text") or "").strip()
+    name = (data.get("name") or "").strip()
+    if len(text) < 2 or not name:
+        return err("이름과 후기를 입력해 주세요")
+    Review.objects.create(name=name[:100], org=(data.get("org") or "")[:200],
+                          text=text, approved=False)
+    return ok(msg="등록되었습니다. 검토 후 게시됩니다.")
 
 
 @csrf_exempt
 def prompt_lib(request):
-    """GET ?action=categories → 카테고리만 / ?action=all → 전체."""
+    """GET ?action=categories/all(공개 읽기). POST {action:...}는 관리자 CRUD로 위임."""
+    if request.method == "POST":
+        from .views_admin import prompt_lib_write
+        return prompt_lib_write(request)
     action = request.GET.get("action", "all")
     cats = [{"id": c.id, "icon": c.icon, "name": c.name,
              "description": c.description, "sort_order": c.sort_order}
@@ -73,10 +94,26 @@ def prompt_lib(request):
 
 @csrf_exempt
 def feedback(request):
-    """POST {text,contact,page,website} → 개선의견 접수."""
+    """공개·관리자 공용(admin FB_API도 같은 /mfg/api/feedback.php).
+    - GET (+관리자) → 의견 목록
+    - POST + 관리자 _method(READ/DELETE) → 읽음/삭제
+    - POST (일반) {text,contact,page,website} → 개선의견 접수
+    """
+    is_admin = request.session.get("is_admin")
+    if request.method == "GET":
+        if not is_admin:
+            return err("관리자 인증이 필요합니다", status=403)
+        return JsonList([{"id": f.id, "text": f.text, "contact": f.contact, "page": f.page,
+                          "read": f.read, "createdAt": f.created_at.isoformat()}
+                         for f in Feedback.objects.all()])
     method, data = read_request(request)
-    if method != "POST":
-        return err("POST only", status=405)
+    if is_admin and method in ("READ", "PUT", "PATCH", "DELETE"):
+        fid = data.get("id")
+        if method == "DELETE":
+            Feedback.objects.filter(id=fid).delete()
+        else:
+            Feedback.objects.filter(id=fid).update(read=bool(data.get("read", True)))
+        return ok()
     if data.get("website"):  # 허니팟
         return ok(msg="소중한 의견 감사합니다!")
     text = (data.get("text") or "").strip()
@@ -89,7 +126,12 @@ def feedback(request):
 
 @csrf_exempt
 def login(request):
-    """데모 게이트. mfg는 {code}(교육코드), ads/biz는 {password}."""
+    """단일 로그인 엔드포인트(/mfg/api/login.php). 세 종류 호출을 한곳에서 받는다:
+      - 관리자 콘솔: {password}==ADMIN_PASSWORD → is_admin 세션, {ok,admin:true}
+      - ads/biz 데모: {password}==DEMO_PASSWORD → demo 세션
+      - mfg 데모: {code}==교육세션코드 → demo 세션
+    """
+    from django.conf import settings
     method, data = read_request(request)
     if method != "POST":
         return err("POST only", status=405)
@@ -101,7 +143,9 @@ def login(request):
             return ok(msg="인증되었습니다")
         return err("유효하지 않은 코드입니다")
     if password:
-        from django.conf import settings
+        if password == settings.ADMIN_PASSWORD:
+            request.session["is_admin"] = True
+            return ok(admin=True, msg="관리자로 로그인했습니다")
         if password == settings.DEMO_PASSWORD:
             request.session["demo_authed"] = True
             return ok(msg="인증되었습니다")

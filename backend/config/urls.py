@@ -2,21 +2,43 @@
 
 백엔드 경로(.php로 끝나는 원본 주소)를 먼저 잡고, 나머지는 전부 정적 프론트로 보낸다.
 프론트 JS가 `/mfg/api/xxx.php` 를 하드코딩해 부르므로 우리도 그 주소 그대로 받는다
-(`.php`는 URL 속 글자일 뿐, Python이 처리한다).
+(`.php`는 URL 속 글자일 뿐, Python이 처리한다). admin(BASE_URL='/mfg')·공개 모두 /mfg/api/*.
 """
+from django.conf import settings
 from django.urls import path, re_path
+from django.views.static import serve as media_serve
 from core import views_public as pub
+from core import views_admin as adm
+from core import views_adminpage as apage
 from core import frontend
 
 urlpatterns = [
-    # --- 공개 백엔드 /mfg/api/* ---
+    # ── 공개 API (로드 때 호출) ──
     path("mfg/api/traffic_log.php", pub.traffic_log),
-    path("mfg/api/reviews.php", pub.reviews),
-    path("mfg/api/prompt_lib.php", pub.prompt_lib),
-    path("mfg/api/feedback.php", pub.feedback),
-    path("mfg/api/login.php", pub.login),
+    path("mfg/api/reviews.php", pub.reviews),        # GET 공개 / POST는 아래 admin과 경로 겹침→쿼리로 구분
+    path("mfg/api/prompt_lib.php", pub.prompt_lib),  # GET 읽기 / POST 관리자 CRUD 위임
+    path("mfg/api/feedback.php", pub.feedback),      # 공개 제출
+    path("mfg/api/login.php", pub.login),            # 관리자·데모 통합 로그인
     path("mfg/api/logout.php", pub.logout),
 
-    # --- 정적 프론트 (깔끔한 URL) : 맨 마지막 캐치올 ---
+    # ── 관리자 API (후기·의견은 공개와 URL 공유 → 위 pub 뷰가 세션으로 분기) ──
+    path("mfg/api/sessions.php", adm.sessions),
+    path("mfg/api/courses.php", adm.courses),
+    path("mfg/api/content_lib.php", adm.content_lib),
+    path("mfg/api/hub_tools.php", adm.hub_tools),
+    path("mfg/api/drive.php", adm.drive),
+    path("mfg/api/short_url.php", adm.short_url),
+    path("mfg/api/upload_file.php", adm.upload_file),
+    path("mfg/api/upload_pdf.php", adm.upload_pdf),
+    path("mfg/api/traffic_stats.php", adm.traffic_stats),
+
+    # ── 관리자 페이지(self-router + 로그아웃) ──
+    path("admin/", apage.admin_page),
+    path("admin", apage.admin_page),
+
+    # ── 업로드된 미디어 ──
+    re_path(r"^media/(?P<path>.*)$", media_serve, {"document_root": settings.MEDIA_ROOT}),
+
+    # ── 정적 프론트 (깔끔한 URL) : 맨 마지막 캐치올 ──
     re_path(r"^(?P<path>.*)$", frontend.serve_site),
 ]

@@ -28,7 +28,10 @@ def read_request(request):
         if override:
             method = override
         data = {}
+        # payload는 Blob(파일명 payload.json)으로 오므로 POST가 아니라 FILES에 담긴다.
         payload = request.POST.get("payload")
+        if payload is None and "payload" in request.FILES:
+            payload = request.FILES["payload"].read().decode("utf-8", "replace")
         if payload:
             try:
                 data = json.loads(payload)
