@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>페르소나 시뮬레이터 — DataForge</title>
+<title>페르소나 시뮬레이터 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
-<meta property="og:title" content="페르소나 시뮬레이터 — DataForge">
+<meta property="og:title" content="페르소나 시뮬레이터 — RunLab">
 <meta property="og:description" content="타겟 고객의 기본 정보, 목표, 고충, 행동 패턴을 입력해 전문적인 페르소나 카드를 생성하세요">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -178,7 +178,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       HTML로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -676,7 +676,7 @@ function buildExportHTML(s) {
     '</style>\n</head>\n<body>\n<div class="wrap">\n' +
 
     '<div class="page-title">👤 페르소나 카드</div>\n' +
-    '<div class="meta"><b style="color:var(--muted)">'+ec(s.name||'페르소나')+'</b> &nbsp;·&nbsp; '+ec(date)+' &nbsp;·&nbsp; DataForge</div>\n' +
+    '<div class="meta"><b style="color:var(--muted)">'+ec(s.name||'페르소나')+'</b> &nbsp;·&nbsp; '+ec(date)+' &nbsp;·&nbsp; RunLab</div>\n' +
 
     '<div class="sum-row">\n' +
     '<div class="sum-c" style="border-color:var(--border);"><div class="sum-icon">👤</div><div style="min-width:0;overflow:hidden;"><div class="sum-v" style="color:var(--text);">'+ec(s.name||'-')+'</div><div class="sum-l" style="color:var(--muted);">'+ec(s.age)+'세 · '+ec(s.gender)+'</div></div></div>\n' +
@@ -711,7 +711,7 @@ function buildExportHTML(s) {
     (tagItems||'<span style="font-size:12px;color:var(--dim);">태그 없음</span>')+
     '</div>\n</div>\n</div>\n' +
 
-    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(date)+'</div>\n' +
+    '<div class="footer">RunLab · runlab.ai.kr · '+ec(date)+'</div>\n' +
     '</div>\n</body>\n</html>';
 }
 
@@ -725,7 +725,7 @@ function exportMD(){
   function mdc(x){ return String(x||'').replace(/\|/g,'\\|'); }
   var md = '# 👤 페르소나 — ' + (s.name||'이름 없음') + '\n\n';
   if (s.quote) md += '> "' + s.quote + '"\n\n';
-  md += today + ' · DataForge 페르소나 시뮬레이터\n\n';
+  md += today + ' · RunLab 페르소나 시뮬레이터\n\n';
   md += '## 기본 프로필\n\n| 항목 | 내용 |\n|---|---|\n';
   md += '| 나이 · 성별 | ' + mdc(s.age + '세 · ' + s.gender) + ' |\n';
   if (s.job)       md += '| 직업 / 직위 | ' + mdc(s.job) + ' |\n';

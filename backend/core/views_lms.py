@@ -56,7 +56,7 @@ def _render_viewer(sess):
     } for m in mods], ensure_ascii=False)
     return f"""<!doctype html><html lang=ko><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>{_h.escape(sess.name)} · DataForge LMS</title>
+<title>{_h.escape(sess.name)} · RunLab LMS</title>
 <style>
 :root{{--bg:#0f172a;--side:#1e293b;--card:#fff;--accent:#2563eb;--text:#1e293b;--dim:#64748b}}
 *{{box-sizing:border-box;margin:0;padding:0}}

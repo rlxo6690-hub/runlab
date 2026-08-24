@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KPI 대시보드 — DataForge</title>
+<title>KPI 대시보드 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
-<meta property="og:title" content="KPI 대시보드 — DataForge">
+<meta property="og:title" content="KPI 대시보드 — RunLab">
 <meta property="og:description" content="KPI 목표·현재값을 입력하고 달성률 대시보드를 생성합니다.">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -184,7 +184,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </button>
     <button class="pr-open-btn" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:#0d9488;" onclick="exportMD()">⬇️ 마크다운</button>
     <button class="pr-open-btn" onclick="openPrompt()">🤖 분석 프롬프트</button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -574,7 +574,7 @@ function generateExportHTML() {
     '</style>\n</head>\n<body>\n<div class="wrap">\n' +
 
     '<div class="page-title">'+ec(title)+'</div>\n' +
-    '<div class="meta">'+(org?'<b style="color:#64748b">'+ec(org)+'</b> &nbsp;·&nbsp; ':'')+ec(date)+' 기준 &nbsp;·&nbsp; KPI '+data.length+'개 &nbsp;·&nbsp; DataForge</div>\n' +
+    '<div class="meta">'+(org?'<b style="color:#64748b">'+ec(org)+'</b> &nbsp;·&nbsp; ':'')+ec(date)+' 기준 &nbsp;·&nbsp; KPI '+data.length+'개 &nbsp;·&nbsp; RunLab</div>\n' +
 
     '<div class="sum-row">\n' +
     '<div class="sum-c" style="border-color:var(--border);"><div class="sum-icon">📊</div><div><div class="sum-v">'+data.length+'</div><div class="sum-l" style="color:var(--muted);">전체 KPI</div></div></div>\n' +
@@ -589,7 +589,7 @@ function generateExportHTML() {
 
     '<div class="section-card">\n<div class="section-title">KPI 상세</div>\n'+cardsSect+'</div>\n' +
 
-    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(date)+'</div>\n' +
+    '<div class="footer">RunLab · runlab.ai.kr · '+ec(date)+'</div>\n' +
     '</div>\n' +
     '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>\n' +
     '<script>\n' +
@@ -720,7 +720,7 @@ function exportMD(){
   var avg = kpis.reduce(function(s,k){ return s + calcAchiev(k); }, 0) / kpis.length;
   var cnt = {achieved:0, ontrack:0, below:0};
   kpis.forEach(function(k){ cnt[statusOf(calcAchiev(k))]++; });
-  var md = '# 📋 ' + title + '\n\n' + (org?org+' · ':'') + today + ' · DataForge\n\n';
+  var md = '# 📋 ' + title + '\n\n' + (org?org+' · ':'') + today + ' · RunLab\n\n';
   md += '## 요약\n\n';
   md += '- 전체 KPI: ' + kpis.length + '개 · 평균 달성률: ' + avg.toFixed(1) + '%\n';
   md += '- ✅ 달성 ' + cnt.achieved + '개 · 🟡 진행중 ' + cnt.ontrack + '개 · 🔴 미달 ' + cnt.below + '개\n\n';

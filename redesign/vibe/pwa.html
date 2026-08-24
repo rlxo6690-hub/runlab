@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PWA 빌더 — DataForge</title>
+<title>PWA 빌더 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
-<meta property="og:title" content="PWA 빌더 — DataForge">
+<meta property="og:title" content="PWA 빌더 — RunLab">
 <meta property="og:description" content="내 웹사이트를 설치형 앱으로 — manifest·서비스 워커·아이콘을 한 번에 생성">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -162,11 +162,11 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
   <header class="site-header">
     <div class="logo">
-      <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+      <a href="https://runlab.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
       <div class="logo-sep"></div>
       <div class="logo-title">PWA 빌더</div>
     </div>
-    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr" class="header-back">← RunLab 홈</a>
   </header>
 
   <div class="page">
@@ -557,7 +557,7 @@ function buildSw(){
   var cache = slug() + '-' + (val('inpVer') || 'v1');
   var page = './index.html';
   var lines = [
-"// DataForge PWA 빌더 — 서비스 워커",
+"// RunLab PWA 빌더 — 서비스 워커",
 "// 재배포할 때는 CACHE 버전을 올려주세요 (예: -v1 → -v2)",
 "const CACHE = '" + cache + "';",
 "const PRECACHE = ['./', '" + page + "', './manifest.json'];",
@@ -635,7 +635,7 @@ function buildSw(){
 function buildHead(){
   var name = val('inpShort') || val('inpName') || '내앱';
   var out = [
-'<!-- ═══ PWA (DataForge PWA 빌더) ═══ -->',
+'<!-- ═══ PWA (RunLab PWA 빌더) ═══ -->',
 '<link rel="manifest" href="./manifest.json">',
 '<meta name="theme-color" content="' + $('inpTheme').value + '">',
 '<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">',
@@ -751,7 +751,7 @@ function buildHead(){
 }
 
 // ═══════════ 업로드한 HTML에 PWA 스니펫 자동 삽입 ═══════════
-var PWA_MARK_START = '<!-- ═══ PWA (DataForge PWA 빌더) ═══ -->';
+var PWA_MARK_START = '<!-- ═══ PWA (RunLab PWA 빌더) ═══ -->';
 var PWA_MARK_END   = '<!-- ═══════════════════════════════ -->';
 
 function buildAppliedHtml(){
@@ -812,7 +812,7 @@ function buildReadme(){
 '  3. GitHub Pages / Vercel에 배포(push)'
       ];
   return [
-'PWA 패키지 — DataForge PWA 빌더 (https://dataforge.ai.kr/vibe/pwa)',
+'PWA 패키지 — RunLab PWA 빌더 (https://runlab.ai.kr/vibe/pwa)',
 '================================================================',
 '',
 '[포함 파일]',

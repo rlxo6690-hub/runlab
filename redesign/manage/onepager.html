@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>원페이지 아이디어 기획서 — DataForge</title>
+<title>원페이지 아이디어 기획서 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
 <meta name="description" content="아이디어·고객·수익 모델을 한 장으로 정리하는 기획서 작성 도구. 완성된 기획서를 HTML 파일로 저장하세요.">
-<meta property="og:title" content="원페이지 아이디어 기획서 — DataForge">
+<meta property="og:title" content="원페이지 아이디어 기획서 — RunLab">
 <meta property="og:description" content="아이디어·고객·수익 모델을 한 장으로 정리하고 HTML로 저장합니다.">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -183,7 +183,7 @@ textarea.inp{resize:vertical;min-height:84px;}
       HTML로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -376,7 +376,7 @@ function docHTML(forExport){
     + (one?'<div class="lead">'+xe(one)+'</div>':'')
     + '<div class="meta">'
     +   (author?'<b style="color:var(--muted)">'+xe(author)+'</b> &nbsp;·&nbsp; ':'')
-    +   today+' &nbsp;·&nbsp; DataForge 원페이지 기획서</div>';
+    +   today+' &nbsp;·&nbsp; RunLab 원페이지 기획서</div>';
 
   /* 요약 카드 행 (html.md §6) — 상태별 색상은 인라인으로 */
   var okB='rgba(5,150,105,.3)', okG='rgba(5,150,105,.04)';
@@ -576,7 +576,7 @@ function saveHTML(){
     +'.section-card,.sum-c{break-inside:avoid;}.footer{margin-top:24px;}}\n'
     +'</style>\n</head>\n<body>\n<div class="wrap">\n'
     + docHTML(true)
-    + '\n<div class="footer">DataForge · dataforge.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
+    + '\n<div class="footer">RunLab · runlab.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
 
   var safe=title.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'onepager';
   var a=document.createElement('a');
@@ -610,7 +610,7 @@ function exportMD(){
   var title=v('title')||'제목 없는 아이디어';
   var md='# 💡 '+title+'\n\n';
   if(v('oneline')) md+='> '+v('oneline')+'\n\n';
-  md+=(v('author')?v('author')+' · ':'')+today+' · DataForge 원페이지 기획서\n\n';
+  md+=(v('author')?v('author')+' · ':'')+today+' · RunLab 원페이지 기획서\n\n';
   if(revSel.length) md+='**수익 방식**: '+revSel.join(' · ')+'\n\n';
   BODY.forEach(function(f){
     var val=v(f.k);

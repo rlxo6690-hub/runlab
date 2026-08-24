@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SWOT 분석 — DataForge</title>
+<title>SWOT 분석 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
 <meta name="description" content="강점·약점·기회·위협 4분면을 한 장에 정리하고 SO·WO·ST·WT 교차전략까지 도출합니다. 작성 내용은 브라우저에 자동 저장되고 HTML 파일로 내보낼 수 있습니다.">
-<meta property="og:title" content="SWOT 분석 — DataForge">
+<meta property="og:title" content="SWOT 분석 — RunLab">
 <meta property="og:description" content="SWOT 4분면과 교차전략(TOWS)을 한 장에 정리하고 HTML로 저장합니다.">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -179,7 +179,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       HTML로 저장
     </button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -531,7 +531,7 @@ function exportHTML(){
     +'<div class="page-title">⚖️ SWOT 분석</div>\n'
     +'<div class="meta"><b>'+ec(name)+'</b>'
     + (author ? ' &nbsp;·&nbsp; '+ec(author) : '')
-    + ' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; DataForge</div>\n\n'
+    + ' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; RunLab</div>\n\n'
 
     +'<div class="sum-row">\n'
     +'<div class="sum-c"><div class="sum-icon">⚖️</div><div><div class="sum-v">'+filled.length+' / 5</div><div class="sum-l">작성한 칸</div></div></div>\n'
@@ -542,7 +542,7 @@ function exportHTML(){
     +'</div>\n\n'
 
     +'<div class="canvas">\n'+canvas+'\n</div>\n\n'
-    +'<div class="footer">DataForge · dataforge.ai.kr · '+ec(today)+'</div>\n'
+    +'<div class="footer">RunLab · runlab.ai.kr · '+ec(today)+'</div>\n'
     +'</div>\n</body>\n</html>';
 
   var safe = name.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40) || 'swot';
@@ -665,7 +665,7 @@ function exportMD(){
   var author = val('bizAuthor');
   var today = new Date().toISOString().slice(0,10);
   var T = {SO:'**[SO·공격]** ', WO:'**[WO·보완]** ', ST:'**[ST·방어]** ', WT:'**[WT·회피]** '};
-  var md = '# ⚖️ SWOT 분석 — ' + name + '\n\n' + (author?author+' · ':'') + today + ' · DataForge\n\n';
+  var md = '# ⚖️ SWOT 분석 — ' + name + '\n\n' + (author?author+' · ':'') + today + ' · RunLab\n\n';
   BLOCKS.forEach(function(b){
     var items = itemsOf(b.key);
     md += '## ' + b.title + (b.en && b.en !== '⇒' ? ' ('+b.en+')' : '') + '\n\n';

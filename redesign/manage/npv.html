@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NPV · IRR 분석 시뮬레이터 — DataForge</title>
+<title>NPV · IRR 분석 시뮬레이터 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
-<meta property="og:title" content="NPV · IRR 분석 시뮬레이터 — DataForge">
+<meta property="og:title" content="NPV · IRR 분석 시뮬레이터 — RunLab">
 <meta property="og:description" content="순현재가치(NPV)·내부수익률(IRR)·투자회수기간을 시각화하는 투자 타당성 분석 시뮬레이터">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -138,7 +138,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 <header class="site-header">
   <div class="logo">
-    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <a href="https://runlab.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
     <div class="logo-sep"></div>
     <div class="logo-title">NPV · IRR 분석 시뮬레이터</div>
   </div>
@@ -149,7 +149,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </button>
     <button class="pr-open-btn" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:#0d9488;" onclick="exportMD()">⬇️ 마크다운</button>
     <button class="pr-open-btn" onclick="openPrompt()">🤖 분석 프롬프트</button>
-    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -630,7 +630,7 @@ function downloadHTML() {
     '<div class="wrap">',
     '',
     '<div class="page-title">📊 NPV · IRR 분석 결과</div>',
-    '<div class="meta"><b style="color:var(--muted)">NPV · IRR 시뮬레이터</b> &nbsp;·&nbsp; '+ec(dateStr)+' 기준 &nbsp;·&nbsp; DataForge</div>',
+    '<div class="meta"><b style="color:var(--muted)">NPV · IRR 시뮬레이터</b> &nbsp;·&nbsp; '+ec(dateStr)+' 기준 &nbsp;·&nbsp; RunLab</div>',
     '',
     sumRowHtml,
     '<div class="section-card">',
@@ -670,7 +670,7 @@ function downloadHTML() {
   }
 
   html += [
-    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(dateStr)+'</div>',
+    '<div class="footer">RunLab · runlab.ai.kr · '+ec(dateStr)+'</div>',
     '</div>',
     '</body>',
     '</html>'
@@ -795,7 +795,7 @@ function exportMD(){
   var npv = calcNPV(invest, cfs, r), irr = calcIRR(invest, cfs), pb = calcPayback(invest, cfs);
   var pv = cfs.reduce(function(s,cf,i){ return s + cf/Math.pow(1+r/100, i+1); }, 0);
   var pi = invest > 0 ? pv/invest : null;
-  var md = '# 💹 NPV·IRR 분석 결과\n\n' + today + ' · DataForge\n\n';
+  var md = '# 💹 NPV·IRR 분석 결과\n\n' + today + ' · RunLab\n\n';
   md += '## 입력값\n\n| 항목 | 값 |\n|---|---:|\n';
   md += '| 초기 투자금 | ' + fmt(invest) + '원 |\n| 할인율 (자본비용) | ' + r + '% |\n\n';
   md += '## 연도별 현금흐름\n\n| 연차 | 현금흐름 | 현재가치 |\n|---|---:|---:|\n';

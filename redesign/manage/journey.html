@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>고객 여정 맵 — DataForge</title>
+<title>고객 여정 맵 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
-<meta property="og:title" content="고객 여정 맵 — DataForge">
+<meta property="og:title" content="고객 여정 맵 — RunLab">
 <meta property="og:description" content="페르소나별 고객 여정을 단계별로 작성하고 감정 곡선을 시각화합니다.">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -245,7 +245,7 @@ input[type=range].emo-slider::-moz-range-thumb{
       HTML로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -651,7 +651,7 @@ function exportHTML() {
     +'<div class="meta"><b style="color:var(--muted)">'+ec(pName)+'</b>'
     +(pSeg?' &nbsp;·&nbsp; '+ec(pSeg):'')
     +(pGoal?' &nbsp;·&nbsp; '+ec(pGoal):'')
-    +' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; DataForge</div>\n\n'
+    +' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; RunLab</div>\n\n'
 
     +'<div class="sum-row">\n'
     +'<div class="sum-c" style="border-color:var(--border);"><div class="sum-icon">🗺</div><div><div class="sum-v">'+stages.length+'</div><div class="sum-l" style="color:var(--muted);">전체 단계</div></div></div>\n'
@@ -673,7 +673,7 @@ function exportHTML() {
     +'</div>\n'
     +'</div>\n\n'
 
-    +'<div class="footer">DataForge · dataforge.ai.kr · '+ec(today)+'</div>\n'
+    +'<div class="footer">RunLab · runlab.ai.kr · '+ec(today)+'</div>\n'
     +'</div>\n'
     +'<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>\n'
     +'<script>\n'
@@ -716,7 +716,7 @@ function exportMD() {
 
   var md = '# 🗺 고객 여정 맵\n\n';
   md += [pName, pSeg, pGoal].filter(Boolean).join(' · ') + '\n\n';
-  md += today + ' · DataForge\n\n';
+  md += today + ' · RunLab\n\n';
   md += '## 단계별 여정\n\n';
   stages.forEach(function(s, i){
     md += '### STEP ' + (i+1) + ' — ' + (s.name || '단계 ' + (i+1)) + '\n\n';

@@ -25,3 +25,4 @@
 {"t":0,"agent":"a3b3c33","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":317054}
 {"t":0,"agent":"system","event":"skill_invoked","skill_name":"frontend-design"}
 {"t":0,"agent":"a4fb07f","agent_type":"untracked-native-fork","event":"agent_stop","success":true,"synthetic":true,"telemetry_status":"unmatched_stop","reason":"SubagentStop arrived without a matching SubagentStart; native Agent/Task start telemetry was not observed."}
+{"t":0,"agent":"a252642","agent_type":"untracked-native-fork","event":"agent_stop","success":true,"synthetic":true,"telemetry_status":"unmatched_stop","reason":"SubagentStop arrived without a matching SubagentStart; native Agent/Task start telemetry was not observed."}

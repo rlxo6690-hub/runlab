@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>문제 분석 — DataForge</title>
+<title>문제 분석 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
 <meta name="description" content="As-Is/To-Be 갭으로 문제를 정의하고, 원인을 카테고리로 분해한 뒤 5 Whys로 근본 원인까지 파고듭니다. 대책은 즉시 실행·중장기로 나눠 정리하고 HTML로 저장하세요.">
-<meta property="og:title" content="문제 분석 — DataForge">
+<meta property="og:title" content="문제 분석 — RunLab">
 <meta property="og:description" content="문제 정의 → 원인 분해 → 5 Whys 근본 원인 → 대책. 문제 분석 표준 흐름을 한 장에 담아 HTML로 저장합니다.">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -187,7 +187,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       HTML로 저장
     </button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -655,7 +655,7 @@ function exportHTML(){
     +'<div class="page-title">🔎 문제 분석</div>\n'
     +'<div class="meta"><b>'+ec(name)+'</b>'
     + (author ? ' &nbsp;·&nbsp; '+ec(author) : '')
-    + ' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; DataForge</div>\n\n'
+    + ' &nbsp;·&nbsp; '+ec(today)+' &nbsp;·&nbsp; RunLab</div>\n\n'
 
     +'<div class="sum-row">\n'
     +'<div class="sum-c"><div class="sum-icon">🔎</div><div><div class="sum-v">'+filled+' / 4</div><div class="sum-l">작성 단계</div></div></div>\n'
@@ -665,7 +665,7 @@ function exportHTML(){
     +'</div>\n\n'
 
     +'<div class="canvas">\n'+defHTML+'\n'+causeHTML+'\n'+whyHTML+'\n'+actHTML+'\n</div>\n\n'
-    +'<div class="footer">DataForge · dataforge.ai.kr · '+ec(today)+'</div>\n'
+    +'<div class="footer">RunLab · runlab.ai.kr · '+ec(today)+'</div>\n'
     +'</div>\n</body>\n</html>';
 
   var safe = name.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40) || 'problem';
@@ -801,7 +801,7 @@ function exportMD(){
   var name = val('bizName') || '문제 분석';
   var author = val('bizAuthor');
   var today = new Date().toISOString().slice(0,10);
-  var md = '# 🔎 문제 분석 — ' + name + '\n\n' + (author?author+' · ':'') + today + ' · DataForge\n\n';
+  var md = '# 🔎 문제 분석 — ' + name + '\n\n' + (author?author+' · ':'') + today + ' · RunLab\n\n';
   md += '## ① 문제 정의\n\n';
   md += '- **현상 (As-Is)**: ' + (val('ta-asis') || '_작성되지 않음_') + '\n';
   md += '- **목표 (To-Be)**: ' + (val('ta-tobe') || '_작성되지 않음_') + '\n';

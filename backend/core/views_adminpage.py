@@ -21,6 +21,10 @@ def admin_page(request):
         if not os.path.exists(html):
             html = os.path.join(settings.SITE_DIR, "admin", "index.php")
         body = open(html, encoding="utf-8").read()
+        # 리브랜드: 관리자 콘솔도 RunLab 표기로(원본 site/admin은 그대로 두고 서빙 시 치환)
+        for a, b in (("DATA FORGE", "RUN LAB"), ("DATAFORGE", "RUNLAB"),
+                     ("DataForge", "RunLab"), ("dataforge.ai.kr", "runlab.ai.kr")):
+            body = body.replace(a, b)
         authed = bool(request.session.get("is_admin"))
         # 원본 PHP가 서버에서 주입하던 값. 세션 로그인 상태를 여기서 주입한다.
         body = re.sub(r"const isAdmin\s*=\s*(true|false)\s*;",

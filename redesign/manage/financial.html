@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>재무분석 시뮬레이터 — DataForge</title>
+<title>재무분석 시뮬레이터 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
-<meta property="og:title" content="재무분석 시뮬레이터 — DataForge">
+<meta property="og:title" content="재무분석 시뮬레이터 — RunLab">
 <meta property="og:description" content="재무상태표·손익계산서 항목 추가/삭제로 수익성·안정성·활동성 비율을 자동 계산하는 재무비율 분석 시뮬레이터">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -153,7 +153,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 <header class="site-header">
   <div class="logo">
-    <a href="https://dataforge.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
+    <a href="https://runlab.ai.kr" class="logo-brand">DATA<em>FORGE</em></a>
     <div class="logo-sep"></div>
     <div class="logo-title">재무비율 분석 시뮬레이터</div>
   </div>
@@ -164,7 +164,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </button>
     <button class="pr-open-btn" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:#0d9488;" onclick="exportMD()">⬇️ 마크다운</button>
     <button class="pr-open-btn" onclick="openPrompt()">🤖 분석 프롬프트</button>
-    <a href="https://dataforge.ai.kr" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -754,7 +754,7 @@ function downloadHTML() {
     '<div class="wrap">',
     '',
     '<div class="page-title">📊 재무비율 분석 결과</div>',
-    '<div class="meta"><b style="color:var(--muted)">재무분석 시뮬레이터</b> &nbsp;·&nbsp; '+ec(dateStr)+' 기준 &nbsp;·&nbsp; DataForge</div>',
+    '<div class="meta"><b style="color:var(--muted)">재무분석 시뮬레이터</b> &nbsp;·&nbsp; '+ec(dateStr)+' 기준 &nbsp;·&nbsp; RunLab</div>',
     '',
     sumRowHtml,
     '<div class="section-card">',
@@ -826,7 +826,7 @@ function downloadHTML() {
   html += '</div>\n';
 
   html += [
-    '<div class="footer">DataForge · dataforge.ai.kr · '+ec(dateStr)+'</div>',
+    '<div class="footer">RunLab · runlab.ai.kr · '+ec(dateStr)+'</div>',
     '</div>',
     '</body>',
     '</html>'
@@ -947,7 +947,7 @@ function safeName(n){ return String(n).replace(/[\\/:*?"<>|#]/g,'').replace(/\s+
 function exportMD(){
   var today = new Date().toISOString().slice(0,10);
   var r = calc();
-  var md = '# 🏦 재무비율 분석 결과\n\n' + today + ' · DataForge\n\n';
+  var md = '# 🏦 재무비율 분석 결과\n\n' + today + ' · RunLab\n\n';
   md += '## 재무상태표 요약\n\n| 항목 | 금액 |\n|---|---:|\n';
   md += '| 유동자산 | ' + fmt(r.ca) + '원 |\n| └ 재고자산 | ' + fmt(r.inv) + '원 |\n| 비유동자산 | ' + fmt(r.nca) + '원 |\n| **총자산** | **' + fmt(r.ta) + '원** |\n';
   md += '| 유동부채 | ' + fmt(r.cl) + '원 |\n| 비유동부채 | ' + fmt(r.ncl) + '원 |\n| **총부채** | **' + fmt(r.tl) + '원** |\n| **자기자본** | **' + fmt(r.eq) + '원** |\n\n';

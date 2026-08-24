@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TAM SAM SOM 시장 규모 빌더 — DataForge</title>
+<title>TAM SAM SOM 시장 규모 빌더 — RunLab</title>
 <link rel="icon" type="image/png" href="/img/mfg.png">
 <meta name="description" content="TAM·SAM·SOM 시장 규모를 하향식·상향식 두 방식으로 계산하고 깔때기 그림으로 정리하는 도구. 근거·출처까지 담아 링크로 공유하고 HTML로 저장하세요.">
-<meta property="og:title" content="TAM SAM SOM 시장 규모 빌더 — DataForge">
+<meta property="og:title" content="TAM SAM SOM 시장 규모 빌더 — RunLab">
 <meta property="og:description" content="전체 시장·유효 시장·수익 시장을 계산하고 깔때기로 정리합니다. 상향식 교차 검증과 현실 점검까지.">
-<meta property="og:image" content="https://dataforge.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -228,7 +228,7 @@ input.num{font-family:'Space Mono',monospace;font-weight:700;}
       HTML로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://dataforge.ai.kr/" class="header-back">← DataForge 홈</a>
+    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -842,7 +842,7 @@ function docHTML(forExport){
     +   (author?'<b style="color:var(--muted)">'+xe(author)+'</b> &nbsp;·&nbsp; ':'')
     +   (year?xe(year)+'년 기준 &nbsp;·&nbsp; ':'')
     +   (data.mode==='top'?'하향식(Top-down)':'상향식(Bottom-up)')+' 산정 &nbsp;·&nbsp; '
-    +   today+' &nbsp;·&nbsp; DataForge TAM SAM SOM</div>';
+    +   today+' &nbsp;·&nbsp; RunLab TAM SAM SOM</div>';
 
   if(!(c.tam>0)){
     return head+'<div class="section-card"><div class="empty-state">'
@@ -1139,7 +1139,7 @@ function saveHTML(){
     +'.section-card,.sum-c{break-inside:avoid;}.footer{margin-top:24px;}}\n'
     +'</style>\n</head>\n<body>\n<div class="wrap">\n'
     + docHTML(true)
-    + '\n<div class="footer">DataForge · dataforge.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
+    + '\n<div class="footer">RunLab · runlab.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
 
   var safe=name.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'market';
   var a=document.createElement('a');
@@ -1163,7 +1163,7 @@ function exportMD(){
   md+=(v('author')?v('author')+' · ':'')
     +(v('baseYear')?v('baseYear')+'년 기준 · ':'')
     +(data.mode==='top'?'하향식(Top-down)':'상향식(Bottom-up)')+' 산정 · '
-    +today+' · DataForge TAM SAM SOM\n\n';
+    +today+' · RunLab TAM SAM SOM\n\n';
 
   if(c.tam>0){
     md+='## 요약\n\n| 구분 | 금액 | 비고 |\n|---|---:|---|\n';
