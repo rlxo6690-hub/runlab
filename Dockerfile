@@ -29,4 +29,4 @@ EXPOSE 8000
 # 시작: 마이그레이션 → factory 시딩 → gunicorn
 # 2GB 서버 최적화: 워커 2개(WEB_CONCURRENCY로 조절), --max-requests로 워커 주기적 재활용
 # (머신러닝 라이브러리가 남긴 메모리를 풀어줘 메모리 누수 방지). timeout 900(PPT·유튜브 대비).
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_factory && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers ${WEB_CONCURRENCY:-2} --timeout 900 --max-requests 200 --max-requests-jitter 50 --access-logfile - --error-logfile -"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_factory && python manage.py seed_prompts && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers ${WEB_CONCURRENCY:-2} --timeout 900 --max-requests 200 --max-requests-jitter 50 --access-logfile - --error-logfile -"]
