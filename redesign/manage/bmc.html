@@ -8,7 +8,7 @@
 <meta name="description" content="비즈니스 모델 9개 블록을 한 장에 도식화합니다. 고객 세그먼트부터 비용 구조까지 순서대로 작성하고 HTML 파일로 저장하세요.">
 <meta property="og:title" content="비즈니스 모델 캔버스 — RunLab">
 <meta property="og:description" content="비즈니스 모델 9개 블록을 한 장에 도식화하고 HTML로 저장합니다.">
-<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -157,7 +157,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       HTML로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
+    <a href="https://runlab.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -478,7 +478,7 @@ function exportHTML(){
     +'</div>\n\n'
 
     +'<div class="canvas">\n'+canvas+'\n</div>\n\n'
-    +'<div class="footer">RunLab · runlab.ai.kr · '+ec(today)+'</div>\n'
+    +'<div class="footer">RunLab · runlab.kr · '+ec(today)+'</div>\n'
     +'</div>\n</body>\n</html>';
 
   var safe = name.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40) || 'bmc';

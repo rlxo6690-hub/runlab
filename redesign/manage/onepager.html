@@ -8,7 +8,7 @@
 <meta name="description" content="아이디어·고객·수익 모델을 한 장으로 정리하는 기획서 작성 도구. 완성된 기획서를 HTML 파일로 저장하세요.">
 <meta property="og:title" content="원페이지 아이디어 기획서 — RunLab">
 <meta property="og:description" content="아이디어·고객·수익 모델을 한 장으로 정리하고 HTML로 저장합니다.">
-<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -183,7 +183,7 @@ textarea.inp{resize:vertical;min-height:84px;}
       HTML로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
+    <a href="https://runlab.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -576,7 +576,7 @@ function saveHTML(){
     +'.section-card,.sum-c{break-inside:avoid;}.footer{margin-top:24px;}}\n'
     +'</style>\n</head>\n<body>\n<div class="wrap">\n'
     + docHTML(true)
-    + '\n<div class="footer">RunLab · runlab.ai.kr · '+today+'</div>\n</div>\n</body>\n</html>';
+    + '\n<div class="footer">RunLab · runlab.kr · '+today+'</div>\n</div>\n</body>\n</html>';
 
   var safe=title.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-').slice(0,40)||'onepager';
   var a=document.createElement('a');

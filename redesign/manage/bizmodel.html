@@ -8,7 +8,7 @@
 <meta name="description" content="구조 템플릿을 고르고 이름과 화살표 문구만 채우면 비즈니스 모델 도식이 완성됩니다. SVG·PNG·HTML로 저장해 제안서에 바로 넣으세요.">
 <meta property="og:title" content="비즈니스 모델 도식화 — RunLab">
 <meta property="og:description" content="비즈니스 모델을 주체와 화살표로 도식화합니다. SVG·PNG 저장.">
-<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -135,7 +135,7 @@ select.inp{cursor:pointer;}
       PNG로 저장
     </button>
     <button class="md-btn" onclick="exportMD()">⬇️ 마크다운</button>
-    <a href="https://runlab.ai.kr/" class="header-back">← RunLab 홈</a>
+    <a href="https://runlab.kr/" class="header-back">← RunLab 홈</a>
   </div>
 </header>
 
@@ -713,7 +713,7 @@ function saveHTML(){
   }).join('\n');
   if(flows) html+='<div class="flows">\n'+flows+'\n</div>\n';
 
-  html+='</div>\n<div class="footer">RunLab · runlab.ai.kr · '+xe(today)+'</div>\n</div>\n</body>\n</html>';
+  html+='</div>\n<div class="footer">RunLab · runlab.kr · '+xe(today)+'</div>\n</div>\n</body>\n</html>';
   dl(new Blob([html],{type:'text/html;charset=utf-8'}), fname('html'));
 }
 

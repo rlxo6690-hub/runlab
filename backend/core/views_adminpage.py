@@ -26,7 +26,7 @@ def admin_page(request):
         body = _re.sub(r"DATA(<(?:em|span|b|strong)>)FORGE(</(?:em|span|b|strong)>)",
                        lambda m: "RUN" + m.group(1) + "LAB" + m.group(2), body)
         for a, b in (("DATA FORGE", "RUN LAB"), ("DATAFORGE", "RUNLAB"),
-                     ("DataForge", "RunLab"), ("dataforge.ai.kr", "runlab.ai.kr")):
+                     ("DataForge", "RunLab"), ("dataforge.ai.kr", "runlab.kr")):
             body = body.replace(a, b)
         # 노트북 스킨 주입 (인라인 <style> 뒤에 오도록 </head> 직전)
         skin = ('<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">'

@@ -8,7 +8,7 @@
 <meta name="description" content="파이썬 설치 없이 구글 시트만으로 웹 데이터를 가져오는 실습. IMPORTHTML·IMPORTXML부터 Apps Script까지 4단계로 배웁니다.">
 <meta property="og:title" content="구글 시트 크롤링 — RunLab">
 <meta property="og:description" content="설치 없이 구글 계정 하나로 하는 웹 데이터 수집 실습">
-<meta property="og:image" content="https://runlab.ai.kr/img/OG_IMAGE.jpg">
+<meta property="og:image" content="https://runlab.kr/img/OG_IMAGE.jpg">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -303,11 +303,11 @@ body::before{
 
   <header class="site-header">
     <div class="logo">
-      <a href="https://runlab.ai.kr" class="logo-brand">RUN<em>LAB</em></a>
+      <a href="https://runlab.kr" class="logo-brand">RUN<em>LAB</em></a>
       <div class="logo-sep"></div>
       <div class="logo-title"><span>구글 시트</span> 크롤링</div>
     </div>
-    <a href="https://runlab.ai.kr" class="header-back">← RunLab 홈</a>
+    <a href="https://runlab.kr" class="header-back">← RunLab 홈</a>
   </header>
 
   <div class="page">
@@ -329,22 +329,22 @@ body::before{
       <div class="a-card-title">연습용 페이지 <span class="badge badge-green">● 실습 허용</span></div>
       <ul class="tgt-list">
         <li>
-          <a href="https://runlab.ai.kr/factory_lab/production/" target="_blank" rel="noopener">생산 현황</a>
+          <a href="https://runlab.kr/factory_lab/production/" target="_blank" rel="noopener">생산 현황</a>
           <span>진짜 <code class="ic">&lt;table&gt;</code>로 된 표 — 1단계용</span>
           <span class="cnt">TABLE</span>
         </li>
         <li>
-          <a href="https://runlab.ai.kr/factory_lab/catalog/" target="_blank" rel="noopener">부품 카탈로그</a>
+          <a href="https://runlab.kr/factory_lab/catalog/" target="_blank" rel="noopener">부품 카탈로그</a>
           <span>카드 12개 (제품명·가격·분류·제조사) — 2단계용</span>
           <span class="cnt">12건</span>
         </li>
         <li>
-          <a href="https://runlab.ai.kr/factory_lab/news/" target="_blank" rel="noopener">공지·뉴스</a>
+          <a href="https://runlab.kr/factory_lab/news/" target="_blank" rel="noopener">공지·뉴스</a>
           <span>목록 10개 (제목·작성자·날짜) — 2단계용</span>
           <span class="cnt">10건</span>
         </li>
         <li>
-          <a href="https://runlab.ai.kr/factory_lab/sensor/api.php" target="_blank" rel="noopener">센서 API</a>
+          <a href="https://runlab.kr/factory_lab/sensor/api.php" target="_blank" rel="noopener">센서 API</a>
           <span>JSON으로 바로 주는 주소 — 4단계용</span>
           <span class="cnt">JSON</span>
         </li>
@@ -373,7 +373,7 @@ body::before{
           <span class="code-lang">GOOGLE SHEETS</span>
           <button class="btn-copy" onclick="copyEl('f1',this)">복사</button>
         </div>
-        <div class="code-body" id="f1">=IMPORTHTML("https://runlab.ai.kr/factory_lab/production/", "table", 1)</div>
+        <div class="code-body" id="f1">=IMPORTHTML("https://runlab.kr/factory_lab/production/", "table", 1)</div>
       </div>
       <div class="info-block">
         <strong>세 조각으로 읽습니다.</strong>
@@ -543,15 +543,15 @@ function 정리(s) {
           <thead><tr><th>수식</th><th>결과</th></tr></thead>
           <tbody>
             <tr>
-              <td><code>=긁기("https://runlab.ai.kr/factory_lab/catalog/", "cc-name")</code></td>
+              <td><code>=긁기("https://runlab.kr/factory_lab/catalog/", "cc-name")</code></td>
               <td>제품명 12개</td>
             </tr>
             <tr>
-              <td><code>=긁기("https://runlab.ai.kr/factory_lab/catalog/", "cc-price")</code></td>
+              <td><code>=긁기("https://runlab.kr/factory_lab/catalog/", "cc-price")</code></td>
               <td>가격 12개</td>
             </tr>
             <tr>
-              <td><code>=긁기("https://runlab.ai.kr/factory_lab/news/", "ni-title")</code></td>
+              <td><code>=긁기("https://runlab.kr/factory_lab/news/", "ni-title")</code></td>
               <td>뉴스 제목 10개</td>
             </tr>
           </tbody>
@@ -580,7 +580,7 @@ function 정리(s) {
         그게 API입니다. 화면이 아니라 데이터를 직접 주기 때문에 훨씬 정확하고, 사이트 디자인이 바뀌어도 안 깨집니다.
       </p>
       <p class="lead">
-        <a href="https://runlab.ai.kr/factory_lab/sensor/api.php" target="_blank" rel="noopener">센서 API 주소</a>를
+        <a href="https://runlab.kr/factory_lab/sensor/api.php" target="_blank" rel="noopener">센서 API 주소</a>를
         브라우저에서 그냥 열어보세요. 화면 대신 데이터가 그대로 보입니다. 이걸 시트로 가져오면:
       </p>
       <div class="code-wrap">
@@ -588,7 +588,7 @@ function 정리(s) {
           <span class="code-lang">GOOGLE SHEETS</span>
           <button class="btn-copy" onclick="copyEl('f4',this)">복사</button>
         </div>
-        <div class="code-body" id="f4">=API표("https://runlab.ai.kr/factory_lab/sensor/api.php", "sensors")</div>
+        <div class="code-body" id="f4">=API표("https://runlab.kr/factory_lab/sensor/api.php", "sensors")</div>
       </div>
       <div class="info-block">
         <strong>열 이름까지 자동으로 붙습니다.</strong>
@@ -656,7 +656,7 @@ function 정리(s) {
 
 <script>
 /* ── 실습 대상 정의 ────────────────────────────── */
-var BASE = 'https://runlab.ai.kr/factory_lab/';
+var BASE = 'https://runlab.kr/factory_lab/';
 
 var TARGETS = [
   {
