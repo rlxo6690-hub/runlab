@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd ~/Desktop/태태/dataforge-복구 && sed -i '' 's/스마일서브 서버 IP/가비아 서버 IP/g' docs/배포-안내서.md && grep -c \\\"스마일서브\\\" docs/배포-안내서.md && git add -A && git -c user.name=claude -c user.email=noreply@anth...",
-  "error": "Exit code 1\n0",
-  "timestamp": "2026-08-25T04:44:33.170Z",
-  "retry_count": 1
-}
